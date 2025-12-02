@@ -1,0 +1,41 @@
+# AI assistant artefacts
+.claude/
+CLAUDE.md
+.cursor/
+.cursorrules
+.aider*
+.codeium/
+.continue/
+.cody/
+AGENTS.md
+.github/copilot-instructions.md
+
+# LaTeX intermediate files
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.run.xml
+*.synctex.gz
+*.toc
+*.lot
+*.lof
+*.nav
+*.snm
+*.bst
+*.dvi
+*.xdv
+*.ps
+
+# Editors and OS metadata
+*.swp
+*.bak
+*.tmp
+*.backup
+*~
+.DS_Store
+Thumbs.db
