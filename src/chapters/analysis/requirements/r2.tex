@@ -1,0 +1,45 @@
+\label{sec:r2-context-awareness}
+
+Context-aware vulnerability reasoning refers to the system's ability to correctly identify, classify, and localize security vulnerabilities by analyzing source code within its surrounding semantic and structural context. This requirement goes beyond surface-level pattern matching and instead relies on understanding data flow, control flow, API semantics, and usage constraints to determine whether a code fragment constitutes a genuine security risk.
+
+In contrast to traditional static analyzers that operate primarily on syntactic rules or predefined patterns, effective vulnerability reasoning must consider how code behaves in context. Prior research has shown that many vulnerabilities only manifest under specific execution paths, input assumptions, or API usage scenarios, and cannot be reliably detected without contextual analysis \cite{fu2023llmsec, basic2025slr}. Similarly, LLM-based approaches that lack explicit grounding may misclassify benign code as vulnerable or overlook subtle security flaws when context is incomplete or fragmented \cite{pearce2022copilot, peng2025cweval}.
+
+% As illustrated in Figure~\ref{fig:ide-detection-example}, an
+An ideal solution must detect vulnerabilities even when relevant information is distributed across multiple statements, functions, or files. The system should associate related code fragments into a coherent reasoning context while ignoring unrelated logic. For example, input validation performed in a helper function should be correctly recognized when assessing the safety of downstream API usage, and defensive checks should prevent false positives when they effectively mitigate a potential vulnerability.
+
+This requirement is critical because real-world codebases are rarely self-contained or linear. Security-relevant information is often scattered across variable initializations, conditional branches, utility functions, and framework abstractions. Without robust contextual reasoning, a system may either miss vulnerabilities that emerge from interdependent logic or incorrectly flag code that is secure by design. Such errors reduce developer confidence and limit the system’s usefulness in practice.
+
+Effective context-aware reasoning operates along three complementary dimensions. First, the system must correctly integrate dispersed information. Security-relevant signals may appear in different parts of a file or across multiple files, and the system must combine these fragments into a unified vulnerability assessment. Second, the system must recognize mitigation logic. If appropriate safeguards—such as input sanitization, authentication checks, or bounds validation—are present, the system should account for them and avoid reporting false positives. Third, the system must avoid unsupported inference. When insufficient context is available to determine whether a vulnerability exists, the system should explicitly acknowledge uncertainty rather than hallucinating a definitive conclusion.
+
+Retrieval-Augmented Generation supports this requirement by grounding vulnerability reasoning in structured security knowledge, such as Common Weakness Enumeration (CWE) descriptions, secure coding guidelines, and historical vulnerability examples. Retrieved context helps the model align observed code patterns with known vulnerability semantics, reducing reliance on implicit assumptions and improving reasoning reliability.
+
+The advantages of strong context-aware vulnerability reasoning are multifold. It improves detection accuracy by reducing false positives and false negatives caused by superficial pattern matching. It enhances robustness to coding style variation by focusing on semantic behavior rather than syntactic form. It also improves developer trust, as reported vulnerabilities more closely align with actual security risks in the codebase.
+
+For evaluation, context-aware reasoning is assessed using classification metrics that measure the correctness of vulnerability detection and categorization in context-rich scenarios. Precision, recall, and macro-averaged F1-score are computed over benchmarks containing both vulnerable and non-vulnerable code samples with similar surface patterns. In addition, localization accuracy is measured by evaluating whether the system correctly identifies the relevant code regions contributing to the vulnerability. These metrics collectively capture the system’s ability to reason about vulnerabilities in context rather than in isolation.
+
+\begin{table}[h!]
+\centering
+\renewcommand{\arraystretch}{1.6}
+\setlength{\tabcolsep}{12pt}
+\begin{tabularx}{\textwidth}{|>{\centering\arraybackslash}m{3cm}|>{\arraybackslash}X|}
+\hline
+\textbf{Reasoning Level} & \textbf{Interpretation (example criteria)} \\
+\hline
+High &
+\textbf{High context awareness.} The system correctly integrates dispersed context, recognizes mitigation logic, and avoids unsupported inference. Vulnerability classification and localization are accurate (macro F1 $\geq 0.80$). \\
+\hline
+Medium &
+\textbf{Moderate context awareness.} The system integrates some contextual information but occasionally misses mitigations or misinterprets dependencies (macro F1 in $[0.65, 0.80)$). \\
+\hline
+Low &
+\textbf{Low context awareness.} The system relies primarily on surface patterns, leading to frequent false positives or missed vulnerabilities (macro F1 in $[0.50, 0.65)$). \\
+\hline
+None &
+\textbf{No context awareness.} The system fails to incorporate contextual information and produces unreliable vulnerability assessments (macro F1 $< 0.50$). \\
+\hline
+\end{tabularx}
+\caption{Evaluation scale for R2: Context-Aware Vulnerability Reasoning.}
+\label{tab:r2-context-awareness}
+\end{table}
+
+In summary, R2 ensures that vulnerability detection is grounded in semantic and structural understanding of source code rather than superficial pattern matching. By integrating dispersed context, accounting for mitigation logic, and avoiding unsupported assumptions, the system provides accurate and trustworthy vulnerability assessments that reflect real-world security risks in modern codebases.

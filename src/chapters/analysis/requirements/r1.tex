@@ -1,0 +1,44 @@
+
+\label{sec:r1-consistency}
+
+Consistency refers to the system’s ability to produce stable, repeatable, and uniformly structured vulnerability detection results when analyzing identical or semantically equivalent source code. In the context of security analysis, consistency means that the same vulnerability is detected, classified, explained, and localized in a comparable manner across repeated runs, invocation modes, and interaction contexts.
+
+Unlike general-purpose code analysis, vulnerability detection demands a high degree of determinism. Security findings are often used to guide remediation decisions, trigger audits, or satisfy compliance requirements. Inconsistent detection outcomes—such as reporting a vulnerability in one analysis but not in another, or fluctuating between different vulnerability classes—undermine developer trust and reduce the practical usability of the system. Prior empirical studies on LLM-based vulnerability detection have shown that uncontrolled prompt variability and stochastic generation can lead to unstable predictions and inconsistent explanations, even when analyzing identical code snippets \cite{sheng2025survey, li2025everything}.
+
+% As illustrated in Figure~\ref{fig:ide-detection-example}, an
+An ideal solution should ensure that once a vulnerability is identified, it is reported in a consistent manner. This includes stable classification (e.g., mapping to the same CWE category), consistent localization of the affected code region, and uniform explanation structure. For example, an input validation flaw should not alternately be reported as a generic "security issue," an injection vulnerability, or a logic error across different executions if the underlying code has not changed.
+
+Consistency operates across multiple dimensions of vulnerability reporting. At the level of detection outcome, the presence or absence of a vulnerability should be stable across repeated analyses. At the level of classification, detected issues should map consistently to the same vulnerability categories and severity levels. At the level of explanation, descriptions should follow standardized phrasing and structure, avoiding unnecessary variation in terminology or level of detail. At the level of localization, the same code regions should be highlighted as relevant to the vulnerability.
+
+This requirement is particularly critical because modern development workflows increasingly rely on automated security feedback integrated into the IDE. If a vulnerability warning appears intermittently or changes classification without code modifications, developers may disregard the warning entirely. Similar concerns have been documented in studies of static analysis tools, where inconsistent or noisy warnings reduce adoption and remediation rates \cite{johnson2013don}.
+
+From a system design perspective, achieving consistency requires controlling sources of nondeterminism in LLM inference and grounding vulnerability reasoning in structured security knowledge. Retrieval-Augmented Generation contributes to this goal by anchoring model outputs to curated vulnerability descriptions and examples, thereby reducing reliance on purely generative reasoning and mitigating hallucination.
+
+For evaluation, detection consistency is assessed using repeated analyses of identical code samples under fixed configurations. We measure agreement between runs using macro-averaged precision, recall, and F1-score for vulnerability presence and classification. In addition, label agreement metrics are used to quantify stability in vulnerability categorization across runs. A high degree of agreement indicates that the system produces stable and reliable security findings.
+
+\begin{table}[h!]
+\centering
+\renewcommand{\arraystretch}{1.6}
+\setlength{\tabcolsep}{12pt}
+\begin{tabularx}{\textwidth}{|>{\centering\arraybackslash}m{3cm}|>{\arraybackslash}X|}
+\hline
+\textbf{Consistency Level} & \textbf{Interpretation (example thresholds)} \\
+\hline
+High &
+\textbf{High consistency.} Vulnerability presence and classification are stable across runs (macro F1 $\geq 0.80$), with minimal variation in localization and explanation structure. \\
+\hline
+Medium &
+\textbf{Moderate consistency.} Minor variations in classification or explanation occur (macro F1 in $[0.65, 0.80)$), but core vulnerability detection remains stable. \\
+\hline
+Low &
+\textbf{Low consistency.} Frequent changes in vulnerability presence or classification (macro F1 in $[0.50, 0.65)$), indicating unstable detection behavior. \\
+\hline
+None &
+\textbf{No consistency.} Detection results vary substantially across runs (macro F1 $< 0.50$), undermining trust in the system. \\
+\hline
+\end{tabularx}
+\caption{Evaluation scale for R1: Detection Consistency (example thresholds).}
+\label{tab:r1-detection-consistency}
+\end{table}
+
+In summary, R1 ensures that vulnerability detection results are stable, reproducible, and uniformly structured across repeated analyses. By enforcing consistency across detection outcomes, classification, explanation, and localization, the system provides developers with reliable security feedback that can be trusted and acted upon within real-world development workflows.
