@@ -1,0 +1,43 @@
+\label{sec:r4-repair-quality}
+
+Actionable repair suggestions refer to the system's ability to generate concrete, security-aware code modifications that effectively remediate detected vulnerabilities while preserving the original program's functional correctness. In contrast to generic advice or high-level recommendations, actionable repairs must be directly applicable to the affected code region and sufficiently specific to support immediate developer adoption.
+
+In the context of vulnerability detection, identifying a security flaw is only the first step. Developers ultimately require guidance on how to fix the issue correctly and efficiently. Prior work has shown that even when vulnerabilities are correctly identified, developers may struggle to apply appropriate fixes, particularly when they lack security expertise or when remediation requires nuanced understanding of APIs and security constraints \cite{islam2024secrepair, basic2025slr}. Inconsistent or incorrect fixes may leave vulnerabilities partially unresolved or introduce new flaws, undermining the value of automated detection.
+
+% As illustrated in Figure~\ref{fig:ide-repair-example}, an
+An ideal solution should provide repair suggestions that are tightly coupled to the detected vulnerability and localized to the relevant code region. For example, if an injection vulnerability is identified, the system should suggest concrete input validation or sanitization mechanisms that are appropriate for the specific API and execution context, rather than issuing abstract recommendations such as "sanitize input." Suggested repairs should reflect established secure coding practices and align with recognized vulnerability classes, such as those defined by the Common Weakness Enumeration (CWE).
+
+Actionable repair suggestions operate across several dimensions. At the level of specificity, suggested fixes must include precise code changes rather than vague guidance. At the level of correctness, repairs must eliminate the underlying vulnerability without breaking existing functionality or introducing new security issues. At the level of contextual appropriateness, fixes should respect the surrounding code structure, library usage, and project conventions, avoiding disruptive or unrealistic refactorings. Finally, at the level of control, developers must retain full authority over whether and how suggested repairs are applied.
+
+This requirement is particularly important in IDE-integrated workflows, where developers expect rapid, low-friction assistance. Repair suggestions that are overly verbose, difficult to interpret, or incompatible with the existing codebase are likely to be ignored. Conversely, concise and correct fixes that can be reviewed and applied incrementally encourage adoption and improve remediation rates.
+
+Retrieval-Augmented Generation supports actionable repair suggestions by grounding generated fixes in curated vulnerability knowledge and historical remediation examples. Retrieved context enables the system to align suggested repairs with established security practices and reduce the risk of hallucinated or insecure fixes. By decoupling security knowledge from the model parameters, RAG further allows repair logic to evolve as new vulnerability patterns and recommended mitigations emerge.
+
+For evaluation, repair quality is assessed using a combination of functional and security-oriented metrics. Functional correctness is evaluated by verifying that repaired code preserves expected behavior, for example through regression tests or benchmark-provided test cases. Security effectiveness is evaluated by re-analyzing the repaired code to confirm that the original vulnerability is no longer detected and that no new vulnerabilities are introduced. In addition, repair precision is assessed by measuring the proportion of suggested fixes that are both applicable and correct without manual modification.
+
+\begin{table}[h!]
+\centering
+\renewcommand{\arraystretch}{1.6}
+\setlength{\tabcolsep}{12pt}
+\begin{tabularx}{\textwidth}{|>{\centering\arraybackslash}m{3cm}|>{\arraybackslash}X|}
+\hline
+\textbf{Repair Quality Level} & \textbf{Interpretation (example criteria)} \\
+\hline
+High &
+\textbf{High-quality repairs.} Suggested fixes are directly applicable, remove the vulnerability, preserve functional correctness, and align with secure coding practices. \\
+\hline
+Medium &
+\textbf{Moderate-quality repairs.} Suggested fixes address the vulnerability but require minor manual adjustment or introduce small, non-critical side effects. \\
+\hline
+Low &
+\textbf{Low-quality repairs.} Suggested fixes are vague, incomplete, or partially incorrect, requiring substantial developer intervention. \\
+\hline
+None &
+\textbf{No actionable repair.} The system fails to provide a usable fix or produces insecure or functionally incorrect code. \\
+\hline
+\end{tabularx}
+\caption{Evaluation scale for R4: Actionable Repair Suggestions.}
+\label{tab:r4-repair-quality}
+\end{table}
+
+In summary, R4 ensures that vulnerability detection is complemented by practical, security-aware repair suggestions that developers can readily apply within their workflow. By emphasizing specificity, correctness, contextual appropriateness, and developer control, this requirement bridges the gap between vulnerability identification and effective remediation, thereby enhancing the overall utility of the proposed system.

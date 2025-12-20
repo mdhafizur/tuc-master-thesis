@@ -1,0 +1,43 @@
+\label{sec:r3-transparency}
+
+Explainability and transparency refer to the system's ability to make its vulnerability detection and repair reasoning understandable, inspectable, and verifiable by developers. In the context of security analysis, transparency means that the system does not merely report that a vulnerability exists, but clearly communicates \emph{why} it was detected, \emph{which code elements contributed to the decision}, and \emph{what security principles are being violated}. This requirement is essential for fostering developer trust, enabling informed remediation decisions, and supporting auditability in security-sensitive environments.
+
+Unlike traditional static analyzers, which often expose explicit rules or taint paths, LLM-based systems risk operating as opaque black boxes. Prior research has shown that when developers cannot understand the rationale behind automated security findings, they are more likely to ignore warnings or apply fixes incorrectly \cite{johnson2013don, christakis2016developers}. This issue is amplified for LLM-based approaches, where probabilistic reasoning and generative explanations may obscure the causal relationship between code patterns and reported vulnerabilities.
+
+% As illustrated in Figure~\ref{fig:ide-detection-example}, an
+An ideal solution should present vulnerability findings alongside structured explanations that link detected issues to concrete code regions and recognized vulnerability classes. For example, when reporting an injection vulnerability, the system should indicate the untrusted input source, the absence or insufficiency of validation or sanitization, and the sensitive sink where exploitation may occur. Explanations should be concise, technically precise, and aligned with established security taxonomies such as the Common Weakness Enumeration (CWE).
+
+Explainability operates across several dimensions. At the level of localization, the system should highlight the specific lines or code fragments that contributed to the detection, enabling developers to quickly identify the relevant context. At the level of reasoning, the system should describe the logical chain that led from observed code patterns to the vulnerability conclusion, avoiding vague or purely descriptive statements. At the level of justification, the system should reference recognized vulnerability categories or security guidelines to ground its explanations in established knowledge rather than ad hoc model intuition.
+
+This requirement is particularly important in real-world development workflows, where developers must often balance security concerns against functional requirements and delivery timelines. Transparent explanations allow developers to assess whether a reported issue is relevant in their specific context and to determine whether a suggested fix aligns with project constraints. In regulated domains, transparency further supports accountability by enabling security findings to be reviewed, documented, and justified during audits.
+
+Retrieval-Augmented Generation plays a central role in supporting explainability. By grounding explanations in retrieved vulnerability descriptions, secure coding guidelines, and historical examples, the system can produce explanations that are both informative and consistent. This reduces the risk of hallucinated or misleading justifications and improves alignment between detection outcomes and established security knowledge.
+
+For evaluation, explainability and transparency are assessed through a combination of qualitative and quantitative criteria. We evaluate whether explanations correctly reference the underlying vulnerability type, accurately identify the contributing code regions, and maintain internal coherence between detection, explanation, and suggested repair. In addition, explanation completeness is assessed by verifying that all essential components of the vulnerability reasoning—such as source, sink, and missing mitigation—are explicitly addressed. While explainability is inherently qualitative, structured scoring rubrics enable reproducible assessment across benchmarks.
+
+\begin{table}[h!]
+\centering
+\renewcommand{\arraystretch}{1.6}
+\setlength{\tabcolsep}{12pt}
+\begin{tabularx}{\textwidth}{|>{\centering\arraybackslash}m{3cm}|>{\arraybackslash}X|}
+\hline
+\textbf{Transparency Level} & \textbf{Interpretation (example criteria)} \\
+\hline
+High &
+\textbf{High transparency.} Explanations clearly identify the vulnerability type, affected code regions, and reasoning steps, and reference established security knowledge. Developers can easily verify and act on the findings. \\
+\hline
+Medium &
+\textbf{Moderate transparency.} Explanations identify the vulnerability and affected code but provide limited reasoning detail or incomplete justification. Additional developer interpretation is required. \\
+\hline
+Low &
+\textbf{Low transparency.} Explanations are vague, generic, or loosely connected to the reported vulnerability, making verification difficult. \\
+\hline
+None &
+\textbf{No transparency.} The system reports vulnerabilities without meaningful explanation or justification, effectively operating as a black box. \\
+\hline
+\end{tabularx}
+\caption{Evaluation scale for R3: Explainability and Transparency.}
+\label{tab:r3-transparency}
+\end{table}
+
+In summary, R3 ensures that vulnerability detection and repair suggestions are accompanied by clear, structured, and verifiable explanations. By making the system’s reasoning transparent and grounding it in established security knowledge, the system supports developer trust, facilitates correct remediation, and enables accountable use in real-world software development settings.
