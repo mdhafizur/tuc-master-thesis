@@ -1,0 +1,88 @@
+\section{Concept Derivation from Analysis Results}
+\label{sec:concept-derivation}
+
+The conceptual design of the proposed vulnerability detection system is derived systematically from the six requirements identified in Section~\ref{sec:requirements} and the gaps observed in existing approaches reviewed in Section~\ref{sec:related-work}. This section traces how each architectural decision directly addresses specific limitations in current vulnerability detection systems, establishing the rationale for a local, RAG-augmented, IDE-integrated design.
+
+\subsection{From Cloud-Based to Privacy-Preserving Local Deployment}
+\label{subsec:cloud-to-local}
+
+The analysis in Section~\ref{sec:related-work} revealed that most LLM-based vulnerability detection systems rely on cloud-hosted models or external APIs, requiring transmission of source code to remote servers. This poses unacceptable privacy risks in industrial, governmental, and regulated settings where source code contains proprietary logic, intellectual property, or sensitive business information \cite{kaur2025cyberreview,gholami2024llmcyber}.
+
+These observations directly motivate the decision to deploy all components locally within the developer's environment. By running LLMs, retrieval systems, and analysis components entirely on local hardware, the system ensures that no source code, intermediate representations, or analysis results are transmitted beyond the developer's machine. This design directly satisfies R5 (privacy-preserving operation) and enables offline operation, making the system suitable for air-gapped or security-sensitive development environments.
+
+The trade-off for local deployment is increased latency compared to cloud-based systems with dedicated accelerators. However, by carefully optimizing model selection, retrieval strategies, and context management, the system can achieve acceptable response times on standard developer hardware, addressing R6 (usability and responsiveness).
+
+\subsection{Retrieval-Augmented Generation for Security Knowledge Grounding}
+\label{subsec:rag-security}
+
+Requirement R1 demands consistent and accurate vulnerability detection across repeated analyses. Pure generative LLM approaches suffer from hallucination and inconsistent classifications, as shown in prior studies \cite{sheng2025survey,li2025everything}. Similarly, R2 requires context-aware reasoning that goes beyond surface-level pattern matching to understand data flow, control flow, and API semantics.
+
+The system addresses these requirements through Retrieval-Augmented Generation (RAG), which grounds vulnerability detection in a locally maintained knowledge base of security information. This knowledge base includes:
+\begin{itemize}
+\item \textbf{Vulnerability descriptions} from the Common Weakness Enumeration (CWE) taxonomy
+\item \textbf{Secure coding guidelines} for JavaScript and TypeScript
+\item \textbf{Historical vulnerability examples} with explanations and fixes
+\item \textbf{Framework-specific security patterns} for common libraries
+\end{itemize}
+
+During analysis, relevant security knowledge is retrieved based on semantic similarity to the code under examination and provided as context to the LLM. This design reduces reliance on purely generative reasoning, improves detection consistency by anchoring outputs to established security knowledge, and enables the knowledge base to evolve independently of model parameters. By decoupling security knowledge from the model, the system supports continuous updates to vulnerability information without requiring model retraining.
+
+\subsection{IDE Integration for In-Context Security Assistance}
+\label{subsec:ide-integration}
+
+Traditional SAST tools operate as separate processes in CI/CD pipelines, providing feedback only after code is committed. This delayed feedback loop increases cognitive load and reduces remediation rates, as developers must context-switch between writing code and reviewing security findings \cite{johnson2013don,christakis2016developers}.
+
+The proposed system integrates directly into Visual Studio Code as an extension, providing security analysis during active development. This design supports two interaction modes:
+\begin{itemize}
+\item \textbf{Inline detection}: Real-time vulnerability annotations triggered by file save events, providing immediate feedback similar to type errors or linting warnings
+\item \textbf{On-demand analysis}: Explicit analysis commands for comprehensive security audits of selected code regions or entire files
+\end{itemize}
+
+IDE integration directly addresses R3 (explainability and transparency) by enabling rich, interactive presentation of vulnerability findings, explanations, and repair suggestions within the developer's familiar environment. It also supports R4 (actionable repair suggestions) by allowing developers to preview, review, and apply suggested fixes with minimal friction.
+
+\subsection{Modular Component Architecture}
+\label{subsec:modular-architecture}
+
+The analysis in Section~\ref{sec:related-work} showed that monolithic vulnerability detection systems lack transparency: when detection fails or produces unexpected results, it is difficult to diagnose whether the error originated in context extraction, retrieval, reasoning, or explanation generation.
+
+The proposed system decomposes vulnerability detection into four core components, each with clearly defined responsibilities:
+\begin{enumerate}
+\item \textbf{Context Extraction}: Parses source code and extracts relevant context (function definitions, imports, data flow)
+\item \textbf{Knowledge Retrieval}: Queries the local security knowledge base to retrieve relevant vulnerability information
+\item \textbf{Vulnerability Detection}: Analyzes code context using the LLM, grounded in retrieved security knowledge
+\item \textbf{Repair Generation}: Produces concrete, context-appropriate fixes for detected vulnerabilities
+\end{enumerate}
+
+This modular design enables component-level analysis, isolated improvement, and transparent error diagnosis. Each component can be tested, optimized, and replaced independently without destabilizing the overall architecture. Intermediate outputs (extracted context, retrieved knowledge, detection reasoning) remain visible for debugging and validation, supporting transparency and reproducibility.
+
+\subsection{Context-Aware Analysis with Code Understanding}
+\label{subsec:context-aware-analysis}
+
+Requirement R2 demands that the system correctly identify vulnerabilities based on semantic and structural context rather than syntactic patterns alone. Surface-level pattern matching produces false positives when secure code resembles vulnerable patterns, and false negatives when vulnerabilities depend on data flow or control flow relationships.
+
+The system addresses this through multi-level context extraction that captures:
+\begin{itemize}
+\item \textbf{Syntactic context}: Abstract Syntax Tree (AST) representations of code structure
+\item \textbf{Semantic context}: Variable definitions, function signatures, import statements, and type information
+\item \textbf{Data flow context}: Traces of how untrusted inputs flow through the code to sensitive operations
+\item \textbf{Control flow context}: Conditional branches, validation checks, and mitigation logic
+\end{itemize}
+
+This context is provided to the LLM alongside retrieved security knowledge, enabling reasoning about whether observed code patterns constitute genuine vulnerabilities or are mitigated by contextual safeguards. The design directly supports R2 by enabling the system to distinguish between vulnerable and benign code that appears syntactically similar.
+
+\subsection{Explainability Through Structured Reasoning}
+\label{subsec:explainability-design}
+
+Requirement R3 demands transparent explanations that link detected vulnerabilities to concrete code regions and recognized security principles. Opaque "black box" detection undermines developer trust and makes it difficult to validate findings or apply fixes correctly \cite{johnson2013don,christakis2016developers}.
+
+The system enforces explainability through structured output generation, where vulnerability reports must include:
+\begin{itemize}
+\item \textbf{Vulnerability classification}: CWE category and severity level
+\item \textbf{Code localization}: Specific lines or code fragments contributing to the vulnerability
+\item \textbf{Reasoning explanation}: Description of why the code is vulnerable (e.g., untrusted input, missing validation, dangerous API usage)
+\item \textbf{Security principle violated}: Reference to secure coding guidelines or CWE descriptions
+\end{itemize}
+
+By grounding explanations in retrieved security knowledge and enforcing structured output formats, the system produces consistent, verifiable, and actionable vulnerability reports. This design directly supports R3 and improves developer trust by making detection reasoning transparent and auditable.
+
+This section has shown how each architectural decision maps to the requirements established in Chapter~\ref{chap:analysis}. The local, RAG-augmented, IDE-integrated design is not an arbitrary choice, but a direct consequence of the limitations observed in existing work and the operational constraints of real-world, privacy-sensitive development environments. The next section details the core components that instantiate this design, specifying their inputs, outputs, and processing logic.
