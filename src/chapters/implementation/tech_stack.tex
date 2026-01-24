@@ -1,0 +1,38 @@
+\section{Technology Stack and Rationale}
+\label{sec:tech-stack}
+
+Implementation of the \textit{Invox} system follows a modular monolith architecture that balances development simplicity with operational flexibility. A single Node.js application hosts all five agents, while specialized services—such as vector search, embedding generation, and external LLMs—operate externally. This hybrid approach preserves modular boundaries without incurring the operational overhead typical of fully distributed microservices \cite{fowler2015monolith,microservices_newman}.
+
+\subsection*{Architecture Pattern: Modular Monolith with External Services}
+
+Invox adopts a modular monolith pattern in which the STT, RAG, IE, CF, and VER agents are implemented as cohesive modules within one Node.js service. This yields a unified codebase, consistent versioning, simplified debugging, and low-latency in-process communication. Clear module interfaces maintain separation of concerns despite co-location.
+
+External components are used where the benefits are decisive. \textbf{OpenSearch} provides vector similarity search; a dedicated embedding service generates domain-relevant vectors; and LLM providers (OpenAI, Google) perform model inference. This division allows the core pipeline to remain lightweight while delegating specialized computation to optimized services.
+
+\subsection*{Containerization and Deployment}
+
+Deployment relies on \textbf{Docker} to ensure reproducibility, isolation, and consistent behavior across environments. Containers encapsulate dependencies, simplify distribution, and enable horizontal scaling by replicating services. \textbf{Docker Compose} orchestrates the multi-service environment, coordinating the main application alongside OpenSearch and auxiliary components.
+
+\subsection*{Backend Implementation}
+
+Backend development is carried out in \textbf{Node.js} with \textbf{Express}, providing an adaptable foundation for the multi-agent workflow. LLM invocation is abstracted through the \textbf{Vercel AI SDK}, which enables a plugin-like architecture for switching between OpenAI, Google, Anthropic, and future providers with minimal changes. Type-safe communication between backend and frontend is achieved using \textbf{tRPC}, with \textbf{JSON} as the shared data format for inter-agent communication.
+
+\subsection*{External Service Integration}
+
+\textbf{OpenSearch} acts as the vector index for the RAG agent, storing dense embeddings and enabling efficient retrieval of semantically related examples. Vector indexing significantly accelerates similarity search and supports context-rich extraction. Embeddings are generated using the \texttt{intfloat/multilingual-e5-large-instruct} model (1024 dimensions), selected for its strong multilingual performance and favorable trade-off between accuracy and computational cost. This model provides robust semantic representations for diverse input conditions.
+
+\subsection*{Frontend Interface}
+
+The user interface is built in \textbf{React}, chosen for its wide adoption, strong ecosystem, and suitability for building interactive components that match the system’s modular structure. React's predictable rendering model ensures responsive interactions when reviewing extracted fields and modifying templates. 
+
+\subsection*{Data Persistence and Retrieval}
+
+Persistent storage is managed by \textbf{PostgreSQL}, which offers strong consistency, reliability, and efficient querying for structured data. Finalized templates are stored relationally, while OpenSearch serves as the retrieval layer for RAG by indexing dense vector embeddings. This combination provides both robust persistence and high-quality semantic search.
+
+\subsection*{Authentication and Security}
+
+Authentication and authorization are handled by \textbf{Keycloak}, which supports OAuth2 and OpenID Connect \cite{rfc6749}. Role-based policies ensure that only authorized users can submit, review, or modify templates, supporting secure multi-user workflows.
+
+\subsection*{Architecture Rationale}
+
+A modular monolith provides a pragmatic balance between maintainability, performance, and future extensibility. It avoids the operational complexity of microservices while retaining clear module boundaries. The plugin-based LLM integration ensures adaptability as new models become available, and containerized deployment guarantees reproducibility and reliability across environments. Together, these choices provide a scalable and future-proof foundation for \textit{Invox}.

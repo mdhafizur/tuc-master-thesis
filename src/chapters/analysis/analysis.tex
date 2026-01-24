@@ -1,0 +1,72 @@
+This chapter analyzes the problem space of automated vulnerability detection and repair within modern software development workflows. The objective is to identify the fundamental technical and practical requirements for integrating Large Language Models (LLMs) into secure coding assistance, to critically examine existing approaches, and to derive design implications for a privacy-preserving, retrieval-augmented framework integrated into an Integrated Development Environment (IDE).
+
+
+\section{Requirements}
+\label{sec:requirements}
+
+This section outlines the core requirements that a system must fulfill to support effective, privacy-preserving vulnerability detection and repair within modern software development workflows. The focus of this thesis is on assisting developers during implementation by identifying security-relevant weaknesses in source code and providing actionable repair suggestions directly within the Integrated Development Environment (IDE).
+
+The primary goal of the system proposed in this thesis is to enable developers to detect and remediate vulnerabilities in JavaScript and TypeScript code using a locally deployed Large Language Model (LLM) augmented with retrieval-based security knowledge. Rather than relying on cloud-hosted services or post hoc pipeline analysis, the system operates entirely on the developer’s machine and integrates seamlessly into Visual Studio Code. Source code, analysis results, and vulnerability knowledge remain local at all times, ensuring privacy, reproducibility, and suitability for regulated or security-sensitive environments.
+
+In contrast to traditional Static Application Security Testing (SAST) tools, which rely on predefined rules and often provide limited remediation guidance, the proposed system leverages LLM-based semantic reasoning combined with Retrieval-Augmented Generation (RAG). This enables the system to reason about code context, explain detected issues, and suggest concrete repairs grounded in curated vulnerability knowledge. To ensure practical usefulness, the system must satisfy both functional and non-functional requirements related to accuracy, transparency, performance, and usability.
+
+Based on the challenges identified in Chapter~1 and the analysis of existing approaches, six core requirements (R1–R6) are defined. These requirements establish a systematic basis for evaluating the proposed architecture and guide the design decisions discussed in subsequent chapters.
+
+\textbf{R1 – Detection Accuracy and Consistency:}  
+The system must reliably identify security-relevant vulnerabilities in source code with stable behavior across repeated analyses. Detection results should be consistent for identical inputs, independent of invocation timing or interaction mode. The system should minimize false positives while maintaining adequate recall, ensuring that developers can trust reported findings and are not overwhelmed by spurious warnings.
+
+\textbf{R2 – Context-Aware Vulnerability Reasoning:}  
+The system must analyze vulnerabilities in their surrounding code context rather than relying solely on syntactic patterns. This includes reasoning about data flow, API usage, and control structures at the function and file level. The system should correctly distinguish between vulnerable and benign code patterns that appear syntactically similar and must avoid flagging issues that are mitigated by contextual safeguards.
+
+\textbf{R3 – Explainability and Transparency:}  
+To foster developer trust and facilitate efficient remediation, the system must provide transparent explanations for detected vulnerabilities. Each finding should be accompanied by a clear description of the underlying weakness, references to relevant vulnerability classes (e.g., CWE), and an indication of which code fragments contributed to the detection. Explanations should be concise, technically precise, and suitable for developers without specialized security expertise.
+
+\textbf{R4 – Actionable Repair Suggestions:}  
+The system must generate concrete, security-aware repair suggestions that address the root cause of detected vulnerabilities while preserving functional correctness. Suggested fixes should be directly applicable to the affected code region and must avoid introducing new security issues or breaking existing behavior. Developers must retain full control over whether and how suggested changes are applied.
+
+\textbf{R5 – Privacy-Preserving Operation:}  
+All analysis, retrieval, and generation steps must be performed locally without transmitting source code or derived artifacts to external services. The system must operate with locally deployed models and locally stored vulnerability knowledge, ensuring that proprietary code remains confidential and that results are reproducible across environments.
+
+\textbf{R6 – Usability and Responsiveness:}  
+The system must integrate smoothly into the IDE and provide feedback within acceptable latency bounds. Inline detection should support near–real-time interaction to avoid disrupting the development flow, while more comprehensive audit operations may tolerate higher latency. Usability is evaluated with respect to end-to-end response time, clarity of presented information, and compatibility with typical developer hardware configurations.
+
+These six requirements define the evaluation criteria for the proposed system. In the following chapters, each requirement is addressed through specific architectural choices and implementation strategies. The evaluation chapter assesses to what extent the system satisfies these requirements in practice, using quantitative metrics and reproducible benchmarks.
+
+\subsection{R1: Detection Accuracy and Consistency}\vspace{-2mm}
+\input{src/chapters/analysis/requirements/r1} 
+
+\subsection{R2: Context-Aware Vulnerability Reasoning}\vspace{-2mm}
+\input{src/chapters/analysis/requirements/r2}
+
+\subsection{R3: Explainability and Transparency}\vspace{-2mm}
+\input{src/chapters/analysis/requirements/r3}
+
+\subsection{R4: Actionable Repair Suggestions}\vspace{-2mm}
+\input{src/chapters/analysis/requirements/r4}
+
+\subsection{R5: Privacy-Preserving Operation}\vspace{-2mm}
+\input{src/chapters/analysis/requirements/r5}
+
+\subsection{R6: Usability and Responsiveness}\vspace{-2mm}
+\input{src/chapters/analysis/requirements/r6}
+
+
+\section{Related Work}
+\label{sec:related-work}
+
+This section reviews prior research relevant to LLM-based vulnerability detection and repair, with a focus on static analysis approaches, large language models for software security, retrieval-augmented generation, and privacy-preserving deployment. The discussion highlights both the strengths and limitations of existing work and positions the present thesis within the current research landscape.
+
+\subsection{Traditional Static Application Security Testing}\vspace{-2mm}
+\input{src/chapters/analysis/related_works/traditional_sast}
+
+\subsection{LLM-Based Vulnerability Detection and Repair}\vspace{-2mm}
+\input{src/chapters/analysis/related_works/llm_vuln_detection}
+
+\subsection{Retrieval-Augmented Generation for Secure Coding}\vspace{-2mm}
+\input{src/chapters/analysis/related_works/rag_secure_coding}
+
+\subsection{Privacy-Preserving and IDE-Integrated Approaches}\vspace{-2mm}
+\input{src/chapters/analysis/related_works/privacy_ide}
+
+\subsection{Positioning of This Thesis}\vspace{-2mm}
+\input{src/chapters/analysis/related_works/positioning}

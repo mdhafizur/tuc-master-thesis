@@ -1,0 +1,43 @@
+\label{sec:r5-privacy}
+
+Privacy-preserving operation refers to the system's ability to perform vulnerability detection, reasoning, and repair generation without exposing source code or derived artifacts to external services. This requirement ensures that all stages of analysis—including model inference, retrieval of security knowledge, and generation of explanations or fixes—are executed locally within the developer's environment.
+
+Source code frequently contains proprietary logic, intellectual property, or sensitive business information. In many industrial, governmental, and regulated settings, transmitting such data to cloud-hosted services is unacceptable due to confidentiality, compliance, or contractual constraints. Consequently, any practical vulnerability detection system intended for real-world adoption must provide strong guarantees that code remains under the developer's control at all times.
+
+% As illustrated in Figure~\ref{fig:local-architecture-overview}, an
+An ideal solution should operate entirely on local hardware, using locally deployed LLMs and locally stored vulnerability knowledge bases. No source code, intermediate representations, embeddings, or analysis results should be transmitted beyond the local machine. This includes not only raw code but also prompts, retrieved documents, and generated outputs, all of which may inadvertently leak sensitive information if handled improperly.
+
+Privacy-preserving operation encompasses several dimensions. At the level of deployment, the system must rely exclusively on local inference engines and avoid dependencies on external APIs or remote model hosting. At the level of data handling, all inputs and outputs must remain confined to local memory or storage, with no background telemetry or logging that could result in unintended data egress. At the level of reproducibility, local execution ensures that analysis results can be replicated across environments without reliance on changing external services or opaque model updates.
+
+This requirement is particularly important for vulnerability detection, where analysis often requires access to complete source files or project-level context. Partial redaction or anonymization strategies are insufficient, as they may remove security-relevant information and degrade detection accuracy. By contrast, local execution allows full-context analysis while maintaining strict confidentiality.
+
+Retrieval-Augmented Generation supports privacy-preserving operation by decoupling security knowledge from the model parameters and enabling the use of locally maintained knowledge bases. Vulnerability descriptions, secure coding guidelines, and historical examples can be curated and updated locally without requiring cloud-based retrieval or retraining. This design enables timely incorporation of new vulnerability knowledge while preserving data sovereignty.
+
+For evaluation, privacy preservation is assessed through architectural inspection and runtime verification. We verify that no network communication occurs during analysis by monitoring outbound connections and ensuring that all model inference and retrieval operations are confined to local processes. In addition, we assess whether the system functions correctly in offline environments, confirming that detection and repair capabilities do not degrade when network access is unavailable. These checks provide objective evidence that privacy guarantees are upheld in practice.
+
+\begin{table}[h!]
+\centering
+\renewcommand{\arraystretch}{1.6}
+\setlength{\tabcolsep}{12pt}
+\begin{tabularx}{\textwidth}{|>{\centering\arraybackslash}m{3cm}|>{\arraybackslash}X|}
+\hline
+\textbf{Privacy Level} & \textbf{Interpretation (example criteria)} \\
+\hline
+High &
+\textbf{Strong privacy guarantees.} All analysis stages run locally, no network communication is observed, and the system functions fully offline without loss of capability. \\
+\hline
+Medium &
+\textbf{Partial privacy.} Core analysis is local, but auxiliary components (e.g., optional updates or logging) require network access. No source code is transmitted. \\
+\hline
+Low &
+\textbf{Weak privacy.} Some analysis steps or prompts rely on external services, introducing potential data exposure risks. \\
+\hline
+None &
+\textbf{No privacy guarantees.} Source code or derived artifacts are transmitted to remote services during analysis. \\
+\hline
+\end{tabularx}
+\caption{Evaluation scale for R5: Privacy-Preserving Operation.}
+\label{tab:r5-privacy}
+\end{table}
+
+In summary, R5 ensures that vulnerability detection and repair can be performed without compromising source code confidentiality. By enforcing fully local execution, eliminating external dependencies, and enabling offline operation, the system addresses a key barrier to adoption of LLM-based security assistance in real-world, security-sensitive development environments.

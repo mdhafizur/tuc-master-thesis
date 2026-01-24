@@ -1,0 +1,151 @@
+\section{System Components}
+\label{sec:system-components}
+
+The modular architecture of the proposed vulnerability detection system is organized into four core components and several supporting subsystems. Each component exposes a clear input/output contract, enabling component-level analysis, flexible substitution, and isolated improvement. This section characterizes the roles of the components and their interconnections, independent of any particular deployment scenario.
+
+\subsection{Context Extraction Component}
+\label{subsec:context-extraction}
+
+The Context Extraction component parses JavaScript and TypeScript source code to extract security-relevant information and structural context. It accepts source files as input and produces structured representations suitable for vulnerability analysis.
+
+\textbf{Extraction Mechanisms.} The component employs multiple analysis techniques to capture different aspects of code context:
+\begin{itemize}
+\item \textbf{Syntactic parsing}: Uses TypeScript/JavaScript parsers (e.g., Babel, TypeScript Compiler API) to generate Abstract Syntax Trees (AST) representing code structure
+\item \textbf{Semantic analysis}: Extracts function signatures, variable definitions, import statements, type annotations, and API usage patterns
+\item \textbf{Data flow tracking}: Identifies how data flows from sources (user input, external APIs) to sinks (database queries, system commands, DOM manipulation)
+\item \textbf{Control flow analysis}: Captures conditional branches, validation checks, authentication guards, and other control structures
+\end{itemize}
+
+\textbf{Output Format.} The component produces a structured code context object containing:
+\begin{itemize}
+\item Source code text with line numbers
+\item AST representation of key code regions
+\item List of imported modules and dependencies
+\item Identified data flows (source $\rightarrow$ intermediate $\rightarrow$ sink)
+\item Control flow paths and validation checkpoints
+\item Type information (for TypeScript code)
+\end{itemize}
+
+\textbf{Design Rationale.} Separating context extraction from vulnerability detection ensures that analysis is grounded in actual code structure rather than surface-level text patterns. This directly supports R2 (context-aware vulnerability reasoning) by providing the LLM with rich semantic information about code behavior. The structured output format also supports R3 (explainability) by enabling precise localization of vulnerability-contributing code regions.
+
+\subsection{Knowledge Retrieval Component (RAG)}
+\label{subsec:knowledge-retrieval}
+
+The Knowledge Retrieval component implements Retrieval-Augmented Generation (RAG) to ground vulnerability detection in established security knowledge. It accepts extracted code context as input and retrieves relevant security information from a locally maintained knowledge base.
+
+\textbf{Knowledge Base Contents.} The local knowledge base comprises:
+\begin{itemize}
+\item \textbf{CWE descriptions}: Detailed vulnerability classifications from the Common Weakness Enumeration
+\item \textbf{Secure coding guidelines}: Best practices for JavaScript and TypeScript security
+\item \textbf{Vulnerability examples}: Historical vulnerability instances with explanations and fixes
+\item \textbf{Framework-specific patterns}: Security guidance for common libraries (Express.js, React, etc.)
+\end{itemize}
+
+\textbf{Retrieval Mechanism.} The component encodes code context using sentence transformers (e.g., all-MiniLM-L6-v2) and performs semantic similarity search against indexed knowledge base entries. Vector similarity is computed using cosine distance, and the top-$k$ most relevant entries (typically $k = 3$--$5$) are returned.
+
+\textbf{Indexing Strategy.} Knowledge base entries are pre-processed and indexed offline:
+\begin{enumerate}
+\item Security knowledge documents are chunked into semantically coherent segments
+\item Each segment is embedded using the same sentence transformer used for queries
+\item Embeddings are stored in a vector database (e.g., FAISS, ChromaDB) for efficient retrieval
+\end{enumerate}
+
+\textbf{Design Rationale.} RAG directly addresses R1 (detection consistency) by anchoring LLM reasoning to established vulnerability definitions rather than relying on purely generative outputs. It also supports R5 (privacy-preserving operation) by maintaining all knowledge locally, and R2 (context-aware reasoning) by retrieving knowledge tailored to the specific code patterns under analysis.
+
+\subsection{Vulnerability Detection Component}
+\label{subsec:vulnerability-detection}
+
+The Vulnerability Detection component performs security analysis of extracted code context, grounded in retrieved security knowledge. It accepts code context and retrieved knowledge as input and produces structured vulnerability reports.
+
+\textbf{Analysis Workflow.} Detection proceeds in three stages:
+\begin{enumerate}
+\item \textbf{Prompt construction}: Combines code context, retrieved knowledge, and detection instructions into a structured prompt
+\item \textbf{LLM inference}: Submits the prompt to a locally deployed LLM (e.g., Llama, Mistral, CodeLlama) for analysis
+\item \textbf{Output parsing}: Extracts and validates vulnerability findings from LLM output
+\end{enumerate}
+
+\textbf{Prompt Structure.} The detection prompt integrates:
+\begin{itemize}
+\item \textbf{System instructions}: Defines the detection task and output format requirements
+\item \textbf{Security knowledge}: Retrieved CWE descriptions, guidelines, and examples
+\item \textbf{Code context}: Extracted source code with syntactic and semantic annotations
+\item \textbf{Output schema}: JSON template specifying required fields (CWE ID, severity, explanation, location)
+\end{itemize}
+
+\textbf{Output Format.} Each detected vulnerability includes:
+\begin{itemize}
+\item \textbf{Classification}: CWE category, vulnerability type, severity level
+\item \textbf{Localization}: File path, line numbers, and specific code fragments
+\item \textbf{Explanation}: Description of why the code is vulnerable, including:
+  \begin{itemize}
+  \item Untrusted input sources
+  \item Missing or insufficient validation/sanitization
+  \item Dangerous API usage or sink operations
+  \item Security principles violated
+  \end{itemize}
+\item \textbf{Confidence score}: Estimated reliability of the detection
+\end{itemize}
+
+\textbf{Design Rationale.} Structured output generation ensures that all vulnerability reports include explainability information (R3), while grounding in retrieved knowledge maintains detection consistency (R1). The modular design allows the LLM to be replaced or upgraded without affecting other components, supporting maintainability and flexibility.
+
+\subsection{Repair Generation Component}
+\label{subsec:repair-generation}
+
+The Repair Generation component produces concrete, security-aware code modifications to remediate detected vulnerabilities. It accepts vulnerability reports and code context as input and generates context-appropriate fixes.
+
+\textbf{Repair Strategy.} Fix generation follows a three-step process:
+\begin{enumerate}
+\item \textbf{Fix pattern retrieval}: Queries the knowledge base for repair examples matching the detected CWE category
+\item \textbf{Context adaptation}: Adapts generic repair patterns to the specific code context (variable names, API usage, code style)
+\item \textbf{Validation}: Verifies that suggested repairs maintain syntactic validity and address the root vulnerability
+\end{enumerate}
+
+\textbf{Output Format.} Each repair suggestion includes:
+\begin{itemize}
+\item \textbf{Code modification}: Concrete replacement code or patch
+\item \textbf{Explanation}: Description of what the fix does and why it addresses the vulnerability
+\item \textbf{Applicability constraints}: Conditions under which the fix is appropriate
+\item \textbf{Side effects}: Potential impacts on functionality or performance
+\end{itemize}
+
+\textbf{Types of Repairs.} The system generates repairs for common vulnerability classes:
+\begin{itemize}
+\item \textbf{Input validation}: Adding sanitization, type checking, or allowlist validation
+\item \textbf{Parameterized queries}: Converting string concatenation to prepared statements
+\item \textbf{Output encoding}: Adding context-appropriate encoding (HTML, URL, JavaScript)
+\item \textbf{Access control}: Inserting authentication or authorization checks
+\item \textbf{Safe API usage}: Replacing dangerous functions with secure alternatives
+\end{itemize}
+
+\textbf{Design Rationale.} Repair suggestions directly address R4 (actionable repair suggestions) by providing concrete, context-specific fixes rather than generic advice. Grounding repairs in retrieved examples ensures they align with established secure coding practices, while context adaptation ensures they integrate smoothly into the existing codebase.
+
+\subsection{IDE Integration Layer}
+\label{subsec:ide-integration}
+
+The IDE Integration Layer manages interaction between the vulnerability detection system and Visual Studio Code. It handles event triggers, result presentation, and user interactions.
+
+\textbf{Trigger Mechanisms.} The system supports multiple analysis triggers:
+\begin{itemize}
+\item \textbf{On-save detection}: Triggered automatically when a JavaScript/TypeScript file is saved
+\item \textbf{Command-based analysis}: Explicit commands for analyzing selected code or entire files
+\item \textbf{Workspace scanning}: Batch analysis of multiple files in the project
+\end{itemize}
+
+\textbf{Result Presentation.} Vulnerability findings are presented through:
+\begin{itemize}
+\item \textbf{Inline annotations}: Diagnostic markers in the editor showing vulnerability locations
+\item \textbf{Problems panel}: Structured list of all detected issues with severity indicators
+\item \textbf{Hover tooltips}: Detailed explanations displayed when hovering over annotated code
+\item \textbf{Quick fixes}: Code action suggestions accessible via context menu or keyboard shortcut
+\end{itemize}
+
+\textbf{User Interactions.} The extension supports:
+\begin{itemize}
+\item \textbf{Fix application}: One-click application of suggested repairs with preview
+\item \textbf{False positive reporting}: Marking detections as false positives to improve future analysis
+\item \textbf{Severity adjustment}: Customizing which vulnerability types are shown based on severity
+\end{itemize}
+
+\textbf{Design Rationale.} IDE integration directly addresses R6 (usability and responsiveness) by providing immediate, contextual feedback during development. Rich presentation options support R3 (explainability) by making vulnerability information easily accessible without disrupting workflow.
+
+This section has described the core components of the vulnerability detection system and their individual responsibilities. The modular design ensures that each component can be developed, tested, and optimized independently, while clear interfaces enable flexible composition and deployment strategies. The next section presents the detection workflows that orchestrate these components to perform vulnerability analysis in different scenarios.

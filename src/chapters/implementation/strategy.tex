@@ -1,0 +1,39 @@
+\section{Strategy Implementation}
+\label{sec:impl-strategies}
+
+This section presents the practical realization of the four architectural strategies introduced in Section~\ref{sec:architectural-strategies}. While the conceptual motivations were discussed earlier, the focus here is on their concrete execution: preparation of transcripts and few-shot examples, invocation of language models, and consolidation of outputs. Simplified TypeScript sketches of the core procedures are included in Appendix~\ref{app:strategy-impl}.
+
+\subsection{S1 Implementation: Single-Pass Full-Input}
+\label{subsec:impl-s1}
+
+The S1 strategy is implemented through the \texttt{singleLlmAllField} function, which processes the entire template in a single model call. The system first constructs a combined transcript and retrieves a small set of examples from the RAG agent. All fields are represented within a unified schema, and the prompt incorporates task instructions, field definitions, transcripts, current values, and retrieved examples.
+
+A single \texttt{generateObject} call produces a complete candidate template. The output is subsequently normalized via the CF agent’s rules and verified once in aggregate. The strategy is therefore characterized by a single prompt, a single model invocation, and batch-style post-processing. While efficient and simple to orchestrate, S1 provides limited error isolation, as malformed responses may affect all fields simultaneously.
+
+\subsection{S2 Implementation: Iterative Single-Field}
+\label{subsec:impl-s2}
+
+S2, implemented by \texttt{singleLlmOneField}, introduces field-level decomposition. After preparing the combined transcript and retrieving few-shot examples, the system constructs individual prompts for each field, containing only the information relevant to that field, including filtered examples.
+
+Each field is processed by an independent asynchronous task. Outputs pass through normalization and are merged into the final template. Errors are isolated to the corresponding field; upon failure, the system reverts to a sensible fallback (typically the previously known value). S2 thus provides improved robustness relative to S1 through parallelized extraction, field-specific prompting, and localized error handling.
+
+\subsection{S3 Implementation: Multi-LLM Consensus}
+\label{subsec:impl-s3}
+
+The S3 strategy is implemented using \texttt{dualLlmAllField}, which performs model-level parallelism. A unified prompt and schema are constructed as in S1, but two model providers (e.g., GPT-4 and Gemini~2.0 Flash) are invoked in parallel. Because both models receive identical prompts, differences in their outputs reflect model behaviour, not prompt variation.
+
+The two candidates are forwarded to an ensemble verifier, which applies rule-based checks and a judge LLM to select, for each field, the more reliable value or retain the original value when neither candidate is adequate. A finalized template and confidence metadata are produced. S3 is therefore defined by parallel model inference, an explicit consensus phase, and structured documentation of ensemble decisions.
+
+\subsection{S4 Implementation: Multi-LLM Per-Field}
+\label{subsec:impl-s4}
+
+S4, implemented through \texttt{multiLlmOneField}, combines field-wise decomposition with multi-model consensus. For each field, the system constructs a tailored prompt and invokes both model providers. Their outputs are passed to a per-field verifier, which applies the same decision logic as in S3 but at field granularity.
+
+Fields are processed sequentially to avoid rate-limit interactions and to simplify auditing. Each iteration returns a \texttt{FilledField} entry after consensus and normalization. This yields the highest robustness and interpretability among the strategies, though at the cost of substantially increased computational overhead.
+
+\subsection{Strategy Orchestration Infrastructure}
+\label{subsec:impl-orchestration-strategies}
+
+All strategies are executed through a dedicated \texttt{StrategyOrchestrator}, which exposes a uniform entry point (\texttt{executeStrategy}). The orchestrator maps the selected identifier (S1--S4) to a concrete implementation adhering to a shared \texttt{StrategyImplementation} interface. 
+
+Common infrastructure ensures consistent error handling, telemetry, and configuration. Strategy-specific parameters (model names, temperatures, provider settings) are injected through environment-based configuration, and all outputs are serialized into a unified \texttt{FinalTemplate} structure, ensuring that downstream evaluation and analytics remain strategy-agnostic. A minimal TypeScript sketch of the orchestrator is provided in Appendix~\ref{app:strategy-impl}.

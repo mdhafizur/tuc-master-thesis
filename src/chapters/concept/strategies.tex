@@ -1,0 +1,152 @@
+\section{Detection Workflows}
+\label{sec:detection-strategies}
+
+While the modular component architecture defines the general structure of the vulnerability detection system, its practical application depends on how components are orchestrated in different usage scenarios. This section presents three primary detection workflows that address distinct developer needs: inline detection for immediate feedback during coding, on-demand analysis for comprehensive security reviews, and repair suggestion workflows for vulnerability remediation.
+
+\subsection{Inline Detection Workflow}
+\label{subsec:inline-detection}
+
+Inline detection provides real-time vulnerability feedback triggered by file save events, similar to how modern IDEs display type errors or linting warnings. This workflow prioritizes low latency and minimal disruption to the development flow.
+
+\textbf{Trigger Conditions.} Inline detection activates when:
+\begin{itemize}
+\item A JavaScript or TypeScript file is saved in the editor
+\item The file size is below a configurable threshold (default: 500 lines)
+\item No other analysis is currently in progress on the same file
+\end{itemize}
+
+\textbf{Workflow Steps:}
+\begin{enumerate}
+\item \textbf{Context Extraction}: Parse the saved file to extract AST, imports, and function definitions
+\item \textbf{Focused Retrieval}: Query knowledge base with recently modified code regions (not entire file)
+\item \textbf{Lightweight Detection}: Analyze modified functions/blocks using a smaller, faster LLM model
+\item \textbf{Result Presentation}: Display inline diagnostics for detected vulnerabilities
+\end{enumerate}
+
+\textbf{Optimizations for Responsiveness.} To meet R6 (usability and responsiveness), inline detection employs several latency-reduction strategies:
+\begin{itemize}
+\item \textbf{Incremental analysis}: Only analyze changed code regions, not entire file
+\item \textbf{Fast models}: Use smaller LLMs (e.g., CodeLlama-7B) optimized for speed
+\item \textbf{Limited retrieval}: Retrieve top-3 knowledge entries instead of top-5
+\item \textbf{Cached context}: Reuse previously extracted file-level context when only small edits occur
+\item \textbf{Debouncing}: Wait 500ms after last edit before triggering analysis
+\end{itemize}
+
+\textbf{Trade-offs.} Inline detection sacrifices some detection coverage for speed. Complex, multi-file vulnerabilities or subtle data flow issues may not be detected. However, it provides immediate feedback on common, localized vulnerabilities (SQL injection, XSS, path traversal) where developers can fix issues before moving to the next task.
+
+\subsection{On-Demand Comprehensive Analysis}
+\label{subsec:comprehensive-analysis}
+
+On-demand analysis provides thorough vulnerability detection for entire files, code regions, or workspace directories. Developers explicitly invoke this workflow when they want comprehensive security review without time constraints.
+
+\textbf{Trigger Mechanisms:}
+\begin{itemize}
+\item \textbf{Command palette}: Execute "Analyze File for Vulnerabilities" command
+\item \textbf{Context menu}: Right-click on file/folder and select "Security Analysis"
+\item \textbf{Code selection}: Analyze only highlighted code region
+\end{itemize}
+
+\textbf{Workflow Steps:}
+\begin{enumerate}
+\item \textbf{Comprehensive Context Extraction}: Full AST parsing, data flow analysis, control flow graphs
+\item \textbf{Multi-level Retrieval}: Query knowledge base with:
+  \begin{itemize}
+  \item Overall file structure and purpose
+  \item Individual function-level patterns
+  \item Identified data flows (source-to-sink traces)
+  \end{itemize}
+\item \textbf{Deep Vulnerability Detection}: Analyze using larger, more capable LLM models (e.g., CodeLlama-13B/34B)
+\item \textbf{Cross-function Analysis}: Detect vulnerabilities spanning multiple functions
+\item \textbf{Detailed Reporting}: Generate comprehensive report with all findings, severities, and explanations
+\end{enumerate}
+
+\textbf{Enhanced Detection Capabilities.} Comprehensive analysis enables:
+\begin{itemize}
+\item \textbf{Multi-function vulnerabilities}: Detect when untrusted input in one function flows to dangerous sink in another
+\item \textbf{Missing validation detection}: Identify where input validation should exist but doesn't
+\item \textbf{Framework-specific issues}: Leverage deeper security knowledge for Express.js, React, etc.
+\item \textbf{Configuration vulnerabilities}: Analyze security-relevant configuration (CORS, CSP, authentication)
+\end{itemize}
+
+\textbf{Trade-offs.} Comprehensive analysis takes significantly longer (10-60 seconds depending on file size) but provides higher detection accuracy and coverage. It directly supports R1 (detection consistency) and R2 (context-aware reasoning) by allowing thorough code analysis without time pressure.
+
+\subsection{Repair Suggestion Workflow}
+\label{subsec:repair-workflow}
+
+The repair workflow generates and applies security fixes for detected vulnerabilities. It extends the detection workflow with repair generation and interactive fix application.
+
+\textbf{Workflow Steps:}
+\begin{enumerate}
+\item \textbf{Vulnerability Selection}: Developer selects a detected vulnerability to fix
+\item \textbf{Repair Context Assembly}: Gather:
+  \begin{itemize}
+  \item Vulnerability details (CWE, severity, explanation)
+  \item Surrounding code context (function body, related functions)
+  \item Relevant security guidelines from knowledge base
+  \end{itemize}
+\item \textbf{Fix Pattern Retrieval}: Query knowledge base for repair examples matching the CWE category
+\item \textbf{Repair Generation}: LLM generates context-specific fix using:
+  \begin{itemize}
+  \item Retrieved repair patterns
+  \item Current code structure and style
+  \item Available APIs and libraries
+  \end{itemize}
+\item \textbf{Fix Presentation}: Display proposed repair with:
+  \begin{itemize}
+  \item Diff view showing original vs. fixed code
+  \item Explanation of what the fix does
+  \item Warnings about potential side effects
+  \end{itemize}
+\item \textbf{Application}: Developer reviews and applies fix with one click
+\item \textbf{Re-analysis}: Automatically re-check fixed code to verify vulnerability is resolved
+\end{enumerate}
+
+\textbf{Safety Mechanisms.} To ensure repair quality (R4), the workflow includes:
+\begin{itemize}
+\item \textbf{Syntax validation}: Verify generated fix is syntactically valid JavaScript/TypeScript
+\item \textbf{Scope checking}: Ensure fix doesn't introduce undefined variables or break references
+\item \textbf{Preview requirement}: Never auto-apply fixes; always require developer review
+\item \textbf{Undo support}: Integrate with VS Code's undo stack for easy reversion
+\end{itemize}
+
+\textbf{Types of Repairs Generated.} The system handles common vulnerability classes:
+\begin{itemize}
+\item \textbf{SQL Injection}: Convert string concatenation to parameterized queries
+\item \textbf{XSS}: Add appropriate output encoding (HTML, JavaScript, URL)
+\item \textbf{Path Traversal}: Add path sanitization and validation
+\item \textbf{Command Injection}: Replace shell command construction with safe alternatives
+\item \textbf{Insecure Randomness}: Replace Math.random() with crypto.randomBytes()
+\end{itemize}
+
+\subsection{Workflow Selection and Integration}
+\label{subsec:workflow-integration}
+
+The three workflows are designed to complement each other in a typical development session:
+
+\textbf{Typical Usage Pattern:}
+\begin{enumerate}
+\item Developer writes code, inline detection flags common issues in real-time
+\item Developer fixes flagged issues immediately while context is fresh
+\item Before committing code, developer runs comprehensive analysis
+\item Comprehensive analysis identifies additional issues missed by inline detection
+\item Developer uses repair workflow to fix remaining vulnerabilities
+\item Final re-analysis confirms all critical vulnerabilities are resolved
+\end{enumerate}
+
+\textbf{Configuration Options.} The system allows developers to customize:
+\begin{itemize}
+\item \textbf{Inline detection sensitivity}: Which vulnerability severities trigger inline warnings
+\item \textbf{Model selection}: Choose faster or more accurate models based on hardware
+\item \textbf{Auto-analysis triggers}: Enable/disable on-save detection
+\item \textbf{Retrieval depth}: Number of knowledge base examples to retrieve
+\end{itemize}
+
+\textbf{Performance Considerations.} All workflows operate entirely locally, satisfying R5 (privacy-preserving operation):
+\begin{itemize}
+\item Models run on local GPU (if available) or CPU
+\item Knowledge base is stored and queried locally (FAISS/ChromaDB)
+\item No network requests or external API calls
+\item Analysis continues to work offline
+\end{itemize}
+
+This section has described how the modular components are orchestrated in three distinct workflows, each optimized for different development scenarios. The design ensures that developers receive appropriate security feedback—whether immediate inline guidance or comprehensive analysis—without compromising privacy or disrupting their workflow. The next section presents the overall system architecture showing how these components and workflows are deployed and integrated.
