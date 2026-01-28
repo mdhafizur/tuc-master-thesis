@@ -1,41 +1,40 @@
 \section{System Workflow}
 \label{sec:system-workflow}
 
-This section describes the operational workflow of the Invox system, tracing the transformation of unstructured input into verified structured templates. The workflow implements the conceptual pipeline from Chapter~\ref{chap:concept} through a sequence of processing stages with user-driven quality control.
+This section describes the operational workflow of the Code Guardian system, tracing how JavaScript/TypeScript code inside Visual Studio Code is transformed into vulnerability findings and repair suggestions. The workflow operationalizes the conceptual design from Chapter~\ref{chap:concept} and aligns the implementation with the requirements defined in Chapter~\ref{chap:analysis}, especially privacy-preserving operation (R5), responsiveness (R6), and explainability (R3).
 
 \subsection*{End-to-End Processing Flow}
 
-The end-to-end workflow of Invox’s five-agent pipeline is illustrated in Figure~\ref{fig:agent-pipeline}. Starting from user input, the system proceeds through six sequential stages:
+Code Guardian exposes multiple analysis triggers (real-time and explicit commands). Two execution paths are particularly important in the prototype:
+(i) a \emph{structured diagnostics} path that produces JSON findings suitable for editor diagnostics, and
+(ii) an \emph{interactive analysis} path that produces Markdown explanations in a WebView and supports follow-up questions.
 
 \begin{enumerate}
-    \item \textbf{Input Reception}: Users provide input through speech (audio recording) or direct text entry via the web interface. The system accepts both modalities and routes them appropriately through the processing pipeline.
-    
-    \item \textbf{Speech Recognition}: For audio inputs, the system invokes the Whisper ASR service to generate transcripts with confidence scores and timestamps. Text inputs proceed directly to the next stage.
-    
-    \item \textbf{Context Retrieval}: The RAG agent queries the vector database to retrieve the most relevant historical templates and examples, providing contextual guidance for the extraction process.
-    
-    \item \textbf{Information Extraction}: Based on the selected strategy (S1–S4), the system processes the input:
+    \item \textbf{Trigger and scope selection}: An analysis run is triggered either (i) automatically while the user edits code (debounced), or (ii) explicitly via a command (analyze selection, analyze file, scan workspace). The selected scope determines how much code context is included (function vs.\ selection vs.\ full document vs.\ workspace batch).
+
+    \item \textbf{Code context extraction}: The extension extracts the relevant code fragment and its location (start line offset). For real-time diagnostics, the default unit is the \emph{enclosing function} at the cursor position. For selection analysis, the unit is the selected region (or the current line if no selection exists). For file analysis, the entire document text is used.
+
+    \item \textbf{Optional retrieval (RAG)}: If RAG is enabled and initialized, the system retrieves security knowledge snippets relevant to the analyzed code. Retrieval uses a local embedding model and a local vector index; retrieved guidance is appended to prompts to ground explanations and recommendations. In the current prototype, RAG is primarily used in the interactive WebView workflows and can be used for batch scanning; the real-time diagnostics path is kept lightweight to preserve responsiveness.
+
+    \item \textbf{LLM analysis (local)}: The local model (Ollama) is invoked with different output constraints depending on the workflow.
     \begin{itemize}
-        \item \textbf{S1 (Single-Pass Full Input)}: A single language model extracts all template fields in one pass
-        \item \textbf{S2 (Iterative Single-Field Processing)}: Multiple LLM calls extract each field independently  
-        \item \textbf{S3/S4 (Multi-LLM Consensus (Full), Multi-LLM Consensus (Iterative))}: Multiple models generate candidate answers, with a dedicated judge LLM selecting the optimal response through comparative analysis
+        \item \textbf{Structured diagnostics}: the model is required to return \emph{only} a JSON array of issues (message, line range, optional fix). Light post-processing removes Markdown fences and extracts the first JSON array substring if needed.
+        \item \textbf{Interactive analysis}: the model streams Markdown-formatted explanations to a WebView, enabling richer narratives and follow-up questions.
     \end{itemize}
-    
-    \item \textbf{Consistency Enforcement}: The CF agent normalizes dates to ISO format, standardizes entity names, and enforces schema compliance through deterministic transformation rules.
-    
-    \item \textbf{Quality Assessment and Presentation}: The system assigns confidence scores to each extracted field and presents the complete template to the user for review and potential correction.
+
+    \item \textbf{Diagnostics and UI rendering}: Findings are converted into VS Code diagnostics and rendered inline (squiggles), in the Problems panel, and via hover tooltips. When a suggested fix is available, a quick-fix code action is offered so the developer can apply a patch after review.
+
+    \item \textbf{Caching and statistics}: Results are cached by (code snippet, model) to avoid repeated inference. The cache uses LRU-style eviction and a time-to-live policy, and cache statistics can be inspected from the UI to validate responsiveness improvements under repeated edits.
 \end{enumerate}
 
-\subsection*{User-Driven Quality Control}
+\subsection*{Interactive vs.\ Batch Workflows}
 
-The system employs a user-in-the-loop approach where quality assurance is primarily driven by human judgment:
+\textbf{Real-time workflow (function-level).} When editing, Code Guardian runs on a small scope and uses debouncing to avoid overwhelming the local model. A size threshold skips unusually large functions (2000 characters) to bound worst-case latency. This mode is optimized for R6 and is intended to surface common, localized patterns (e.g., injection sinks, insecure randomness) with minimal disruption.
 
-\textbf{Confidence-Based Presentation}: Fields with lower confidence scores are visually highlighted, directing user attention to potentially problematic extractions.
+\textbf{On-demand workflow (selection/file).} The developer can explicitly request analysis of selected code (interactive WebView) or the full file (structured diagnostics). Full-file analysis includes a conservative size guard (20{,}000 characters) to avoid excessively large prompts.
 
-\textbf{Multi-Model Decision Making}: In strategies S3 and S4, the judge LLM evaluates candidate answers from multiple models, selecting the most appropriate response based on coherence, accuracy, and alignment with the input context.
+\textbf{Workspace workflow (dashboard scan).} The workspace scanner iterates through JavaScript/TypeScript files (excluding \texttt{node\_modules}) and aggregates findings into a dashboard. Very large files are skipped (500\,KB) to keep scans bounded. This supports risk overview and prioritization by surfacing the most affected files and a coarse severity distribution.
 
-\textbf{User-Initiated Reprocessing}: If users are unsatisfied with results, they can modify their input and resubmit for reprocessing, creating an iterative refinement cycle driven by human assessment rather than automated detection.
+\subsection*{User-Controlled Remediation}
 
-\subsection*{Knowledge Accumulation}
-
-Successfully processed templates are indexed in the vector database, enabling the RAG agent to leverage an expanding knowledge base for improved context retrieval in future processing cycles.
+Repair suggestions are never applied automatically. Instead, the system presents a quick-fix option that inserts the suggested patch only after explicit user confirmation. This design preserves developer control (R4), prevents silent behavior changes, and keeps responsibility for functional correctness with the human developer.

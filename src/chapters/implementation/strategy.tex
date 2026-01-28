@@ -1,39 +1,36 @@
-\section{Strategy Implementation}
-\label{sec:impl-strategies}
+\section{Analysis Modes and Orchestration}
+\label{sec:impl-modes}
 
-This section presents the practical realization of the four architectural strategies introduced in Section~\ref{sec:architectural-strategies}. While the conceptual motivations were discussed earlier, the focus here is on their concrete execution: preparation of transcripts and few-shot examples, invocation of language models, and consolidation of outputs. Simplified TypeScript sketches of the core procedures are included in Appendix~\ref{app:strategy-impl}.
+Code Guardian supports multiple analysis modes that trade off latency, context breadth, and user disruption. Rather than implementing multiple independent pipelines, the system follows a single orchestration pattern: extract code context $\rightarrow$ (optional) retrieve security knowledge $\rightarrow$ run local LLM analysis $\rightarrow$ render diagnostics and optional fixes.
 
-\subsection{S1 Implementation: Single-Pass Full-Input}
-\label{subsec:impl-s1}
+\subsection{Scopes: Function, Selection, File, Workspace}
+\label{subsec:impl-scopes}
 
-The S1 strategy is implemented through the \texttt{singleLlmAllField} function, which processes the entire template in a single model call. The system first constructs a combined transcript and retrieves a small set of examples from the RAG agent. All fields are represented within a unified schema, and the prompt incorporates task instructions, field definitions, transcripts, current values, and retrieved examples.
+\textbf{Function scope (real-time).} During editing, Code Guardian analyzes the enclosing function at the cursor position. This reduces prompt size and supports low-latency feedback. A size threshold is applied to skip unusually large functions to avoid blocking the editor.
 
-A single \texttt{generateObject} call produces a complete candidate template. The output is subsequently normalized via the CF agent’s rules and verified once in aggregate. The strategy is therefore characterized by a single prompt, a single model invocation, and batch-style post-processing. While efficient and simple to orchestrate, S1 provides limited error isolation, as malformed responses may affect all fields simultaneously.
+\textbf{Selection scope.} Developers can explicitly analyze selected code (or the current line if no selection exists). This mode is used for focused investigation and interactive follow-up.
 
-\subsection{S2 Implementation: Iterative Single-Field}
-\label{subsec:impl-s2}
+\textbf{File scope.} Full-file analysis runs on demand and produces a complete set of findings for the document. This mode can tolerate higher latency but provides broader context for classification and repair suggestions.
 
-S2, implemented by \texttt{singleLlmOneField}, introduces field-level decomposition. After preparing the combined transcript and retrieving few-shot examples, the system constructs individual prompts for each field, containing only the information relevant to that field, including filtered examples.
+\textbf{Workspace scope.} Workspace scanning analyzes multiple files and aggregates findings into the dashboard. The output is intended for prioritization (which files and categories dominate) rather than line-by-line interaction.
 
-Each field is processed by an independent asynchronous task. Outputs pass through normalization and are merged into the final template. Errors are isolated to the corresponding field; upon failure, the system reverts to a sensible fallback (typically the previously known value). S2 thus provides improved robustness relative to S1 through parallelized extraction, field-specific prompting, and localized error handling.
+\subsection{LLM-Only vs.\ RAG-Enhanced Execution}
+\label{subsec:impl-rag-toggle}
 
-\subsection{S3 Implementation: Multi-LLM Consensus}
-\label{subsec:impl-s3}
+The system offers two operational configurations:
+\begin{itemize}
+  \item \textbf{LLM-only:} prompt contains the analyzed code plus strict JSON-output constraints. This configuration minimizes overhead and is suitable for real-time use.
+  \item \textbf{LLM+RAG:} the prompt is augmented with retrieved CWE/OWASP/CVE knowledge snippets and secure coding guidance. This improves grounding and can reduce false positives or unsupported suggestions, at the cost of additional embedding and retrieval time.
+\end{itemize}
 
-The S3 strategy is implemented using \texttt{dualLlmAllField}, which performs model-level parallelism. A unified prompt and schema are constructed as in S1, but two model providers (e.g., GPT-4 and Gemini~2.0 Flash) are invoked in parallel. Because both models receive identical prompts, differences in their outputs reflect model behaviour, not prompt variation.
+RAG can be toggled at runtime through settings and is surfaced via a status-bar indicator in the IDE.
 
-The two candidates are forwarded to an ensemble verifier, which applies rule-based checks and a judge LLM to select, for each field, the more reliable value or retain the original value when neither candidate is adequate. A finalized template and confidence metadata are produced. S3 is therefore defined by parallel model inference, an explicit consensus phase, and structured documentation of ensemble decisions.
+\subsection{Caching and Responsiveness}
+\label{subsec:impl-caching}
 
-\subsection{S4 Implementation: Multi-LLM Per-Field}
-\label{subsec:impl-s4}
+To reduce repeated inference calls, Code Guardian caches analysis results keyed by (code snippet, model). Under typical editing patterns, small changes frequently return to previously seen states (undo/redo, formatting), making caching effective. Debouncing and caching together aim to keep real-time diagnostics responsive (R6) while maintaining stable behavior across repeated runs (R1).
 
-S4, implemented through \texttt{multiLlmOneField}, combines field-wise decomposition with multi-model consensus. For each field, the system constructs a tailored prompt and invokes both model providers. Their outputs are passed to a per-field verifier, which applies the same decision logic as in S3 but at field granularity.
+\subsection{Repair Suggestion Handling}
+\label{subsec:impl-repair}
 
-Fields are processed sequentially to avoid rate-limit interactions and to simplify auditing. Each iteration returns a \texttt{FilledField} entry after consensus and normalization. This yields the highest robustness and interpretability among the strategies, though at the cost of substantially increased computational overhead.
-
-\subsection{Strategy Orchestration Infrastructure}
-\label{subsec:impl-orchestration-strategies}
-
-All strategies are executed through a dedicated \texttt{StrategyOrchestrator}, which exposes a uniform entry point (\texttt{executeStrategy}). The orchestrator maps the selected identifier (S1--S4) to a concrete implementation adhering to a shared \texttt{StrategyImplementation} interface. 
-
-Common infrastructure ensures consistent error handling, telemetry, and configuration. Strategy-specific parameters (model names, temperatures, provider settings) are injected through environment-based configuration, and all outputs are serialized into a unified \texttt{FinalTemplate} structure, ensuring that downstream evaluation and analytics remain strategy-agnostic. A minimal TypeScript sketch of the orchestrator is provided in Appendix~\ref{app:strategy-impl}.
+When the model returns a suggested fix, Code Guardian exposes it as a quick fix action. The extension does not auto-apply modifications; instead it requires explicit user confirmation and integrates with the editor undo stack. This design ensures that repair suggestions remain \emph{advisory} and that final responsibility for functional correctness stays with the developer (R4).

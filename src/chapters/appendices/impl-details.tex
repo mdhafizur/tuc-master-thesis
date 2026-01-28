@@ -1,399 +1,63 @@
-\section{Consistency Formatting (CF) Agent}
-\label{app:cf-impl}
+\section{Prompt Contract (JSON-Only Output)}
+\label{app:prompt-contract}
 
-Listing~\ref{lst:cf-transforms} shows the main helper functions used by the CF agent for deterministic normalization. These correspond to the transformation rules described in Section~\ref{subsec:impl-cf}.
+Code Guardian relies on a strict output contract so findings can be converted into IDE diagnostics reliably. The analyzer instructs the local model to return \emph{only} a JSON array of security issues.
 
-\begin{lstlisting}[language=Java, caption={CF agent transformation function signatures}, label={lst:cf-transforms}]
-function normalizeDate(value: string): string | null;
-
-function normalizeNumber(value: string): number | null;
-
-function validateEnum(v: string, o: string[]): string | null;
-
-function joinMultiValue(values: any[]): string | null;
-
-function normalizeText(value: string): string | null;
-\end{lstlisting}
-
-\section{IE Agent Supporting Types}
-\label{appendix:detailed-implementation}
-
-Listing~\ref{lst:ie-types} defines the supporting types used by the IE agent to represent current and filled field values.
-
-\begin{lstlisting}[language=Java, caption={Supporting types for the IE agent}, label={lst:ie-types}]
-interface CurrentFieldValue {
-  value: any;
-  locked?: boolean;             
-  source?: "ai" | "manual";     
-}
-
-interface FilledField {
-  value: any;
-  changed: boolean;             
-  previousValue?: any;          
-  source: "ai" | "manual";
-  confidence?: number;         
-}
-\end{lstlisting}
-
-\section{Verification Agent API}
-\label{app:ver-api}
-
-Listing~\ref{lst:ver-api} provides the TypeScript interfaces for the verification agent, as described conceptually in Section~\ref{subsec:impl-ver}.
-
-\begin{lstlisting}[language=Java, caption={Verification agent API contract}, label={lst:ver-api}]
-interface VerificationInput {
-  cand: Record<string, FilledField> | Record<string, FilledField>[];
-  transcript: string;           
-  fields: FormTemplateField[];
-  currentValues?: Record<string, CurrentFieldValue>;
-}
-
-interface VerificationOutput {
-  filled: Record<string, FilledField>;
-  confidence: Record<string, number>;  
-  issues?: Array<{
-    field: string;
-    type: "missing" | "conflict" | "low_conf" | "invalid";
-    detail: string;
-    action?: "requery" | "clarify" | "manual_review";
-  }>;
-  decisions?: Array<{             
-    field: string;
-    decision: "gpt" | "gemini" | "merge" | "keep_current";
-    reason: string;
-  }>;
-}
-\end{lstlisting}
-
-\section{Orchestrator Implementation}
-\label{app:orchestrator-impl}
-
-Listing~\ref{lst:orchestrator-core} presents the core orchestration logic as implemented in the \texttt{Orchestrator} class. This corresponds to the conceptual pipeline described in Section~\ref{subsec:impl-orchestration}.
-
-\begin{lstlisting}[language=Java, caption={Core orchestration logic of the Invox pipeline}, label={lst:orchestrator-core}]
-class Orchestrator {
-  async processTemplate(in: ProcessingRequest): Promise<FinalTemplate> {
-    // Step 1: Transcription (optional)
-    const transcript = in.audio 
-      ? await stt.transcribe(in.audio)
-      : { transcript: in.text, language: in.lang ?? "en" };
-
-    // Step 2: Retrieval (RAG)
-    const examples = await rag.retrieve(
-      transcript.transcript,
-      in.fields,
-      in.templateId
-    );
-
-    // Step 3: Extraction (strategy-dependent)
-    const extraction = await this.runStrategy({
-      strategy: in.strategy,
-      transcript: transcript.transcript,
-      fields: in.fields,
-      currentValues: in.currentValues,
-      fewShots: examples.examples,
-      ...in.metadata,
-    });
-
-    // Step 4: Formatting (deterministic normalization)
-    const norm = await cf.normalize(extraction.filled, in.fields);
-
-    // Step 5: Verification (completeness + consistency)
-    const verified = await ver.verify({
-      candidates: norm,
-      transcript: transcript.transcript,
-      fields: in.fields,
-      currentValues: in.currentValues,
-    });
-
-    // Step 6: Clarification loop (if needed)
-    if (verified.issues?.some(i => i.action === "requery")) {
-      // Re-run IE with hints from VER, then re-verify
-    }
-
-    return {
-      filled: verified.filled,
-      confidence: verified.confidence,
-      issues: verified.issues,
-      model: extraction.model,
-      transcript: transcript.transcript,
-    };
+\begin{lstlisting}[language=Java, caption={JSON-only response schema (conceptual)}, label={lst:appendix-json-schema}]
+[
+  {
+    "message": "Issue description",
+    "startLine": 1,
+    "endLine": 3,
+    "suggestedFix": "Optional secure alternative"
   }
-
-  private async runStrategy(p: StrategyParams): Promise<IEOutput> {
-    switch (p.strategy) {
-      case "S1": return await singleLlmAllField(p);
-      case "S2": return await singleLlmOneField(p);
-      case "S3": return await dualLlmAllField(p);
-      case "S4": return await multiLlmOneField(p);
-    }
-  }
-}
+]
 \end{lstlisting}
 
+\subsection*{Robustness in practice}
 
-\section{Strategy Function Implementations}
-\label{app:strategy-impl}
+Even with explicit instructions, some models occasionally emit Markdown fences or additional text. The prototype therefore applies defensive parsing: it removes common code-block markers and extracts the first JSON array substring before attempting to parse. This is a pragmatic mechanism to improve structured-output robustness for IDE integration.
 
-This section provides simplified TypeScript sketches of the four strategy functions and the strategy-level orchestrator described in Section~\ref{sec:impl-strategies}. The listings are not intended as production-ready code, but as an executable illustration of the control flow.
+\section{Runtime Guardrails}
+\label{app:guardrails}
 
-\subsection*{S1: \texttt{singleLlmAllField}}
+To keep the extension usable on developer hardware (R6), Code Guardian includes conservative guardrails:
+\begin{itemize}
+  \item \textbf{Debounce interval:} 800\,ms for real-time analysis after document changes.
+  \item \textbf{Function scope size limit:} extracted functions larger than 2000 characters are skipped in real-time mode.
+  \item \textbf{File scope size limit:} full-file analysis is skipped above 20{,}000 characters.
+  \item \textbf{Workspace scan file size limit:} files larger than 500\,KB are skipped in batch scans.
+\end{itemize}
 
-\begin{lstlisting}[language=Java, caption={Core S1 implementation sketch (\texttt{singleLlmAllField})}, label={lst:s1-impl}]
-export async function singleLlmAllField(
-  input: GetFilledTemplateInput
-): Promise<GetFilledTemplateResult> {
-  const {
-    oldText,
-    newText,
-    fields,
-    currentValues,
-    modelName,
-    transcriptData,
-  } = input;
+In addition, analysis results are cached using an LRU-style cache (100 entries, 30-minute TTL) to reduce redundant inference calls during iterative edits.
 
-  // 1. Combine transcripts
-  const combTrans = oldText ? `${oldText}\n${newText}` : newText;
-  
-  // 2. Retrieve few-shot examples
-  const fewShots = await getFewShotsFromTranscript(
-    combinedTranscript,
-    fields,
-    3
-  );
-  
-  // 3. Single LLM call for all fields
-  const schema = z.object(/* comprehensive field schema */);
-  const result = await generateObject({
-    model: openai(modelName),
-    schema,
-    prompt: buildComprehensivePrompt(
-      fields,
-      oldText,
-      newText,
-      fewShots
-    ),
-  });
-  
-  // 4. Process results
-  const filled = processAllFields(
-    result.object,
-    fields,
-    currentValues
-  );
-  const verified = await runVerifier(
-    combTrans,
-    fields,
-    filled
-  );
-  
-  return {
-    filled: verified,
-    model: modelName,
-    transcript: transcriptData,
-  };
-}
-\end{lstlisting}
+\section{Key Configuration Options}
+\label{app:config}
 
-\subsection*{S2: \texttt{singleLlmOneField}}
+The extension exposes user configuration through VS Code settings. The most relevant options are:
+\begin{itemize}
+  \item \texttt{codeGuardian.model}: default Ollama model for analysis
+  \item \texttt{codeGuardian.ollamaHost}: Ollama base URL (default: \url{http://localhost:11434})
+  \item \texttt{codeGuardian.enableRAG}: enable/disable retrieval augmentation
+\end{itemize}
 
-\begin{lstlisting}[language=Java, caption={Core S2 implementation sketch (\texttt{singleLlmOneField})}, label={lst:s2-impl}]
-export async function singleLlmOneField(
-  input: GetFilledTemplateInput
-): Promise<GetFilledTemplateResult> {
-  const {
-    oldText,
-    newText,
-    fields,
-    currentValues,
-    modelName,
-    transcriptData,
-  } = input;
+\section{VS Code Commands (Prototype)}
+\label{app:commands}
 
-  const combTrans = oldText ? `${oldText}\n${newText}` : newText;
+The prototype exposes the following main commands via the Command Palette:
+\begin{itemize}
+  \item \textbf{Analyze selected code with AI}: opens the interactive analysis view for a selection or current line.
+  \item \textbf{Analyze full file}: runs the structured diagnostics pipeline over the active document.
+  \item \textbf{Contextual Q\&A}: opens a WebView for asking security questions with user-selected file/folder context.
+  \item \textbf{Select AI model}: lists available local Ollama models and switches the active model.
+  \item \textbf{Manage RAG knowledge base}: view/add/search knowledge, rebuild the vector store, and update vulnerability data.
+  \item \textbf{Toggle RAG}: enables/disables retrieval augmentation through settings.
+  \item \textbf{Update vulnerability data}: refreshes cached public metadata used for the knowledge base.
+  \item \textbf{View cache statistics}: inspects the analysis cache and supports clearing/resetting statistics.
+  \item \textbf{Workspace security dashboard}: performs a batch scan and displays an aggregate dashboard.
+\end{itemize}
 
-  // Retrieve few-shot examples once
-  const fewShots = await getFewShotsFromTranscript(
-    combTrans,
-    fields,
-    3
-  );
-  
-  // Parallel field processing with individual error boundaries
-  const tasks = fields.map(field =>
-    runField({
-      field,
-      oldText,
-      newText,
-      fewShots,
-      current: currentValues?.[field.id],
-      modelName,
-    }).catch(error => {
-      // Field-level error recovery
-      return [field.id, getFallbackField(field, currentValues)];
-    })
-  );
-  
-  const entries = await Promise.all(tasks);
+\section{Evaluation Harness Location}
+\label{app:eval-harness}
 
-  return {
-    filled: Object.fromEntries(entries),
-    model: modelName,
-    transcript: transcriptData,
-  };
-}
-\end{lstlisting}
-
-\subsection*{S3: \texttt{dualLlmAllField}}
-
-\begin{lstlisting}[language=Java, caption={Core S3 implementation sketch (\texttt{dualLlmAllField})}, label={lst:s3-impl}]
-export async function dualLlmAllField(
-  input: GetFilledTemplateInput
-): Promise<GetFilledTemplateResult> {
-  const {
-    oldText,
-    newText,
-    fields,
-    currentValues,
-    gptModel,
-    geminiModel,
-    transcriptData,
-  } = input;
-
-  const combTrans = oldText ? `${oldText}\n${newText}` : newText;
-  const fewShots = await getFewShotsFromTranscript(
-    combTrans,
-    fields,
-    3
-  );
-
-  const schema = z.object(/* comprehensive field schema */);
-  const prompt = buildComprehensivePrompt(
-    fields,
-    oldText,
-    newText,
-    fewShots
-  );
-
-  // Parallel model execution
-  const [gptResult, geminiResult] = await Promise.all([
-    generateObject({ model: openai(gptModel), schema, prompt }),
-    generateObject({ model: google(geminiModel), schema, prompt }),
-  ]);
-  
-  // Build candidates
-  const gptCandidate = buildCandidate(
-    gptResult.object,
-    fields,
-    currentValues
-  );
-  const geminiCandidate = buildCandidate(
-    geminiResult.object,
-    fields,
-    currentValues
-  );
-
-  // Consensus verification
-  const verified = await runEnsembleVerifier({
-    combTrans,
-    fields,
-    currentValues,
-    gpt: gptCandidate,
-    gemini: geminiCandidate,
-  });
-  
-  return {
-    filled: verified.filled,
-    model: `ensemble:${gptModel}+${geminiModel}`,
-    transcript: transcriptData,
-  };
-}
-\end{lstlisting}
-
-\subsection*{S4: \texttt{multiLlmOneField}}
-
-\begin{lstlisting}[language=Java, caption={Core S4 implementation sketch (\texttt{multiLlmOneField})}, label={lst:s4-impl}]
-export async function multiLlmOneField(
-  input: GetFilledTemplateInput
-): Promise<GetFilledTemplateResult> {
-  const {
-    oldText,
-    newText,
-    fields,
-    currentValues,
-    gptModel,
-    geminiModel,
-    verifierModel,
-    transcriptData,
-  } = input;
-
-  const combTrans = oldText ? `${oldText}\n${newText}` : newText;
-  const fewShots = await getFewShotsFromTranscript(
-    combTrans,
-    fields,
-    3
-  );
-
-  const results: [string, FilledField][] = [];
-  
-  // Sequential field processing (rate limit avoidance)
-  for (const field of fields) {
-    const entry = await runOneFieldWithEnsemble({
-      field,
-      oldText,
-      newText,
-      fewShots,
-      current: currentValues?.[field.id],
-      gptModel,
-      geminiModel,
-      verifierModel,
-    });
-    results.push(entry);
-  }
-  
-  return {
-    filled: Object.fromEntries(results),
-    model: `ensemble-per-field:${gptModel}+${geminiModel}`,
-    transcript: transcriptData,
-  };
-}
-\end{lstlisting}
-
-\subsection*{\texttt{StrategyOrchestrator} Sketch}
-
-\begin{lstlisting}[language=Java, caption={Strategy-level orchestrator sketch}, label={lst:strategy-orchestrator}]
-class StrategyOrchestrator {
-  constructor(
-    private readonly singlePass: SinglePassStrategy,
-    private readonly iterative: IterativeStrategy,
-    private readonly multiModelFull: MultiModelFullStrategy,
-    private readonly multiModelSlot: MultiModelSlotStrategy
-  ) {}
-
-  async executeStrategy(
-    input: ProcessingRequest
-  ): Promise<FinalTemplate> {
-    const impl = this.getStrategyImplementation(input.strategy);
-    return await impl.execute(input);
-  }
-  
-  private getStrategyImplementation(
-    strategy: Strategy
-  ): StrategyImplementation {
-    switch (strategy) {
-      case "S1":
-        return this.singlePass;
-      case "S2":
-        return this.iterative;
-      case "S3":
-        return this.multiModelFull;
-      case "S4":
-        return this.multiModelSlot;
-      default:
-        throw new Error(`Unknown strategy: ${strategy}`);
-    }
-  }
-}
-\end{lstlisting}
-
+The evaluation script used in Chapter~\ref{chap:evaluation} is located at \path{code-guardian/evaluation/evaluate-models.js}. The curated datasets are located in \path{code-guardian/evaluation/datasets/}.

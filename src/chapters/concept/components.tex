@@ -1,151 +1,89 @@
 \section{System Components}
 \label{sec:system-components}
 
-The modular architecture of the proposed vulnerability detection system is organized into four core components and several supporting subsystems. Each component exposes a clear input/output contract, enabling component-level analysis, flexible substitution, and isolated improvement. This section characterizes the roles of the components and their interconnections, independent of any particular deployment scenario.
+The Code Guardian prototype is organized into a small set of components that map directly to the requirements from Chapter~\ref{chap:analysis}. The system is implemented as a VS Code extension that (i) extracts an appropriate analysis scope from the editor, (ii) invokes a local LLM for vulnerability analysis, (iii) optionally augments prompts with locally retrieved security knowledge (RAG), and (iv) renders findings and fix suggestions using IDE-native UI elements.
 
 \subsection{Context Extraction Component}
 \label{subsec:context-extraction}
 
-The Context Extraction component parses JavaScript and TypeScript source code to extract security-relevant information and structural context. It accepts source files as input and produces structured representations suitable for vulnerability analysis.
+The context extraction component determines \emph{which} code is analyzed for a given interaction mode and provides the analyzer with enough metadata to localize findings in the editor.
 
-\textbf{Extraction Mechanisms.} The component employs multiple analysis techniques to capture different aspects of code context:
+\textbf{Scopes.} Code Guardian supports multiple scopes with different latency and completeness characteristics:
 \begin{itemize}
-\item \textbf{Syntactic parsing}: Uses TypeScript/JavaScript parsers (e.g., Babel, TypeScript Compiler API) to generate Abstract Syntax Trees (AST) representing code structure
-\item \textbf{Semantic analysis}: Extracts function signatures, variable definitions, import statements, type annotations, and API usage patterns
-\item \textbf{Data flow tracking}: Identifies how data flows from sources (user input, external APIs) to sinks (database queries, system commands, DOM manipulation)
-\item \textbf{Control flow analysis}: Captures conditional branches, validation checks, authentication guards, and other control structures
+    \item \textbf{Function scope (real-time)} extracts the innermost function-like block at the cursor position (function declarations, arrow functions, methods, constructors). This is the default for continuous feedback because it keeps the prompt small.
+    \item \textbf{File scope (on-demand)} analyzes the full current document and returns a comprehensive set of findings as diagnostics.
+    \item \textbf{Selection scope (interactive)} sends a selected region (or current line) into a webview-based analysis view that supports follow-up questions.
+    \item \textbf{Workspace scope (batch)} scans all JS/TS files and aggregates results into a security dashboard.
 \end{itemize}
 
-\textbf{Output Format.} The component produces a structured code context object containing:
-\begin{itemize}
-\item Source code text with line numbers
-\item AST representation of key code regions
-\item List of imported modules and dependencies
-\item Identified data flows (source $\rightarrow$ intermediate $\rightarrow$ sink)
-\item Control flow paths and validation checkpoints
-\item Type information (for TypeScript code)
-\end{itemize}
+\textbf{AST-based function extraction.} Function scope extraction is implemented by parsing the current document with the TypeScript compiler API and selecting the smallest enclosing \texttt{FunctionLikeDeclaration} around the cursor. The extractor returns both the extracted snippet and its start-line offset (0-based) in the original document. This offset enables precise mapping of model-reported line numbers back to VS Code diagnostic ranges.
 
-\textbf{Design Rationale.} Separating context extraction from vulnerability detection ensures that analysis is grounded in actual code structure rather than surface-level text patterns. This directly supports R2 (context-aware vulnerability reasoning) by providing the LLM with rich semantic information about code behavior. The structured output format also supports R3 (explainability) by enabling precise localization of vulnerability-contributing code regions.
+\textbf{Design rationale.} Function scoping is a practical mechanism to keep latency predictable for real-time use (R6), while the line-offset mapping improves explainability by ensuring that findings point to the correct source locations (R3). Deeper program context (imports, cross-file flows) is not extracted explicitly in the current prototype and is treated as a key future-work direction.
 
 \subsection{Knowledge Retrieval Component (RAG)}
 \label{subsec:knowledge-retrieval}
 
-The Knowledge Retrieval component implements Retrieval-Augmented Generation (RAG) to ground vulnerability detection in established security knowledge. It accepts extracted code context as input and retrieves relevant security information from a locally maintained knowledge base.
+The retrieval component implements Retrieval-Augmented Generation (RAG) to ground LLM reasoning in local security knowledge \cite{lewis2020rag,karpukhin2020dpr}. In Code Guardian, retrieval is implemented by a dedicated \texttt{RAGManager} that maintains a local knowledge base and a persistent vector index.
 
-\textbf{Knowledge Base Contents.} The local knowledge base comprises:
+\textbf{Knowledge base contents.} The knowledge base is populated from a mix of curated and fetched \emph{public} security metadata:
 \begin{itemize}
-\item \textbf{CWE descriptions}: Detailed vulnerability classifications from the Common Weakness Enumeration
-\item \textbf{Secure coding guidelines}: Best practices for JavaScript and TypeScript security
-\item \textbf{Vulnerability examples}: Historical vulnerability instances with explanations and fixes
-\item \textbf{Framework-specific patterns}: Security guidance for common libraries (Express.js, React, etc.)
+    \item \textbf{CWE-aligned entries} describing common weakness patterns and mitigations \cite{mitreCWE}.
+    \item \textbf{OWASP Top 10 guidance} for recurring web vulnerability categories \cite{owaspTop10_2021}.
+    \item \textbf{CVE/NVD summaries} retrieved from the NVD API (descriptions and references) \cite{nistNVD,mitreCVE}.
+    \item \textbf{JavaScript ecosystem advisories} for dependency and platform-specific risks.
 \end{itemize}
+Knowledge artifacts are cached on disk and reused across sessions. When network access is unavailable, the system falls back to a small baseline knowledge bundle so retrieval remains functional (with reduced coverage).
 
-\textbf{Retrieval Mechanism.} The component encodes code context using sentence transformers (e.g., all-MiniLM-L6-v2) and performs semantic similarity search against indexed knowledge base entries. Vector similarity is computed using cosine distance, and the top-$k$ most relevant entries (typically $k = 3$--$5$) are returned.
+\textbf{Indexing and retrieval.} Knowledge entries are chunked using a recursive splitter (chunk size 1000, overlap 200) and embedded locally through an Ollama-served embedding model. Embeddings are stored in a local HNSW vector index \cite{malkov2018hnsw} via LangChain tooling \cite{langchainDocs}. At query time, the top-$k$ most similar chunks are retrieved (default $k=3$) and injected into the prompt as an explicit ``relevant security knowledge'' section.
 
-\textbf{Indexing Strategy.} Knowledge base entries are pre-processed and indexed offline:
-\begin{enumerate}
-\item Security knowledge documents are chunked into semantically coherent segments
-\item Each segment is embedded using the same sentence transformer used for queries
-\item Embeddings are stored in a vector database (e.g., FAISS, ChromaDB) for efficient retrieval
-\end{enumerate}
-
-\textbf{Design Rationale.} RAG directly addresses R1 (detection consistency) by anchoring LLM reasoning to established vulnerability definitions rather than relying on purely generative outputs. It also supports R5 (privacy-preserving operation) by maintaining all knowledge locally, and R2 (context-aware reasoning) by retrieving knowledge tailored to the specific code patterns under analysis.
+\textbf{Privacy boundary.} Retrieval and embeddings are executed locally. Optional knowledge refresh operations fetch only public vulnerability metadata; user source code is not transmitted to those endpoints (R5).
 
 \subsection{Vulnerability Detection Component}
 \label{subsec:vulnerability-detection}
 
-The Vulnerability Detection component performs security analysis of extracted code context, grounded in retrieved security knowledge. It accepts code context and retrieved knowledge as input and produces structured vulnerability reports.
+The vulnerability detection component performs local LLM inference and returns findings in a format suitable for IDE integration.
 
-\textbf{Analysis Workflow.} Detection proceeds in three stages:
-\begin{enumerate}
-\item \textbf{Prompt construction}: Combines code context, retrieved knowledge, and detection instructions into a structured prompt
-\item \textbf{LLM inference}: Submits the prompt to a locally deployed LLM (e.g., Llama, Mistral, CodeLlama) for analysis
-\item \textbf{Output parsing}: Extracts and validates vulnerability findings from LLM output
-\end{enumerate}
-
-\textbf{Prompt Structure.} The detection prompt integrates:
+\textbf{Structured-output analyzer for diagnostics.} For inline diagnostics, Code Guardian enforces a strict JSON-only output contract to reduce ambiguity and parsing failures. Each finding includes:
 \begin{itemize}
-\item \textbf{System instructions}: Defines the detection task and output format requirements
-\item \textbf{Security knowledge}: Retrieved CWE descriptions, guidelines, and examples
-\item \textbf{Code context}: Extracted source code with syntactic and semantic annotations
-\item \textbf{Output schema}: JSON template specifying required fields (CWE ID, severity, explanation, location)
+    \item \textbf{message}: a short description of the issue.
+    \item \textbf{startLine}/\textbf{endLine}: 1-based line indices relative to the analyzed snippet.
+    \item \textbf{suggestedFix} (optional): a replacement string that can be offered as a quick fix.
 \end{itemize}
+If no issues are found, the model must return an empty array \texttt{[]}. The analyzer performs defensive parsing by stripping code fences and extracting the first JSON array substring if the model emits additional text.
 
-\textbf{Output Format.} Each detected vulnerability includes:
-\begin{itemize}
-\item \textbf{Classification}: CWE category, vulnerability type, severity level
-\item \textbf{Localization}: File path, line numbers, and specific code fragments
-\item \textbf{Explanation}: Description of why the code is vulnerable, including:
-  \begin{itemize}
-  \item Untrusted input sources
-  \item Missing or insufficient validation/sanitization
-  \item Dangerous API usage or sink operations
-  \item Security principles violated
-  \end{itemize}
-\item \textbf{Confidence score}: Estimated reliability of the detection
-\end{itemize}
+\textbf{Failure handling and caching.} Transient inference failures (timeouts, local server warm-up) are handled through retry with exponential backoff. To reduce repeated inference on unchanged code, results are cached with an LRU-style strategy keyed by a hash of (code, model), improving responsiveness during iterative edits.
 
-\textbf{Design Rationale.} Structured output generation ensures that all vulnerability reports include explainability information (R3), while grounding in retrieved knowledge maintains detection consistency (R1). The modular design allows the LLM to be replaced or upgraded without affecting other components, supporting maintainability and flexibility.
+\textbf{Interactive analysis mode.} In addition to the structured diagnostics flow, Code Guardian includes a webview-based analysis view for selected code. This mode uses Markdown-formatted responses and supports follow-up Q\&A. When enabled, the RAG manager can be used to enrich the system prompt and user prompt for this interactive workflow.
 
 \subsection{Repair Generation Component}
 \label{subsec:repair-generation}
 
-The Repair Generation component produces concrete, security-aware code modifications to remediate detected vulnerabilities. It accepts vulnerability reports and code context as input and generates context-appropriate fixes.
-
-\textbf{Repair Strategy.} Fix generation follows a three-step process:
-\begin{enumerate}
-\item \textbf{Fix pattern retrieval}: Queries the knowledge base for repair examples matching the detected CWE category
-\item \textbf{Context adaptation}: Adapts generic repair patterns to the specific code context (variable names, API usage, code style)
-\item \textbf{Validation}: Verifies that suggested repairs maintain syntactic validity and address the root vulnerability
-\end{enumerate}
-
-\textbf{Output Format.} Each repair suggestion includes:
-\begin{itemize}
-\item \textbf{Code modification}: Concrete replacement code or patch
-\item \textbf{Explanation}: Description of what the fix does and why it addresses the vulnerability
-\item \textbf{Applicability constraints}: Conditions under which the fix is appropriate
-\item \textbf{Side effects}: Potential impacts on functionality or performance
-\end{itemize}
-
-\textbf{Types of Repairs.} The system generates repairs for common vulnerability classes:
-\begin{itemize}
-\item \textbf{Input validation}: Adding sanitization, type checking, or allowlist validation
-\item \textbf{Parameterized queries}: Converting string concatenation to prepared statements
-\item \textbf{Output encoding}: Adding context-appropriate encoding (HTML, URL, JavaScript)
-\item \textbf{Access control}: Inserting authentication or authorization checks
-\item \textbf{Safe API usage}: Replacing dangerous functions with secure alternatives
-\end{itemize}
-
-\textbf{Design Rationale.} Repair suggestions directly address R4 (actionable repair suggestions) by providing concrete, context-specific fixes rather than generic advice. Grounding repairs in retrieved examples ensures they align with established secure coding practices, while context adaptation ensures they integrate smoothly into the existing codebase.
+In the current prototype, repair generation is implemented as an \emph{optional field} in the vulnerability report rather than as a separate autonomous patching system. When the analyzer includes a \texttt{suggestedFix}, the IDE integration layer exposes it as a quick fix action. Applying a fix is always user-initiated and can be reverted via the editor undo stack (R4). The system does not automatically validate functional correctness of repairs; this is treated as a major future improvement area.
 
 \subsection{IDE Integration Layer}
 \label{subsec:ide-integration}
 
-The IDE Integration Layer manages interaction between the vulnerability detection system and Visual Studio Code. It handles event triggers, result presentation, and user interactions.
+The IDE integration layer connects the analysis pipeline to VS Code’s APIs \cite{vscodeExtensionApi} and determines when analyses run and how results are presented.
 
-\textbf{Trigger Mechanisms.} The system supports multiple analysis triggers:
+\textbf{Triggers.} The extension supports both automatic and manual triggers:
 \begin{itemize}
-\item \textbf{On-save detection}: Triggered automatically when a JavaScript/TypeScript file is saved
-\item \textbf{Command-based analysis}: Explicit commands for analyzing selected code or entire files
-\item \textbf{Workspace scanning}: Batch analysis of multiple files in the project
+    \item \textbf{Debounced real-time analysis} on document changes (default debounce: 800\,ms) for JavaScript/TypeScript documents.
+    \item \textbf{Manual file analysis} via a command palette command, with a size guard to avoid excessively large prompts.
+    \item \textbf{Interactive selection analysis} and \textbf{contextual Q\&A} views implemented as WebViews.
+    \item \textbf{Workspace scanning} that aggregates results into a dashboard view.
 \end{itemize}
 
-\textbf{Result Presentation.} Vulnerability findings are presented through:
+\textbf{Presentation.} Findings are rendered as VS Code diagnostics (squiggles, Problems panel, hover tooltips). Suggested repairs are attached to diagnostics and exposed as a quick fix action.
+
+\subsection{Supporting Subsystems}
+\label{subsec:supporting-subsystems}
+
+Several additional subsystems are important for usability and reproducibility:
 \begin{itemize}
-\item \textbf{Inline annotations}: Diagnostic markers in the editor showing vulnerability locations
-\item \textbf{Problems panel}: Structured list of all detected issues with severity indicators
-\item \textbf{Hover tooltips}: Detailed explanations displayed when hovering over annotated code
-\item \textbf{Quick fixes}: Code action suggestions accessible via context menu or keyboard shortcut
+    \item \textbf{Model management} queries available local Ollama models, filters for suitable code models, and supports runtime model switching.
+    \item \textbf{Analysis cache} is a bounded LRU cache (100 entries, 30-minute TTL) with user-visible hit/miss statistics.
+    \item \textbf{Workspace dashboard} computes a coarse security score using issue density and keyword-based severity heuristics and visualizes the distribution across files.
+    \item \textbf{Vulnerability data manager} caches public metadata (e.g., OWASP/CWE/CVE-derived entries) with a time-based expiry to support offline reuse after updates.
 \end{itemize}
 
-\textbf{User Interactions.} The extension supports:
-\begin{itemize}
-\item \textbf{Fix application}: One-click application of suggested repairs with preview
-\item \textbf{False positive reporting}: Marking detections as false positives to improve future analysis
-\item \textbf{Severity adjustment}: Customizing which vulnerability types are shown based on severity
-\end{itemize}
-
-\textbf{Design Rationale.} IDE integration directly addresses R6 (usability and responsiveness) by providing immediate, contextual feedback during development. Rich presentation options support R3 (explainability) by making vulnerability information easily accessible without disrupting workflow.
-
-This section has described the core components of the vulnerability detection system and their individual responsibilities. The modular design ensures that each component can be developed, tested, and optimized independently, while clear interfaces enable flexible composition and deployment strategies. The next section presents the detection workflows that orchestrate these components to perform vulnerability analysis in different scenarios.
+This section has described the core components that constitute Code Guardian. The next section describes how these components are orchestrated into workflows for real-time feedback, on-demand inspection, and batch scans.

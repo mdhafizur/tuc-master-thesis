@@ -114,3 +114,4 @@ build/
 *.fls
 *.bcf
 *.pyg
+/code-guardian

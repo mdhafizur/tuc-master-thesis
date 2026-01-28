@@ -1,37 +1,39 @@
 \section{Experimental Setup}
 \label{sec:eval-setup}
 
-This section describes the configuration of the experiments conducted to evaluate the \textit{Invox} system under different orchestration strategies. All evaluations were executed using the preprocessed MUC-4 dataset described in Section~\ref{sec:eval-dataset} and the embedding-based metrics defined in Section~\ref{sec:eval-metrics}.  
-The setup ensures comparability across strategies by maintaining identical model parameters, embedding configurations, and evaluation scripts.
+All experiments are executed locally using the Code Guardian evaluation harness in \texttt{code-guardian/evaluation/evaluate-models.js}. The harness iterates over the \emph{core} dataset described in Section~\ref{sec:eval-dataset} and invokes Ollama with a strict JSON-only system prompt. Model decoding is configured for low randomness (\texttt{temperature=0.1}) to improve determinism and parsing stability.
 
-\subsection{Compared Strategies}
+\subsection*{Response Schema for Scoring}
 
-The \textit{Invox} system supports multiple extraction strategies that differ in how they allocate reasoning effort across large-language-model (LLM) calls. Each strategy is evaluated independently but within the same pipeline, demonstrating the modular nature of the architecture.  
+For evaluation purposes, the harness requests a richer structured output than the minimal in-editor diagnostics flow. In particular, each finding includes a vulnerability \texttt{type} string and a coarse \texttt{severity} level in addition to location and an optional fix. This enables type-level scoring (precision/recall) and per-category analysis. In the extension UI, vulnerability categories may appear within the message text and are used for downstream aggregation (e.g., in the workspace dashboard); a future refinement is to surface \texttt{type} and \texttt{severity} as first-class fields in diagnostics.
 
+\subsection*{Compared Configurations}
+
+Two configurations are relevant for the overall system design:
 \begin{itemize}
-    \item \textbf{S1: Single-Pass Full Input} — the entire document is processed in a single inference step using one LLM instance. This approach minimizes latency and cost but provides limited internal verification.
-    \item \textbf{S2: Iterative Single-Field} — each field is extracted sequentially in separate LLM calls. This allows focused reasoning for difficult slots such as \texttt{perpetratorIndividual} or \texttt{target}, often improving precision at the cost of longer inference time.
-    \item \textbf{S3: Multi-LLM Consensus (Full)} — multiple LLMs (e.g., GPT-5 and Gemini 2.5) process the entire input independently. The Verification Agent aggregates their results via consensus scoring to improve overall reliability.
-    \item \textbf{S4: Multi-LLM Per-Field} — similar to S3 but the consensus process operates at the field level, combining specialized model outputs per slot. This configuration provides the most granular control over extraction quality.
-    \item \textbf{S5: LangExtract Baseline} — a non-LLM rule-based extraction pipeline used as an external baseline. It relies on handcrafted patterns and regular expressions and serves to contextualize the semantic improvements achieved by \textit{Invox}.
+  \item \textbf{LLM-only (quantitative):} the JSON-only analyzer evaluated by the harness.
+  \item \textbf{LLM+RAG (qualitative / optional extension):} retrieval-augmented prompting using the local knowledge base and vector retrieval. This configuration is exercised in the prototype’s interactive workflows and can be evaluated quantitatively by extending the harness to inject retrieved snippets into the prompt.
 \end{itemize}
 
-All strategies share the same input format and produce outputs following the schema 
-(\texttt{incidentType}, \texttt{incidentDate}, \texttt{incidentLocation}, \texttt{incidentStage}, \texttt{target}, \texttt{victim}, \texttt{perpetratorIndividual}, \texttt{perpetratorOrganization}, \texttt{weapon}).  
-This unified design enables a direct, component-wise comparison of accuracy, latency, and cost.
+Where relevant, results can also be stratified by model size or model family to study the trade-off between accuracy and latency.
 
-\paragraph{Note on the Hybrid Strategy.}
-A separate Hybrid Refinement strategy was planned, but not implemented. During development it became clear that all four main strategies (S1--S4) already include user review and correction, which creates the same hybrid behaviour in practice. Adding a fifth strategy would have duplicated functionality without offering a new method.
+\subsection*{Models and Hardware}
 
-\subsection{Embedding Models}
-Semantic similarity between predicted and reference fillers is computed using the \texttt{sentence-transformers} library.  
-The primary encoder is \texttt{all-MiniLM-L6-v2}, chosen for its balance between speed and representational quality.  
-To verify metric robustness, a secondary encoder, \texttt{multi-qa-MiniLM-L6-cos-v1}, was used for cross-checking.  
-Both models produce 384-dimensional embeddings normalized to unit length, ensuring that cosine similarity values fall within the range [0, 1].  
-Empirical tests showed that the two encoders produce nearly identical ranking orders across strategies, confirming the stability of the evaluation results.
+The prototype supports multiple local models (e.g., Qwen2.5-Coder, Gemma, and CodeLlama variants) via Ollama. The evaluation script contains a default list of models to test, but this list can be adjusted based on what is installed locally. For reproducibility, the reported results should include the exact model names, Ollama version, and hardware configuration (CPU/GPU and RAM).
 
-\subsection{Environment and Settings}
+\subsection*{Runtime Parameters}
 
-All experiments were run on a CPU-only Ubuntu 24.04.3 LTS machine (kernel 6.14) with an Intel i7-6600U (2 cores, 4 threads), 16\,GB RAM, and integrated Intel HD 520 graphics (no discrete NVIDIA GPU / no CUDA). Local preprocessing and evaluation were implemented in Python~3.10; the orchestration service was built with Node.js~20 (TypeScript).
+The evaluation harness enforces a per-request timeout (default: 30\,s) and limits generation length (default: \texttt{num\_predict=1000}). A small delay is inserted between requests to reduce burstiness and minimize transient failures on developer hardware.
 
-Model inference used hosted APIs (OpenAI, Gemini) with deterministic settings (\texttt{temperature=0.2}, \texttt{top-p=1.0}) and fixed random seeds for reproducibility. Latency was measured at the API boundary per document (request--response wall time, including network). Token usage and provider-reported pricing were logged to estimate cost. All strategies used identical batching and concurrency to avoid scheduling bias.
+\paragraph{Response parsing.}
+The harness strips Markdown code fences if present and then attempts to parse the remaining content as JSON. Responses that fail to parse are counted toward the parse failure rate and are scored as producing no issues, which impacts recall on vulnerable samples.
+
+\subsection*{Running the Evaluation}
+
+The evaluation can be reproduced by running:
+\begin{lstlisting}[language=Java, caption={Running the Code Guardian evaluation harness}, label={lst:eval-run}]
+cd code-guardian
+node evaluation/evaluate-models.js
+\end{lstlisting}
+
+The script produces per-model metrics and can be extended to emit JSON/Markdown reports under \texttt{code-guardian/evaluation/logs/} for inclusion in the thesis appendix.

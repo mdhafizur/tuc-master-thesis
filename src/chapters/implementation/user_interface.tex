@@ -1,46 +1,44 @@
 \section{User Interface}
 \label{sec:user-interface}
 
-The user interface implements the human-in-the-loop quality control paradigm established in Section~\ref{sec:system-workflow}. The interface design focuses on efficient template filling through voice input and interactive correction workflows.
+Code Guardian is designed to integrate security feedback into the existing Visual Studio Code workflow rather than introducing a separate application. The interface emphasizes (i) low-friction detection during coding, (ii) actionable remediation via quick fixes, and (iii) workspace-level prioritization.
 
-\subsection{Authentication and Template Access}
-\label{subsec:ui-authentication}
+\subsection{Inline Diagnostics and Hover Explanations}
+\label{subsec:ui-diagnostics}
 
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=1.0\linewidth]{images/login_interface.png}
-  \caption{INVOX authentication interface with Keycloak integration}
-  \label{fig:login-interface}
-\end{figure}
+Detected issues are rendered as standard VS Code diagnostics. This provides familiar affordances: squiggles in the editor, a centralized list in the Problems panel, and hover tooltips that summarize the finding. This presentation supports R3 by making explanations available at the point of code, without requiring context switching.
 
-The system implements role-based access through a centralized authentication interface (Figure~\ref{fig:login-interface}). Users authenticate via Keycloak-managed credentials, which determine which template types they can access. Security personnel see incident reporting templates, while medical staff access patient handover forms. Users cannot create new template schemas through the interface—they can only fill templates assigned to their role.
+\paragraph{Real-time behavior.}
+For JavaScript and TypeScript documents, diagnostics can be produced during normal editing via a debounced trigger. To preserve responsiveness, the default real-time scope is the enclosing function at the cursor, and unusually large functions are skipped. Developers can therefore treat Code Guardian feedback similarly to linting warnings: it appears close to the code being written and is automatically updated as the local scope changes.
 
-\subsection{Template Filling Interface}
-\label{subsec:ui-template-filling}
+\subsection{Quick Fixes for Repair Suggestions}
+\label{subsec:ui-quickfix}
 
-\begin{sidewaysfigure}
-  \centering
-  \includegraphics[width=1.0\linewidth]{images/template_interface.png}
-  \caption{Template-filling interface used in Invox. The left panel offers voice recording and chat interaction for describing an incident, while the right panel displays the structured form populated by the pipeline. The layout illustrates how transcription, automated extraction, and user review occur within a unified workflow.}
-  \label{fig:template-interface}
-\end{sidewaysfigure}
+When a finding includes a suggested fix, Code Guardian offers a \textit{Quick Fix} action. Fix application is always user-initiated and confirmed, which preserves developer control and reduces the risk of unintended behavior changes (R4). Fixes integrate with the editor undo stack so developers can revert and iterate.
 
-The interface consists of three main components (Figure~\ref{fig:template-interface}): the audio recording panel at the bottom-left, the structured template form on the right, and an interactive chat panel for clarifications.
+\paragraph{Developer control.}
+The prototype does not apply patches automatically. Instead, suggested fixes are attached to diagnostics and surfaced through the standard lightbulb UI. This design reflects the practical risk that an LLM-generated patch may be security-improving but behavior-changing; keeping the developer in the loop is therefore essential for safe adoption.
 
-\subsubsection{Audio Recording Panel}
+\subsection{Interactive Analysis View and Contextual Q\&A}
+\label{subsec:ui-webview}
 
-The recording panel provides a "Start" button to initiate audio capture. During recording, the button changes to "Stop \& Process." When clicked, the system transcribes the audio and extracts template values using the selected strategy. A strategy selector menu allows users to choose between S1, S2, S3, or S4 before processing, enabling them to balance speed versus accuracy based on the template's importance.
+For deeper inspection, the extension provides WebView-based views. A selection analysis view presents the model output in a dedicated panel for longer explanations and follow-up questions (e.g., ``why is this vulnerable?'', ``what is the safer alternative?''). In addition, Code Guardian provides a contextual Q\&A view in which the developer can select files or folders as context and ask security-related questions about a codebase segment. Both views support switching the local model at runtime and (when enabled) benefit from retrieval-augmented grounding.
 
-\subsubsection{Structured Template Form}
+\paragraph{Model controls inside WebViews.}
+The WebView views include a model selector that lists locally available Ollama models and supports refreshing the list at runtime. This enables quick comparison of smaller models (fast feedback) versus larger models (more detailed explanations) without restarting the extension.
 
-The right side shows the structured template, with fields grouped by category (Incident Type, Perpetrator, Target, Victim, Weapon). As audio is processed, the system auto-populates the fields using extraction results. Each field uses an appropriate widget—dropdowns for enumerations, text areas for descriptions, and dedicated inputs for dates or numeric values. Confidence indicators mark AI-filled entries, and low-confidence fields are highlighted for review.
+\subsection{Workspace Security Dashboard}
+\label{subsec:ui-dashboard}
 
-Users may edit values at any time, lock fields to protect them during later recordings, and inspect whether a value was extracted or manually entered. Before submission, the form validates all entries against the template schema.
+The workspace dashboard aggregates findings across the codebase. It provides a severity breakdown and highlights the most vulnerable files, enabling developers to prioritize remediation work. This mode is complementary to inline diagnostics: it supports periodic security reviews and progress tracking after fixes.
 
-\subsubsection{Interactive Chat Panel}
+\paragraph{Score and prioritization.}
+To support triage, the dashboard computes a coarse security score based on issue density and severity heuristics, and surfaces the files with the highest concentration of findings. The score is intended as a prioritization aid rather than a formal risk metric; the underlying findings should still be inspected and validated by the developer.
 
-The chat panel provides real-time feedback during template filling. When the system identifies missing required fields, conflicting information, or ambiguous extractions, it posts messages requesting clarification. For example, if the perpetrator field contains uncertain information, the chat prompts the user to provide more specific details. This interactive guidance reduces iteration cycles by identifying issues immediately rather than after submission.
+\subsection{Model and RAG Controls}
+\label{subsec:ui-controls}
 
-\subsection{Template Export}
+Because Code Guardian is intended to run on developer hardware with varying resource constraints, model selection is exposed as a first-class UI feature. The extension provides commands to list available local Ollama models and switch the active model without restarting the extension. RAG can be toggled through settings and is also surfaced as a lightweight status indicator to make the current analysis mode explicit during development sessions. This transparency supports reproducibility (R1) and reduces user confusion about why results differ across runs.
 
-Once users complete template review, the interface provides export options in JSON, Excel, and PDF formats through a download button group. All templates are automatically persisted to PostgreSQL upon processing, ensuring data preservation regardless of export actions. Having established the complete implementation of the Invox system—from backend agent architecture to frontend user interface—the next chapter evaluates this implementation empirically. Chapter~\ref{chap:evaluation} applies the system to the MUC-4 benchmark and measures its performance against the six requirements (R1–R6) established in Chapter~\ref{sec:requirements}. The evaluation compares the four architectural strategies quantitatively, examining their trade-offs in accuracy, cost, latency, and user satisfaction.
+\paragraph{RAG and cache management.}
+The prototype also exposes maintenance commands for (i) updating vulnerability metadata used for the local knowledge base, (ii) rebuilding or searching the knowledge base, and (iii) inspecting and clearing the analysis cache. These controls help developers validate performance improvements (cache hit rates) and keep the retrieval corpus current without sacrificing source-code privacy.

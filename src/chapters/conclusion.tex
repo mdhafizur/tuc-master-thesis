@@ -1,75 +1,30 @@
-% --- Chapter 6: Conclusion ---
-
-This chapter summarizes the system developed in this thesis, its empirical findings, limitations, and implications for practice. The aim was to design and evaluate a modular, multi-agent system that converts unstructured speech and text into structured templates. Compared with single end-to-end models, the proposed architecture improves accuracy, transparency, adaptability, and debuggability.
+This chapter summarizes the contributions of this thesis, highlights key findings, discusses limitations, and outlines implications for practice. The goal of the thesis was to design and implement a privacy-preserving vulnerability detection and repair assistant for Visual Studio Code that leverages locally deployed LLMs and retrieval-augmented grounding without transmitting source code to external services.
 
 \section{Summary of Contributions}
 
-\textbf{Invox: a modular multi-agent pipeline.}
-This thesis presents \textbf{Invox}, a five-agent system covering Speech-to-Text (STT), Retrieval-Augmented Generation (RAG), Information Extraction (IE), Consistency Formatting (CF), and Verification (VER). Clear separation of roles reduces brittleness, localizes failures, and allows targeted upgrades (e.g., swapping IE or strengthening VER) without redesigning the pipeline. Templates are defined declaratively, enabling domain transfer.
+\textbf{Code Guardian: an IDE-integrated, local security assistant.}
+This thesis delivers \textbf{Code Guardian}, a VS Code extension that performs on-device vulnerability analysis for JavaScript and TypeScript projects. Findings are presented using IDE-native diagnostics, and optional quick fixes provide repair suggestions while keeping developers in full control of code changes.
 
-\textbf{Four orchestration strategies.}
-Four strategies balance cost, speed, and robustness: S1 (single pass), S2 (per-field extraction), S3 (multi-model consensus on full input), and S4 (per-field consensus). These match different deployment needs: S1 for cost efficiency, S2 for low latency, S3 for stable consensus outputs, and S4 for maximum recall when fields are expected.
+\textbf{Privacy-preserving LLM inference with optional RAG.}
+All code analysis runs locally via Ollama. To improve grounding, the system optionally augments prompts with locally retrieved security knowledge (CWE/OWASP/CVE guidance) using a local vector index and local embeddings. This architecture supports explainability and consistency while preserving the no-exfiltration requirement.
 
-\textbf{Evaluation focused on meaning and decisions.}
-Exact match was complemented with embedding-based scores (Soft-F1) and behavioral metrics: fill-decision accuracy, hallucination rate, missing rate, and required-fill accuracy. These reflect both semantic correctness and system decision quality.
+\textbf{Practical performance mechanisms.}
+To remain usable during development, Code Guardian combines debounced triggers, function-level scoping for real-time use, and caching of repeated analyses. These mechanisms reduce unnecessary inference calls and support responsive IDE feedback.
 
-\textbf{Cost and latency profiling.}
-Each strategy was profiled on MUC-4 (N = 100), reporting median latency and per-document cost to guide deployment trade-offs.
-
-\textbf{Requirements-driven design.}
-Six requirements (R1–R6) shaped the system: consistency, extraction quality, transparency, user correction, learning/adaptation, and usability.
-
-\section{Key Findings}
-
-\textbf{No single strategy dominates.}
-On MUC-4, S1.1 offered the best overall balance (OBS = 0.644; HR = 0.180; FDA = 0.746). S2.1 was fastest (25.35 s) with strong accuracy (OBS = 0.619). S3.1 provided consensus-stable outputs (OBS = 0.641; FDA = 0.743) with lower hallucination. S4.1 produced the highest quality on nonempty fields (NES = 0.624; MR = 0.144) but overfilled empty slots (HR = 0.476), requiring post-filtering. Strategy selection therefore depends on latency, cost, and risk constraints.
-
-\textbf{RAG consistently improves performance.}
-Across S1–S4, adding retrieved few-shot examples improved accuracy by 3–4 points and reduced hallucination by 5–7 points, especially for entity-heavy fields (e.g., \texttt{perpetratorOrganization}, \texttt{weapon}).
-
-\textbf{Speech-style inputs remain robust.}
-Speech-like transcripts caused only minor degradation. S1.2 preserved 97\% of S1.1’s OBS (0.626 vs.\ 0.644). Consensus strategies remained stable; per-field approaches did not gain a consistent advantage. This suggests resilience to lexical and structural variability even without explicit ASR noise.
-
-\textbf{Embedding metrics capture meaning better than exact match.}
-Soft-F1 credited near-synonyms (“guerrillas” vs.\ “rebel forces”) missed by exact match. S1.1 and S3.1 aligned best with semantic gold values. The Empty Advantage Index (EAI = OBS - NES) separated content quality from abstention: S1.1 showed balanced abstention; S4.1’s negative EAI reflected excellent quality on nonempty fields but aggressive filling.
-
-\textbf{Cost and latency scale with complexity.}
-Cost per document ranked S1 < S3 < S2 < S4 (\$0.0072–\$0.0432). Latency followed the same order. Whisper costs scaled predictably by duration. Field-wise, \texttt{perpetratorOrganization} and \texttt{weapon} scored highest (0.7–0.8), while \texttt{perpetratorIndividual} lagged (0.56–0.58). Per-field strategies excelled on location fields.
+\textbf{Reproducible evaluation harness.}
+The prototype includes a curated benchmark of security test cases and a local evaluation script for comparing models and configurations using standard detection metrics, parse robustness, and latency.
 
 \section{Limitations}
 
-\textbf{Scope and generalizability.}
-Results rely on MUC-4, limiting generalization to domains such as healthcare or manufacturing. Speech-style inputs do not model real ASR noise or confidence distributions.
+\textbf{Scope limits and contextual depth.}
+While the system can flag common vulnerability patterns, deep semantic reasoning across files (e.g., source-to-sink flows spanning modules) is limited by the analysis scope and the absence of full static data-flow analysis.
 
-\textbf{Statistical depth.}
-N = 100 with no confidence intervals, multiple runs, or significance tests; findings should be interpreted directionally.
+\textbf{Evaluation representativeness.}
+The curated dataset is intentionally small and human-auditable, but it does not fully reflect the diversity and ambiguity of real-world codebases. Results should therefore be interpreted as indicative rather than definitive.
 
-\textbf{Methodological gaps.}
-RAG benefits were isolated, but CF and VER contributions were not. Embedding metrics can conflate related concepts; no human evaluation was conducted.
-
-\textbf{Operational and ethical readiness.}
-The system was not load-tested, nor evaluated for security, compliance, or adversarial robustness. Fairness aspects (accent, dialect, gender) remain unexamined.
-
-\section{Implications for Practice}
-
-\textbf{When to use a modular pipeline.}
-Modularity is advantageous when templates contain many heterogeneous fields, when traceability is required, or when vocabularies evolve. Agent-level separation simplifies maintenance and upgrades.
-
-\textbf{When a single model is enough.}
-Small templates (<5 fields), low correction needs, and strict latency/cost constraints may favor a single-model setup.
-
-\textbf{Choosing a strategy.}
-For <30 s latency: choose S2.  
-For <\$0.01 per document: choose S1.  
-For safety-critical robustness: choose S3.  
-For maximum recall on required fields: choose S4 with empty-slot filtering.
-
-\textbf{Pre-production checklist.}
-Validate schemas; seed RAG with $\geq 100$ examples; monitor low-confidence and high-disagreement cases; train users briefly on evidence/correction flows; implement manual fallback; ensure compliance; monitor latency and cost.
-
-\textbf{Cost illustration.}
-A 15-minute form at \$25/hour costs \$1,250/month for 200 reports. Invox S1 adds only $\approx\$2.60$ plus $\approx\$50$ infrastructure, suggesting $\approx\$1,197$ monthly savings (excluding setup and oversight).
+\textbf{Repair correctness.}
+Repair suggestions are model-generated and may affect behavior beyond security hardening. The system mitigates this by requiring explicit user review, but comprehensive functional validation remains outside the scope of the extension.
 
 \section{Conclusion}
 
-Modular multi-agent systems offer transparency, adaptability, and maintainability that single end-to-end models cannot match. Invox evaluations show that S1 optimizes cost, S2 optimizes speed, S3 improves robustness via consensus, and S4 maximizes recall when fields are present. Embedding-based evaluation better captures semantic correctness, especially for paraphrased content. Such systems are intended to support, not replace, expert judgment—reducing repetitive entry, surfacing evidence, and enabling users to focus on higher-level decisions.
+Privacy-preserving secure coding assistance is feasible within the IDE when local LLM inference is combined with careful prompt structuring, optional retrieval grounding, and developer-controlled remediation workflows. Code Guardian demonstrates that locally deployed LLMs can provide actionable vulnerability detection and repair suggestions without transmitting source code off-device, while remaining compatible with interactive development constraints.
