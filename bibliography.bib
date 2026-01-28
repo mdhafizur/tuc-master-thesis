@@ -1,128 +1,523 @@
+% ============================
+% LLMs, Code Models, and RAG
+% ============================
+
 @inproceedings{pearce2022copilot,
-  author    = {H. Pearce and B. Ahmad and B. Tan and B. Dolan-Gavitt and R. Karri},
-  title     = {Asleep at the Keyboard? Assessing the Security of GitHub Copilot’s Code Contributions},
+  author    = {Pearce, Henry and Ahmad, Benjamin and Tan, Benjamin and Dolan-Gavitt, Brendan and Karri, Ramesh},
+  title     = {Asleep at the Keyboard? Assessing the Security of {GitHub} {Copilot}'s Code Contributions},
   booktitle = {Proceedings of the IEEE Symposium on Security and Privacy (S\&P)},
-  year      = {2022},
-  address   = {San Francisco, CA, USA}
+  year      = {2022}
 }
 
-@article{fu2023llmsec,
-  author  = {Y. Fu and Z. Chen and J. Huang},
-  title   = {LLMs for Software Security: A Survey of Vulnerability Detection Techniques},
-  journal = {ACM Computing Surveys},
-  year    = {2023},
-  volume  = {56},
-  number  = {8}
+@article{chen2021codex,
+  author  = {Chen, Mark and Tworek, Jerry and Jun, Heewoo and Yuan, Qiming and Pinto, Henrique Ponde de Oliveira and Kaplan, Jared and Edwards, Harri and Burda, Yuri and Joseph, Nicholas and Brockman, Greg and Ray, Alex and Puri, Raul and Krueger, Gretchen and Petrov, Michael and Khlaaf, Heidy and Sastry, Girish and Mishkin, Pamela and Chan, Brooke and Gray, Scott and Ryder, Nick and Pavlov, Mikhail and Power, Alethea and Kaiser, Lukasz and Bavarian, Mohammad and Hilton, Jacob and Nakano, Reiichiro and Hesse, Christopher and Chen, Jonathan and Plappert, Matthias and Beard, Matthew and Voss, Carina and Radford, Alec and Sutskever, Ilya},
+  title   = {Evaluating Large Language Models Trained on Code},
+  journal = {arXiv preprint arXiv:2107.03374},
+  year    = {2021}
 }
 
-@inproceedings{he2023safecoder,
-  author    = {J. He and M. Vechev},
-  title     = {SafeCoder: Improving Code Generation with Security-Aware Fine-Tuning},
-  booktitle = {Proceedings of the USENIX Security Symposium},
-  year      = {2023},
-  address   = {Anaheim, CA, USA}
+@inproceedings{brown2020gpt3,
+  author    = {Brown, Tom B. and Mann, Benjamin and Ryder, Nick and Subbiah, Melanie and Kaplan, Jared and Dhariwal, Prafulla and Neelakantan, Arvind and Shyam, Pranav and Sastry, Girish and Askell, Amanda and others},
+  title     = {Language Models are Few-Shot Learners},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
+  year      = {2020}
 }
 
-@inproceedings{li2024constrained,
-  author    = {X. Li and Y. Fu},
-  title     = {Constrained Decoding for Secure Code Generation},
-  booktitle = {Proceedings of the International Conference on Learning Representations (ICLR)},
-  year      = {2024},
-  address   = {Vienna, Austria}
+@article{openai2023gpt4,
+  author  = {{OpenAI}},
+  title   = {{GPT-4} Technical Report},
+  journal = {arXiv preprint arXiv:2303.08774},
+  year    = {2023}
+}
+
+@inproceedings{vaswani2017attention,
+  author    = {Vaswani, Ashish and Shazeer, Noam and Parmar, Niki and Uszkoreit, Jakob and Jones, Llion and Gomez, Aidan N. and Kaiser, Lukasz and Polosukhin, Illia},
+  title     = {Attention Is All You Need},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
+  year      = {2017}
+}
+
+@inproceedings{devlin2019bert,
+  author    = {Devlin, Jacob and Chang, Ming-Wei and Lee, Kenton and Toutanova, Kristina},
+  title     = {{BERT}: Pre-training of Deep Bidirectional Transformers for Language Understanding},
+  booktitle = {Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics (NAACL-HLT)},
+  year      = {2019}
+}
+
+@inproceedings{raffel2020t5,
+  author    = {Raffel, Colin and Shazeer, Noam and Roberts, Adam and Lee, Katherine and Narang, Sharan and Matena, Michael and Zhou, Yanqi and Li, Wei and Liu, Peter J.},
+  title     = {Exploring the Limits of Transfer Learning with a Unified Text-to-Text Transformer},
+  booktitle = {Journal of Machine Learning Research},
+  year      = {2020},
+  volume    = {21},
+  number    = {140}
+}
+
+@inproceedings{feng2020codebert,
+  author    = {Feng, Zhangyin and Guo, Daya and Tang, Duyu and Duan, Nan and Feng, Xiaocheng and Gong, Ming and Shou, Linjun and Qin, Bing and Liu, Ting and Jiang, Daxin and Zhou, Ming},
+  title     = {CodeBERT: A Pre-Trained Model for Programming and Natural Languages},
+  booktitle = {Findings of the Association for Computational Linguistics: EMNLP},
+  year      = {2020}
+}
+
+@inproceedings{wang2021codet5,
+  author    = {Wang, Yue and Wang, Weishi and Joty, Shafiq and Hoi, Steven C. H.},
+  title     = {CodeT5: Identifier-aware Unified Pre-trained Encoder-Decoder Models for Code Understanding and Generation},
+  booktitle = {Proceedings of the 2021 Conference on Empirical Methods in Natural Language Processing (EMNLP)},
+  year      = {2021}
+}
+
+@article{nijkamp2022codegen,
+  author  = {Nijkamp, Erik and Pang, Bo and Hayashi, Hiroaki and Tu, Lifu and Wang, Huan and Zhou, Yingbo and Savarese, Silvio},
+  title   = {CodeGen: An Open Large Language Model for Code with Multi-Turn Program Synthesis},
+  journal = {arXiv preprint arXiv:2203.13474},
+  year    = {2022}
 }
 
 @article{mialon2023augmented,
-  author  = {G. Mialon and others},
+  author  = {Mialon, Gr{\'{e}}goire and Dess{\`{i}}, Roberto and Lomeli, Maria and Nalmpantis, Christoforos and Pasunuru, Ram and Raileanu, Roberta and Rozi{\`{e}}re, Baptiste and Schick, Timo and Scialom, Thomas and Suau, Xavier and others},
   title   = {Augmented Language Models: A Survey},
   journal = {arXiv preprint arXiv:2302.07842},
   year    = {2023}
 }
 
 @inproceedings{schick2023toolformer,
-  author    = {T. Schick and others},
+  author    = {Schick, Timo and Dwivedi-Yu, Jane and Dess{\`{i}}, Roberto and Raileanu, Roberta and Lombardi, Maria and Zettlemoyer, Luke and Cancedda, Nicola and Scialom, Thomas},
   title     = {Toolformer: Language Models Can Teach Themselves to Use Tools},
   booktitle = {Proceedings of the International Conference on Learning Representations (ICLR)},
-  year      = {2023},
-  address   = {Kigali, Rwanda}
+  year      = {2023}
 }
 
-@article{sheng2025survey,
-  author  = {Z. Sheng and Z. Chen and S. Gu and H. Huang and G. Gu and J. Huang},
-  title   = {LLMs in Software Security: A Survey of Vulnerability Detection Techniques and Insights},
+@inproceedings{lewis2020rag,
+  author    = {Lewis, Patrick and Perez, Ethan and Piktus, Aleksandra and Petroni, Fabio and Karpukhin, Vladimir and Goyal, Naman and K{\"{u}}ttler, Heinrich and Lewis, Mike and Yih, Wen-tau and Rockt{\"{a}}schel, Tim and Riedel, Sebastian and Kiela, Douwe},
+  title     = {Retrieval-Augmented Generation for Knowledge-Intensive {NLP} Tasks},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
+  year      = {2020}
+}
+
+@inproceedings{karpukhin2020dpr,
+  author    = {Karpukhin, Vladimir and Oguz, Barlas and Min, Sewon and Wu, Ledell and Edunov, Sergey and Chen, Danqi and Yih, Wen-tau},
+  title     = {Dense Passage Retrieval for Open-Domain Question Answering},
+  booktitle = {Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP)},
+  year      = {2020}
+}
+
+@inproceedings{guu2020realm,
+  author    = {Guu, Kelvin and Lee, Kenton and Tung, Zora and Pasupat, Panupong and Chang, Ming-Wei},
+  title     = {{REALM}: Retrieval-Augmented Language Model Pre-Training},
+  booktitle = {Proceedings of the 37th International Conference on Machine Learning (ICML)},
+  year      = {2020}
+}
+
+@inproceedings{reimers2019sentencebert,
+  author    = {Reimers, Nils and Gurevych, Iryna},
+  title     = {Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks},
+  booktitle = {Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing (EMNLP-IJCNLP)},
+  year      = {2019}
+}
+
+@article{malkov2018hnsw,
+  author  = {Malkov, Yu. A. and Yashunin, D. A.},
+  title   = {Efficient and Robust Approximate Nearest Neighbor Search Using Hierarchical Navigable Small World Graphs},
+  journal = {IEEE Transactions on Pattern Analysis and Machine Intelligence},
+  year    = {2020},
+  volume  = {42},
+  number  = {4},
+  pages   = {824--836}
+}
+
+@article{johnson2017faiss,
+  author  = {Johnson, Jeff and Douze, Matthijs and J{\'{e}}gou, Herv{\'{e}}},
+  title   = {Billion-Scale Similarity Search with {GPUs}},
+  journal = {arXiv preprint arXiv:1702.08734},
+  year    = {2017}
+}
+
+@incollection{robertson2009bm25,
+  author    = {Robertson, Stephen and Zaragoza, Hugo},
+  title     = {The Probabilistic Relevance Framework: {BM25} and Beyond},
+  booktitle = {Foundations and Trends in Information Retrieval},
+  publisher = {Now Publishers},
+  year      = {2009},
+  volume    = {3},
+  number    = {4},
+  pages     = {333--389}
+}
+
+% ============================
+% Security, Privacy, and Risks
+% ============================
+
+@inproceedings{carlini2021extracting,
+  author    = {Carlini, Nicholas and Tramer, Florian and Wallace, Eric and Jagielski, Matthew and Herbert-Voss, Ariel and Lee, Katherine and Roberts, Adam and Brown, Tom and Song, Dawn and Erlingsson, {\'{U}}lfar and Oprea, Alina and Raffel, Colin},
+  title     = {Extracting Training Data from Large Language Models},
+  booktitle = {Proceedings of the 30th {USENIX} Security Symposium},
+  year      = {2021}
+}
+
+@inproceedings{shokri2017membership,
+  author    = {Shokri, Reza and Stronati, Marco and Song, Congzheng and Shmatikov, Vitaly},
+  title     = {Membership Inference Attacks Against Machine Learning Models},
+  booktitle = {Proceedings of the 2017 IEEE Symposium on Security and Privacy (S\&P)},
+  year      = {2017}
+}
+
+@inproceedings{bender2021stochastic,
+  author    = {Bender, Emily M. and Gebru, Timnit and McMillan-Major, Angelina and Shmitchell, Margaret},
+  title     = {On the Dangers of Stochastic Parrots: Can Language Models Be Too Big?},
+  booktitle = {Proceedings of the 2021 ACM Conference on Fairness, Accountability, and Transparency (FAccT)},
+  year      = {2021}
+}
+
+@article{weidinger2021ethical,
+  author  = {Weidinger, Laura and Mellor, John and Rauh, Maribeth and Griffin, Conor and Uesato, Jonathan and Huang, Po-Sen and Cheng, Myra and Balle, Borja and Kasirzadeh, Atoosa and others},
+  title   = {Ethical and Social Risks of Harm from Language Models},
+  journal = {arXiv preprint arXiv:2112.04359},
+  year    = {2021}
+}
+
+@article{ji2023hallucination,
+  author  = {Ji, Ziwei and Lee, Nayeon and Frieske, Rita and Yu, Tiancheng and Su, Dan and Xu, Yan and Ishii, Etsuko and Bang, Yejin and Madotto, Andrea and Fung, Pascale},
+  title   = {Survey of Hallucination in Natural Language Generation},
   journal = {ACM Computing Surveys},
-  year    = {2025},
-  note    = {Early access}
+  year    = {2023},
+  volume  = {55},
+  number  = {12}
 }
 
-@inproceedings{li2025iris,
-  author    = {Z. Li and S. Dutta and M. Naik},
-  title     = {IRIS: LLM-Assisted Static Analysis for Detecting Security Vulnerabilities},
-  booktitle = {Proceedings of the International Conference on Learning Representations (ICLR)},
-  year      = {2025}
+@article{zou2023universal,
+  author  = {Zou, Andy and Wang, Zifan and Kolter, J. Zico and Fredrikson, Matt},
+  title   = {Universal and Transferable Adversarial Attacks on Aligned Language Models},
+  journal = {arXiv preprint arXiv:2307.15043},
+  year    = {2023}
 }
 
-@article{shi2025rescue,
-  author  = {J. Shi and T. Zhang},
-  title   = {RESCUE: Retrieval-Augmented Secure Code Generation},
-  journal = {arXiv preprint arXiv:2510.18204},
-  year    = {2025}
+% ============================
+% Vulnerability Taxonomies and Standards
+% ============================
+
+@misc{mitreCWE,
+  author       = {{MITRE}},
+  title        = {Common Weakness Enumeration ({CWE})},
+  howpublished = {\url{https://cwe.mitre.org/}},
+  note         = {Accessed: 2026-01-24}
 }
 
-@inproceedings{kavian2024llmsecguard,
-  author    = {A. Kavian and M. M. Pourhashem Kallehbasti and S. Kazemi and E. Firouzi and M. Ghafari},
-  title     = {LLM Security Guard for Code},
-  booktitle = {Proceedings of the International Conference on Evaluation and Assessment in Software Engineering (EASE)},
-  year      = {2024},
-  address   = {Salerno, Italy}
+@misc{mitreCWEtop25,
+  author       = {{MITRE}},
+  title        = {{CWE} Top 25 Most Dangerous Software Weaknesses},
+  howpublished = {\url{https://cwe.mitre.org/top25/}},
+  note         = {Accessed: 2026-01-24}
 }
 
-@article{peng2025cweval,
-  author  = {J. Peng and L. Cui and K. Huang and J. Yang and B. Ray},
-  title   = {CWEval: Outcome-Driven Evaluation on Functionality and Security of LLM Code Generation},
-  journal = {arXiv preprint arXiv:2501.08200},
-  year    = {2025}
+@misc{mitreCVE,
+  author       = {{MITRE}},
+  title        = {Common Vulnerabilities and Exposures ({CVE})},
+  howpublished = {\url{https://www.cve.org/}},
+  note         = {Accessed: 2026-01-24}
 }
 
-@article{basic2025slr,
-  author  = {E. Basic and A. Giaretta},
-  title   = {From Vulnerabilities to Remediation: A Systematic Literature Review of LLMs in Code Security},
-  journal = {ACM Computing Surveys},
-  year    = {2025},
-  note    = {Early access}
+@misc{nistNVD,
+  author       = {{National Institute of Standards and Technology}},
+  title        = {National Vulnerability Database ({NVD})},
+  howpublished = {\url{https://nvd.nist.gov/}},
+  note         = {Accessed: 2026-01-24}
 }
 
-@inproceedings{islam2024secrepair,
-  author    = {N. T. Islam and J. Khoury and A. Seong and E. Bou-Hard and P. Najafirad},
-  title     = {Enhancing Source Code Security with LLMs: Demystifying the Challenges and Generating Reliable Repairs},
+@misc{firstCvss31,
+  author       = {{FIRST}},
+  title        = {Common Vulnerability Scoring System v3.1: Specification Document},
+  howpublished = {\url{https://www.first.org/cvss/specification-document}},
+  note         = {Accessed: 2026-01-24}
+}
+
+@techreport{nist800218,
+  author      = {{National Institute of Standards and Technology}},
+  title       = {Secure Software Development Framework ({SSDF}) Version 1.1},
+  institution = {NIST},
+  number      = {SP 800-218},
+  year        = {2022},
+  howpublished = {\url{https://csrc.nist.gov/publications/detail/sp/800-218/final}},
+  note        = {Accessed: 2026-01-24}
+}
+
+@misc{owaspTop10_2021,
+  author       = {{OWASP Foundation}},
+  title        = {OWASP Top 10 -- 2021},
+  howpublished = {\url{https://owasp.org/www-project-top-ten/}},
+  year         = {2021},
+  note         = {Accessed: 2026-01-24}
+}
+
+@misc{owaspASVS,
+  author       = {{OWASP Foundation}},
+  title        = {OWASP Application Security Verification Standard ({ASVS})},
+  howpublished = {\url{https://owasp.org/www-project-application-security-verification-standard/}},
+  note         = {Accessed: 2026-01-24}
+}
+
+@misc{owaspCheatSheets,
+  author       = {{OWASP Foundation}},
+  title        = {OWASP Cheat Sheet Series},
+  howpublished = {\url{https://cheatsheetseries.owasp.org/}},
+  note         = {Accessed: 2026-01-24}
+}
+
+@misc{owaspSqlCheatSheet,
+  author       = {{OWASP Foundation}},
+  title        = {SQL Injection Prevention Cheat Sheet},
+  howpublished = {\url{https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet.html}},
+  note         = {Accessed: 2026-01-24}
+}
+
+@misc{owaspXssCheatSheet,
+  author       = {{OWASP Foundation}},
+  title        = {Cross Site Scripting (XSS) Prevention Cheat Sheet},
+  howpublished = {\url{https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html}},
+  note         = {Accessed: 2026-01-24}
+}
+
+@misc{owaspCsrfCheatSheet,
+  author       = {{OWASP Foundation}},
+  title        = {Cross-Site Request Forgery Prevention Cheat Sheet},
+  howpublished = {\url{https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html}},
+  note         = {Accessed: 2026-01-24}
+}
+
+@misc{owaspInputValidationCheatSheet,
+  author       = {{OWASP Foundation}},
+  title        = {Input Validation Cheat Sheet},
+  howpublished = {\url{https://cheatsheetseries.owasp.org/cheatsheets/Input_Validation_Cheat_Sheet.html}},
+  note         = {Accessed: 2026-01-24}
+}
+
+@misc{owaspDeserializationCheatSheet,
+  author       = {{OWASP Foundation}},
+  title        = {Deserialization Cheat Sheet},
+  howpublished = {\url{https://cheatsheetseries.owasp.org/cheatsheets/Deserialization_Cheat_Sheet.html}},
+  note         = {Accessed: 2026-01-24}
+}
+
+@misc{owaspFileUploadCheatSheet,
+  author       = {{OWASP Foundation}},
+  title        = {Unrestricted File Upload Cheat Sheet},
+  howpublished = {\url{https://cheatsheetseries.owasp.org/cheatsheets/File_Upload_Cheat_Sheet.html}},
+  note         = {Accessed: 2026-01-24}
+}
+
+@misc{owaspPasswordStorageCheatSheet,
+  author       = {{OWASP Foundation}},
+  title        = {Password Storage Cheat Sheet},
+  howpublished = {\url{https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html}},
+  note         = {Accessed: 2026-01-24}
+}
+
+@misc{owaspLoggingCheatSheet,
+  author       = {{OWASP Foundation}},
+  title        = {Logging Cheat Sheet},
+  howpublished = {\url{https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html}},
+  note         = {Accessed: 2026-01-24}
+}
+
+@misc{owaspLLMTop10_2023,
+  author       = {{OWASP Foundation}},
+  title        = {OWASP Top 10 for Large Language Model Applications},
+  howpublished = {\url{https://owasp.org/www-project-top-10-for-large-language-model-applications/}},
+  year         = {2023},
+  note         = {Accessed: 2026-01-24}
+}
+
+@misc{gdpr2016,
+  author       = {{European Union}},
+  title        = {Regulation (EU) 2016/679 (General Data Protection Regulation)},
+  howpublished = {\url{https://eur-lex.europa.eu/eli/reg/2016/679/oj}},
+  year         = {2016},
+  note         = {Accessed: 2026-01-24}
+}
+
+% ============================
+% Static Analysis and SAST Tooling
+% ============================
+
+@article{bessey2010billion,
+  author  = {Bessey, Al and Block, Ken and Chelf, Ben and Chou, Andy and Fulton, Bryan and Hallem, Seth and Henri-Gros, Charles and Kamsky, Asya and McPeak, Scott and Engler, Dawson},
+  title   = {A Few Billion Lines of Code Later: Using Static Analysis to Find Bugs in the Real World},
+  journal = {Communications of the ACM},
+  year    = {2010},
+  volume  = {53},
+  number  = {2},
+  pages   = {66--75}
+}
+
+@inproceedings{engler2001bugs,
+  author    = {Engler, Dawson and Chen, David Yu and Hallem, Seth and Chou, Andy and Chelf, Benjamin},
+  title     = {Bugs as Deviant Behavior: A General Approach to Inferring Errors in Systems Code},
+  booktitle = {Proceedings of the 18th ACM Symposium on Operating Systems Principles (SOSP)},
+  year      = {2001},
+  pages     = {57--72}
+}
+
+@article{cousot1977abstract,
+  author  = {Cousot, Patrick and Cousot, Radhia},
+  title   = {Abstract Interpretation: A Unified Lattice Model for Static Analysis of Programs by Construction or Approximation of Fixpoints},
+  journal = {Proceedings of the 4th ACM Symposium on Principles of Programming Languages (POPL)},
+  year    = {1977},
+  pages   = {238--252}
+}
+
+@article{chess2004staticanalysis,
+  author  = {Chess, Brian and McGraw, Gary},
+  title   = {Static Analysis for Security},
+  journal = {IEEE Security \& Privacy},
+  year    = {2004},
+  volume  = {2},
+  number  = {6},
+  pages   = {76--79}
+}
+
+@inproceedings{livshits2005java,
+  author    = {Livshits, Benjamin and Lam, Monica S.},
+  title     = {Finding Security Vulnerabilities in Java Applications with Static Analysis},
+  booktitle = {Proceedings of the 14th {USENIX} Security Symposium},
+  year      = {2005}
+}
+
+@misc{semgrepDocs,
+  author       = {{Semgrep, Inc.}},
+  title        = {Semgrep Documentation},
+  howpublished = {\url{https://semgrep.dev/docs/}},
+  note         = {Accessed: 2026-01-24}
+}
+
+@misc{codeqlDocs,
+  author       = {{GitHub}},
+  title        = {CodeQL Documentation},
+  howpublished = {\url{https://codeql.github.com/docs/}},
+  note         = {Accessed: 2026-01-24}
+}
+
+% ============================
+% Neural Vulnerability Detection (Pre-LLM)
+% ============================
+
+@inproceedings{li2018vuldeepecker,
+  author    = {Li, Zhen and Zou, Deqing and Xu, Shouhuai and Jin, Hai and Zhu, Yawei and Chen, Zhaoxuan and Wang, Sujuan},
+  title     = {VulDeePecker: A Deep Learning-Based System for Vulnerability Detection},
   booktitle = {Proceedings of the Network and Distributed System Security Symposium (NDSS)},
-  year      = {2024},
-  address   = {San Diego, CA, USA}
+  year      = {2018}
 }
 
-@article{li2025everything,
-  author  = {Y. Li and others},
-  title   = {Everything You Wanted to Know About LLM-Based Vulnerability Detection But Were Afraid to Ask},
-  journal = {arXiv preprint},
-  year    = {2025}
+@inproceedings{zhou2019devign,
+  author    = {Zhou, Yaqin and Liu, Shangqing and Siow, Jing Kai and Du, Xiaobing and Liu, Yang},
+  title     = {Devign: Effective Vulnerability Identification by Learning Comprehensive Program Semantics via Graph Neural Networks},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
+  year      = {2019}
 }
 
-@article{kaur2025cyberreview,
-  author  = {R. Kaur and T. Klobu{\v{c}}ar and D. Gabrijel{\v{c}}i{\v{c}}},
-  title   = {Harnessing the Power of Language Models in Cybersecurity: A Comprehensive Review},
-  journal = {International Journal of Information Management Data Insights},
-  year    = {2025},
-  volume  = {5}
+@inproceedings{allamanis2018learninggraphs,
+  author    = {Allamanis, Miltiadis and Brockschmidt, Marc and Khademi, Mahmoud},
+  title     = {Learning to Represent Programs with Graphs},
+  booktitle = {Proceedings of the International Conference on Learning Representations (ICLR)},
+  year      = {2018}
 }
 
-@article{gholami2024llmcyber,
-  author  = {Y. Gholami},
-  title   = {Large Language Models (LLMs) for Cybersecurity: A Systematic Review},
-  journal = {World Journal of Advanced Engineering Technology and Sciences},
-  year    = {2024},
-  volume  = {13},
-  number  = {1},
-  pages   = {57--69}
+@inproceedings{alon2019code2vec,
+  author    = {Alon, Uri and Zilberstein, Meital and Levy, Omer and Yahav, Eran},
+  title     = {Code2Vec: Learning Distributed Representations of Code},
+  booktitle = {Proceedings of the ACM on Programming Languages (POPL)},
+  year      = {2019}
 }
+
+% ============================
+% Benchmarks and Datasets
+% ============================
+
+@misc{owaspBenchmark,
+  author       = {{OWASP Foundation}},
+  title        = {OWASP Benchmark Project},
+  howpublished = {\url{https://owasp.org/www-project-benchmark/}},
+  note         = {Accessed: 2026-01-24}
+}
+
+@misc{nistJuliet,
+  author       = {{National Institute of Standards and Technology}},
+  title        = {Juliet Test Suite for {C/C++} and {Java}},
+  howpublished = {\url{https://samate.nist.gov/SARD/test-suites/}},
+  note         = {Accessed: 2026-01-24}
+}
+
+% ============================
+% Automated Program Repair (for Repair Suggestions Context)
+% ============================
+
+@inproceedings{weimer2009genprog,
+  author    = {Weimer, Westley and Nguyen, ThanhVu and Le Goues, Claire and Forrest, Stephanie},
+  title     = {Automatically Finding Patches Using Genetic Programming},
+  booktitle = {Proceedings of the 31st International Conference on Software Engineering (ICSE)},
+  year      = {2009}
+}
+
+@inproceedings{legoues2012genprog,
+  author    = {Le Goues, Claire and Nguyen, ThanhVu and Forrest, Stephanie and Weimer, Westley},
+  title     = {GenProg: A Generic Method for Automatic Software Repair},
+  booktitle = {IEEE Transactions on Software Engineering},
+  year      = {2012},
+  volume    = {38},
+  number    = {1},
+  pages     = {54--72}
+}
+
+@inproceedings{monperrus2014critique,
+  author    = {Monperrus, Martin},
+  title     = {A Critical Review of Automatic Patch Generation Learned from Human-Written Patches: Essay on the Problem Statement and the Evaluation of Automatic Software Repair},
+  booktitle = {Proceedings of the 36th International Conference on Software Engineering (ICSE)},
+  year      = {2014},
+  pages     = {234--242}
+}
+
+@inproceedings{kim2013par,
+  author    = {Kim, Dongsun and Nam, Jaechang and Song, Jaewoo and Kim, Sunghun},
+  title     = {Automatic Patch Generation Learned from Human-Written Patches},
+  booktitle = {Proceedings of the 2013 International Conference on Software Engineering (ICSE)},
+  year      = {2013},
+  pages     = {802--811}
+}
+
+% ============================
+% IDE Integration and Tooling
+% ============================
+
+@misc{vscodeExtensionApi,
+  author       = {{Microsoft}},
+  title        = {Visual Studio Code Extension {API}},
+  howpublished = {\url{https://code.visualstudio.com/api}},
+  note         = {Accessed: 2026-01-24}
+}
+
+@misc{languageServerProtocol,
+  author       = {{Microsoft}},
+  title        = {Language Server Protocol Specification},
+  howpublished = {\url{https://microsoft.github.io/language-server-protocol/}},
+  note         = {Accessed: 2026-01-24}
+}
+
+@misc{ollamaDocs,
+  author       = {{Ollama}},
+  title        = {Ollama Documentation},
+  howpublished = {\url{https://ollama.com/}},
+  note         = {Accessed: 2026-01-24}
+}
+
+@misc{langchainDocs,
+  author       = {{LangChain}},
+  title        = {LangChain Documentation},
+  howpublished = {\url{https://python.langchain.com/}},
+  note         = {Accessed: 2026-01-24}
+}
+
+% ============================
+% Human Factors / UX References
+% ============================
 
 @inproceedings{johnson2013don,
   author    = {B. Johnson and Y. Song and E. Murphy-Hill and R. Bowdidge},
@@ -157,4 +552,69 @@
   publisher = {Morgan Kaufmann},
   year      = {1994},
   address   = {San Francisco, CA, USA}
+}
+
+@article{brooke1996sus,
+  author  = {Brooke, John},
+  title   = {{SUS}: A Quick and Dirty Usability Scale},
+  journal = {Usability Evaluation in Industry},
+  year    = {1996},
+  pages   = {189--194},
+  publisher = {Taylor \& Francis}
+}
+
+@inproceedings{hart1988nasa,
+  author    = {Hart, Sandra G. and Staveland, Lowell E.},
+  title     = {Development of {NASA}-{TLX} (Task Load Index): Results of Empirical and Theoretical Research},
+  booktitle = {Advances in Psychology},
+  year      = {1988},
+  volume    = {52},
+  pages     = {139--183},
+  publisher = {North-Holland}
+}
+
+% ============================
+% OAuth / Security Specs (for background sections if referenced)
+% ============================
+
+@misc{rfc6749,
+  author       = {Hardt, Dick},
+  title        = {The OAuth 2.0 Authorization Framework},
+  howpublished = {RFC 6749},
+  year         = {2012},
+  note         = {\url{https://www.rfc-editor.org/rfc/rfc6749}}
+}
+
+@misc{rfc6819,
+  author       = {Lodderstedt, Torsten and McGloin, Mark and Hunt, Phil},
+  title        = {OAuth 2.0 Threat Model and Security Considerations},
+  howpublished = {RFC 6819},
+  year         = {2013},
+  note         = {\url{https://www.rfc-editor.org/rfc/rfc6819}}
+}
+
+@misc{rfc7636,
+  author       = {Sakimura, Nat and Bradley, John and Jones, Michael and de Medeiros, Breno and Mortimore, Chuck},
+  title        = {Proof Key for Code Exchange by OAuth Public Clients},
+  howpublished = {RFC 7636},
+  year         = {2015},
+  note         = {\url{https://www.rfc-editor.org/rfc/rfc7636}}
+}
+
+% ============================
+% Secure Development Process References
+% ============================
+
+@book{howard2006sdl,
+  author    = {Howard, Michael and Lipner, Steve},
+  title     = {The Security Development Lifecycle},
+  publisher = {Microsoft Press},
+  year      = {2006}
+}
+
+@book{mcgraw2006softwaresecurity,
+  author    = {McGraw, Gary},
+  title     = {Software Security: Building Security In},
+  publisher = {Addison-Wesley},
+  year      = {2006}
 }

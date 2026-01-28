@@ -13,7 +13,7 @@ This requirement is particularly important for vulnerability detection, where an
 
 Retrieval-Augmented Generation supports privacy-preserving operation by decoupling security knowledge from the model parameters and enabling the use of locally maintained knowledge bases. Vulnerability descriptions, secure coding guidelines, and historical examples can be curated and updated locally without requiring cloud-based retrieval or retraining. This design enables timely incorporation of new vulnerability knowledge while preserving data sovereignty.
 
-For evaluation, privacy preservation is assessed through architectural inspection and runtime verification. We verify that no network communication occurs during analysis by monitoring outbound connections and ensuring that all model inference and retrieval operations are confined to local processes. In addition, we assess whether the system functions correctly in offline environments, confirming that detection and repair capabilities do not degrade when network access is unavailable. These checks provide objective evidence that privacy guarantees are upheld in practice.
+For evaluation, privacy preservation is assessed through architectural inspection and runtime verification. We verify that no \emph{external} network communication occurs during analysis by monitoring outbound connections and ensuring that all model inference and retrieval operations are confined to local processes (localhost communication is expected when using a local inference server). In addition, we assess whether the system functions correctly in offline environments, confirming that detection and repair capabilities remain available when network access is unavailable. These checks provide objective evidence that privacy guarantees are upheld in practice.
 
 \begin{table}[h!]
 \centering
@@ -24,7 +24,7 @@ For evaluation, privacy preservation is assessed through architectural inspectio
 \textbf{Privacy Level} & \textbf{Interpretation (example criteria)} \\
 \hline
 High &
-\textbf{Strong privacy guarantees.} All analysis stages run locally, no network communication is observed, and the system functions fully offline without loss of capability. \\
+\textbf{Strong privacy guarantees.} All analysis stages run locally, no outbound communication to external services is observed during analysis (localhost communication is expected), and the system functions offline using cached/baseline knowledge. \\
 \hline
 Medium &
 \textbf{Partial privacy.} Core analysis is local, but auxiliary components (e.g., optional updates or logging) require network access. No source code is transmitted. \\

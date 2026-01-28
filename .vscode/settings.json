@@ -41,5 +41,6 @@
     "*.log",
     "*.out",
     "*.synctex.gz"
-  ]
+  ],
+  "git.ignoreLimitWarning": true
 }

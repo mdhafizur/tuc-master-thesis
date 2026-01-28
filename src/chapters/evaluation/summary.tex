@@ -1,246 +1,30 @@
-\section{Comparative Analysis of Strategies}
-\label{sec:eval-comparative}
+\section{Summary and Discussion}
+\label{sec:eval-summary}
 
-This section compares the four Invox strategies (S1, S2, S3, S4) on the same dataset to identify their relative strengths and trade-offs. All results use few-shot prompting on the original MUC-4 test set (N=100).
+The evaluation framework provides reproducible measurements of detection quality, structured output robustness, and latency for Code Guardian. The curated dataset enables rapid iteration on prompts, retrieval, and output validation, while the model-comparison view supports selecting an appropriate default model for real-time IDE use.
 
-\subsection*{Accuracy Comparison}
+\subsection*{Key Takeaways}
 
-Figure~\ref{fig:strategy-comparison-bar} shows the main performance metrics. S1.1 reaches the highest OBS (0.644) and SF1 (0.642), with low hallucination (HR = 0.180). S4.1 has the highest NES (0.624), meaning it performs best when gold values exist, but its HR is much higher (0.476), indicating it often fills empty fields incorrectly. S2.1 and S3.1 fall between these extremes. The Empty Advantage Index (EAI) shows how much each strategy benefits from correctly leaving fields empty: S1.1 has EAI = 0.140, while S4.1 has negative EAI (-0.044), confirming it relies on filling rather than abstaining.
-\begin{figure}[H]
-\centering
-\begin{tikzpicture}
-  \begin{axis}[
-    width=0.95\textwidth,
-    height=6.5cm,
-    ybar,
-    bar width=7pt,
-    ylabel={Score},
-    ylabel style={font=\small\bfseries},
-    xlabel={Metrics},
-    xlabel style={font=\small\bfseries},
-    symbolic x coords={OBS, NES, EAI, SF1, FDA, HR, MR},
-    xtick=data,
-    xticklabel style={font=\small},
-    ymin=-0.1,
-    ymax=0.8,
-    ytick={-0.1, 0, 0.2, 0.4, 0.6, 0.8},
-    ymajorgrids=true,
-    grid style={line width=0.3pt, draw=gray!30},
-    legend style={
-      at={(0.5,-0.22)},
-      anchor=north,
-      legend columns=2,
-      font=\footnotesize,
-      /tikz/every even column/.append style={column sep=0.4cm}
-    },
-    enlarge x limits=0.12,
-  ]
-  
-  % S1.1: Single-Pass - Blue
-  \addplot[fill=blue!60, draw=blue!80!black] coordinates {
-    (OBS, 0.644) (NES, 0.504) (EAI, 0.140) (SF1, 0.642)
-    (FDA, 0.746) (HR, 0.180) (MR, 0.313)
-  };
-  \addlegendentry{S1.1: Single-Pass}
-  
-  % S2.1: Iterative per-field - Orange
-  \addplot[fill=orange!60, draw=orange!80!black] coordinates {
-    (OBS, 0.619) (NES, 0.555) (EAI, 0.064) (SF1, 0.639)
-    (FDA, 0.718) (HR, 0.301) (MR, 0.267)
-  };
-  \addlegendentry{S2.1: Iterative per-field}
-  
-  % S3.1: Full consensus - Green
-  \addplot[fill=green!60!black, draw=green!80!black] coordinates {
-    (OBS, 0.641) (NES, 0.521) (EAI, 0.120) (SF1, 0.638)
-    (FDA, 0.743) (HR, 0.208) (MR, 0.295)
-  };
-  \addlegendentry{S3.1: Full consensus}
-  
-  % S4.1: Per-field consensus - Red
-  \addplot[fill=red!60, draw=red!80!black] coordinates {
-    (OBS, 0.579) (NES, 0.624) (EAI, -0.044) (SF1, 0.613)
-    (FDA, 0.709) (HR, 0.476) (MR, 0.144)
-  };
-  \addlegendentry{S4.1: Per-field consensus}
-  
-  \end{axis}
-\end{tikzpicture}
-\caption{Performance comparison across four strategies (few-shot, orig MUC-4).}
-\label{fig:strategy-comparison-bar}
-\end{figure}
+\begin{itemize}
+  \item \textbf{R1--R2 (quality and consistency):} Precision/recall trade-offs vary across models; RAG can improve grounding but may introduce latency overhead.
+  \item \textbf{R3 (explainability):} IDE-native rendering (diagnostics, hovers) keeps explanations close to code, but message quality depends on prompt design and knowledge coverage.
+  \item \textbf{R4 (repairs):} Quick fixes are effective as an assistive mechanism when suggestions are minimal and context-appropriate; developer confirmation remains essential.
+  \item \textbf{R5 (privacy):} All source code analysis and model inference remain local; only public vulnerability metadata may be fetched for knowledge updates.
+  \item \textbf{R6 (responsiveness):} Debouncing and caching are critical to keep real-time analysis practical under normal editing patterns.
+\end{itemize}
 
+\subsection*{Limitations}
 
-\subsection*{Cost Comparison}
+The dataset is intentionally small and synthetic; therefore, it may not capture the full diversity of real-world codebases (framework-specific patterns, multi-file flows, and complex validation logic). Future work should include evaluation on larger benchmarks and real repositories, as discussed in Chapter~\ref{chap:future-work}.
 
-Figure~\ref{fig:cost-trend-audio} shows how cost increases with audio duration. All strategies add \$0.006 per minute for Whisper transcription. The base LLM cost varies: S1.1 costs 0.72\textcent, S3.1 costs 1.40\textcent, S2.1 costs 2.18\textcent, and S4.1 costs 4.32\textcent per document (without audio). At 1 minute of audio, S4.1 is 3.7$\times$ more expensive than S1.1.
-\begin{figure}[H]
-\centering
-\begin{tikzpicture}
-  \begin{axis}[
-    width=0.95\textwidth, 
-    height=7cm,
-    xlabel={Audio duration $D$ (minutes)},
-    ylabel={Cost (\textcent/doc)},
-    xlabel style={font=\small},
-    ylabel style={font=\small},
-    xmin=0, xmax=10,
-    ymin=0, ymax=11,
-    grid=both,
-    grid style={line width=0.3pt, draw=gray!30},
-    legend style={at={(0.5,-0.22)}, anchor=north, legend columns=2, font=\footnotesize},
-    domain=0:10,
-    samples=2,
-    tick label style={font=\footnotesize},
-  ]
+\subsection*{Threats to Validity}
 
-  % Removed "mark=*" from all lines
-  \addplot+[thick, no markers, color=blue]  {0.72  + 0.60*x};
-  \addlegendentry{S1.1 (Single-pass)}
+\textbf{Internal validity.} The evaluation harness scores detections at the vulnerability-type level using substring matching between expected and predicted category names. This reduces brittleness to naming variation but can also over-credit partially correct labels (e.g., a broad ``Injection'' label matching multiple injection subclasses). A stricter label ontology or CWE-level normalization would improve precision of the evaluation itself.
 
-  \addplot+[thick, no markers, color=orange] {2.183 + 0.60*x};
-  \addlegendentry{S2.1 (Iterative per-field)}
+\textbf{Construct validity.} Precision/recall and parse success rate measure important properties for IDE integration, but they do not fully capture developer value. In practice, usefulness also depends on (i) localization quality (correct lines), (ii) explanation clarity, and (iii) the security adequacy and minimality of suggested fixes. These are partially addressed through the qualitative case-study structure (Section~\ref{sec:eval-case-studies}) but are not yet quantified.
 
-  \addplot+[thick, no markers, color=green!50!black] {1.395 + 0.60*x};
-  \addlegendentry{S3.1 (Full consensus)}
+\textbf{External validity.} Synthetic snippets are easier than real codebases with frameworks, configuration files, and cross-file flows. Results on the curated datasets should therefore be interpreted as an estimate of core capability under controlled conditions rather than a definitive measure of real-world performance. The most likely failure mode in practice is missing context when only a small scope (e.g., a single function) is analyzed.
 
-  \addplot+[thick, no markers, color=red] {4.32  + 0.60*x};
-  \addlegendentry{S4.1 (Per-field consensus)}
+\subsection*{Reproducibility Notes}
 
-  % Baseline labels
-  \node[anchor=west, font=\tiny] at (axis cs:0.1,0.80) {0.72};
-  \node[anchor=west, font=\tiny] at (axis cs:0.1,2.26) {2.18};
-  \node[anchor=west, font=\tiny] at (axis cs:0.1,1.47) {1.40};
-  \node[anchor=west, font=\tiny] at (axis cs:0.1,4.40) {4.32};
-
-  \end{axis}
-\end{tikzpicture}
-\caption{Cost vs.\ audio duration: $\text{cost}(D)=\text{base}+0.60D$ (\textcent/doc).}
-\label{fig:cost-trend-audio}
-\end{figure}
-
-
-\subsection*{Latency Comparison}
-
-
-\begin{figure}[H]
-\centering
-\begin{tikzpicture}
-  \begin{axis}[
-    width=0.95\textwidth,
-    height=6.5cm,
-    ybar,
-    bar width=7pt,
-    ylabel={Latency (seconds)},
-    ylabel style={font=\small\bfseries},
-    xlabel={Statistics},
-    xlabel style={font=\small\bfseries},
-    symbolic x coords={p50, p90, p95, p99, Mean, Min, Max},
-    xtick=data,
-    xticklabel style={font=\small},
-    ymin=0,
-    ymax=180,
-    ytick={0, 30, 60, 90, 120, 150, 180},
-    ymajorgrids=true,
-    grid style={line width=0.3pt, draw=gray!30},
-    legend style={
-      at={(0.5,-0.22)},
-      anchor=north,
-      legend columns=2,
-      font=\footnotesize,
-      /tikz/every even column/.append style={column sep=0.4cm}
-    },
-    enlarge x limits=0.12,
-  ]
-  
-  % S1.1: Single-Pass - Blue
-  \addplot[fill=blue!60, draw=blue!80!black] coordinates {
-    (p50, 55.91) (p90, 93.01) (p95, 108.40) (p99, 134.93)
-    (Mean, 57.34) (Min, 14.54) (Max, 163.79)
-  };
-  \addlegendentry{S1.1: Single-Pass}
-  
-  % S2.1: Iterative per-field - Orange
-  \addplot[fill=orange!60, draw=orange!80!black] coordinates {
-    (p50, 25.35) (p90, 42.48) (p95, 46.68) (p99, 71.52)
-    (Mean, 28.58) (Min, 13.60) (Max, 80.28)
-  };
-  \addlegendentry{S2.1: Iterative per-field}
-  
-  % S3.1: Full consensus - Green
-  \addplot[fill=green!60!black, draw=green!80!black] coordinates {
-    (p50, 59.39) (p90, 93.15) (p95, 98.77) (p99, 118.28)
-    (Mean, 61.09) (Min, 18.13) (Max, 164.96)
-  };
-  \addlegendentry{S3.1: Full consensus}
-  
-  % S4.1: Per-field consensus - Red
-  \addplot[fill=red!60, draw=red!80!black] coordinates {
-    (p50, 121.81) (p90, 143.39) (p95, 155.16) (p99, 164.08)
-    (Mean, 124.98) (Min, 98.10) (Max, 168.81)
-  };
-  \addlegendentry{S4.1: Per-field consensus}
-  
-  \end{axis}
-\end{tikzpicture}
-\caption{Latency distribution across strategies (seconds).}
-\label{fig:latency-comparison-bar}
-\end{figure}
-
-
-
-\subsection*{Consistency Comparison}
-
-Figure~\ref{fig:consistency-cross-strategy} compares how well each strategy follows the schema format (FPR$_{\text{overall}}$) and maintains consistent writing style (SC$_{\text{macro}}$). The baseline S5 (LangExtract) has perfect format compliance (1.000) because it uses strict validation rules. Among Invox strategies, S1.1 has the highest format score (0.960). For style consistency, S1.1 and S3.1 both reach 0.724, slightly higher than S2.1 (0.683) and S4.1 (0.688).
-
-\begin{figure}[H]
-\centering
-\begin{tikzpicture}
-  \begin{axis}[
-    width=0.95\textwidth,
-    height=5.5cm,
-    ybar=0pt,
-    bar width=12pt,
-    ymin=0, ymax=1.05,
-    ylabel={Score},
-    ylabel style={font=\small},
-    symbolic x coords={S1.1,S2.1,S3.1,S4.1,S5},
-    xtick=data,
-    xticklabel style={font=\small},
-    ymajorgrids=true,
-    grid style={line width=0.3pt, draw=gray!30},
-    legend style={at={(0.5,-0.25)}, anchor=north, legend columns=2, font=\footnotesize},
-    enlarge x limits=0.18,
-    nodes near coords,
-    nodes near coords style={font=\tiny},
-    nodes near coords align={vertical},
-  ]
-    \addplot[fill=gray!35, draw=black!60] coordinates {
-      (S1.1,0.960) (S2.1,0.950) (S3.1,0.920) (S4.1,0.940) (S5,1.000)
-    };
-    \addlegendentry{$\mathrm{FPR}_{\text{overall}}$}
-
-    \addplot[fill=blue!35, draw=blue!70!black] coordinates {
-      (S1.1,0.724) (S2.1,0.683) (S3.1,0.724) (S4.1,0.688) (S5,0.709)
-    };
-    \addlegendentry{$\mathrm{SC}_{\text{macro}}$}
-  \end{axis}
-\end{tikzpicture}
-\caption{Format compliance and style consistency across strategies.}
-\label{fig:consistency-cross-strategy}
-\end{figure}
-
-
-\subsection*{Observed Trade-offs}
-
-The four strategies show clear patterns:
-
-\textbf{S1.1 (Single-LLM Full-Input)} achieves the best overall scores (OBS = 0.644), balancing accuracy, speed (median 55.91s), cost (0.72\textcent), and lowest hallucination (0.180).
-
-\textbf{S2.1 (Single-LLM One-Field)} is fastest (median 25.35s) through parallel processing. Accuracy is slightly lower (OBS = 0.619) with higher hallucination (0.301), but improves location fields.
-
-\textbf{S3.1 (Multi-LLM Full-Input)} runs two models, reducing hallucination (HR = 0.208) and improving NES (0.521 vs.\ 0.504). Speed and cost fall between S1.1 and S2.1.
-
-\textbf{S4.1 (Multi-LLM One-Field)} runs two models per field, achieving highest NES (0.624) and lowest missing rate (0.144), but highest hallucination (0.476). It is slowest (median 121.81s) and most expensive (4.32\textcent).
-
-The main trade-off is filling correctly when values exist (NES, MR) versus abstaining when absent (HR, EAI). S1.1 and S3.1 balance both. S2.1 prioritizes speed. S4.1 prioritizes recall over precision.
+To support reproducibility, the benchmark suite and evaluation harness are kept in the same repository as the prototype. For comparable results across machines, the reported numbers should include the Ollama version, the selected model(s), and hardware characteristics. Where possible, evaluation should be repeated across multiple runs to estimate variability due to runtime effects (warm-up, caching, and transient system load) even under low-temperature decoding.

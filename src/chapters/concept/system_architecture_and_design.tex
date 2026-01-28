@@ -1,178 +1,93 @@
 \section{System Architecture and Design}
 \label{sec:system-architecture}
 
-This section presents the high-level architecture of the privacy-preserving vulnerability detection system using the C4 model, which structures architectural documentation into hierarchical levels: context (system boundaries and external actors), containers (major components and their interactions), and process (dynamic execution flow). These views provide a comprehensive understanding of how the conceptual design translates into a deployable, locally-executed system integrated within Visual Studio Code.
+This section presents the high-level architecture of Code Guardian using C4-style views (context, containers, and process). The goal is to make the privacy boundary and the main data flows explicit: code stays on-device, local inference is performed through a localhost LLM backend, and retrieval (when enabled) is backed by a local knowledge base and vector index.
 
-\subsection{Context View: System Boundaries and External Actors}
+\subsection{Context View: System Boundary and External Interactions}
 \label{subsec:context-view}
 
-The context diagram (Figure~\ref{fig:c4-context}) positions the vulnerability detection system within its operational environment. The system operates entirely locally within the developer's machine, with no external service dependencies, satisfying R5 (privacy-preserving operation).
+Figure~\ref{fig:c4-context} positions Code Guardian within its operational environment. The primary actor is the developer working inside Visual Studio Code. The system executes in the VS Code extension host and communicates with a local LLM backend (Ollama) running on the same machine \cite{ollamaDocs}.
 
-\textbf{Primary users} are software developers working on JavaScript and TypeScript projects who interact with the system through Visual Studio Code. They write code, trigger vulnerability analysis, review security findings, and apply suggested repairs—all within the IDE without leaving their development environment.
-
-\textbf{Local data sources} include:
+\textbf{Local assets.} The core local assets are:
 \begin{itemize}
-\item \textbf{Source code repositories}: Local Git repositories containing JavaScript/TypeScript projects under development
-\item \textbf{Security knowledge base}: Locally stored vulnerability information including CWE descriptions, secure coding guidelines, historical vulnerability examples, and framework-specific security patterns
-\item \textbf{Project metadata}: Package.json files, dependency information, and configuration files that provide context about the codebase
+    \item \textbf{Workspace source code} (JavaScript/TypeScript) being edited.
+    \item \textbf{Local LLM runtime} (Ollama) used for analysis and (optionally) embeddings.
+    \item \textbf{Local security knowledge base} and \textbf{vector index} used for retrieval when RAG is enabled \cite{langchainDocs,malkov2018hnsw}.
+    \item \textbf{Local caches} for analysis results and vulnerability metadata.
 \end{itemize}
 
-\textbf{Local services} consist of:
-\begin{itemize}
-\item \textbf{VS Code Extension Host}: The runtime environment hosting the extension
-\item \textbf{Local LLM Server}: Locally deployed language model (e.g., Ollama, llama.cpp) running on CPU or GPU
-\item \textbf{Vector Database}: Local embedding storage and retrieval system (e.g., FAISS, ChromaDB)
-\item \textbf{TypeScript/JavaScript Parser}: Local AST parsing libraries (Babel, TypeScript Compiler API)
-\end{itemize}
-
-\textbf{Key architectural principle.} All components execute locally on the developer's machine. No source code, analysis results, or intermediate data is transmitted to external services. The system functions fully offline, ensuring privacy, data sovereignty, and reproducibility.
+\textbf{Optional external data.} Code Guardian may optionally fetch \emph{public vulnerability metadata} to refresh the knowledge base (e.g., CVE records from the NVD API). This traffic does not include user source code and can be disabled by running in offline mode. After a refresh, cached knowledge can be reused without network access. This separation preserves the core privacy goal (no source-code exfiltration) while still allowing the knowledge base to evolve over time.
 
 \begin{figure}[H]
   \centering
   \includegraphics[width=1\linewidth]{images/c4_context.drawio.pdf}
-  \caption{Context diagram illustrating the system boundary of the vulnerability detection system and its interactions with local actors including developers, source code repositories, local LLM servers, and security knowledge bases—all operating within the developer's local environment without external dependencies.}
+  \caption{Context diagram: Code Guardian runs locally in the VS Code extension host and calls a local LLM backend. A local knowledge base supports retrieval; optional refresh operations may fetch public vulnerability metadata, but source code remains local.}
   \label{fig:c4-context}
 \end{figure}
 
 \subsection{Container View: Internal Component Structure}
 \label{subsec:container-view}
 
-The container diagram (Figure~\ref{fig:c4-container}) outlines the system's main components and the flow of analysis requests through the architecture.
+Figure~\ref{fig:c4-container} summarizes the main internal containers and their responsibilities.
 
-\textbf{VS Code Extension.} The extension serves as the primary interface between developers and the vulnerability detection system. It:
-\begin{itemize}
-\item Registers file save events to trigger inline detection
-\item Provides command palette commands for on-demand analysis
-\item Displays diagnostics, hover information, and quick fixes
-\item Manages user configuration and settings
-\item Coordinates communication between VS Code API and backend services
-\end{itemize}
+\textbf{VS Code extension host.} The extension is responsible for registering editor triggers, extracting analysis scopes, and rendering results using VS Code diagnostics and WebViews \cite{vscodeExtensionApi}. It provides commands for file analysis, selection analysis, contextual Q\&A, model selection, cache inspection, and workspace scanning.
 
-\textbf{Context Extraction Service.} This component parses JavaScript and TypeScript source files to extract security-relevant context. It uses:
-\begin{itemize}
-\item Babel parser for JavaScript AST generation
-\item TypeScript Compiler API for TypeScript analysis
-\item Custom data flow trackers to identify source-to-sink paths
-\item Control flow analyzers to detect validation checks and guards
-\end{itemize}
+\textbf{Structured diagnostics pipeline.} For real-time and file-level diagnostics, the extension invokes a JSON-only analyzer that returns a list of issues with line ranges and optional fixes. These results are mapped into VS Code diagnostics and quick fixes. A bounded analysis cache reduces redundant LLM calls for unchanged snippets.
 
-Output includes structured code representations (AST, data flows, control flows) and semantic metadata (imports, type information, API usage).
+\textbf{Interactive analysis pipeline.} For selection analysis and contextual Q\&A, the extension opens a WebView panel and streams Markdown-formatted responses from the local model. This mode supports conversational follow-up and can incorporate retrieved knowledge when RAG is enabled.
 
-\textbf{Knowledge Retrieval Service (RAG).} The RAG component manages the local security knowledge base and performs semantic retrieval. It:
-\begin{itemize}
-\item Maintains indexed CWE descriptions, secure coding guidelines, and vulnerability examples
-\item Embeds code context using sentence transformers (e.g., all-MiniLM-L6-v2)
-\item Performs vector similarity search using cosine distance
-\item Returns top-$k$ most relevant security knowledge entries
-\end{itemize}
-
-The knowledge base is pre-indexed offline and stored in a local vector database. Retrieval occurs entirely on the developer's machine without network access.
-
-\textbf{Vulnerability Detection Service.} This service performs LLM-based security analysis using locally deployed models. It:
-\begin{itemize}
-\item Constructs prompts combining code context and retrieved security knowledge
-\item Invokes local LLM server (e.g., Ollama API, llama.cpp HTTP server)
-\item Parses structured JSON output containing vulnerability findings
-\item Validates and normalizes detection results
-\end{itemize}
-
-Model selection (e.g., CodeLlama-7B for inline, CodeLlama-13B for comprehensive) is configurable based on available hardware and latency requirements.
-
-\textbf{Repair Generation Service.} When developers request fixes, this component:
-\begin{itemize}
-\item Retrieves repair patterns from the knowledge base matching the CWE category
-\item Constructs repair prompts with vulnerability details and code context
-\item Invokes local LLM to generate context-appropriate fixes
-\item Validates generated repairs for syntactic correctness
-\item Formats repairs as VS Code code actions
-\end{itemize}
-
-\textbf{Data Stores.} The system maintains three local data stores:
-\begin{itemize}
-\item \textbf{Vector Index}: Embedded security knowledge (CWE, guidelines, examples) for semantic retrieval
-\item \textbf{Knowledge Base}: Raw text documents containing vulnerability information
-\item \textbf{Cache}: Recently analyzed code contexts and results to avoid redundant processing
-\end{itemize}
-
-\textbf{End-to-end flow.} Analysis requests flow from the VS Code extension through context extraction, knowledge retrieval, and vulnerability detection, with results returned as diagnostics displayed in the IDE. All processing occurs locally without external communication.
+\textbf{RAG manager and data manager.} When enabled, the RAG manager maintains a local knowledge base (serialized entries) and a persistent vector store. A vulnerability data manager refreshes public metadata (CWE-/OWASP-aligned curated entries and optional CVE/advisory sources) and caches results on disk. The vector store is rebuilt or updated based on the knowledge base content.
 
 \begin{sidewaysfigure}
   \centering
   \includegraphics[width=1\linewidth]{images/c4_container.drawio.pdf}
-  \caption{Container diagram illustrating how analysis requests move through the system's internal services—Context Extraction, Knowledge Retrieval (RAG), Vulnerability Detection, and Repair Generation—and how these components interact with local LLM servers, vector databases, and the VS Code Extension Host, all executing within the developer's local environment.}
+  \caption{Container diagram: The VS Code extension orchestrates context extraction, local LLM analysis, optional retrieval augmentation, and IDE-native rendering. Knowledge and caches are stored locally; optional knowledge refreshes fetch only public metadata.}
   \label{fig:c4-container}
 \end{sidewaysfigure}
 
-\subsection{Process View: Workflow and Decision Logic}
+\subsection{Process View: End-to-End Workflows}
 \label{subsec:process-view}
 
-The process diagram (Figure~\ref{fig:bpmn}) illustrates the dynamic execution flow for vulnerability detection and repair workflows.
+Figure~\ref{fig:bpmn} illustrates the dynamic execution flow for the main workflows.
 
-\textbf{Inline Detection Workflow:}
+\textbf{Real-time diagnostics (function scope).}
 \begin{enumerate}
-\item Developer saves a JavaScript/TypeScript file in VS Code
-\item Extension detects save event and triggers analysis after 500ms debounce
-\item Context Extraction Service parses modified code regions only (incremental analysis)
-\item Knowledge Retrieval performs focused search with top-3 results
-\item Vulnerability Detection analyzes using fast model (CodeLlama-7B)
-\item Results are returned as diagnostics and displayed as inline annotations
-\item Total latency target: < 2 seconds (p95)
+    \item A JavaScript/TypeScript document change event occurs in the active editor.
+    \item After a debounce interval (800\,ms), the extension extracts the innermost enclosing function at the cursor.
+    \item If the extracted scope is within size limits, the local analyzer is invoked and required to return a JSON array of findings.
+    \item Findings are parsed defensively, cached, mapped to document ranges, and rendered as diagnostics. Optional \texttt{suggestedFix} strings are surfaced as quick fixes.
 \end{enumerate}
 
-\textbf{Comprehensive Analysis Workflow:}
+\textbf{On-demand file diagnostics.}
 \begin{enumerate}
-\item Developer invokes "Analyze File for Vulnerabilities" command
-\item Context Extraction performs full file analysis (AST, data flow, control flow)
-\item Knowledge Retrieval searches with multiple queries (file-level, function-level, data-flow-level)
-\item Vulnerability Detection analyzes using larger model (CodeLlama-13B/34B) with extended context
-\item Cross-function vulnerability detection identifies multi-file security issues
-\item Comprehensive report is generated and displayed in Problems panel
-\item Total latency: 10-60 seconds depending on file size and model
+    \item The developer invokes the ``analyze full file'' command.
+    \item The full document text is analyzed (subject to a size guard).
+    \item Findings are mapped to diagnostics and rendered in the editor.
 \end{enumerate}
 
-\textbf{Repair Suggestion Workflow:}
+\textbf{Interactive analysis (selection) and contextual Q\&A.}
 \begin{enumerate}
-\item Developer selects a detected vulnerability and requests fix
-\item System retrieves repair patterns matching the CWE category
-\item Repair context is assembled (vulnerability details, surrounding code, guidelines)
-\item Local LLM generates context-specific repair suggestion
-\item Syntax validation ensures generated code is valid JavaScript/TypeScript
-\item Repair is presented as code action with diff preview
-\item Developer reviews and applies fix
-\item Automatic re-analysis verifies vulnerability is resolved
+    \item The developer selects code (or context files/folders) and asks a security question.
+    \item The extension collects the selected context locally and opens a WebView panel.
+    \item The local model streams Markdown-formatted responses; follow-up questions extend the conversation history.
+    \item When enabled, retrieved security knowledge can be injected into prompts to ground explanations.
 \end{enumerate}
 
-\textbf{Decision logic.} The system includes several decision points:
-\begin{itemize}
-\item \textbf{Model selection}: Choose fast vs. accurate model based on analysis mode (inline vs. comprehensive)
-\item \textbf{Retrieval depth}: Adjust number of retrieved knowledge entries (3 for inline, 5+ for comprehensive)
-\item \textbf{Analysis scope}: Incremental (changed regions only) vs. full file analysis
-\item \textbf{Caching}: Reuse extracted context if file changes are minimal
-\item \textbf{Confidence thresholds}: Filter low-confidence detections in inline mode, show all in comprehensive mode
-\end{itemize}
+\textbf{Workspace scan and dashboard.}
+\begin{enumerate}
+    \item The developer starts a workspace scan from the command palette.
+    \item The scanner enumerates JS/TS files, excluding dependencies, and skips very large files.
+    \item Each file is analyzed locally; issues are aggregated and summarized by severity heuristics and issue density.
+    \item Results are shown in a dashboard WebView, which can open files directly and trigger rescans.
+\end{enumerate}
 
-\textbf{Error handling.} The system handles various failure modes:
-\begin{itemize}
-\item \textbf{LLM unavailable}: Display error notification, suggest checking local LLM server
-\item \textbf{Parsing errors}: Skip analysis for files with syntax errors, show warning
-\item \textbf{Timeout}: Cancel long-running analyses, allow user retry with different model
-\item \textbf{Invalid output}: Fallback to pattern-based detection if LLM returns malformed JSON
-\end{itemize}
-
-\textbf{Privacy guarantees.} Throughout all workflows:
-\begin{itemize}
-\item No network requests are made to external services
-\item All analysis occurs on local CPU/GPU
-\item Source code never leaves the developer's machine
-\item Knowledge base and models are stored and accessed locally
-\item System functions identically in offline environments
-\end{itemize}
+\textbf{Privacy considerations in the process view.} Across all workflows, source code is sent only to the local LLM backend on \texttt{localhost}. Optional knowledge refresh operations fetch only public metadata and are cached; disabling refresh yields a fully offline analysis mode.
 
 \begin{sidewaysfigure}
   \centering
   \includegraphics[width=\linewidth]{images/bpmn_process_flow.pdf}
-  \caption{BPMN diagram illustrating the end-to-end workflow of vulnerability detection including inline detection, comprehensive analysis, and repair suggestion workflows, showing the decision logic governing model selection, retrieval depth, caching strategies, and privacy-preserving local execution.}
+  \caption{Process view: debounced real-time function analysis, on-demand file analysis, interactive analysis/Q\&A, and workspace scanning. The privacy boundary is maintained by keeping code on-device and using local inference.}
   \label{fig:bpmn}
 \end{sidewaysfigure}
 
-This section has presented the system architecture across three levels of abstraction. The context view establishes that all components operate locally within the developer's environment. The container view details the modular component structure and data flow. The process view illustrates dynamic execution workflows for different analysis modes. Together, these views demonstrate how the conceptual design translates into a practical, privacy-preserving, IDE-integrated vulnerability detection system that satisfies all six requirements (R1--R6) established in the analysis chapter.
+These architecture views make explicit how Code Guardian operationalizes the conceptual design: modular responsibilities, local inference as the default deployment, optional retrieval grounding, and IDE-native presentation with developer-controlled remediation.

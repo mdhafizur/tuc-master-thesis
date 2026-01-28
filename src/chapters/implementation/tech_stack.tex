@@ -1,38 +1,24 @@
 \section{Technology Stack and Rationale}
 \label{sec:tech-stack}
 
-Implementation of the \textit{Invox} system follows a modular monolith architecture that balances development simplicity with operational flexibility. A single Node.js application hosts all five agents, while specialized services—such as vector search, embedding generation, and external LLMs—operate externally. This hybrid approach preserves modular boundaries without incurring the operational overhead typical of fully distributed microservices \cite{fowler2015monolith,microservices_newman}.
+Code Guardian is implemented as a Visual Studio Code extension that performs security analysis and repair suggestion \emph{locally} on the developer machine. The design goal is to integrate vulnerability detection into the IDE workflow while maintaining a strict \textit{no source-code exfiltration} property (R5) and practical responsiveness for interactive use (R6).
 
-\subsection*{Architecture Pattern: Modular Monolith with External Services}
+\subsection*{VS Code Extension (TypeScript)}
 
-Invox adopts a modular monolith pattern in which the STT, RAG, IE, CF, and VER agents are implemented as cohesive modules within one Node.js service. This yields a unified codebase, consistent versioning, simplified debugging, and low-latency in-process communication. Clear module interfaces maintain separation of concerns despite co-location.
+The extension is implemented in \textbf{TypeScript} using the VS Code Extension API \cite{vscodeExtensionApi}. Core responsibilities include registering editor events (on-change and on-command triggers), mapping analysis findings to VS Code diagnostics, and exposing quick fixes through code actions. The extension also provides two WebView-based interfaces: an interactive analysis view for selected code and a workspace security dashboard that aggregates findings across the project. Where IDE integration benefits from standardized editor tooling, the Language Server Protocol provides a relevant reference point for diagnostics-style interactions in modern IDEs \cite{languageServerProtocol}.
 
-External components are used where the benefits are decisive. \textbf{OpenSearch} provides vector similarity search; a dedicated embedding service generates domain-relevant vectors; and LLM providers (OpenAI, Google) perform model inference. This division allows the core pipeline to remain lightweight while delegating specialized computation to optimized services.
+\subsection*{Local LLM Inference via Ollama}
 
-\subsection*{Containerization and Deployment}
+All model inference is performed through \textbf{Ollama} running on \texttt{localhost:11434} \cite{ollamaDocs}. Code Guardian supports multiple local code models (e.g., Qwen2.5-Coder, CodeLlama) and allows switching models at runtime through settings. Requests are configured for low-temperature decoding to improve determinism and schema adherence, and retry logic with exponential backoff is applied to handle transient failures (e.g., model warm-up, timeouts).
 
-Deployment relies on \textbf{Docker} to ensure reproducibility, isolation, and consistent behavior across environments. Containers encapsulate dependencies, simplify distribution, and enable horizontal scaling by replicating services. \textbf{Docker Compose} orchestrates the multi-service environment, coordinating the main application alongside OpenSearch and auxiliary components.
+\subsection*{Retrieval-Augmented Generation (RAG)}
 
-\subsection*{Backend Implementation}
+Optional RAG is implemented with \textbf{LangChain} and a local vector index \cite{langchainDocs}. Security knowledge entries (CWE patterns, OWASP Top 10 guidance, selected CVE summaries, and JavaScript/TypeScript secure coding notes) are embedded using a lightweight local embedding model (\texttt{nomic-embed-text} via Ollama) and stored in an \textbf{HNSW} vector store. At analysis time, relevant knowledge snippets are retrieved and injected into the prompt to ground the model’s reasoning and reduce hallucinations (R1--R3).
 
-Backend development is carried out in \textbf{Node.js} with \textbf{Express}, providing an adaptable foundation for the multi-agent workflow. LLM invocation is abstracted through the \textbf{Vercel AI SDK}, which enables a plugin-like architecture for switching between OpenAI, Google, Anthropic, and future providers with minimal changes. Type-safe communication between backend and frontend is achieved using \textbf{tRPC}, with \textbf{JSON} as the shared data format for inter-agent communication.
+\subsection*{Dynamic Vulnerability Knowledge Updates}
 
-\subsection*{External Service Integration}
+The knowledge base is designed to be refreshable. Code Guardian supports updating OWASP and CVE information and persists cached data on disk. Importantly, only public vulnerability metadata is fetched; source code and extracted context remain local.
 
-\textbf{OpenSearch} acts as the vector index for the RAG agent, storing dense embeddings and enabling efficient retrieval of semantically related examples. Vector indexing significantly accelerates similarity search and supports context-rich extraction. Embeddings are generated using the \texttt{intfloat/multilingual-e5-large-instruct} model (1024 dimensions), selected for its strong multilingual performance and favorable trade-off between accuracy and computational cost. This model provides robust semantic representations for diverse input conditions.
+\subsection*{Performance Mechanisms}
 
-\subsection*{Frontend Interface}
-
-The user interface is built in \textbf{React}, chosen for its wide adoption, strong ecosystem, and suitability for building interactive components that match the system’s modular structure. React's predictable rendering model ensures responsive interactions when reviewing extracted fields and modifying templates. 
-
-\subsection*{Data Persistence and Retrieval}
-
-Persistent storage is managed by \textbf{PostgreSQL}, which offers strong consistency, reliability, and efficient querying for structured data. Finalized templates are stored relationally, while OpenSearch serves as the retrieval layer for RAG by indexing dense vector embeddings. This combination provides both robust persistence and high-quality semantic search.
-
-\subsection*{Authentication and Security}
-
-Authentication and authorization are handled by \textbf{Keycloak}, which supports OAuth2 and OpenID Connect \cite{rfc6749}. Role-based policies ensure that only authorized users can submit, review, or modify templates, supporting secure multi-user workflows.
-
-\subsection*{Architecture Rationale}
-
-A modular monolith provides a pragmatic balance between maintainability, performance, and future extensibility. It avoids the operational complexity of microservices while retaining clear module boundaries. The plugin-based LLM integration ensures adaptability as new models become available, and containerized deployment guarantees reproducibility and reliability across environments. Together, these choices provide a scalable and future-proof foundation for \textit{Invox}.
+To support near-real-time feedback, the system uses (i) debounced analysis triggers during editing, (ii) a lightweight function-level analysis mode for continuous feedback, and (iii) an LRU-style analysis cache that avoids repeated model calls for unchanged snippets. These mechanisms directly support R6 while keeping the user experience consistent.
