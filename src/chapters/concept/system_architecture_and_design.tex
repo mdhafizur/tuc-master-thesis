@@ -20,7 +20,7 @@ Figure~\ref{fig:c4-context} positions Code Guardian within its operational envir
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=1\linewidth]{images/c4_context.drawio.pdf}
+  \safeincludegraphics[width=1\linewidth]{images/c4_context.drawio.pdf}
   \caption{Context diagram: Code Guardian runs locally in the VS Code extension host and calls a local LLM backend. A local knowledge base supports retrieval; optional refresh operations may fetch public vulnerability metadata, but source code remains local.}
   \label{fig:c4-context}
 \end{figure}
@@ -40,7 +40,7 @@ Figure~\ref{fig:c4-container} summarizes the main internal containers and their 
 
 \begin{sidewaysfigure}
   \centering
-  \includegraphics[width=1\linewidth]{images/c4_container.drawio.pdf}
+  \safeincludegraphics[width=1\linewidth]{images/c4_container.drawio.pdf}
   \caption{Container diagram: The VS Code extension orchestrates context extraction, local LLM analysis, optional retrieval augmentation, and IDE-native rendering. Knowledge and caches are stored locally; optional knowledge refreshes fetch only public metadata.}
   \label{fig:c4-container}
 \end{sidewaysfigure}
@@ -85,7 +85,7 @@ Figure~\ref{fig:bpmn} illustrates the dynamic execution flow for the main workfl
 
 \begin{sidewaysfigure}
   \centering
-  \includegraphics[width=\linewidth]{images/bpmn_process_flow.pdf}
+  \safeincludegraphics[width=\linewidth]{images/bpmn_process_flow.pdf}
   \caption{Process view: debounced real-time function analysis, on-demand file analysis, interactive analysis/Q\&A, and workspace scanning. The privacy boundary is maintained by keeping code on-device and using local inference.}
   \label{fig:bpmn}
 \end{sidewaysfigure}

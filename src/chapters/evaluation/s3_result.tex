@@ -1,34 +1,34 @@
 \section{Model Comparison and Category Breakdown}
 \label{sec:eval-models}
 
-Code Guardian supports multiple local models through Ollama. In practice, model choice affects not only detection quality but also structured-output robustness and latency. This section outlines how results can be analyzed by model and by vulnerability category.
+Code Guardian supports multiple local models through Ollama. In practice, model choice affects not only detection quality but also structured-output robustness and latency. This section summarizes the measured ablation results and category-level behavior observed in the run logs.
 
-\subsection*{Model Ranking}
+\subsection*{Ablation Comparison}
 
-Using the evaluation harness, models can be ranked by F1 score subject to a minimum JSON parse success threshold (e.g., $\geq 90\%$). This avoids selecting a high-F1 model that frequently produces malformed output, which would harm IDE integration.
-
-\subsection*{Per-Category Performance}
-
-Different vulnerability types can exhibit different error profiles. For example, injection sinks are often easy to detect but harder to localize precisely; configuration-level issues (e.g., CORS) can be detected but tend to yield higher false positives without context. Table~\ref{tab:eval-per-category} provides a template for reporting category-wise results.
+Table~\ref{tab:eval-ablation-summary} compares all measured model/prompt-mode combinations. In this run, all configurations achieved 100\% parse success.
 
 \begin{table}[H]
   \centering
-  \caption{Per-category performance (fill with measured values).}
-  \label{tab:eval-per-category}
-  \begin{tabular}{lccc}
-    \toprule
-    Category & Precision (\%) & Recall (\%) & F1 (\%) \\
-    \midrule
-    Injection (SQL/XSS/Command) & -- & -- & -- \\
-    Path traversal / file ops & -- & -- & -- \\
-    Authentication / authorization & -- & -- & -- \\
-    Cryptography / randomness & -- & -- & -- \\
-    Web security (CORS/CSRF/Open redirect) & -- & -- & -- \\
-    Other & -- & -- & -- \\
-    \bottomrule
-  \end{tabular}
+  \caption{Ablation summary across model and prompt mode.}
+  \label{tab:eval-ablation-summary}
+  \resizebox{\textwidth}{!}{%
+  \begin{tabular}{lccccc}
+      \toprule
+      Configuration & Precision (\%) & Recall (\%) & F1 (\%) & FPR (\%) & Median (ms) \\
+      \midrule
+      \texttt{gemma3:1b} (LLM-only) & 100.00 & 5.56 & 10.53 & 0.00 & 184 \\
+      \texttt{gemma3:1b} (LLM+RAG) & 0.00 & 0.00 & 0.00 & 0.00 & 182 \\
+      \texttt{qwen3-coder} (LLM-only) & 19.05 & 44.44 & 26.67 & 100.00 & 1099 \\
+      \texttt{qwen3-coder} (LLM+RAG) & 27.27 & 55.56 & 36.59 & 100.00 & 1060 \\
+      \bottomrule
+    \end{tabular}%
+  }
 \end{table}
+
+\subsection*{Per-Category Observations}
+
+Based on detailed run logs, injection-style cases (SQL injection, XSS, command injection, NoSQL injection) were more frequently detected by \texttt{qwen3-coder}. Categories with broader or less stable label naming (e.g., authentication, randomness, XXE, race-condition related cases) showed more mismatches between expected and predicted labels, which reduced scored precision despite plausible security commentary. Secure samples also triggered frequent ``advisory'' findings for \texttt{qwen3-coder}, which explains the 100\% false-positive rate in this run.
 
 \subsection*{Interpretation}
 
-This breakdown supports targeted improvements: categories with low precision motivate tighter prompting and better abstention behavior; categories with low recall motivate broader context extraction and stronger retrieval coverage. These findings also inform the selection of different default models for real-time vs.\ audit usage.
+These results motivate two practical follow-ups: tighter output contracts to improve abstention on secure samples, and stricter label normalization (e.g., CWE-level mapping) so semantically similar labels are scored consistently. They also support differentiated defaults: a fast conservative model for inline checks and a higher-recall model for audit mode.

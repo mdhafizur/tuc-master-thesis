@@ -29,8 +29,29 @@ The overarching objective of this thesis is to design and evaluate an IDE-integr
 
 This thesis focuses on IDE-integrated security assistance for \textbf{JavaScript and TypeScript} codebases inside \textbf{Visual Studio Code}. The central privacy objective is \textbf{no source-code exfiltration}: analyzed code and IDE-derived context are sent only to a local LLM runtime. The system may optionally refresh its local security knowledge base from \emph{public} vulnerability metadata sources (e.g., CVE/NVD descriptions); this does not transmit user code and can be disabled for fully offline operation.
 
-\paragraph{Threat model (privacy and integrity).}
-The primary threat is unintended disclosure of proprietary code when using cloud-hosted assistants. Local inference reduces this exposure surface, but it does not eliminate all risks: the developer machine must still be trusted, prompts may contain sensitive data if logged locally, and LLM-based systems are susceptible to prompt-injection style attacks where attacker-controlled text attempts to override analysis instructions \cite{owaspLLMTop10_2023}. This thesis therefore emphasizes clear privacy boundaries, explicit output contracts for automation, and developer-controlled remediation rather than fully autonomous patching.
+\subsection*{Threat Model and Trust Assumptions}
+
+The primary threat addressed by this thesis is unintended disclosure of proprietary code through cloud-hosted analysis services. Local inference reduces this exposure surface, but does not remove all security risks.
+
+\begin{table}[H]
+  \centering
+  \caption{Threat model summary for Code Guardian.}
+  \label{tab:intro-threat-model}
+  \footnotesize
+  \renewcommand{\arraystretch}{1.15}
+  \begin{tabularx}{\textwidth}{p{0.19\textwidth}p{0.28\textwidth}X}
+    \toprule
+    Threat class & Assumption / attack path & Design response in this thesis \\
+    \midrule
+    Source-code exfiltration & External API calls could expose proprietary code or derived context. & Local inference only; code and prompts sent to localhost backend; no code upload in evaluated workflows. \\
+    Prompt injection & Attacker-controlled comments/strings try to override analysis instructions \cite{owaspLLMTop10_2023}. & Strict JSON-output contract in diagnostic mode; defensive parsing; human review before any repair is applied. \\
+    Retrieval poisoning & Low-quality or malicious knowledge entries degrade grounding quality. & Use curated local knowledge sources and explicit retrieval scope; future work adds provenance scoring and stricter source controls. \\
+    Local host compromise & Malware or untrusted local users can access code, prompts, or caches. & Out of scope for this thesis; assumes trusted developer machine and OS-level hardening. \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+In scope are privacy-preserving inference boundaries and robustness of developer-facing outputs. Out of scope are full endpoint hardening, hardware-level attacks, and enterprise identity/network controls.
 
 \section{Contributions}
 \label{sec:intro-contributions}

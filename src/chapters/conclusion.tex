@@ -14,6 +14,37 @@ To remain usable during development, Code Guardian combines debounced triggers, 
 \textbf{Reproducible evaluation harness.}
 The prototype includes a curated benchmark of security test cases and a local evaluation script for comparing models and configurations using standard detection metrics, parse robustness, and latency.
 
+\section{Answers to Research Questions}
+
+\textbf{RQ1 (Feasibility).}
+The thesis supports feasibility with caveats. Code Guardian demonstrates that useful vulnerability analysis and repair suggestions can be generated inside VS Code using fully local inference, satisfying the no-code-exfiltration objective. However, practical usefulness depends on selecting a model profile that matches the deployment context (interactive editing vs.\ audit workflows).
+
+\textbf{RQ2 (Grounding).}
+Retrieval augmentation is beneficial only under model-dependent conditions. In this run, RAG improved detection quality for \texttt{qwen3-coder} (higher recall/F1) but reduced \texttt{gemma3:1b} to zero true positives. Grounding should therefore be treated as a tunable strategy rather than a universally positive default.
+
+\textbf{RQ3 (Practicality).}
+IDE practicality is achievable when inference is constrained by function-level scoping, debounced triggers, and caching. These mechanisms keep local analysis responsive for small models, while larger models remain better suited to on-demand scans where higher latency is acceptable.
+
+\section{Deployment Implications}
+
+Table~\ref{tab:conclusion-deployment-profiles} summarizes pragmatic deployment choices based on the measured trade-offs.
+
+\begin{table}[H]
+  \centering
+  \caption{Recommended deployment profiles from thesis results.}
+  \label{tab:conclusion-deployment-profiles}
+  \small
+  \begin{tabularx}{\textwidth}{p{0.19\textwidth}p{0.22\textwidth}XX}
+    \toprule
+    Use case & Preferred configuration & Main advantage & Main risk \\
+    \midrule
+    Real-time editor feedback & \texttt{gemma3:1b} (LLM-only) & Very low latency (about 180--200 ms median) & Misses many vulnerabilities (low recall) \\
+    Focused security audit pass & \texttt{qwen3-coder} (LLM+RAG) & Highest recall/F1 among tested modes & High alert noise on secure samples \\
+    Conservative CI gate (current state) & Not recommended as sole gate & Fast local execution and strong privacy boundary & Recall/FPR trade-offs are too extreme for autonomous blocking decisions \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
 \section{Limitations}
 
 \textbf{Scope limits and contextual depth.}
@@ -25,6 +56,14 @@ The curated dataset is intentionally small and human-auditable, but it does not 
 \textbf{Repair correctness.}
 Repair suggestions are model-generated and may affect behavior beyond security hardening. The system mitigates this by requiring explicit user review, but comprehensive functional validation remains outside the scope of the extension.
 
+\section{Responsible Use}
+
+This thesis treats Code Guardian as a decision-support system, not an autonomous security verifier. Both false negatives and false positives were observed, and some findings used semantically plausible but ontology-mismatched labels. For this reason, findings and repair suggestions should remain reviewable artifacts under developer control, with conventional testing and security review retained as mandatory safeguards before release.
+
 \section{Conclusion}
 
-Privacy-preserving secure coding assistance is feasible within the IDE when local LLM inference is combined with careful prompt structuring, optional retrieval grounding, and developer-controlled remediation workflows. Code Guardian demonstrates that locally deployed LLMs can provide actionable vulnerability detection and repair suggestions without transmitting source code off-device, while remaining compatible with interactive development constraints.
+Privacy-preserving secure coding assistance is feasible within the IDE when local LLM inference is combined with careful prompt structuring, optional retrieval grounding, and developer-controlled remediation workflows. The evaluation shows a clear quality-latency trade-off: in this setup, \texttt{gemma3:1b} remained fast (roughly 180--200 ms median) but had very low recall, while \texttt{qwen3-coder} achieved materially higher recall/F1 at around 1.0--1.5 s median latency.
+
+The results also show that retrieval augmentation is not universally beneficial; its effect is model-dependent. In this study, RAG improved \texttt{qwen3-coder} recall/F1 but reduced \texttt{gemma3:1b} to zero true positives. This indicates that RAG integration must be calibrated per model and prompt format, not assumed to improve security detection by default.
+
+Overall, Code Guardian demonstrates that locally deployed LLMs can provide useful vulnerability detection and repair suggestions without transmitting source code off-device, but practical deployment requires explicit configuration choices for model class, latency budget, and acceptable false-positive behavior.

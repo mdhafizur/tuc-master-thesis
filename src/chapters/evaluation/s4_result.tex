@@ -1,18 +1,20 @@
 \section{Qualitative Case Studies and Repair Suggestions}
 \label{sec:eval-case-studies}
 
-Quantitative metrics summarize overall detection behavior, but IDE usefulness also depends on explanation clarity and repair quality. This section reports qualitative observations from representative cases.
+Quantitative metrics summarize overall detection behavior, but IDE usefulness also depends on explanation clarity and repair quality. This section reports qualitative observations from representative cases in the recorded ablation run.
 
-\subsection*{Case Study Structure}
+\subsection*{Representative Cases}
 
-For each selected example, the analysis documents:
-\begin{itemize}
-  \item the vulnerable code fragment and its location,
-  \item the reported vulnerability type and message,
-  \item whether the finding is a true positive or false positive,
-  \item the suggested fix (if present) and whether it addresses the root cause,
-  \item any trade-offs or functional impacts introduced by the fix.
-\end{itemize}
+\textbf{Case A (True Positive with direct remediation): SQL injection.}
+Sample ID: \texttt{sql-injection-1}.
+Both \texttt{qwen3-coder} modes consistently flagged direct string concatenation in the query and suggested parameterized queries. The suggested remediation aligned with the expected fix and was minimal.
+
+\textbf{Case B (False Positive on secure sample): parameterized query.}
+Sample ID: \texttt{secure-code-1}.
+For \texttt{qwen3-coder}, the secure sample was repeatedly flagged as SQL injection despite use of a parameterized query. This illustrates an over-warning failure mode that harms developer trust during normal coding.
+
+\textbf{Case C (Label mismatch): XXE and authentication-related cases.}
+Several detections produced security-relevant explanations but used labels that did not match expected categories (e.g., broad or alternate vulnerability names). These were scored as false positives/false negatives in the harness and reduced measured precision.
 
 \subsection*{Repair Suggestion Quality (R4)}
 
@@ -27,12 +29,32 @@ Because Code Guardian operates inside the IDE, repair suggestions are intentiona
 
 \subsection*{Observed Failure Modes}
 
-Common failure modes to track include:
+Observed failure modes in the run include:
 \begin{itemize}
-  \item \textbf{Over-warning:} benign patterns flagged without sufficient evidence (precision loss).
-  \item \textbf{Under-warning:} vulnerabilities missed when the relevant context lies outside the analyzed scope (recall loss).
-  \item \textbf{Inexact localization:} correct type but wrong line range.
-  \item \textbf{Overconfident fixes:} suggested patch changes behavior beyond security hardening.
+  \item \textbf{Over-warning:} secure patterns flagged as vulnerable, especially by the larger model.
+  \item \textbf{Under-warning:} conservative configurations (notably \texttt{gemma3:1b} with RAG) missing most vulnerable samples.
+  \item \textbf{Label drift:} semantically plausible detections mapped to non-matching category labels during scoring.
+  \item \textbf{Over-extended advice:} some suggestions include broader code-quality guidance beyond the minimal security fix.
 \end{itemize}
+
+\subsection*{Error Taxonomy from Run Logs}
+
+\begin{table}[H]
+  \centering
+  \caption{Observed error taxonomy in the ablation run.}
+  \label{tab:eval-error-taxonomy}
+  \footnotesize
+  \renewcommand{\arraystretch}{1.15}
+  \begin{tabular}{p{0.28\textwidth}p{0.30\textwidth}p{0.30\textwidth}}
+    \toprule
+    Error pattern & Representative evidence & Quantitative impact in this run \\
+    \midrule
+    Secure-sample over-warning & \texttt{secure-code-1} to \texttt{secure-code-15} (especially with \texttt{qwen3-coder}) & FPR reached 100\% for \texttt{qwen3-coder} in both modes (45/45 secure evaluations flagged). \\
+    Conservative under-detection & Vulnerable classes under \texttt{gemma3:1b} (especially LLM+RAG mode) & \texttt{gemma3:1b} recall dropped to 0.00\% (0/54) with RAG; LLM-only recall was 5.56\% (3/54). \\
+    Label mismatch / ontology drift & XXE, JWT, insecure-random, ReDoS, race-condition, unsafe-reflection cases with alternate labels & Semantically relevant explanations were scored as FP+FN pairs, reducing measured precision and recall. \\
+    Over-extended advisory findings & Secure snippets flagged with generic security/code-quality advice & Extra issues increased issue-level FP counts, lowering precision for high-recall configurations. \\
+    \bottomrule
+  \end{tabular}
+\end{table}
 
 These observations motivate the future work directions summarized in Chapter~\ref{chap:future-work}.

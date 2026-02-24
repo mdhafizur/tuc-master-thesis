@@ -18,6 +18,13 @@
         "-synctex=1",
         "%DOC%"
       ]
+    },
+    {
+      "name": "bibtex",
+      "command": "bibtex",
+      "args": [
+        "%DOCFILE%"
+      ]
     }
   ],
   "latex-workshop.latex.recipes": [
@@ -31,6 +38,12 @@
     }
   ],
   "latex-workshop.view.pdf.viewer": "tab",
+  "latex-workshop.latex.recipe.default": "latexmk (pdf)",
+  "latex-workshop.latex.autoBuild.run": "onFileChange",
+  "latex-workshop.latex.autoBuild.interval": 1000,
+  "latex-workshop.synctex.afterBuild.enabled": true,
+  "files.autoSave": "afterDelay",
+  "files.autoSaveDelay": 800,
   "latex-workshop.latex.clean.enabled": true,
   "latex-workshop.latex.clean.fileTypes": [
     "*.aux",

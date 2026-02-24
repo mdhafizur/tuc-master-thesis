@@ -6,25 +6,121 @@ The evaluation framework provides reproducible measurements of detection quality
 \subsection*{Key Takeaways}
 
 \begin{itemize}
-  \item \textbf{R1--R2 (quality and consistency):} Precision/recall trade-offs vary across models; RAG can improve grounding but may introduce latency overhead.
+  \item \textbf{R1--R2 (quality and consistency):} Model behavior differs strongly. In this run, \texttt{gemma3:1b} was conservative (high precision, very low recall), while \texttt{qwen3-coder} achieved higher recall/F1 but produced frequent false positives on secure samples.
+  \item \textbf{RAG impact is model-dependent:} RAG improved \texttt{qwen3-coder} (F1: 26.67\% $\rightarrow$ 36.59\%) and reduced its latency (median: 1099 ms $\rightarrow$ 1060 ms), but reduced \texttt{gemma3:1b} detection to zero true positives.
   \item \textbf{R3 (explainability):} IDE-native rendering (diagnostics, hovers) keeps explanations close to code, but message quality depends on prompt design and knowledge coverage.
   \item \textbf{R4 (repairs):} Quick fixes are effective as an assistive mechanism when suggestions are minimal and context-appropriate; developer confirmation remains essential.
   \item \textbf{R5 (privacy):} All source code analysis and model inference remain local; only public vulnerability metadata may be fetched for knowledge updates.
-  \item \textbf{R6 (responsiveness):} Debouncing and caching are critical to keep real-time analysis practical under normal editing patterns.
+  \item \textbf{R6 (responsiveness):} Responsiveness depends heavily on model size (about 180--200 ms for \texttt{gemma3:1b} vs. about 1.0--1.5 s for \texttt{qwen3-coder} in this setup).
 \end{itemize}
+
+\subsection*{Claim-to-Evidence Map}
+
+Table~\ref{tab:claim-evidence-map} links the thesis research questions to the concrete measurements and sections used as evidence.
+
+\begin{table}[H]
+  \centering
+  \caption{Claim-to-evidence map for core research questions.}
+  \label{tab:claim-evidence-map}
+  \footnotesize
+  \renewcommand{\arraystretch}{1.15}
+  \begin{tabularx}{\textwidth}{p{0.12\textwidth}p{0.30\textwidth}p{0.28\textwidth}X}
+    \toprule
+    RQ & Claim tested & Evidence used & Outcome in this thesis run \\
+    \midrule
+    RQ1 (Feasibility) & Local IDE assistant can provide useful security findings without source-code exfiltration. & Privacy boundary and local deployment design (Chapter~\ref{chap:concept}); detection/latency measurements (Sections~\ref{sec:eval-llm-only}--\ref{sec:eval-models}). & Supported with caveats: useful findings are produced locally, but model choice strongly affects recall and false positives. \\
+    RQ2 (Grounding) & Retrieval augmentation improves quality and consistency versus LLM-only. & Ablation results across prompt modes and models (Section~\ref{sec:eval-models}); confidence and significance analyses in this section. & Partially supported and model-dependent: improvement for \texttt{qwen3-coder}, degradation for \texttt{gemma3:1b}. \\
+    RQ3 (Practicality) & Real-time IDE use is achievable with scoping/caching/debouncing. & Runtime design and guardrails (Chapter~\ref{chap:implementation}); measured latency distributions (Sections~\ref{sec:eval-llm-only}, \ref{sec:eval-rag}). & Supported for smaller models and scoped workflows; larger models are better suited to audit-mode usage. \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\subsection*{Uncertainty and Variability}
+
+To quantify uncertainty under repeated measurements, Table~\ref{tab:eval-confidence} reports 95\% Wilson confidence intervals for recall and parse success.
+
+\begin{table}[H]
+  \centering
+  \caption{Recall and parse-rate confidence intervals (95\% Wilson).}
+  \label{tab:eval-confidence}
+  \small
+  \begin{tabular}{lcccc}
+    \toprule
+    Configuration & Recall (\%) & Recall 95\% CI & Parse (\%) & Parse 95\% CI \\
+    \midrule
+    \texttt{gemma3:1b} (LLM-only) & 5.56 & [1.91, 15.11] & 100.00 & [96.26, 100.00] \\
+    \texttt{gemma3:1b} (LLM+RAG) & 0.00 & [0.00, 6.64] & 100.00 & [96.26, 100.00] \\
+    \texttt{qwen3-coder} (LLM-only) & 44.44 & [32.00, 57.62] & 100.00 & [96.26, 100.00] \\
+    \texttt{qwen3-coder} (LLM+RAG) & 55.56 & [42.38, 68.00] & 100.00 & [96.26, 100.00] \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Latency was measured across repeated calls per sample. For \texttt{qwen3-coder}, mean latency remained above median in both modes, indicating right-skewed response-time tails under local inference.
+
+\subsection*{Exploratory Significance Comparison}
+
+To test whether observed recall differences between LLM-only and LLM+RAG are likely to be noise, we report two-sided tests on vulnerable-evaluation counts ($n=54$ per configuration). Because paired per-sample contingency tables were not exported by the harness in this run, these tests are treated as exploratory and assume independent proportions.
+
+\begin{table}[H]
+  \centering
+  \caption{Exploratory recall comparison (LLM-only vs.\ LLM+RAG).}
+  \label{tab:eval-significance}
+  \small
+  \begin{tabular}{lcccc}
+    \toprule
+    Model & Recall LLM (\%) & Recall RAG (\%) & $p$ (z-test) & $p$ (Fisher) \\
+    \midrule
+    \texttt{gemma3:1b} & 5.56 (3/54) & 0.00 (0/54) & 0.079 & 0.243 \\
+    \texttt{qwen3-coder} & 44.44 (24/54) & 55.56 (30/54) & 0.248 & 0.336 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+At $\alpha=0.05$, neither comparison is statistically significant under these assumptions. The practical effect size is still relevant for deployment decisions (especially the direction of change per model), but stronger conclusions require paired tests from per-sample outcomes.
 
 \subsection*{Limitations}
 
 The dataset is intentionally small and synthetic; therefore, it may not capture the full diversity of real-world codebases (framework-specific patterns, multi-file flows, and complex validation logic). Future work should include evaluation on larger benchmarks and real repositories, as discussed in Chapter~\ref{chap:future-work}.
 
+\subsection*{Negative Results and Boundary Conditions}
+
+To avoid overstating system performance, the following negative outcomes are explicit boundary conditions of this thesis run:
+\begin{itemize}
+  \item \textbf{RAG is not uniformly beneficial:} for \texttt{gemma3:1b}, enabling RAG reduced recall from 5.56\% to 0.00\%.
+  \item \textbf{Higher recall can come with high alert noise:} \texttt{qwen3-coder} achieved higher recall but flagged secure samples frequently (FPR 100\% in this run).
+  \item \textbf{Scoring remains sensitive to label ontology:} semantically plausible but differently named labels can be scored as FP/FN pairs.
+  \item \textbf{Small-sample uncertainty remains material:} mode-to-mode recall differences were not statistically significant at $\alpha=0.05$ under available assumptions.
+\end{itemize}
+
+These results indicate that practical deployment requires explicit tuning of model, prompting, and scoring ontology rather than assuming a single universally best configuration.
+
 \subsection*{Threats to Validity}
 
-\textbf{Internal validity.} The evaluation harness scores detections at the vulnerability-type level using substring matching between expected and predicted category names. This reduces brittleness to naming variation but can also over-credit partially correct labels (e.g., a broad ``Injection'' label matching multiple injection subclasses). A stricter label ontology or CWE-level normalization would improve precision of the evaluation itself.
+\begin{table}[H]
+  \centering
+  \caption{Threats-to-validity summary and mitigations.}
+  \label{tab:eval-validity-summary}
+  \footnotesize
+  \renewcommand{\arraystretch}{1.15}
+  \begin{tabularx}{\textwidth}{p{0.14\textwidth}XXX}
+    \toprule
+    Threat type & Main risk & Mitigation in this thesis & Residual risk \\
+    \midrule
+    Internal & Label-matching and issue-level FP counting can bias precision/FPR. & Fixed JSON schema, repeated runs, explicit reporting of scoring rules. & Partial label mismatches still distort measured precision/recall. \\
+    Construct & Core metrics may miss practical developer value (localization, fix quality). & Added qualitative case studies and repair-quality criteria. & No fully automated metric for fix correctness/minimality yet. \\
+    External & Curated synthetic snippets may not reflect real multi-file systems. & Included diverse CWE/OWASP-aligned classes and secure cases. & Generalization to production repositories remains uncertain. \\
+    Statistical conclusion & Small sample size limits power for mode-comparison claims. & Added confidence intervals and exploratory hypothesis tests. & Paired significance testing is limited by current exported outputs. \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
 
-\textbf{Construct validity.} Precision/recall and parse success rate measure important properties for IDE integration, but they do not fully capture developer value. In practice, usefulness also depends on (i) localization quality (correct lines), (ii) explanation clarity, and (iii) the security adequacy and minimality of suggested fixes. These are partially addressed through the qualitative case-study structure (Section~\ref{sec:eval-case-studies}) but are not yet quantified.
+\textbf{Internal validity.} The evaluation harness scores detections at the vulnerability-type level using substring matching between expected and predicted category names. This reduces brittleness to naming variation but can also over-credit partially correct labels (e.g., a broad ``Injection'' label matching multiple injection subclasses) or under-credit semantically correct but differently phrased labels. In addition, false positives are counted at issue level, so precision/FPR denominators are sensitive to how many issues a model emits per sample. A stricter label ontology plus CWE-level normalization would improve precision of the evaluation itself.
+
+\textbf{Construct validity.} Precision/recall and parse success rate measure important properties for IDE integration, but they do not fully capture developer value. In practice, usefulness also depends on (i) localization quality (correct lines), (ii) explanation clarity, and (iii) the security adequacy and minimality of suggested fixes. These are addressed in part through qualitative case studies (Section~\ref{sec:eval-case-studies}) but are not yet fully quantified.
 
 \textbf{External validity.} Synthetic snippets are easier than real codebases with frameworks, configuration files, and cross-file flows. Results on the curated datasets should therefore be interpreted as an estimate of core capability under controlled conditions rather than a definitive measure of real-world performance. The most likely failure mode in practice is missing context when only a small scope (e.g., a single function) is analyzed.
 
 \subsection*{Reproducibility Notes}
 
-To support reproducibility, the benchmark suite and evaluation harness are kept in the same repository as the prototype. For comparable results across machines, the reported numbers should include the Ollama version, the selected model(s), and hardware characteristics. Where possible, evaluation should be repeated across multiple runs to estimate variability due to runtime effects (warm-up, caching, and transient system load) even under low-temperature decoding.
+To support reproducibility, the benchmark suite and evaluation harness are kept in the same repository as the prototype, and run-specific environment/configuration details are reported in Section~\ref{sec:eval-setup}. Repeating runs remains important for estimating variability due to runtime effects (warm-up, caching, and transient system load) even under low-temperature decoding.

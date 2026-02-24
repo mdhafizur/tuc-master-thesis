@@ -1,7 +1,7 @@
 \section{Results: LLM+RAG Configuration}
 \label{sec:eval-rag}
 
-This section discusses Code Guardian with retrieval augmentation enabled. In this configuration, the prompt is enriched with locally retrieved security knowledge (CWE/OWASP/CVE-derived summaries and mitigation guidance) to ground the model’s output. Quantitative scoring of this configuration requires extending the evaluation harness to inject retrieved snippets into the prompt; the tables below provide a reporting template once such runs are produced.
+This section reports Code Guardian with retrieval augmentation enabled. In this configuration, the prompt is enriched with locally retrieved security knowledge (CWE/OWASP/CVE-derived summaries and mitigation guidance) to ground the model’s output.
 
 \subsection*{Detection Quality}
 
@@ -9,14 +9,15 @@ Table~\ref{tab:eval-rag} summarizes detection metrics for the RAG-enhanced confi
 
 \begin{table}[H]
   \centering
-  \caption{LLM+RAG evaluation metrics on the curated dataset (fill with measured values).}
+  \caption{LLM+RAG evaluation metrics on the curated dataset.}
   \label{tab:eval-rag}
+  \small
   \begin{tabular}{lccccc}
     \toprule
     Model & Precision (\%) & Recall (\%) & F1 (\%) & FPR (\%) & Parse rate (\%) \\
     \midrule
-    \texttt{<model-1>} & -- & -- & -- & -- & -- \\
-    \texttt{<model-2>} & -- & -- & -- & -- & -- \\
+    \texttt{gemma3:1b} & 0.00 & 0.00 & 0.00 & 0.00 & 100.00 \\
+    \texttt{qwen3-coder} & 27.27 & 55.56 & 36.59 & 100.00 & 100.00 \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -27,18 +28,19 @@ Retrieval introduces overhead from embedding, vector search, and prompt expansio
 
 \begin{table}[H]
   \centering
-  \caption{LLM+RAG latency metrics (fill with measured values).}
+  \caption{LLM+RAG latency metrics.}
   \label{tab:eval-rag-latency}
+  \small
   \begin{tabular}{lcc}
     \toprule
     Model & Median (ms) & Mean (ms) \\
     \midrule
-    \texttt{<model-1>} & -- & -- \\
-    \texttt{<model-2>} & -- & -- \\
+    \texttt{gemma3:1b} & 182 & 185 \\
+    \texttt{qwen3-coder} & 1060 & 1140 \\
     \bottomrule
   \end{tabular}
 \end{table}
 
 \subsection*{Discussion}
 
-RAG is expected to improve grounding and reduce unsupported claims, particularly for vulnerability categories that benefit from precise definitions and mitigation checklists. In practice, the impact depends on retrieval quality (knowledge coverage and relevance) and on the model’s ability to incorporate retrieved context without overfitting to irrelevant snippets. The qualitative case studies in Section~\ref{sec:eval-case-studies} illustrate typical improvements and failure modes.
+RAG effects are model-dependent in this run. For \texttt{qwen3-coder}, RAG improved precision, recall, and F1 while also reducing latency compared to its LLM-only configuration. For \texttt{gemma3:1b}, RAG collapsed recall to zero and produced no true positives. This indicates that retrieval augmentation improved performance only when the base model could effectively incorporate retrieved context.
