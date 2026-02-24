@@ -1,7 +1,7 @@
 \section{Experimental Setup}
 \label{sec:eval-setup}
 
-All experiments are executed locally using the Code Guardian evaluation harness in \texttt{code-guardian/evaluation/evaluate-models.js}. The harness iterates over the \emph{core} dataset described in Section~\ref{sec:eval-dataset} and invokes Ollama with a strict JSON-only system prompt. Model decoding is configured for low randomness (\texttt{temperature=0.1}) to improve determinism and parsing stability.
+All experiments are executed locally using the Code Guardian evaluation harness in \path{code-guardian/evaluation/evaluate-models.js}. The harness iterates over the curated dataset described in Section~\ref{sec:eval-dataset} and invokes Ollama with a strict JSON-only system prompt. Model decoding is configured for low randomness (\texttt{temperature=0.1}) to improve determinism and parsing stability.
 
 \subsection*{Response Schema for Scoring}
 
@@ -9,21 +9,83 @@ For evaluation purposes, the harness requests a richer structured output than th
 
 \subsection*{Compared Configurations}
 
-Two configurations are relevant for the overall system design:
+Two configurations are evaluated quantitatively:
 \begin{itemize}
-  \item \textbf{LLM-only (quantitative):} the JSON-only analyzer evaluated by the harness.
-  \item \textbf{LLM+RAG (qualitative / optional extension):} retrieval-augmented prompting using the local knowledge base and vector retrieval. This configuration is exercised in the prototype’s interactive workflows and can be evaluated quantitatively by extending the harness to inject retrieved snippets into the prompt.
+  \item \textbf{LLM-only:} JSON-only analyzer without retrieval context.
+  \item \textbf{LLM+RAG:} retrieval-augmented prompting with static security snippets (\texttt{k=5}).
 \end{itemize}
 
 Where relevant, results can also be stratified by model size or model family to study the trade-off between accuracy and latency.
 
 \subsection*{Models and Hardware}
 
-The prototype supports multiple local models (e.g., Qwen2.5-Coder, Gemma, and CodeLlama variants) via Ollama. The evaluation script contains a default list of models to test, but this list can be adjusted based on what is installed locally. For reproducibility, the reported results should include the exact model names, Ollama version, and hardware configuration (CPU/GPU and RAM).
+The reported run used two local Ollama models: \texttt{gemma3:1b} and \texttt{qwen3-coder}. In runtime metadata, the second model resolves to the latest local tag. The execution environment was macOS (Darwin 25.3.0, arm64) on Apple M4 Max (16 CPU cores, 64\,GB RAM), Node.js v20.19.5, and Ollama 0.17.0.
 
 \subsection*{Runtime Parameters}
 
-The evaluation harness enforces a per-request timeout (default: 30\,s) and limits generation length (default: \texttt{num\_predict=1000}). A small delay is inserted between requests to reduce burstiness and minimize transient failures on developer hardware.
+The evaluation harness enforces a per-request timeout (\texttt{timeoutMs=30000}) and limits generation length (\texttt{num\_predict=1000}). A request delay of \texttt{500\,ms} is inserted between calls to reduce burstiness on developer hardware. Runs were executed sequentially with no warm-up and no retries.
+
+\subsection*{Reproducibility Snapshot}
+
+\begin{table}[H]
+  \centering
+  \caption{Run configuration used for reported results.}
+  \label{tab:eval-reproducibility}
+  \small
+  \begin{tabular}{p{0.33\textwidth}p{0.6\textwidth}}
+    \toprule
+    Item & Value \\
+    \midrule
+    Dataset file & \texttt{vulnerability-test-cases.json} (33 cases: 18 vulnerable, 15 secure) \\
+    Runs per sample & 3 \\
+    Prompt modes & LLM-only, LLM+RAG \\
+    RAG settings & static security snippets, \texttt{k=5} \\
+    Generation settings & \texttt{temperature=0.1}, \texttt{num\_predict=1000} \\
+    Request controls & \texttt{timeoutMs=30000}, \texttt{requestDelayMs=500} \\
+    Execution mode & sequential, no warm-up, no retries \\
+    Models requested & \texttt{gemma3:1b}, \texttt{qwen3-coder} \\
+    Model resolution & \texttt{qwen3-coder} $\rightarrow$ \texttt{qwen3-coder:latest} \\
+    Software & Ollama 0.17.0, Node.js v20.19.5 \\
+    Hardware/OS & Apple M4 Max (16 CPU cores, 64 GB RAM), macOS Darwin 25.3.0 (arm64) \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection*{Artifact Provenance}
+
+To make the evaluation independently auditable, Table~\ref{tab:eval-artifact-manifest} records the provenance fingerprint for the reported run.
+
+\begin{table}[H]
+  \centering
+  \caption{Artifact provenance manifest for this thesis run.}
+  \label{tab:eval-artifact-manifest}
+  \footnotesize
+  \begin{tabularx}{\textwidth}{p{0.34\textwidth}X}
+    \toprule
+    Field & Value \\
+    \midrule
+    Thesis repository commit & \texttt{82d24c4fdb13} \\
+    Run window (UTC) & 2026-02-24 20:33:15 to 2026-02-24 20:41:33 \\
+    Total runtime & 497\,841 ms \\
+    Execution policy & sequential order, no retries, no warm-up \\
+    Dataset path & \path{code-guardian/evaluation/datasets/vulnerability-test-cases.json} \\
+    Invocation command & \texttt{node evaluation/evaluate-models.js} \\
+    Model fingerprint (gemma3:1b) & digest prefix \texttt{8648f39daa8f} \\
+    Model fingerprint (qwen3-coder:latest) & digest prefix \texttt{06c1097efce0} \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+For archival reproducibility, the recommended artifact bundle includes: (i) raw JSON output from the harness, (ii) the exact run configuration object, (iii) model digests, and (iv) generated summary tables. These artifacts should be stored as supplementary material together with the thesis PDF.
+
+\subsection*{Uncertainty Estimation}
+
+Each sample is evaluated three times. In this thesis, uncertainty is summarized with 95\% Wilson confidence intervals for:
+\begin{itemize}
+  \item \textbf{Recall} (denominator: vulnerable evaluations, $n=54$), and
+  \item \textbf{Parse success} (denominator: total requests, $n=99$).
+\end{itemize}
+We do not report formal confidence intervals for precision and FPR because the current harness counts issue-level false positives, which makes those denominators less directly comparable across configurations.
 
 \paragraph{Response parsing.}
 The harness strips Markdown code fences if present and then attempts to parse the remaining content as JSON. Responses that fail to parse are counted toward the parse failure rate and are scored as producing no issues, which impacts recall on vulnerable samples.
@@ -36,4 +98,6 @@ cd code-guardian
 node evaluation/evaluate-models.js
 \end{lstlisting}
 
-The script produces per-model metrics and can be extended to emit JSON/Markdown reports under \texttt{code-guardian/evaluation/logs/} for inclusion in the thesis appendix.
+The script produces per-model metrics and can be extended to emit JSON/Markdown reports under \path{code-guardian/evaluation/logs/} for inclusion in the thesis appendix.
+
+The reported results in this thesis were produced with \texttt{runsPerSample=3} for both prompt modes.

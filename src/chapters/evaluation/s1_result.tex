@@ -9,14 +9,15 @@ Table~\ref{tab:eval-llm-only} summarizes precision, recall, and F1 score on the 
 
 \begin{table}[H]
   \centering
-  \caption{LLM-only evaluation metrics on the curated dataset (fill with measured values).}
+  \caption{LLM-only evaluation metrics on the curated dataset.}
   \label{tab:eval-llm-only}
+  \small
   \begin{tabular}{lccccc}
     \toprule
     Model & Precision (\%) & Recall (\%) & F1 (\%) & FPR (\%) & Parse rate (\%) \\
     \midrule
-    \texttt{<model-1>} & -- & -- & -- & -- & -- \\
-    \texttt{<model-2>} & -- & -- & -- & -- & -- \\
+    \texttt{gemma3:1b} & 100.00 & 5.56 & 10.53 & 0.00 & 100.00 \\
+    \texttt{qwen3-coder} & 19.05 & 44.44 & 26.67 & 100.00 & 100.00 \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -27,18 +28,19 @@ For interactive usage, response time is critical. Table~\ref{tab:eval-llm-only-l
 
 \begin{table}[H]
   \centering
-  \caption{LLM-only latency metrics (fill with measured values).}
+  \caption{LLM-only latency metrics.}
   \label{tab:eval-llm-only-latency}
+  \small
   \begin{tabular}{lcc}
     \toprule
     Model & Median (ms) & Mean (ms) \\
     \midrule
-    \texttt{<model-1>} & -- & -- \\
-    \texttt{<model-2>} & -- & -- \\
+    \texttt{gemma3:1b} & 184 & 207 \\
+    \texttt{qwen3-coder} & 1099 & 1494 \\
     \bottomrule
   \end{tabular}
 \end{table}
 
 \subsection*{Discussion}
 
-The LLM-only configuration is typically the lowest-latency option and is therefore suitable for real-time feedback in the editor. However, without grounding, it can be more sensitive to hallucinations and may produce less consistent classifications for borderline patterns. The next section evaluates whether retrieval augmentation improves grounding and reduces false positives.
+The LLM-only results show a clear trade-off between precision, recall, and latency. \texttt{gemma3:1b} is very fast and conservative (high precision, very low recall), while \texttt{qwen3-coder} detects more vulnerable samples but over-predicts on secure samples (FPR 100\%) and is substantially slower. Both models maintained 100\% JSON parse success.

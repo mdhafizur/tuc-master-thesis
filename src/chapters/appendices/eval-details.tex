@@ -5,12 +5,11 @@ The curated evaluation suite maintained in \texttt{code-guardian/evaluation/data
 
 \subsection*{Dataset sizes}
 
-At the time of writing, the suite contains:
+For the scored thesis run in Chapter~\ref{chap:evaluation}, the harness uses:
 \begin{itemize}
-  \item \textbf{Core dataset:} 20 test cases (18 vulnerable, 2 secure)
-  \item \textbf{Advanced dataset:} 28 test cases (25 vulnerable, 3 secure)
+  \item \textbf{Primary scored dataset:} \texttt{vulnerability-test-cases.json} with 33 test cases (18 vulnerable, 15 secure)
 \end{itemize}
-The repository-contained evaluation harness loads the core dataset by default; the advanced dataset is included to broaden coverage and can be evaluated by extending the harness.
+Additional datasets can be added for broader coverage, but all quantitative results in this thesis are derived from the 33-case scored dataset above.
 
 \subsection*{Representative Vulnerability Classes}
 
@@ -20,9 +19,10 @@ The dataset includes (non-exhaustive) examples for:
   \item Cross-site scripting (CWE-79)
   \item Command injection (CWE-78)
   \item Path traversal (CWE-22)
-  \item Insecure randomness (CWE-330)
+  \item Insecure randomness (CWE-338)
   \item Hardcoded credentials (CWE-798)
-  \item Insecure CORS / CSRF patterns (CWE-352 and related)
+  \item CSRF and authentication-flow weaknesses (CWE-352, CWE-287)
+  \item Prototype pollution / unsafe reflection patterns (CWE-1321, CWE-470)
 \end{itemize}
 
 \subsection*{Test Case Record Format}
@@ -43,5 +43,16 @@ node evaluation/evaluate-models.js
 \end{lstlisting}
 
 The script prints per-model precision/recall/F1, false positive rate, average response time, and JSON parse success rate. Models to test are specified in the script and can be edited to match the locally installed Ollama models.
+
+\subsection*{Recommended Artifact Checklist}
+
+For full reproducibility and auditability, the following files should be archived with the thesis:
+\begin{itemize}
+  \item Raw run output JSON from the harness (all configurations and per-case results)
+  \item Exact run configuration object (models, prompt modes, runtime parameters)
+  \item Model digests / quantization metadata used for inference
+  \item Environment metadata (OS, Node.js, Ollama versions, hardware)
+  \item Generated tables or scripts used to derive reported confidence intervals and significance tests
+\end{itemize}
 
 This appendix is intentionally concise: the full dataset is machine-readable and can be inspected directly in the repository.

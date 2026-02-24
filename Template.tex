@@ -59,6 +59,9 @@
 \newcommand{\starfull}{\ding{72}}   % Full star
 \newcommand{\starhalf}{\ding{73}}   % Half star
 \newcommand{\starzero}{\ding{78}}   % Empty star
+\newcommand{\safeincludegraphics}[2][]{%
+  \IfFileExists{#2}{\includegraphics[#1]{#2}}{\fbox{Missing image}}%
+}
 
 % --- TOC Appearance Fixes ---
 \renewcommand*{\tableofcontents}{%
@@ -93,7 +96,7 @@
 \begin{titlepage}
   {
     \begin{center}
-        \raisebox{-1ex}{\includegraphics[scale=1.4]{images/TU_Chemnitz_positiv_gruen.pdf}}\\
+        \raisebox{-1ex}{\safeincludegraphics[scale=1.4]{images/TU_Chemnitz_positiv_gruen.pdf}}\\
     \end{center}
     \vspace{0.5cm}
   }
@@ -188,7 +191,7 @@
 % =====================================================
 \backmatter
 
-\bibliographystyle{splncs03}
+\bibliographystyle{splncs04}
 \bibliography{bibliography}
 
 \printindex
