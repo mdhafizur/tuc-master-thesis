@@ -67,7 +67,9 @@ These differences are reported as run-level directional deltas. Because repeated
 
 \subsection*{Limitations}
 
-The dataset is intentionally small and synthetic; therefore, it may not capture the full diversity of real-world codebases (framework-specific patterns, multi-file flows, and complex validation logic). Future work should include evaluation on larger benchmarks and real repositories, as discussed in Chapter~\ref{chap:future-work}.
+The scored dataset in this run is intentionally small (\texttt{n=33}: 18 vulnerable, 15 secure) and synthetic; therefore, a single additional correct or incorrect detection can shift percentages noticeably, and the results should be interpreted as directional rather than definitive. The setup may not capture the full diversity of real-world codebases (framework-specific patterns, multi-file flows, and complex validation logic). In addition, R6 is operationalized primarily through latency and workflow observations in this thesis run; no dedicated developer user study was conducted.
+
+The task description targets broader benchmark/real-world coverage (e.g., Juliet/OWASP benchmark subsets and one actively maintained project), but this run reports the repository-curated 33-case suite for controlled, reproducible model ablation. Future work should extend the same harness to larger public benchmarks and tool baselines (e.g., Semgrep/CodeQL comparisons), as discussed in Chapter~\ref{chap:future-work}.
 
 \subsection*{Negative Results and Boundary Conditions}
 

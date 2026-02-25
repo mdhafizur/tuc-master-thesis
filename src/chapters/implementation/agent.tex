@@ -20,7 +20,7 @@ For explicit commands, the scope expands to (i) a selected region (or current li
 
 The analyzer performs local inference through Ollama and requires the model to return \emph{only} a JSON array of findings. The output schema is intentionally minimal to keep parsing robust and IDE rendering straightforward.
 
-\begin{lstlisting}[language=Java, caption={Security issue output schema used by Code Guardian}, label={lst:cg-issue-schema}]
+\begin{lstlisting}[language=TypeScript, caption={Security issue output schema used by Code Guardian}, label={lst:cg-issue-schema}]
 interface SecurityIssue {
   message: string;
   startLine: number;   // 1-based
@@ -68,7 +68,7 @@ Findings are mapped to VS Code diagnostics with appropriate text ranges. If the 
 \subsection{Caching and Responsiveness Mechanisms}
 \label{subsec:impl-cache}
 
-To avoid repeated inference on unchanged snippets, Code Guardian caches analysis results keyed by the code snippet and active model (\texttt{code-guardian/src/analysisCache.ts}). In addition to caching, real-time analysis is debounced to reduce request volume during rapid edits. Together, these mechanisms reduce redundant local LLM calls and make continuous feedback feasible on developer hardware (R6), while also improving run-to-run consistency by limiting stochastic re-analysis.
+To avoid repeated inference on unchanged snippets, Code Guardian caches analysis results keyed by the code snippet, active model, and prompt mode (RAG enabled/disabled) (\texttt{code-guardian/src/analysisCache.ts}). In addition to caching, real-time analysis is debounced to reduce request volume during rapid edits. Together, these mechanisms reduce redundant local LLM calls and make continuous feedback feasible on developer hardware (R6), while also improving run-to-run consistency by limiting stochastic re-analysis.
 
 \subsection{Workspace Scanner and Dashboard}
 \label{subsec:impl-workspace}
