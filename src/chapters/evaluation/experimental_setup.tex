@@ -19,7 +19,7 @@ Where relevant, results can also be stratified by model size or model family to 
 
 \subsection*{Models and Hardware}
 
-The reported run used two local Ollama models: \texttt{gemma3:1b} and \texttt{qwen3-coder}. In runtime metadata, the second model resolves to the latest local tag. The execution environment was macOS (Darwin 25.3.0, arm64) on Apple M4 Max (16 CPU cores, 64\,GB RAM), Node.js v20.19.5, and Ollama 0.17.0.
+The reported run evaluated five local Ollama models: \texttt{gemma3:1b}, \texttt{gemma3:4b}, \texttt{qwen3:4b}, \texttt{qwen3:8b}, and \texttt{CodeLlama:latest}. The execution environment was macOS (Darwin 25.3.0, arm64) on Apple M4 Max (16 CPU cores, 64\,GB RAM), Node.js v20.19.5, and Ollama 0.17.0.
 
 \subsection*{Runtime Parameters}
 
@@ -43,8 +43,8 @@ The evaluation harness enforces a per-request timeout (\texttt{timeoutMs=30000})
     Generation settings & \texttt{temperature=0.1}, \texttt{num\_predict=1000} \\
     Request controls & \texttt{timeoutMs=30000}, \texttt{requestDelayMs=500} \\
     Execution mode & sequential, no warm-up, no retries \\
-    Models requested & \texttt{gemma3:1b}, \texttt{qwen3-coder} \\
-    Model resolution & \texttt{qwen3-coder} $\rightarrow$ \texttt{qwen3-coder:latest} \\
+    Models requested & \texttt{gemma3:1b}, \texttt{gemma3:4b}, \texttt{qwen3:4b}, \texttt{qwen3:8b}, \texttt{CodeLlama:latest} \\
+    Model resolution & All models resolved to the same tags as requested in this run \\
     Software & Ollama 0.17.0, Node.js v20.19.5 \\
     Hardware/OS & Apple M4 Max (16 CPU cores, 64 GB RAM), macOS Darwin 25.3.0 (arm64) \\
     \bottomrule
@@ -53,7 +53,7 @@ The evaluation harness enforces a per-request timeout (\texttt{timeoutMs=30000})
 
 \subsection*{Artifact Provenance}
 
-To make the evaluation independently auditable, Table~\ref{tab:eval-artifact-manifest} records the provenance fingerprint for the reported run.
+To document run provenance, Table~\ref{tab:eval-artifact-manifest} records the metadata fingerprint for the reported run.
 
 \begin{table}[H]
   \centering
@@ -64,28 +64,26 @@ To make the evaluation independently auditable, Table~\ref{tab:eval-artifact-man
     \toprule
     Field & Value \\
     \midrule
-    Thesis repository commit & \texttt{82d24c4fdb13} \\
-    Run window (UTC) & 2026-02-24 20:33:15 to 2026-02-24 20:41:33 \\
-    Total runtime & 497\,841 ms \\
+    Report repository commit & not captured by the harness in this run \\
+    Run window (UTC) & 2026-02-25 18:26:56 to 2026-02-25 20:00:54 \\
+    Total runtime & 5\,638\,211 ms \\
     Execution policy & sequential order, no retries, no warm-up \\
     Dataset path & \path{code-guardian/evaluation/datasets/vulnerability-test-cases.json} \\
-    Invocation command & \texttt{node evaluation/evaluate-models.js} \\
-    Model fingerprint (gemma3:1b) & digest prefix \texttt{8648f39daa8f} \\
-    Model fingerprint (qwen3-coder:latest) & digest prefix \texttt{06c1097efce0} \\
+    Invocation command & \texttt{node evaluation/evaluate-models.js --ablation --runs=3 --rag-k=5 --temperature=0.1 --num-predict=1000 --timeout-ms=30000 --delay-ms=500} \\
+    Model fingerprint (\texttt{gemma3:1b}) & digest prefix \texttt{8648f39daa8f} \\
+    Model fingerprint (\texttt{gemma3:4b}) & digest prefix \texttt{a2af6cc3eb7f} \\
+    Model fingerprint (\texttt{qwen3:4b}) & digest prefix \texttt{359d7dd4bcda} \\
+    Model fingerprint (\texttt{qwen3:8b}) & digest prefix \texttt{500a1f067a9f} \\
+    Model fingerprint (\texttt{CodeLlama:latest}) & digest prefix \texttt{8fdf8f752f6e} \\
     \bottomrule
   \end{tabularx}
 \end{table}
 
 For archival reproducibility, the recommended artifact bundle includes: (i) raw JSON output from the harness, (ii) the exact run configuration object, (iii) model digests, and (iv) generated summary tables. These artifacts should be stored as supplementary material together with the thesis PDF.
 
-\subsection*{Uncertainty Estimation}
+\subsection*{Run-to-Run Variability (Descriptive)}
 
-Each sample is evaluated three times. In this thesis, uncertainty is summarized with 95\% Wilson confidence intervals for:
-\begin{itemize}
-  \item \textbf{Recall} (denominator: vulnerable evaluations, $n=54$), and
-  \item \textbf{Parse success} (denominator: total requests, $n=99$).
-\end{itemize}
-We do not report formal confidence intervals for precision and FPR because the current harness counts issue-level false positives, which makes those denominators less directly comparable across configurations.
+Each sample is evaluated three times in each configuration. Reported values are descriptive percentages and counts over pooled evaluations (e.g., recall over vulnerable evaluations, parse success over total requests). Because repeated runs reuse the same snippets and paired per-sample mode outputs were not exported by the harness, mode-to-mode differences are interpreted descriptively for this run only.
 
 \paragraph{Response parsing.}
 The harness strips Markdown code fences if present and then attempts to parse the remaining content as JSON. Responses that fail to parse are counted toward the parse failure rate and are scored as producing no issues, which impacts recall on vulnerable samples.
@@ -95,9 +93,10 @@ The harness strips Markdown code fences if present and then attempts to parse th
 The evaluation can be reproduced by running:
 \begin{lstlisting}[language=Java, caption={Running the Code Guardian evaluation harness}, label={lst:eval-run}]
 cd code-guardian
-node evaluation/evaluate-models.js
+node evaluation/evaluate-models.js --ablation --runs=3 --rag-k=5 --temperature=0.1 \
+  --num-predict=1000 --timeout-ms=30000 --delay-ms=500
 \end{lstlisting}
 
-The script produces per-model metrics and can be extended to emit JSON/Markdown reports under \path{code-guardian/evaluation/logs/} for inclusion in the thesis appendix.
+The script produces per-model metrics and can be extended to emit JSON/Markdown reports under \path{code-guardian/evaluation/logs/} for inclusion in the thesis appendix. For strict comparability with the reported tables, the evaluated model list should match the run configuration (\texttt{gemma3:1b}, \texttt{gemma3:4b}, \texttt{qwen3:4b}, \texttt{qwen3:8b}, and \texttt{CodeLlama:latest}).
 
 The reported results in this thesis were produced with \texttt{runsPerSample=3} for both prompt modes.

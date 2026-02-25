@@ -17,7 +17,10 @@ Table~\ref{tab:eval-rag} summarizes detection metrics for the RAG-enhanced confi
     Model & Precision (\%) & Recall (\%) & F1 (\%) & FPR (\%) & Parse rate (\%) \\
     \midrule
     \texttt{gemma3:1b} & 0.00 & 0.00 & 0.00 & 0.00 & 100.00 \\
-    \texttt{qwen3-coder} & 27.27 & 55.56 & 36.59 & 100.00 & 100.00 \\
+    \texttt{gemma3:4b} & 24.24 & 44.44 & 31.37 & 100.00 & 100.00 \\
+    \texttt{qwen3:4b} & 0.00 & 0.00 & 0.00 & 0.00 & 4.04 \\
+    \texttt{qwen3:8b} & 54.29 & 35.19 & 42.70 & 27.12 & 84.85 \\
+    \texttt{CodeLlama:latest} & 0.00 & 0.00 & 0.00 & 10.00 & 1.01 \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -35,12 +38,15 @@ Retrieval introduces overhead from embedding, vector search, and prompt expansio
     \toprule
     Model & Median (ms) & Mean (ms) \\
     \midrule
-    \texttt{gemma3:1b} & 182 & 185 \\
-    \texttt{qwen3-coder} & 1060 & 1140 \\
+    \texttt{gemma3:1b} & 180 & 180 \\
+    \texttt{gemma3:4b} & 1335 & 1334 \\
+    \texttt{qwen3:4b} & 9852 & 9959 \\
+    \texttt{qwen3:8b} & 7809 & 9012 \\
+    \texttt{CodeLlama:latest} & 5478 & 5768 \\
     \bottomrule
   \end{tabular}
 \end{table}
 
 \subsection*{Discussion}
 
-RAG effects are model-dependent in this run. For \texttt{qwen3-coder}, RAG improved precision, recall, and F1 while also reducing latency compared to its LLM-only configuration. For \texttt{gemma3:1b}, RAG collapsed recall to zero and produced no true positives. This indicates that retrieval augmentation improved performance only when the base model could effectively incorporate retrieved context.
+RAG effects are model-dependent in this run. For \texttt{qwen3:8b}, RAG improved precision and F1, reduced FPR, and reduced median latency compared to LLM-only. \texttt{gemma3:4b} showed a small F1 gain but retained an FPR of 100\%. For \texttt{gemma3:1b}, RAG reduced recall to zero. \texttt{qwen3:4b} and \texttt{CodeLlama:latest} remained dominated by parse failures in both prompt modes.

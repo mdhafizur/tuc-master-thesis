@@ -7,14 +7,19 @@ Quantitative metrics summarize overall detection behavior, but IDE usefulness al
 
 \textbf{Case A (True Positive with direct remediation): SQL injection.}
 Sample ID: \texttt{sql-injection-1}.
-Both \texttt{qwen3-coder} modes consistently flagged direct string concatenation in the query and suggested parameterized queries. The suggested remediation aligned with the expected fix and was minimal.
+In the best-performing configuration (\texttt{qwen3:8b} with RAG), the model flagged direct string concatenation in the query and suggested parameterized queries. The suggested remediation aligned with the expected fix and was minimal.
 
-\textbf{Case B (False Positive on secure sample): parameterized query.}
-Sample ID: \texttt{secure-code-1}.
-For \texttt{qwen3-coder}, the secure sample was repeatedly flagged as SQL injection despite use of a parameterized query. This illustrates an over-warning failure mode that harms developer trust during normal coding.
+\textbf{Case B (False Positive on secure sample): safe process invocation.}
+Sample ID: secure snippet with \texttt{execFile} array arguments.
+In \texttt{qwen3:8b} (LLM+RAG), this secure sample was still flagged, with a broad path-sanitization recommendation. This illustrates residual over-warning even in the strongest configuration.
 
-\textbf{Case C (Label mismatch): XXE and authentication-related cases.}
-Several detections produced security-relevant explanations but used labels that did not match expected categories (e.g., broad or alternate vulnerability names). These were scored as false positives/false negatives in the harness and reduced measured precision.
+\textbf{Case C (False Negative): NoSQL injection.}
+Sample ID: NoSQL injection representative case.
+In \texttt{qwen3:8b} (LLM+RAG), this vulnerable sample was missed in a representative run and no remediation suggestion was produced.
+
+\textbf{Case D (True Positive): cross-site scripting via \texttt{innerHTML}.}
+Sample ID: XSS representative case.
+In \texttt{qwen3:8b} (LLM+RAG), the model correctly flagged unsafe HTML sink usage and proposed replacing \texttt{innerHTML} with safer rendering behavior.
 
 \subsection*{Repair Suggestion Quality (R4)}
 
@@ -31,10 +36,10 @@ Because Code Guardian operates inside the IDE, repair suggestions are intentiona
 
 Observed failure modes in the run include:
 \begin{itemize}
-  \item \textbf{Over-warning:} secure patterns flagged as vulnerable, especially by the larger model.
+  \item \textbf{Parse instability:} some model/mode combinations return malformed or non-JSON outputs at high rates.
+  \item \textbf{Over-warning:} secure patterns flagged as vulnerable, especially with \texttt{gemma3:4b}.
   \item \textbf{Under-warning:} conservative configurations (notably \texttt{gemma3:1b} with RAG) missing most vulnerable samples.
-  \item \textbf{Label drift:} semantically plausible detections mapped to non-matching category labels during scoring.
-  \item \textbf{Over-extended advice:} some suggestions include broader code-quality guidance beyond the minimal security fix.
+  \item \textbf{High-latency audit modes:} strongest F1 configurations may still be too slow for inline workflows.
 \end{itemize}
 
 \subsection*{Error Taxonomy from Run Logs}
@@ -49,10 +54,10 @@ Observed failure modes in the run include:
     \toprule
     Error pattern & Representative evidence & Quantitative impact in this run \\
     \midrule
-    Secure-sample over-warning & \texttt{secure-code-1} to \texttt{secure-code-15} (especially with \texttt{qwen3-coder}) & FPR reached 100\% for \texttt{qwen3-coder} in both modes (45/45 secure evaluations flagged). \\
-    Conservative under-detection & Vulnerable classes under \texttt{gemma3:1b} (especially LLM+RAG mode) & \texttt{gemma3:1b} recall dropped to 0.00\% (0/54) with RAG; LLM-only recall was 5.56\% (3/54). \\
-    Label mismatch / ontology drift & XXE, JWT, insecure-random, ReDoS, race-condition, unsafe-reflection cases with alternate labels & Semantically relevant explanations were scored as FP+FN pairs, reducing measured precision and recall. \\
-    Over-extended advisory findings & Secure snippets flagged with generic security/code-quality advice & Extra issues increased issue-level FP counts, lowering precision for high-recall configurations. \\
+    Parse-collapse regimes & \texttt{qwen3:4b} and \texttt{CodeLlama:latest} (both modes) & Parse rates dropped to 1.01--5.05\%, and recall remained 0.00\% in all but one configuration (\texttt{CodeLlama:latest} LLM-only: 3.70\%). \\
+    Secure-sample over-warning & \texttt{gemma3:4b} (LLM-only and LLM+RAG) & FPR reached 100\% in both modes (45/45 secure evaluations flagged). \\
+    Conservative under-detection & \texttt{gemma3:1b} (especially LLM+RAG) & Recall was 5.56\% (3/54) in LLM-only and 0.00\% (0/54) with RAG. \\
+    High-latency high-F1 mode & \texttt{qwen3:8b} (LLM+RAG) & Best F1 (42.70\%) and lower FPR (27.12\%) came with high latency (median 7809\,ms; mean 9012\,ms). \\
     \bottomrule
   \end{tabular}
 \end{table}

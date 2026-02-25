@@ -1,4 +1,4 @@
-\documentclass[a4paper, 12pt, oneside, BCOR1cm, toc=chapterentrywithdots]{scrbook}
+\documentclass[a4paper, 12pt, oneside, BCOR=1cm, toc=chapterentrywithdots]{scrbook}
 
 % --- Encoding and Fonts ---
 \usepackage[utf8]{inputenc}
@@ -10,18 +10,14 @@
 \usepackage{booktabs}
 \usepackage{makeidx}
 \usepackage[colorlinks=false]{hyperref}
-\usepackage{tocbibind}
 \usepackage{blindtext}
 \usepackage{rotating}
 \usepackage{amsmath}
 \usepackage{amssymb}
-\usepackage{subfigure} 
 \usepackage[nohyperlinks]{acronym}
 \usepackage{multicol}
-\KOMAoptions{parskip=half}
-\usepackage{amsmath}
+\KOMAoptions{parskip=half,listof=totoc,bibliography=totoc,index=totoc}
 \usepackage[T1]{fontenc}
-\usepackage[utf8]{inputenc} % if not default
 \usepackage{microtype}   % reduces overfull boxes
 
 \usepackage{listings}
@@ -34,6 +30,7 @@
 
 \usepackage{pgfplots}
 \usepgfplotslibrary{polar}
+\pgfplotsset{compat=1.18}
 
 \usepackage{graphicx}
 \usetikzlibrary{arrows.meta,positioning,fit,backgrounds}
@@ -49,7 +46,6 @@
 % --- Hyperref Setup ---
 \hypersetup{
   bookmarksnumbered=true,
-  hyperindex=true,
   bookmarksopen=true,
   bookmarksopenlevel=1,
   pdfborder=0 0 0
@@ -61,26 +57,6 @@
 \newcommand{\starzero}{\ding{78}}   % Empty star
 \newcommand{\safeincludegraphics}[2][]{%
   \IfFileExists{#2}{\includegraphics[#1]{#2}}{\fbox{Missing image}}%
-}
-
-% --- TOC Appearance Fixes ---
-\renewcommand*{\tableofcontents}{%
-  \begingroup
-  \tocsection
-  \tocfile{\contentsname}{toc}
-  \endgroup
-}
-\renewcommand*{\listoffigures}{%
-  \begingroup
-  \tocsection
-  \tocfile{\listfigurename}{lof}
-  \endgroup
-}
-\renewcommand{\listoftables}{
-  \begingroup
-  \tocsection
-  \tocfile{\listtablename}{lot}
-  \endgroup
 }
 
 \makeindex

@@ -39,7 +39,8 @@ Each test case contains:
 The evaluation script is executed locally:
 \begin{lstlisting}[language=Java, caption={Running the evaluation script}, label={lst:appendix-eval-run}]
 cd code-guardian
-node evaluation/evaluate-models.js
+node evaluation/evaluate-models.js --ablation --runs=3 --rag-k=5 --temperature=0.1 \
+  --num-predict=1000 --timeout-ms=30000 --delay-ms=500
 \end{lstlisting}
 
 The script prints per-model precision/recall/F1, false positive rate, average response time, and JSON parse success rate. Models to test are specified in the script and can be edited to match the locally installed Ollama models.
@@ -52,7 +53,7 @@ For full reproducibility and auditability, the following files should be archive
   \item Exact run configuration object (models, prompt modes, runtime parameters)
   \item Model digests / quantization metadata used for inference
   \item Environment metadata (OS, Node.js, Ollama versions, hardware)
-  \item Generated tables or scripts used to derive reported confidence intervals and significance tests
+  \item Generated tables or scripts used to derive reported descriptive metrics and mode-to-mode recall deltas
 \end{itemize}
 
 This appendix is intentionally concise: the full dataset is machine-readable and can be inspected directly in the repository.

@@ -17,7 +17,10 @@ Table~\ref{tab:eval-llm-only} summarizes precision, recall, and F1 score on the 
     Model & Precision (\%) & Recall (\%) & F1 (\%) & FPR (\%) & Parse rate (\%) \\
     \midrule
     \texttt{gemma3:1b} & 100.00 & 5.56 & 10.53 & 0.00 & 100.00 \\
-    \texttt{qwen3-coder} & 19.05 & 44.44 & 26.67 & 100.00 & 100.00 \\
+    \texttt{gemma3:4b} & 23.96 & 42.59 & 30.67 & 100.00 & 96.97 \\
+    \texttt{qwen3:4b} & 0.00 & 0.00 & 0.00 & 0.00 & 1.01 \\
+    \texttt{qwen3:8b} & 38.30 & 33.33 & 35.64 & 39.73 & 77.78 \\
+    \texttt{CodeLlama:latest} & 40.00 & 3.70 & 6.78 & 6.25 & 5.05 \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -35,12 +38,15 @@ For interactive usage, response time is critical. Table~\ref{tab:eval-llm-only-l
     \toprule
     Model & Median (ms) & Mean (ms) \\
     \midrule
-    \texttt{gemma3:1b} & 184 & 207 \\
-    \texttt{qwen3-coder} & 1099 & 1494 \\
+    \texttt{gemma3:1b} & 178 & 207 \\
+    \texttt{gemma3:4b} & 1415 & 1466 \\
+    \texttt{qwen3:4b} & 9549 & 9612 \\
+    \texttt{qwen3:8b} & 8774 & 9774 \\
+    \texttt{CodeLlama:latest} & 3987 & 4632 \\
     \bottomrule
   \end{tabular}
 \end{table}
 
 \subsection*{Discussion}
 
-The LLM-only results show a clear trade-off between precision, recall, and latency. \texttt{gemma3:1b} is very fast and conservative (high precision, very low recall), while \texttt{qwen3-coder} detects more vulnerable samples but over-predicts on secure samples (FPR 100\%) and is substantially slower. Both models maintained 100\% JSON parse success.
+The LLM-only results show heterogeneous behavior across model families. \texttt{gemma3:1b} remains very fast and conservative (high precision, low recall), while \texttt{qwen3:8b} provides the strongest LLM-only F1 but at much higher latency and lower parse reliability. \texttt{gemma3:4b} achieves higher recall than \texttt{gemma3:1b} but over-warns on secure samples (FPR 100\%). \texttt{qwen3:4b} and \texttt{CodeLlama:latest} show severe parse instability in this run, which corresponds to near-zero detection performance.
