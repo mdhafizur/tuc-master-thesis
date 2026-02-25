@@ -10,7 +10,7 @@ The evaluation dataset is a project-authored curated set of JavaScript and TypeS
 In the evaluated prototype version used for this thesis run, the scored dataset (\texttt{vulnerability-test-cases.json}) contains \textbf{33} test cases (\textbf{18} vulnerable and \textbf{15} secure). Expected findings are annotated with CWE identifiers to support aggregation by vulnerability class.
 
 \paragraph{Which dataset is scored in this chapter.}
-The repository-contained evaluation harness used in this thesis (\path{code-guardian/evaluation/evaluate-models.js}) was run in ablation mode with \texttt{runsPerSample=3}. Unless stated otherwise, quantitative results in Chapter~\ref{chap:evaluation} refer to this 33-case dataset.
+The repository-contained evaluation harness used in this thesis (\path{code-guardian/evaluation/evaluate-models.js}) was run in ablation mode with \texttt{--ablation --runs=3}. Unless stated otherwise, quantitative results in Chapter~\ref{chap:evaluation} refer to this 33-case dataset.
 
 Vulnerability classes are aligned with the Common Weakness Enumeration taxonomy \cite{mitreCWE}, and severities are recorded as coarse labels to support prioritization and reporting. Where applicable, severity can be related back to standardized scoring systems such as CVSS and public vulnerability databases such as CVE/NVD \cite{firstCvss31,mitreCVE,nistNVD}.
 
