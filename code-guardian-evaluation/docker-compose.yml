@@ -1,0 +1,183 @@
+services:
+  evaluation:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: code-guardian-evaluation
+    volumes:
+      # Mount the entire VS Code extension directory
+      - ../:/workspace/code-guardian
+      # Mount evaluation results directory to persist data
+      - ./results:/evaluation/results
+      # Mount datasets directory for test data
+      - ./datasets:/evaluation/datasets
+      # Mount logs directory
+      - ./logs:/evaluation/logs
+      # Mount metrics directory
+      - ./metrics:/evaluation/metrics
+    environment:
+      - DISPLAY=:99
+      - PYTHONPATH=/evaluation:/workspace/code-guardian
+      - EXTENSION_PATH=/workspace/code-guardian
+      - OLLAMA_HOST=ollama:11434  # Point to standalone Ollama service
+      - NODE_OPTIONS=--max-old-space-size=4096
+    working_dir: /evaluation
+    ports:
+      - "8080:8080"    # Web interface for evaluation
+    networks:
+      - evaluation-network
+    stdin_open: true
+    tty: true
+    # Resource limits and monitoring
+    deploy:
+      resources:
+        limits:
+          memory: 16G
+          cpus: '8.0'
+        reservations:
+          memory: 8G
+          cpus: '4.0'
+    # Memory and CPU monitoring
+    mem_limit: 16g
+    memswap_limit: 16g
+    cpus: 8.0
+    # Health check - check if evaluation environment is ready
+    healthcheck:
+      test: ["CMD", "python", "--version"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    command: ["xvfb-run-evaluation", "/bin/bash"]
+
+  # Standalone Ollama service (dedicated model serving)
+  ollama:
+    image: ollama/ollama:latest
+    container_name: code-guardian-ollama
+    volumes:
+      - ./ollama-models:/root/.ollama  # Store models directly on host
+    environment:
+      - OLLAMA_HOST=0.0.0.0:11434
+    ports:
+      - "11434:11434"  # Main Ollama API port
+    networks:
+      - evaluation-network
+    profiles: ["ollama"]
+    deploy:
+      resources:
+        limits:
+          memory: 12G
+          cpus: '6.0'
+        reservations:
+          memory: 6G
+          cpus: '3.0'
+    mem_limit: 12g
+    memswap_limit: 12g
+    cpus: 6.0
+    healthcheck:
+      test: ["CMD", "/bin/ollama", "list"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Model downloader service - pulls required models on startup
+  ollama-models:
+    image: curlimages/curl:latest
+    container_name: code-guardian-model-downloader
+    depends_on:
+      - ollama
+    networks:
+      - evaluation-network
+    profiles: ["models"]
+    command: >
+      sh -c "
+        echo 'Waiting for Ollama to be ready...' &&
+        sleep 15 &&
+        
+        echo 'Checking existing models...' &&
+        existing_models=$$(curl -s http://ollama:11434/api/tags | grep -o '\"name\":\"[^\"]*\"' | cut -d'\"' -f4) &&
+        
+        models='codellama:7b starcoder:15b phi3:mini' &&
+        for model in $$models; do
+          if echo \"$$existing_models\" | grep -q \"$$model\"; then
+            echo \"✅ Model $$model already exists, skipping download\"
+          else
+            echo \"📥 Downloading $$model...\"
+            curl -X POST http://ollama:11434/api/pull -d '{\"name\": \"'$$model'\"}' -H 'Content-Type: application/json' ||
+            echo \"⚠️  Download of $$model may have failed but continuing...\"
+          fi
+        done &&
+        
+        echo 'Model download process completed!'
+      "
+    restart: "no"
+    read_only: false
+
+  # Resource monitoring service
+  monitoring:
+    image: alpine:latest
+    container_name: code-guardian-monitoring
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./logs:/logs
+    networks:
+      - evaluation-network
+    profiles: ["monitoring"]
+    command: >
+      sh -c "
+        apk add --no-cache docker-cli &&
+        while true; do
+          echo \"$(date): Docker stats\" >> /logs/resource-usage.log
+          docker stats --no-stream --format 'table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.MemPerc}}\t{{.NetIO}}\t{{.BlockIO}}' >> /logs/resource-usage.log
+          sleep 60
+        done
+      "
+
+  # Optional: Separate service for baseline SAST tools
+  baseline:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: code-guardian-baseline
+    volumes:
+      - ./datasets:/evaluation/datasets
+      - ./results:/evaluation/results
+      - ./logs:/evaluation/logs
+    environment:
+      - PYTHONPATH=/evaluation
+    working_dir: /evaluation
+    networks:
+      - evaluation-network
+    profiles: ["baseline"]
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: '2.0'
+        reservations:
+          memory: 2G
+          cpus: '1.0'
+    mem_limit: 4g
+    memswap_limit: 4g
+    cpus: 2.0
+    command: ["python", "scripts/baselines/run_sast_comparison.py"]
+
+  # Web interface for monitoring (optional)
+  dashboard:
+    image: nginx:alpine
+    container_name: code-guardian-dashboard
+    volumes:
+      - ./media:/usr/share/nginx/html:ro
+    ports:
+      - "8090:80"
+    networks:
+      - evaluation-network
+    profiles: ["dashboard"]
+
+networks:
+  evaluation-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

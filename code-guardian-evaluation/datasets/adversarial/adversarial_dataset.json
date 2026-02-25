@@ -1,0 +1,731 @@
+{
+  "metadata": {
+    "name": "adversarial",
+    "total_samples": 42,
+    "categories": [
+      "xxe",
+      "path-traversal",
+      "sql-injection",
+      "crypto-weakness",
+      "nosql-injection",
+      "race-condition",
+      "prototype-pollution",
+      "regex-dos",
+      "ssrf",
+      "deserialization",
+      "command-injection",
+      "xss",
+      "auth-bypass",
+      "ldap-injection"
+    ],
+    "languages": [
+      "javascript"
+    ],
+    "sources": [
+      "Adversarial - Original Pattern",
+      "Adversarial - Minimal",
+      "Adversarial - Obfuscated"
+    ],
+    "cwe_ids": [
+      "CWE-1333",
+      "CWE-89",
+      "CWE-79",
+      "CWE-918",
+      "CWE-362",
+      "CWE-208",
+      "CWE-90",
+      "CWE-502",
+      "CWE-78",
+      "CWE-22",
+      "CWE-287",
+      "CWE-611",
+      "CWE-1321",
+      "CWE-943"
+    ],
+    "generated_at": "2025-09-05T22:01:42.781760",
+    "collection_method": "authoritative_sources"
+  },
+  "samples": [
+    {
+      "id": "adversarial_sqli_parameter_injection_original",
+      "cwe_id": "CWE-89",
+      "category": "sql-injection",
+      "language": "javascript",
+      "description": "Adversarial test: SQL injection through parameter manipulation",
+      "code": "// Adversarial: Multiple injection vectors\nfunction complexQuery(userId, role, filters) {\n    const query = `\n        SELECT u.*, r.permissions \n        FROM users u \n        JOIN roles r ON u.role_id = r.id \n        WHERE u.id = ${userId} \n        AND r.name = '${role}'\n        ${filters.where ? 'AND ' + filters.where : ''}\n        ORDER BY ${filters.orderBy || 'u.created_at'}\n    `;\n    return db.query(query);\n}",
+      "severity": "high",
+      "source": "Adversarial - Original Pattern",
+      "vulnerable_lines": [
+        12
+      ],
+      "is_vulnerable": true,
+      "adversarial_type": "original",
+      "created_at": "2025-09-05T22:01:42.351492"
+    },
+    {
+      "id": "adversarial_sqli_parameter_injection_obfuscated",
+      "cwe_id": "CWE-89",
+      "category": "sql-injection",
+      "language": "javascript",
+      "description": "Adversarial test (obfuscated): SQL injection through parameter manipulation",
+      "code": "// Obfuscated vulnerability pattern\n// Adversarial: Multiple injection vectors\nfunction complexQuery(userId, role, filters) {\n    const query = `\n        SELECT u.*, r.permissions \n        FROM users u \n        JOIN roles r ON u.role_id = r.id \n        WHERE u.id = ${userId} \n        AND r.name = '${role}'\n        ${filters.where ? 'AND ' + filters.where : ''}\n        ORDER BY ${filters.orderBy || 'u.created_at'}\n    `;\n    return db.query(query);\n}\n\n// Additional obfuscation layers\nconst obfuscatedFunc = Function.prototype.constructor;\nconst dynamicEval = obfuscatedFunc.constructor(\"return eval\")();\n",
+      "severity": "high",
+      "source": "Adversarial - Obfuscated",
+      "vulnerable_lines": [
+        1
+      ],
+      "is_vulnerable": true,
+      "adversarial_type": "obfuscated",
+      "created_at": "2025-09-05T22:01:42.351497"
+    },
+    {
+      "id": "adversarial_sqli_parameter_injection_minimal",
+      "cwe_id": "CWE-89",
+      "category": "sql-injection",
+      "language": "javascript",
+      "description": "Adversarial test (minimal): SQL injection through parameter manipulation",
+      "code": "function query(id) { return db.exec(\"SELECT * FROM users WHERE id=\" + id); }",
+      "severity": "medium",
+      "source": "Adversarial - Minimal",
+      "vulnerable_lines": [
+        1
+      ],
+      "is_vulnerable": true,
+      "adversarial_type": "minimal",
+      "created_at": "2025-09-05T22:01:42.351500"
+    },
+    {
+      "id": "adversarial_xss_context_switching_original",
+      "cwe_id": "CWE-79",
+      "category": "xss",
+      "language": "javascript",
+      "description": "Adversarial test: XSS with context switching",
+      "code": "// Adversarial: Context-aware XSS\nfunction renderUserProfile(user, template) {\n    const profileHtml = template\n        .replace('{{name}}', user.name)\n        .replace('{{bio}}', user.bio)\n        .replace('{{avatar}}', user.avatar);\n    \n    // Context switching vulnerability\n    if (user.isAdmin) {\n        profileHtml += `<script>window.userRole='${user.role}';</script>`;\n    }\n    \n    document.getElementById('profile').innerHTML = profileHtml;\n}",
+      "severity": "high",
+      "source": "Adversarial - Original Pattern",
+      "vulnerable_lines": [
+        13
+      ],
+      "is_vulnerable": true,
+      "adversarial_type": "original",
+      "created_at": "2025-09-05T22:01:42.351541"
+    },
+    {
+      "id": "adversarial_xss_context_switching_obfuscated",
+      "cwe_id": "CWE-79",
+      "category": "xss",
+      "language": "javascript",
+      "description": "Adversarial test (obfuscated): XSS with context switching",
+      "code": "// Obfuscated vulnerability pattern\n// Adversarial: Context-aware XSS\nfunction renderUserProfile(user, template) {\n    const profileHtml = template\n        .replace('{{name}}', user.name)\n        .replace('{{bio}}', user.bio)\n        .replace('{{avatar}}', user.avatar);\n    \n    // Context switching vulnerability\n    if (user.isAdmin) {\n        profileHtml += `<script>window.userRole='${user.role}';</script>`;\n    }\n    \n    document.getElementById('profile').innerHTML = profileHtml;\n}\n\n// Additional obfuscation layers\nconst obfuscatedFunc = Function.prototype.constructor;\nconst dynamicEval = obfuscatedFunc.constructor(\"return eval\")();\n",
+      "severity": "high",
+      "source": "Adversarial - Obfuscated",
+      "vulnerable_lines": [
+        1
+      ],
+      "is_vulnerable": true,
+      "adversarial_type": "obfuscated",
+      "created_at": "2025-09-05T22:01:42.351544"
+    },
+    {
+      "id": "adversarial_xss_context_switching_minimal",
+      "cwe_id": "CWE-79",
+      "category": "xss",
+      "language": "javascript",
+      "description": "Adversarial test (minimal): XSS with context switching",
+      "code": "function render(html) { document.body.innerHTML = html; }",
+      "severity": "medium",
+      "source": "Adversarial - Minimal",
+      "vulnerable_lines": [
+        1
+      ],
+      "is_vulnerable": true,
+      "adversarial_type": "minimal",
+      "created_at": "2025-09-05T22:01:42.351546"
+    },
+    {
+      "id": "adversarial_path_traversal_double_encoding_original",
+      "cwe_id": "CWE-22",
+      "category": "path-traversal",
+      "language": "javascript",
+      "description": "Adversarial test: Path traversal with encoding bypass",
+      "code": "// Adversarial: Multiple encoding bypass\nconst path = require('path');\nconst fs = require('fs');\n\nfunction serveUserFile(filename, encoding = 'utf8') {\n    // Multiple normalization attempts\n    let sanitized = filename\n        .replace(/\\.\\./g, '')\n        .replace(/\\\\/g, '/')\n        .replace(/\\/+/g, '/');\n    \n    // Still vulnerable to double encoding\n    const filePath = path.join('./uploads', decodeURIComponent(sanitized));\n    return fs.readFileSync(filePath, encoding);\n}",
+      "severity": "high",
+      "source": "Adversarial - Original Pattern",
+      "vulnerable_lines": [
+        2,
+        3,
+        14
+      ],
+      "is_vulnerable": true,
+      "adversarial_type": "original",
+      "created_at": "2025-09-05T22:01:42.351593"
+    },
+    {
+      "id": "adversarial_path_traversal_double_encoding_obfuscated",
+      "cwe_id": "CWE-22",
+      "category": "path-traversal",
+      "language": "javascript",
+      "description": "Adversarial test (obfuscated): Path traversal with encoding bypass",
+      "code": "// Obfuscated vulnerability pattern\n// Adversarial: Multiple encoding bypass\nconst path = require('path');\nconst fs = require('fs');\n\nfunction serveUserFile(filename, encoding = 'utf8') {\n    // Multiple normalization attempts\n    let sanitized = filename\n        .replace(/\\.\\./g, '')\n        .replace(/\\\\/g, '/')\n        .replace(/\\/+/g, '/');\n    \n    // Still vulnerable to double encoding\n    const filePath = path.join('./uploads', decodeURIComponent(sanitized));\n    return fs.readFileSync(filePath, encoding);\n}\n\n// Additional obfuscation layers\nconst obfuscatedFunc = Function.prototype.constructor;\nconst dynamicEval = obfuscatedFunc.constructor(\"return eval\")();\n",
+      "severity": "high",
+      "source": "Adversarial - Obfuscated",
+      "vulnerable_lines": [
+        1
+      ],
+      "is_vulnerable": true,
+      "adversarial_type": "obfuscated",
+      "created_at": "2025-09-05T22:01:42.351598"
+    },
+    {
+      "id": "adversarial_path_traversal_double_encoding_minimal",
+      "cwe_id": "CWE-22",
+      "category": "path-traversal",
+      "language": "javascript",
+      "description": "Adversarial test (minimal): Path traversal with encoding bypass",
+      "code": "function readFile(path) { return fs.readFileSync(\"./files/\" + path); }",
+      "severity": "medium",
+      "source": "Adversarial - Minimal",
+      "vulnerable_lines": [
+        1
+      ],
+      "is_vulnerable": true,
+      "adversarial_type": "minimal",
+      "created_at": "2025-09-05T22:01:42.351599"
+    },
+    {
+      "id": "adversarial_prototype_pollution_nested_original",
+      "cwe_id": "CWE-1321",
+      "category": "prototype-pollution",
+      "language": "javascript",
+      "description": "Adversarial test: Nested prototype pollution",
+      "code": "// Adversarial: Deep nested pollution\nfunction deepMergeConfig(target, source, depth = 0) {\n    if (depth > 10) return target; // Recursion limit\n    \n    for (const key in source) {\n        if (source[key] && typeof source[key] === 'object') {\n            if (!target[key]) target[key] = {};\n            deepMergeConfig(target[key], source[key], depth + 1);\n        } else {\n            target[key] = source[key]; // Pollution vector\n        }\n    }\n    return target;\n}",
+      "severity": "high",
+      "source": "Adversarial - Original Pattern",
+      "vulnerable_lines": [
+        1
+      ],
+      "is_vulnerable": true,
+      "adversarial_type": "original",
+      "created_at": "2025-09-05T22:01:42.351643"
+    },
+    {
+      "id": "adversarial_prototype_pollution_nested_obfuscated",
+      "cwe_id": "CWE-1321",
+      "category": "prototype-pollution",
+      "language": "javascript",
+      "description": "Adversarial test (obfuscated): Nested prototype pollution",
+      "code": "// Obfuscated vulnerability pattern\n// Adversarial: Deep nested pollution\nfunction deepMergeConfig(target, source, depth = 0) {\n    if (depth > 10) return target; // Recursion limit\n    \n    for (const key in source) {\n        if (source[key] && typeof source[key] === 'object') {\n            if (!target[key]) target[key] = {};\n            deepMergeConfig(target[key], source[key], depth + 1);\n        } else {\n            target[key] = source[key]; // Pollution vector\n        }\n    }\n    return target;\n}\n\n// Additional obfuscation layers\nconst obfuscatedFunc = Function.prototype.constructor;\nconst dynamicEval = obfuscatedFunc.constructor(\"return eval\")();\n",
+      "severity": "high",
+      "source": "Adversarial - Obfuscated",
+      "vulnerable_lines": [
+        1
+      ],
+      "is_vulnerable": true,
+      "adversarial_type": "obfuscated",
+      "created_at": "2025-09-05T22:01:42.351645"
+    },
+    {
+      "id": "adversarial_prototype_pollution_nested_minimal",
+      "cwe_id": "CWE-1321",
+      "category": "prototype-pollution",
+      "language": "javascript",
+      "description": "Adversarial test (minimal): Nested prototype pollution",
+      "code": "function merge(obj, src) { for(let k in src) obj[k] = src[k]; }",
+      "severity": "medium",
+      "source": "Adversarial - Minimal",
+      "vulnerable_lines": [
+        1
+      ],
+      "is_vulnerable": true,
+      "adversarial_type": "minimal",
+      "created_at": "2025-09-05T22:01:42.351646"
+    },
+    {
+      "id": "adversarial_command_injection_template_original",
+      "cwe_id": "CWE-78",
+      "category": "command-injection",
+      "language": "javascript",
+      "description": "Adversarial test: Command injection through template processing",
+      "code": "// Adversarial: Template-based command injection\nconst { exec } = require('child_process');\n\nfunction processTemplate(template, data) {\n    // Template processing with command execution\n    const processed = template.replace(/\\\\{\\\\{([^}]+)\\\\}\\\\}/g, (match, expr) => {\n        try {\n            // Dangerous evaluation\n            return Function('\"use strict\"; return (' + expr + ')')();\n        } catch {\n            return match;\n        }\n    });\n    \n    if (data.executeCommand) {\n        exec(`echo \"${processed}\" > output.txt`);\n    }\n    \n    return processed;\n}",
+      "severity": "high",
+      "source": "Adversarial - Original Pattern",
+      "vulnerable_lines": [
+        2,
+        9,
+        16
+      ],
+      "is_vulnerable": true,
+      "adversarial_type": "original",
+      "created_at": "2025-09-05T22:01:42.351701"
+    },
+    {
+      "id": "adversarial_command_injection_template_obfuscated",
+      "cwe_id": "CWE-78",
+      "category": "command-injection",
+      "language": "javascript",
+      "description": "Adversarial test (obfuscated): Command injection through template processing",
+      "code": "// Obfuscated vulnerability pattern\n// Adversarial: Template-based command injection\nconst { exec } = require('child_process');\n\nfunction processTemplate(template, data) {\n    // Template processing with command execution\n    const processed = template.replace(/\\\\{\\\\{([^}]+)\\\\}\\\\}/g, (match, expr) => {\n        try {\n            // Dangerous evaluation\n            return Function('\"use strict\"; return (' + expr + ')')();\n        } catch {\n            return match;\n        }\n    });\n    \n    if (data.executeCommand) {\n        exec(`echo \"${processed}\" > output.txt`);\n    }\n    \n    return processed;\n}\n\n// Additional obfuscation layers\nconst obfuscatedFunc = Function.prototype.constructor;\nconst dynamicEval = obfuscatedFunc.constructor(\"return eval\")();\n",
+      "severity": "high",
+      "source": "Adversarial - Obfuscated",
+      "vulnerable_lines": [
+        1
+      ],
+      "is_vulnerable": true,
+      "adversarial_type": "obfuscated",
+      "created_at": "2025-09-05T22:01:42.351703"
+    },
+    {
+      "id": "adversarial_command_injection_template_minimal",
+      "cwe_id": "CWE-78",
+      "category": "command-injection",
+      "language": "javascript",
+      "description": "Adversarial test (minimal): Command injection through template processing",
+      "code": "function exec(cmd) { require(\"child_process\").exec(cmd); }",
+      "severity": "medium",
+      "source": "Adversarial - Minimal",
+      "vulnerable_lines": [
+        1
+      ],
+      "is_vulnerable": true,
+      "adversarial_type": "minimal",
+      "created_at": "2025-09-05T22:01:42.351704"
+    },
+    {
+      "id": "adversarial_crypto_timing_attack_original",
+      "cwe_id": "CWE-208",
+      "category": "crypto-weakness",
+      "language": "javascript",
+      "description": "Adversarial test: Cryptographic timing attack",
+      "code": "// Adversarial: Timing attack vulnerability\nfunction verifyApiKey(providedKey, validKey) {\n    if (providedKey.length !== validKey.length) {\n        return false;\n    }\n    \n    // Vulnerable: Early termination allows timing attacks\n    for (let i = 0; i < providedKey.length; i++) {\n        if (providedKey[i] !== validKey[i]) {\n            return false; // Timing leak here\n        }\n    }\n    \n    return true;\n}",
+      "severity": "high",
+      "source": "Adversarial - Original Pattern",
+      "vulnerable_lines": [
+        1
+      ],
+      "is_vulnerable": true,
+      "adversarial_type": "original",
+      "created_at": "2025-09-05T22:01:42.351747"
+    },
+    {
+      "id": "adversarial_crypto_timing_attack_obfuscated",
+      "cwe_id": "CWE-208",
+      "category": "crypto-weakness",
+      "language": "javascript",
+      "description": "Adversarial test (obfuscated): Cryptographic timing attack",
+      "code": "// Obfuscated vulnerability pattern\n// Adversarial: Timing attack vulnerability\nfunction verifyApiKey(providedKey, validKey) {\n    if (providedKey.length !== validKey.length) {\n        return false;\n    }\n    \n    // Vulnerable: Early termination allows timing attacks\n    for (let i = 0; i < providedKey.length; i++) {\n        if (providedKey[i] !== validKey[i]) {\n            return false; // Timing leak here\n        }\n    }\n    \n    return true;\n}\n\n// Additional obfuscation layers\nconst obfuscatedFunc = Function.prototype.constructor;\nconst dynamicEval = obfuscatedFunc.constructor(\"return eval\")();\n",
+      "severity": "high",
+      "source": "Adversarial - Obfuscated",
+      "vulnerable_lines": [
+        1
+      ],
+      "is_vulnerable": true,
+      "adversarial_type": "obfuscated",
+      "created_at": "2025-09-05T22:01:42.351750"
+    },
+    {
+      "id": "adversarial_crypto_timing_attack_minimal",
+      "cwe_id": "CWE-208",
+      "category": "crypto-weakness",
+      "language": "javascript",
+      "description": "Adversarial test (minimal): Cryptographic timing attack",
+      "code": "function compare(a, b) { return a === b; }",
+      "severity": "medium",
+      "source": "Adversarial - Minimal",
+      "vulnerable_lines": [
+        1
+      ],
+      "is_vulnerable": true,
+      "adversarial_type": "minimal",
+      "created_at": "2025-09-05T22:01:42.351751"
+    },
+    {
+      "id": "adversarial_deserialization_gadget_original",
+      "cwe_id": "CWE-502",
+      "category": "deserialization",
+      "language": "javascript",
+      "description": "Adversarial test: Unsafe deserialization with gadget chain",
+      "code": "// Adversarial: Deserialization gadget chain\nclass UserSession {\n    constructor(data) {\n        Object.assign(this, data);\n    }\n    \n    toJSON() {\n        return { ...this, serializedAt: Date.now() };\n    }\n    \n    static fromJSON(jsonStr) {\n        const data = JSON.parse(jsonStr);\n        // Vulnerable: Automatic property assignment\n        return new UserSession(data);\n    }\n}\n\nfunction loadUserSession(sessionData) {\n    return UserSession.fromJSON(sessionData);\n}",
+      "severity": "high",
+      "source": "Adversarial - Original Pattern",
+      "vulnerable_lines": [
+        4,
+        12
+      ],
+      "is_vulnerable": true,
+      "adversarial_type": "original",
+      "created_at": "2025-09-05T22:01:42.351804"
+    },
+    {
+      "id": "adversarial_deserialization_gadget_obfuscated",
+      "cwe_id": "CWE-502",
+      "category": "deserialization",
+      "language": "javascript",
+      "description": "Adversarial test (obfuscated): Unsafe deserialization with gadget chain",
+      "code": "// Obfuscated vulnerability pattern\n// Adversarial: Deserialization gadget chain\nclass UserSession {\n    constructor(data) {\n        Object.assign(this, data);\n    }\n    \n    toJSON() {\n        return { ...this, serializedAt: Date.now() };\n    }\n    \n    static fromJSON(jsonStr) {\n        const data = JSON.parse(jsonStr);\n        // Vulnerable: Automatic property assignment\n        return new UserSession(data);\n    }\n}\n\nfunction loadUserSession(sessionData) {\n    return UserSession.fromJSON(sessionData);\n}\n\n// Additional obfuscation layers\nconst obfuscatedFunc = Function.prototype.constructor;\nconst dynamicEval = obfuscatedFunc.constructor(\"return eval\")();\n",
+      "severity": "high",
+      "source": "Adversarial - Obfuscated",
+      "vulnerable_lines": [
+        1
+      ],
+      "is_vulnerable": true,
+      "adversarial_type": "obfuscated",
+      "created_at": "2025-09-05T22:01:42.351807"
+    },
+    {
+      "id": "adversarial_deserialization_gadget_minimal",
+      "cwe_id": "CWE-502",
+      "category": "deserialization",
+      "language": "javascript",
+      "description": "Adversarial test (minimal): Unsafe deserialization with gadget chain",
+      "code": "function load(data) { return Object.assign({}, JSON.parse(data)); }",
+      "severity": "medium",
+      "source": "Adversarial - Minimal",
+      "vulnerable_lines": [
+        1
+      ],
+      "is_vulnerable": true,
+      "adversarial_type": "minimal",
+      "created_at": "2025-09-05T22:01:42.351808"
+    },
+    {
+      "id": "adversarial_nosql_injection_aggregation_original",
+      "cwe_id": "CWE-943",
+      "category": "nosql-injection",
+      "language": "javascript",
+      "description": "Adversarial test: NoSQL injection in aggregation pipeline",
+      "code": "// Adversarial: NoSQL injection via aggregation\nfunction getUserAnalytics(userId, filters) {\n    const pipeline = [\n        { $match: { userId: userId } },\n        { $group: { _id: \"$category\", total: { $sum: 1 } } }\n    ];\n    \n    // Vulnerable: Direct filter injection\n    if (filters.customStage) {\n        pipeline.push(JSON.parse(filters.customStage));\n    }\n    \n    return db.collection('events').aggregate(pipeline).toArray();\n}",
+      "severity": "high",
+      "source": "Adversarial - Original Pattern",
+      "vulnerable_lines": [
+        10
+      ],
+      "is_vulnerable": true,
+      "adversarial_type": "original",
+      "created_at": "2025-09-05T22:01:42.351851"
+    },
+    {
+      "id": "adversarial_nosql_injection_aggregation_obfuscated",
+      "cwe_id": "CWE-943",
+      "category": "nosql-injection",
+      "language": "javascript",
+      "description": "Adversarial test (obfuscated): NoSQL injection in aggregation pipeline",
+      "code": "// Obfuscated vulnerability pattern\n// Adversarial: NoSQL injection via aggregation\nfunction getUserAnalytics(userId, filters) {\n    const pipeline = [\n        { $match: { userId: userId } },\n        { $group: { _id: \"$category\", total: { $sum: 1 } } }\n    ];\n    \n    // Vulnerable: Direct filter injection\n    if (filters.customStage) {\n        pipeline.push(JSON.parse(filters.customStage));\n    }\n    \n    return db.collection('events').aggregate(pipeline).toArray();\n}\n\n// Additional obfuscation layers\nconst obfuscatedFunc = Function.prototype.constructor;\nconst dynamicEval = obfuscatedFunc.constructor(\"return eval\")();\n",
+      "severity": "high",
+      "source": "Adversarial - Obfuscated",
+      "vulnerable_lines": [
+        1
+      ],
+      "is_vulnerable": true,
+      "adversarial_type": "obfuscated",
+      "created_at": "2025-09-05T22:01:42.351854"
+    },
+    {
+      "id": "adversarial_nosql_injection_aggregation_minimal",
+      "cwe_id": "CWE-943",
+      "category": "nosql-injection",
+      "language": "javascript",
+      "description": "Adversarial test (minimal): NoSQL injection in aggregation pipeline",
+      "code": "function vuln() { /* minimal vulnerability */ }",
+      "severity": "medium",
+      "source": "Adversarial - Minimal",
+      "vulnerable_lines": [
+        1
+      ],
+      "is_vulnerable": true,
+      "adversarial_type": "minimal",
+      "created_at": "2025-09-05T22:01:42.351856"
+    },
+    {
+      "id": "adversarial_regex_dos_backtrack_original",
+      "cwe_id": "CWE-1333",
+      "category": "regex-dos",
+      "language": "javascript",
+      "description": "Adversarial test: ReDoS via catastrophic backtracking",
+      "code": "// Adversarial: Regex catastrophic backtracking\nfunction validateEmail(email) {\n    // Vulnerable: Catastrophic backtracking pattern\n    const emailRegex = /^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$/;\n    const complexRegex = /^(a+)+b$/;\n    \n    if (complexRegex.test(email)) {\n        return emailRegex.test(email);\n    }\n    \n    return false;\n}",
+      "severity": "high",
+      "source": "Adversarial - Original Pattern",
+      "vulnerable_lines": [
+        1
+      ],
+      "is_vulnerable": true,
+      "adversarial_type": "original",
+      "created_at": "2025-09-05T22:01:42.351893"
+    },
+    {
+      "id": "adversarial_regex_dos_backtrack_obfuscated",
+      "cwe_id": "CWE-1333",
+      "category": "regex-dos",
+      "language": "javascript",
+      "description": "Adversarial test (obfuscated): ReDoS via catastrophic backtracking",
+      "code": "// Obfuscated vulnerability pattern\n// Adversarial: Regex catastrophic backtracking\nfunction validateEmail(email) {\n    // Vulnerable: Catastrophic backtracking pattern\n    const emailRegex = /^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$/;\n    const complexRegex = /^(a+)+b$/;\n    \n    if (complexRegex.test(email)) {\n        return emailRegex.test(email);\n    }\n    \n    return false;\n}\n\n// Additional obfuscation layers\nconst obfuscatedFunc = Function.prototype.constructor;\nconst dynamicEval = obfuscatedFunc.constructor(\"return eval\")();\n",
+      "severity": "high",
+      "source": "Adversarial - Obfuscated",
+      "vulnerable_lines": [
+        1
+      ],
+      "is_vulnerable": true,
+      "adversarial_type": "obfuscated",
+      "created_at": "2025-09-05T22:01:42.351894"
+    },
+    {
+      "id": "adversarial_regex_dos_backtrack_minimal",
+      "cwe_id": "CWE-1333",
+      "category": "regex-dos",
+      "language": "javascript",
+      "description": "Adversarial test (minimal): ReDoS via catastrophic backtracking",
+      "code": "function vuln() { /* minimal vulnerability */ }",
+      "severity": "medium",
+      "source": "Adversarial - Minimal",
+      "vulnerable_lines": [
+        1
+      ],
+      "is_vulnerable": true,
+      "adversarial_type": "minimal",
+      "created_at": "2025-09-05T22:01:42.351896"
+    },
+    {
+      "id": "adversarial_jwt_algorithm_confusion_original",
+      "cwe_id": "CWE-287",
+      "category": "auth-bypass",
+      "language": "javascript",
+      "description": "Adversarial test: JWT algorithm confusion attack",
+      "code": "// Adversarial: JWT algorithm confusion\nconst jwt = require('jsonwebtoken');\nconst fs = require('fs');\n\nfunction verifyToken(token, publicKey) {\n    try {\n        // Vulnerable: No algorithm specification\n        const decoded = jwt.verify(token, publicKey);\n        return decoded;\n    } catch (error) {\n        // Fallback to 'none' algorithm\n        const parts = token.split('.');\n        if (parts.length === 3) {\n            return JSON.parse(Buffer.from(parts[1], 'base64').toString());\n        }\n        throw error;\n    }\n}",
+      "severity": "high",
+      "source": "Adversarial - Original Pattern",
+      "vulnerable_lines": [
+        2,
+        3,
+        14
+      ],
+      "is_vulnerable": true,
+      "adversarial_type": "original",
+      "created_at": "2025-09-05T22:01:42.351947"
+    },
+    {
+      "id": "adversarial_jwt_algorithm_confusion_obfuscated",
+      "cwe_id": "CWE-287",
+      "category": "auth-bypass",
+      "language": "javascript",
+      "description": "Adversarial test (obfuscated): JWT algorithm confusion attack",
+      "code": "// Obfuscated vulnerability pattern\n// Adversarial: JWT algorithm confusion\nconst jwt = require('jsonwebtoken');\nconst fs = require('fs');\n\nfunction verifyToken(token, publicKey) {\n    try {\n        // Vulnerable: No algorithm specification\n        const decoded = jwt.verify(token, publicKey);\n        return decoded;\n    } catch (error) {\n        // Fallback to 'none' algorithm\n        const parts = token.split('.');\n        if (parts.length === 3) {\n            return JSON.parse(Buffer.from(parts[1], 'base64').toString());\n        }\n        throw error;\n    }\n}\n\n// Additional obfuscation layers\nconst obfuscatedFunc = Function.prototype.constructor;\nconst dynamicEval = obfuscatedFunc.constructor(\"return eval\")();\n",
+      "severity": "high",
+      "source": "Adversarial - Obfuscated",
+      "vulnerable_lines": [
+        1
+      ],
+      "is_vulnerable": true,
+      "adversarial_type": "obfuscated",
+      "created_at": "2025-09-05T22:01:42.351948"
+    },
+    {
+      "id": "adversarial_jwt_algorithm_confusion_minimal",
+      "cwe_id": "CWE-287",
+      "category": "auth-bypass",
+      "language": "javascript",
+      "description": "Adversarial test (minimal): JWT algorithm confusion attack",
+      "code": "function vuln() { /* minimal vulnerability */ }",
+      "severity": "medium",
+      "source": "Adversarial - Minimal",
+      "vulnerable_lines": [
+        1
+      ],
+      "is_vulnerable": true,
+      "adversarial_type": "minimal",
+      "created_at": "2025-09-05T22:01:42.351950"
+    },
+    {
+      "id": "adversarial_ssrf_url_bypass_original",
+      "cwe_id": "CWE-918",
+      "category": "ssrf",
+      "language": "javascript",
+      "description": "Adversarial test: SSRF with URL validation bypass",
+      "code": "// Adversarial: SSRF URL bypass techniques\nconst http = require('http');\nconst url = require('url');\n\nfunction fetchResource(resourceUrl) {\n    const parsed = url.parse(resourceUrl);\n    \n    // Vulnerable: Insufficient blacklist\n    const blockedHosts = ['localhost', '127.0.0.1', '0.0.0.0'];\n    \n    if (blockedHosts.includes(parsed.hostname)) {\n        throw new Error('Blocked host');\n    }\n    \n    // Still vulnerable to bypass techniques\n    return new Promise((resolve, reject) => {\n        http.get(resourceUrl, (res) => {\n            let data = '';\n            res.on('data', chunk => data += chunk);\n            res.on('end', () => resolve(data));\n        }).on('error', reject);\n    });\n}",
+      "severity": "high",
+      "source": "Adversarial - Original Pattern",
+      "vulnerable_lines": [
+        2,
+        3
+      ],
+      "is_vulnerable": true,
+      "adversarial_type": "original",
+      "created_at": "2025-09-05T22:01:42.352020"
+    },
+    {
+      "id": "adversarial_ssrf_url_bypass_obfuscated",
+      "cwe_id": "CWE-918",
+      "category": "ssrf",
+      "language": "javascript",
+      "description": "Adversarial test (obfuscated): SSRF with URL validation bypass",
+      "code": "// Obfuscated vulnerability pattern\n// Adversarial: SSRF URL bypass techniques\nconst http = require('http');\nconst url = require('url');\n\nfunction fetchResource(resourceUrl) {\n    const parsed = url.parse(resourceUrl);\n    \n    // Vulnerable: Insufficient blacklist\n    const blockedHosts = ['localhost', '127.0.0.1', '0.0.0.0'];\n    \n    if (blockedHosts.includes(parsed.hostname)) {\n        throw new Error('Blocked host');\n    }\n    \n    // Still vulnerable to bypass techniques\n    return new Promise((resolve, reject) => {\n        http.get(resourceUrl, (res) => {\n            let data = '';\n            res.on('data', chunk => data += chunk);\n            res.on('end', () => resolve(data));\n        }).on('error', reject);\n    });\n}\n\n// Additional obfuscation layers\nconst obfuscatedFunc = Function.prototype.constructor;\nconst dynamicEval = obfuscatedFunc.constructor(\"return eval\")();\n",
+      "severity": "high",
+      "source": "Adversarial - Obfuscated",
+      "vulnerable_lines": [
+        1
+      ],
+      "is_vulnerable": true,
+      "adversarial_type": "obfuscated",
+      "created_at": "2025-09-05T22:01:42.352024"
+    },
+    {
+      "id": "adversarial_ssrf_url_bypass_minimal",
+      "cwe_id": "CWE-918",
+      "category": "ssrf",
+      "language": "javascript",
+      "description": "Adversarial test (minimal): SSRF with URL validation bypass",
+      "code": "function vuln() { /* minimal vulnerability */ }",
+      "severity": "medium",
+      "source": "Adversarial - Minimal",
+      "vulnerable_lines": [
+        1
+      ],
+      "is_vulnerable": true,
+      "adversarial_type": "minimal",
+      "created_at": "2025-09-05T22:01:42.352025"
+    },
+    {
+      "id": "adversarial_ldap_injection_blind_original",
+      "cwe_id": "CWE-90",
+      "category": "ldap-injection",
+      "language": "javascript",
+      "description": "Adversarial test: Blind LDAP injection",
+      "code": "// Adversarial: Blind LDAP injection\nconst ldap = require('ldapjs');\n\nfunction searchUsers(username, attribute) {\n    const client = ldap.createClient({ url: 'ldap://ldap.company.com' });\n    \n    // Vulnerable: Unescaped LDAP filter construction\n    const filter = `(&(uid=${username})(${attribute}=*))`;\n    \n    return new Promise((resolve, reject) => {\n        client.search('ou=users,dc=company,dc=com', {\n            filter: filter,\n            scope: 'sub'\n        }, (err, result) => {\n            if (err) reject(err);\n            \n            const entries = [];\n            result.on('searchEntry', entry => entries.push(entry.object));\n            result.on('end', () => resolve(entries));\n        });\n    });\n}",
+      "severity": "high",
+      "source": "Adversarial - Original Pattern",
+      "vulnerable_lines": [
+        2
+      ],
+      "is_vulnerable": true,
+      "adversarial_type": "original",
+      "created_at": "2025-09-05T22:01:42.352091"
+    },
+    {
+      "id": "adversarial_ldap_injection_blind_obfuscated",
+      "cwe_id": "CWE-90",
+      "category": "ldap-injection",
+      "language": "javascript",
+      "description": "Adversarial test (obfuscated): Blind LDAP injection",
+      "code": "// Obfuscated vulnerability pattern\n// Adversarial: Blind LDAP injection\nconst ldap = require('ldapjs');\n\nfunction searchUsers(username, attribute) {\n    const client = ldap.createClient({ url: 'ldap://ldap.company.com' });\n    \n    // Vulnerable: Unescaped LDAP filter construction\n    const filter = `(&(uid=${username})(${attribute}=*))`;\n    \n    return new Promise((resolve, reject) => {\n        client.search('ou=users,dc=company,dc=com', {\n            filter: filter,\n            scope: 'sub'\n        }, (err, result) => {\n            if (err) reject(err);\n            \n            const entries = [];\n            result.on('searchEntry', entry => entries.push(entry.object));\n            result.on('end', () => resolve(entries));\n        });\n    });\n}\n\n// Additional obfuscation layers\nconst obfuscatedFunc = Function.prototype.constructor;\nconst dynamicEval = obfuscatedFunc.constructor(\"return eval\")();\n",
+      "severity": "high",
+      "source": "Adversarial - Obfuscated",
+      "vulnerable_lines": [
+        1
+      ],
+      "is_vulnerable": true,
+      "adversarial_type": "obfuscated",
+      "created_at": "2025-09-05T22:01:42.352096"
+    },
+    {
+      "id": "adversarial_ldap_injection_blind_minimal",
+      "cwe_id": "CWE-90",
+      "category": "ldap-injection",
+      "language": "javascript",
+      "description": "Adversarial test (minimal): Blind LDAP injection",
+      "code": "function vuln() { /* minimal vulnerability */ }",
+      "severity": "medium",
+      "source": "Adversarial - Minimal",
+      "vulnerable_lines": [
+        1
+      ],
+      "is_vulnerable": true,
+      "adversarial_type": "minimal",
+      "created_at": "2025-09-05T22:01:42.352098"
+    },
+    {
+      "id": "adversarial_race_condition_toctou_original",
+      "cwe_id": "CWE-362",
+      "category": "race-condition",
+      "language": "javascript",
+      "description": "Adversarial test: Time-of-check to time-of-use race condition",
+      "code": "// Adversarial: TOCTOU race condition\nconst fs = require('fs');\n\nclass FileProcessor {\n    constructor() {\n        this.processing = new Set();\n    }\n    \n    async processFile(filename) {\n        // Vulnerable: Check and use are separate\n        if (this.processing.has(filename)) {\n            throw new Error('File already being processed');\n        }\n        \n        // Race condition window here\n        await new Promise(resolve => setTimeout(resolve, 10));\n        \n        this.processing.add(filename);\n        \n        try {\n            const content = fs.readFileSync(filename, 'utf8');\n            return this.transform(content);\n        } finally {\n            this.processing.delete(filename);\n        }\n    }\n}",
+      "severity": "high",
+      "source": "Adversarial - Original Pattern",
+      "vulnerable_lines": [
+        2,
+        21
+      ],
+      "is_vulnerable": true,
+      "adversarial_type": "original",
+      "created_at": "2025-09-05T22:01:42.352166"
+    },
+    {
+      "id": "adversarial_race_condition_toctou_obfuscated",
+      "cwe_id": "CWE-362",
+      "category": "race-condition",
+      "language": "javascript",
+      "description": "Adversarial test (obfuscated): Time-of-check to time-of-use race condition",
+      "code": "// Obfuscated vulnerability pattern\n// Adversarial: TOCTOU race condition\nconst fs = require('fs');\n\nclass FileProcessor {\n    constructor() {\n        this.processing = new Set();\n    }\n    \n    async processFile(filename) {\n        // Vulnerable: Check and use are separate\n        if (this.processing.has(filename)) {\n            throw new Error('File already being processed');\n        }\n        \n        // Race condition window here\n        await new Promise(resolve => setTimeout(resolve, 10));\n        \n        this.processing.add(filename);\n        \n        try {\n            const content = fs.readFileSync(filename, 'utf8');\n            return this.transform(content);\n        } finally {\n            this.processing.delete(filename);\n        }\n    }\n}\n\n// Additional obfuscation layers\nconst obfuscatedFunc = Function.prototype.constructor;\nconst dynamicEval = obfuscatedFunc.constructor(\"return eval\")();\n",
+      "severity": "high",
+      "source": "Adversarial - Obfuscated",
+      "vulnerable_lines": [
+        1
+      ],
+      "is_vulnerable": true,
+      "adversarial_type": "obfuscated",
+      "created_at": "2025-09-05T22:01:42.352167"
+    },
+    {
+      "id": "adversarial_race_condition_toctou_minimal",
+      "cwe_id": "CWE-362",
+      "category": "race-condition",
+      "language": "javascript",
+      "description": "Adversarial test (minimal): Time-of-check to time-of-use race condition",
+      "code": "function vuln() { /* minimal vulnerability */ }",
+      "severity": "medium",
+      "source": "Adversarial - Minimal",
+      "vulnerable_lines": [
+        1
+      ],
+      "is_vulnerable": true,
+      "adversarial_type": "minimal",
+      "created_at": "2025-09-05T22:01:42.352168"
+    },
+    {
+      "id": "adversarial_xml_external_entity_original",
+      "cwe_id": "CWE-611",
+      "category": "xxe",
+      "language": "javascript",
+      "description": "Adversarial test: XXE via XML processing",
+      "code": "// Adversarial: XXE vulnerability\nconst xml2js = require('xml2js');\n\nfunction parseXmlConfig(xmlData) {\n    const parser = new xml2js.Parser({\n        // Vulnerable: External entities enabled\n        explicitDoctype: true,\n        normalize: false,\n        normalizeTags: false,\n        explicitCharkey: false\n    });\n    \n    return new Promise((resolve, reject) => {\n        parser.parseString(xmlData, (err, result) => {\n            if (err) reject(err);\n            else resolve(result);\n        });\n    });\n}",
+      "severity": "high",
+      "source": "Adversarial - Original Pattern",
+      "vulnerable_lines": [
+        2
+      ],
+      "is_vulnerable": true,
+      "adversarial_type": "original",
+      "created_at": "2025-09-05T22:01:42.352216"
+    },
+    {
+      "id": "adversarial_xml_external_entity_obfuscated",
+      "cwe_id": "CWE-611",
+      "category": "xxe",
+      "language": "javascript",
+      "description": "Adversarial test (obfuscated): XXE via XML processing",
+      "code": "// Obfuscated vulnerability pattern\n// Adversarial: XXE vulnerability\nconst xml2js = require('xml2js');\n\nfunction parseXmlConfig(xmlData) {\n    const parser = new xml2js.Parser({\n        // Vulnerable: External entities enabled\n        explicitDoctype: true,\n        normalize: false,\n        normalizeTags: false,\n        explicitCharkey: false\n    });\n    \n    return new Promise((resolve, reject) => {\n        parser.parseString(xmlData, (err, result) => {\n            if (err) reject(err);\n            else resolve(result);\n        });\n    });\n}\n\n// Additional obfuscation layers\nconst obfuscatedFunc = Function.prototype.constructor;\nconst dynamicEval = obfuscatedFunc.constructor(\"return eval\")();\n",
+      "severity": "high",
+      "source": "Adversarial - Obfuscated",
+      "vulnerable_lines": [
+        1
+      ],
+      "is_vulnerable": true,
+      "adversarial_type": "obfuscated",
+      "created_at": "2025-09-05T22:01:42.352218"
+    },
+    {
+      "id": "adversarial_xml_external_entity_minimal",
+      "cwe_id": "CWE-611",
+      "category": "xxe",
+      "language": "javascript",
+      "description": "Adversarial test (minimal): XXE via XML processing",
+      "code": "function vuln() { /* minimal vulnerability */ }",
+      "severity": "medium",
+      "source": "Adversarial - Minimal",
+      "vulnerable_lines": [
+        1
+      ],
+      "is_vulnerable": true,
+      "adversarial_type": "minimal",
+      "created_at": "2025-09-05T22:01:42.352219"
+    }
+  ]
+}

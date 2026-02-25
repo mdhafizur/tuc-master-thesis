@@ -1,0 +1,70 @@
+# VS Code Extension - Ignore files for packaging
+
+# Source files
+src/**
+.vscode/**
+.vscode-test/**
+
+# Build artifacts
+out/**
+coverage/**
+*.vsix
+
+# Test files and workspaces
+test-files/**
+test-workspace*/**
+evaluation/**
+**/*.test.*
+**/*.spec.*
+
+# Scripts
+scripts/**
+
+# Documentation (keep only README in package)
+docs/**
+
+# Configuration files
+.gitignore
+.gitattributes
+.editorconfig
+tsconfig.json
+eslint.config.mjs
+esbuild.js
+
+# Development files
+Makefile
+*.log
+*.tsbuildinfo
+.github/**
+
+# Markdown files (keep only README and CHANGELOG)
+*.md
+!README.md
+!CHANGELOG.md
+
+# Node modules
+node_modules/**
+
+# Diagrams
+diagrams/**
+
+# Demo files
+demo.gif
+demo/**
+
+# Package files
+package-lock.json
+yarn.lock
+
+# Git files
+.git/**
+.gitignore
+.gitattributes
+
+# Secrets and tokens (IMPORTANT: Never include in package!)
+.vsce-pat
+.env
+.env.*
+*.key
+*.pem
+secrets/

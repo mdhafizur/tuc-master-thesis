@@ -1,0 +1,88 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/27.0.9 Chrome/134.0.6998.205 Electron/35.4.0 Safari/537.36" version="27.0.9">
+  <diagram name="Code Guardian System Architecture" id="code-guardian-arch">
+    <mxGraphModel dx="2618" dy="1948" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1200" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="user" value="User (Developer)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1f5fe;strokeColor=#0277bd;fontSize=16;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="-170" y="255" width="150" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="vscode" value="VS Code Editor" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fffde7;strokeColor=#fbc02d;fontSize=16;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="190" y="255" width="170" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="cg-container" value="Code Guardian Extension" style="swimlane;rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f5e9;strokeColor=#388e3c;fontSize=18;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="560" y="-80" width="360" height="750" as="geometry" />
+        </mxCell>
+        <mxCell id="activation" value="&lt;font style=&quot;font-size: 13px;&quot;&gt;Activation &amp;amp; Command Handler&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f1f8e9;strokeColor=#689f38;fontSize=14;" parent="cg-container" vertex="1">
+          <mxGeometry x="80" y="40" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="func-analyzer" value="Function Analyzer" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e3f2fd;strokeColor=#1976d2;fontSize=14;" parent="cg-container" vertex="1">
+          <mxGeometry x="80" y="120" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="file-analyzer" value="File Analyzer" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e3f2fd;strokeColor=#1976d2;fontSize=14;" parent="cg-container" vertex="1">
+          <mxGeometry x="80" y="200" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="diagnostics" value="Diagnostics Reporter" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff3e0;strokeColor=#f57c00;fontSize=14;" parent="cg-container" vertex="1">
+          <mxGeometry x="80" y="280" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="fix-suggestor" value="Real-time Fix Suggestor" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff3e0;strokeColor=#f57c00;fontSize=14;" parent="cg-container" vertex="1">
+          <mxGeometry x="80" y="360" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="qa-webview" value="Q/A with Context Webview" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fce4ec;strokeColor=#c2185b;fontSize=14;" parent="cg-container" vertex="1">
+          <mxGeometry x="80" y="440" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="webview-msg" value="Webview &lt;-&gt; Extension Messaging" style="rounded=1;dashed=1;whiteSpace=wrap;html=1;fillColor=#f8bbd0;strokeColor=#c2185b;fontSize=12;" parent="cg-container" vertex="1">
+          <mxGeometry x="40" y="490" width="280" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="error-handler" value="Error Handler" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffebee;strokeColor=#d32f2f;fontSize=14;" parent="cg-container" vertex="1">
+          <mxGeometry x="80" y="570" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="extensibility" value="Extensibility:&#xa;-Pluggable LLMs&#xa;-Custom Rules&#xa;-Language Support" style="rounded=1;dashed=1;whiteSpace=wrap;html=1;fillColor=#e0f7fa;strokeColor=#00838f;fontSize=12;" parent="cg-container" vertex="1">
+          <mxGeometry x="120" y="640" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="llm-server" value="LLM Server (Ollama)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ede7f6;strokeColor=#512da8;fontSize=16;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="1120" y="90" width="180" height="410" as="geometry" />
+        </mxCell>
+        <mxCell id="model-mgmt" value="Model Management" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d1c4e9;strokeColor=#512da8;fontSize=12;" parent="llm-server" vertex="1">
+          <mxGeometry x="10" y="68.33" width="160" height="81.67" as="geometry" />
+        </mxCell>
+        <mxCell id="llm-api" value="Request/Response API" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d1c4e9;strokeColor=#512da8;fontSize=12;" parent="llm-server" vertex="1">
+          <mxGeometry x="10" y="270" width="160" height="90.83" as="geometry" />
+        </mxCell>
+        <mxCell id="vscode-to-cg" style="endArrow=block;html=1;strokeColor=#388e3c;strokeWidth=2;" parent="1" source="vscode" target="cg-container" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="cg-to-llm" style="endArrow=block;html=1;strokeColor=#512da8;strokeWidth=2;" parent="1" source="cg-container" target="llm-server" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="llm-to-cg" style="endArrow=block;html=1;strokeColor=#512da8;strokeWidth=2;" parent="1" source="llm-server" target="cg-container" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="cg-to-vscode" style="endArrow=block;html=1;strokeColor=#388e3c;strokeWidth=2;" parent="1" source="cg-container" target="vscode" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="vscode-to-user" style="endArrow=block;html=1;strokeColor=#0277bd;strokeWidth=2;startArrow=blockThin;startFill=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" parent="1" source="vscode" target="user" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="40" y="220" as="sourcePoint" />
+            <mxPoint x="-80" y="229.47368421052624" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="label1" value="Commands, Edits, UI Actions" style="text;html=1;strokeColor=none;fillColor=none;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry y="270" width="120" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="label2" value="Diagnostics, Webview, Fixes" style="text;html=1;strokeColor=none;fillColor=none;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="380" y="265" width="120" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="label3" value="Analysis Requests, Q/A" style="text;html=1;strokeColor=none;fillColor=none;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="960" y="270" width="120" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="label4" value="Security Issues, Answers" style="text;html=1;strokeColor=none;fillColor=none;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="960" y="290" width="120" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="label5" value="Feedback, Results" style="text;html=1;strokeColor=none;fillColor=none;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="410" y="290" width="120" height="20" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

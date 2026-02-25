@@ -1,0 +1,226 @@
+{
+  "name": "code-guardian",
+  "displayName": "Code Guardian",
+  "description": "AI-powered VS Code extension that detects security vulnerabilities and suggests secure coding practices.",
+  "version": "1.0.23",
+  "icon": "icon.png",
+  "publisher": "DreamersRedemption",
+  "engines": {
+    "vscode": "^1.98.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Linters",
+    "Other"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onStartup"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "codeSecurity.analyzeSelectionWithAI",
+        "title": "Code Guardian: 🧠 Analyze Selected Code with AI Security Copilot"
+      },
+      {
+        "command": "codeSecurity.analyzeFullFile",
+        "title": "Code Guardian: 🔍 Analyze Full File for Security Issues"
+      },
+      {
+        "command": "codeSecurity.contextualQnA",
+        "title": "Code Guardian: 💬 Contextual Q&A (Ask About Codebase, Folders, Files)"
+      },
+      {
+        "command": "codeSecurity.selectModel",
+        "title": "Code Guardian: 🎯 Select AI Model"
+      },
+      {
+        "command": "codeSecurity.manageRAG",
+        "title": "Code Guardian: 🧠 Manage RAG Knowledge Base"
+      },
+      {
+        "command": "codeSecurity.toggleRAG",
+        "title": "Code Guardian: 🔄 Toggle RAG On/Off"
+      },
+      {
+        "command": "codeSecurity.updateVulnerabilityData",
+        "title": "Code Guardian: 🔄 Update Vulnerability Data"
+      },
+      {
+        "command": "codeSecurity.viewCacheStats",
+        "title": "Code Guardian: 📊 View Cache Statistics"
+      },
+      {
+        "command": "codeSecurity.workspaceDashboard",
+        "title": "Code Guardian: 🎯 Workspace Security Dashboard"
+      }
+    ],
+    "languages": [
+      {
+        "id": "javascript",
+        "aliases": [
+          "JavaScript"
+        ],
+        "extensions": [
+          ".js"
+        ]
+      },
+      {
+        "id": "typescript",
+        "aliases": [
+          "TypeScript"
+        ],
+        "extensions": [
+          ".ts"
+        ]
+      }
+    ],
+    "configuration": {
+      "title": "Code Guardian",
+      "properties": {
+        "codeGuardian.model": {
+          "type": "string",
+          "default": "codellama:7b",
+          "description": "The Ollama model to use for code analysis",
+          "enum": [
+            "gemma3:1b",
+            "llama3.2:1b",
+            "qwen2.5-coder:0.5b",
+            "qwen2.5-coder:1.5b",
+            "qwen2.5-coder:3b",
+            "qwen2.5-coder:7b",
+            "qwen2.5-coder:14b",
+            "qwen2.5-coder:32b",
+            "gemma3:270m",
+            "gemma3:4b",
+            "gemma3:12b",
+            "gemma3:27b",
+            "codellama:7b",
+            "codellama:13b",
+            "codellama:34b",
+            "codellama:70b",
+            "deepseek-coder:1.3b",
+            "deepseek-coder:6.7b",
+            "deepseek-coder:33b",
+            "wizardcoder:33b",
+            "starcoder2:3b",
+            "starcoder2:7b",
+            "starcoder2:15b",
+            "stable-code:3b",
+            "custom"
+          ],
+          "enumDescriptions": [
+            "Gemma 3 1B - Small: Efficient multimodal capabilities",
+            "Llama 3.2 1B - Compact: Fast general-purpose model",
+            "Qwen 2.5-Coder 0.5B - Ultra lightweight: Minimal resource coding model",
+            "Qwen 2.5-Coder 1.5B - Lightweight: Fast and efficient coding model",
+            "Qwen 2.5-Coder 3B - Compact: Balanced size and performance",
+            "Qwen 2.5-Coder 7B - Code specialist: Dedicated coding proficiency",
+            "Qwen 2.5-Coder 14B - Advanced coder: Enhanced coding capabilities",
+            "Qwen 2.5-Coder 32B - Expert coder: Professional code generation",
+            "Gemma 3 270M - Micro: Ultra-compact multimodal model",
+            "Gemma 3 4B - Medium: Balanced multimodal performance",
+            "Gemma 3 12B - Large: Advanced multimodal capabilities",
+            "Gemma 3 27B - Premium: Full multimodal capabilities",
+            "CodeLlama 7B - Foundation: Base coding model",
+            "CodeLlama 13B - Enhanced: Improved code understanding",
+            "CodeLlama 34B - Professional: Advanced code analysis",
+            "CodeLlama 70B - Expert: Maximum coding capabilities",
+            "DeepSeek-Coder 1.3B - Lightweight: Efficient code analysis",
+            "DeepSeek-Coder 6.7B - Balanced: Good speed and capability",
+            "DeepSeek-Coder 33B - Expert: Advanced code understanding",
+            "WizardCoder 33B - Wizard: Magic-enhanced code generation",
+            "StarCoder2 3B - Compact: Next-gen code model (small)",
+            "StarCoder2 7B - Standard: Next-gen code model (medium)",
+            "StarCoder2 15B - Advanced: Enhanced StarCoder capabilities",
+            "StableCode 3B - Stable: Reliable code generation",
+            "Custom model name (specify in customModel setting)"
+          ]
+        },
+        "codeGuardian.customModel": {
+          "type": "string",
+          "default": "",
+          "description": "Custom Ollama model name when 'custom' is selected"
+        },
+        "codeGuardian.ollamaHost": {
+          "type": "string",
+          "default": "http://localhost:11434",
+          "description": "Ollama server host URL"
+        },
+        "codeGuardian.autoRefreshModels": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically refresh available models when opening model selector"
+        },
+        "codeGuardian.enableRAG": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Retrieval-Augmented Generation (RAG) for enhanced security analysis with relevant knowledge retrieval"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "npm run check-types && npm run lint && node esbuild.js",
+    "watch": "npm-run-all -p watch:*",
+    "watch:esbuild": "node esbuild.js --watch",
+    "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
+    "package": "npm run check-types && npm run lint && node esbuild.js --production",
+    "vscode:prepublish": "npm run package",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "pretest": "npm run compile-tests && npm run compile && npm run lint",
+    "check-types": "tsc --noEmit",
+    "test:data-sources": "node scripts/test-data-sources.js",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
+    "test": "vscode-test",
+    "test:unit": "npm run compile-tests && mocha --require ts-node/register 'src/test/**/*.test.ts'",
+    "test:coverage": "c8 --reporter=html --reporter=text --reporter=lcov npm run test",
+    "test:coverage:unit": "c8 --reporter=html --reporter=text --reporter=lcov npm run test:unit",
+    "coverage:view": "open coverage/index.html",
+    "datasets:generate": "node evaluation/generate-datasets.js",
+    "datasets:generate:all": "node evaluation/generate-datasets.js --source-policy=all --include-adversarial",
+    "evaluate": "node evaluation/evaluate-models.js",
+    "evaluate:generated": "node evaluation/evaluate-models.js --dataset=datasets/vulnerability-test-cases.generated.json",
+    "benchmark": "node scripts/test-models.js"
+  },
+  "devDependencies": {
+    "@istanbuljs/nyc-config-typescript": "^1.0.2",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.98.0",
+    "@typescript-eslint/eslint-plugin": "^8.25.0",
+    "@typescript-eslint/parser": "^8.25.0",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.4.1",
+    "@vscode/vsce": "^3.7.1",
+    "c8": "^10.1.3",
+    "esbuild": "^0.25.0",
+    "eslint": "^9.21.0",
+    "npm-run-all": "^4.1.5",
+    "nyc": "^17.1.0",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "@huggingface/inference": "^4.13.1",
+    "@langchain/community": "^1.0.0",
+    "@langchain/core": "^1.0.2",
+    "@langchain/ollama": "^1.0.0",
+    "@langchain/textsplitters": "^1.0.0",
+    "@pinecone-database/pinecone": "^6.1.3",
+    "hnswlib-node": "^3.0.0",
+    "langchain": "^1.0.2",
+    "ollama": "^0.5.14",
+    "openai": "^4.104.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mdhafizur/code-guardian.git",
+    "homepage": "https://github.com/mdhafizur/code-guardian#readme",
+    "bugs": {
+      "url": "https://github.com/mdhafizur/code-guardian/issues"
+    }
+  }
+}

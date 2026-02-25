@@ -1,0 +1,112 @@
+# CodeQL Configuration for JavaScript/TypeScript Security Analysis
+# Version: 2.23.0
+# Last Updated: September 5, 2025
+
+# Database configuration
+database:
+  language: javascript
+  source_root: "."
+  
+# Query configuration
+queries:
+  # Primary security suite
+  - pack: "codeql/javascript-queries"
+    suite: "codeql-suites/javascript-security-and-quality.qls"
+    
+  # Additional security-focused queries
+  additional_queries:
+    - "Security/CWE-089/SqlInjection.ql"           # SQL Injection
+    - "Security/CWE-078/CommandInjection.ql"       # Command Injection
+    - "Security/CWE-079/Xss.ql"                    # Cross-site Scripting
+    - "Security/CWE-094/CodeInjection.ql"          # Code Injection
+    - "Security/CWE-022/TaintedPath.ql"            # Path Traversal
+    - "Security/CWE-502/UnsafeDeserialization.ql"  # Insecure Deserialization
+    - "Security/CWE-327/BrokenCryptoAlgorithm.ql"  # Weak Cryptography
+    - "Security/CWE-338/InsecureRandomness.ql"     # Insecure Randomness
+    - "Security/CWE-915/PrototypePollutingFunction.ql" # Prototype Pollution
+    - "Security/CWE-918/RequestForgery.ql"         # Server-Side Request Forgery
+
+# Analysis configuration
+analysis:
+  # Output format
+  format: "sarif-latest"
+  
+  # Timeout settings (in seconds)
+  timeout: 600
+  
+  # Memory settings
+  ram: 8192  # 8GB
+  
+  # Thread configuration
+  threads: 4
+
+# Exclusions
+exclude:
+  paths:
+    - "node_modules/**"
+    - "dist/**"
+    - "build/**"
+    - "coverage/**"
+    - "test/**"
+    - "tests/**"
+    - "spec/**"
+    - "*.min.js"
+    - "*.bundle.js"
+    - "vendor/**"
+    - "third_party/**"
+
+# Baseline settings for reproducibility
+baseline:
+  # Tool version
+  codeql_version: "2.23.0"
+  
+  # Query pack versions
+  javascript_queries_version: "2.0.3"
+  javascript_all_version: "2.6.10"
+  
+  # Evaluation date
+  evaluation_date: "2025-09-05"
+  
+  # Environment information
+  environment:
+    os: "macOS"
+    platform: "darwin"
+    architecture: "x64"
+
+# Performance tuning
+performance:
+  # Enable multi-threading
+  parallel: true
+  
+  # Optimize for security analysis
+  optimize_for: "security"
+  
+  # Cache settings
+  cache_enabled: true
+  cache_size: "2GB"
+
+# Reporting configuration
+reporting:
+  # Include dataflow traces
+  dataflow_traces: true
+  
+  # Include source snippets
+  source_snippets: true
+  
+  # Severity levels to report
+  severity_levels:
+    - "error"
+    - "warning"
+    - "note"
+  
+  # Security categories to focus on
+  security_categories:
+    - "injection"
+    - "xss"
+    - "authentication"
+    - "authorization"
+    - "cryptography"
+    - "deserialization"
+    - "path-traversal"
+    - "ssrf"
+    - "prototype-pollution"

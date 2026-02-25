@@ -1,0 +1,306 @@
+# Code Guardian VS Code Extension - Evaluation Configuration
+# This configuration defines all parameters for evaluating the Code Guardian VS Code extension
+
+# General settings
+evaluation:
+  name: "code_guardian_vscode_extension_evaluation"
+  version: "1.0.0"
+  timestamp: null  # Will be set at runtime
+  
+# Phases to include in evaluation
+phases:
+  extension_installation: true
+  extension_performance: true
+  vulnerability_detection: true
+  repair_quality_evaluation: true
+  robustness_evaluation: true
+  user_study: true
+  statistical_analysis: true
+  
+# Dataset configurations
+datasets:
+  benchmark:
+    path: "datasets/benchmark/"
+    juliet_cases: 100
+    owasp_cases: 50
+    node_cves: 10
+    target_languages: ["javascript", "typescript"]
+    
+  extended:
+    path: "datasets/extended/"
+    devign_subset: true
+    bigvul_subset: true
+    codexglue_subset: true
+    filter_languages: ["javascript", "typescript"]
+    
+  real_world:
+    path: "datasets/real-world/"
+    projects:
+      - name: "express"
+        type: "backend"
+        vulnerabilities: ["injection", "deserialization"]
+      - name: "react-dom"
+        type: "frontend" 
+        vulnerabilities: ["xss", "unsafe_sanitization"]
+      - name: "lodash"
+        type: "utility"
+        vulnerabilities: ["prototype_pollution"]
+      - name: "node-forge"
+        type: "cryptography"
+        vulnerabilities: ["weak_randomness", "unsafe_crypto"]
+      - name: "typescript"
+        type: "compiler"
+        vulnerabilities: ["logic_flaws", "unsafe_casts"]
+        
+  adversarial:
+    path: "datasets/adversarial/"
+    prompt_injection_cases: 50
+    obfuscation_cases: 50
+    noise_cases: 50
+
+# Baseline configurations
+baselines:
+  sast:
+    tools:
+      semgrep:
+        enabled: true
+        rules: "javascript,typescript"
+        config: "auto"
+        version: "1.45.0"
+      codeql:
+        enabled: true
+        queries: "security-and-quality"
+        language: "javascript"
+        version: "2.15.0"
+        
+  llm_only:
+    models:
+      - name: "codellama"
+        version: "7b"
+        quantization: "q4_0"
+        temperature: 0.0
+        max_tokens: 2048
+      - name: "starcoder"
+        version: "15b"
+        quantization: "q4_0"
+        temperature: 0.0
+        max_tokens: 2048
+      - name: "phi3-mini"
+        version: "3.8b"
+        quantization: "q4_0"
+        temperature: 0.0
+        max_tokens: 2048
+        
+  cross_model:
+    comparison_models: ["codellama", "starcoder", "phi3-mini"]
+    repetitions: 3  # For variance calculation
+    deterministic: true  # Temperature = 0
+
+# Metrics configurations
+metrics:
+  accuracy:
+    calculate_precision: true
+    calculate_recall: true
+    calculate_f1: true
+    confidence_interval: 0.95
+    significance_test: "mcnemar"
+    bootstrap_samples: 1000
+    
+  latency:
+    measure_median: true
+    measure_p95: true
+    measure_p99: true
+    modes: ["inline", "audit"]
+    repetitions: 10
+    warmup_runs: 3
+    
+  repair_quality:
+    sample_size: 100
+    stratification: "cwe_category"
+    validation_stages:
+      - "compilation"
+      - "functional_tests"
+      - "sast_scan"
+      - "manual_review"
+    inter_rater_reliability: true
+    reviewers: 2
+    
+  robustness:
+    prompt_injection:
+      attack_types: ["ignore_security", "suppress_analysis", "redirect_focus"]
+      degradation_threshold: 0.1
+    obfuscation:
+      techniques: ["minification", "variable_renaming", "control_flow_flattening"]
+      degradation_threshold: 0.15
+    adversarial_noise:
+      noise_types: ["unused_imports", "dead_code", "comments"]
+      noise_levels: [0.1, 0.2, 0.3]
+      
+  calibration:
+    calculate_ece: true
+    ece_bins: 10
+    calculate_brier: true
+    confidence_alignment: true
+    
+  coverage:
+    accuracy_at_coverage: [0.5, 0.7, 0.8, 0.9, 0.95]
+    aurc_calculation: true
+    abstention_thresholds: [0.1, 0.2, 0.3, 0.4, 0.5]
+
+# User study configurations
+user_study:
+  pilot:
+    participants: 15
+    tasks: 5
+    task_types: ["secure_coding", "vulnerability_detection", "repair_evaluation"]
+    duration_minutes: 60
+    data_collection:
+      - "task_completion_time"
+      - "sus_score"
+      - "acceptance_rate"
+      - "qualitative_feedback"
+      
+  main:
+    participants: 50
+    distribution:
+      academic: 20
+      industry: 30
+    tasks: 5
+    task_complexity: ["beginner", "intermediate", "advanced"]
+    duration_minutes: 90
+    randomization: true
+    data_collection:
+      - "task_completion_time"
+      - "sus_score"
+      - "repair_acceptance_rate"
+      - "error_rate"
+      - "structured_interview"
+
+# Statistical analysis configurations
+analysis:
+  significance_testing:
+    alpha: 0.05
+    multiple_comparison_correction: "bonferroni"
+    effect_size_calculation: true
+    
+  confidence_intervals:
+    level: 0.95
+    method: "bootstrap"
+    bootstrap_samples: 10000
+    
+  cross_model_variance:
+    metrics: ["precision", "recall", "f1"]
+    variance_threshold: 0.05  # Flag high variance
+    
+  regression_analysis:
+    factors: ["model_size", "task_complexity", "participant_experience"]
+    interaction_terms: true
+
+# Code Guardian VS Code Extension specific configurations
+code_guardian:
+  extension_path: "../"  # Path to extension directory
+  extension_id: "code-guardian"
+  vscode_path: "code"  # VS Code CLI command
+  
+  # Extension commands to test
+  commands:
+    analyze_selection: "codeGuardian.analyzeSelectionWithAI"
+    analyze_full_file: "codeGuardian.analyzeFullFile"
+    apply_fix: "codeGuardian.applyFix"
+    contextual_qna: "codeGuardian.contextualQnA"
+    
+  # VS Code settings for testing
+  vscode_settings:
+    enableRealTimeScanning: true
+    scanOnSave: true
+    showInlineDecorations: true
+    maxFileSize: 20000
+    maxFunctionSize: 2000
+    
+  # LLM models used by extension
+  models:
+    primary: "gemma3:1b"
+    alternatives: ["llama3.2:1b", "qwen2.5:1.5b"]
+    
+  # Extension performance thresholds
+  performance:
+    max_latency_ms: 5000  # Maximum acceptable response time
+    min_accuracy: 0.8     # Minimum detection accuracy
+    timeout_seconds: 30   # Command timeout
+
+# Hardware and environment specifications
+environment:
+  hardware:
+    cpu_cores: 8
+    memory_gb: 16
+    gpu_memory_gb: 8  # If available
+    storage_gb: 100
+  software:
+    os: "Ubuntu 22.04"
+    python_version: "3.9"
+    nodejs_version: "18.0"
+    vscode_version: "1.98.0"
+    docker_version: "24.0"
+
+# Logging and monitoring
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "logs/evaluation.log"
+  console: true
+  
+monitoring:
+  resource_usage: true
+  progress_tracking: true
+  error_alerting: true
+
+# Output and reporting
+reporting:
+  formats: ["academic_paper", "technical_report", "dashboard"]
+  include_visualizations: true
+  include_raw_data: true
+  include_statistical_analysis: true
+  
+  academic_paper:
+    template: "templates/academic_paper.tex"
+    sections: ["abstract", "introduction", "methodology", "results", "discussion", "conclusion"]
+    
+  technical_report:
+    template: "templates/technical_report.md"
+    include_implementation_details: true
+    
+  dashboard:
+    framework: "streamlit"
+    interactive_plots: true
+    real_time_updates: false
+
+# Reproducibility settings
+reproducibility:
+  random_seed: 42
+  pin_dependencies: true
+  freeze_environment: true
+  archive_artifacts: true
+  
+  artifacts:
+    datasets: true
+    models: true
+    results: true
+    configurations: true
+    
+  archival:
+    github_release: true
+    zenodo_upload: true
+    doi_generation: true
+    
+# Quality assurance
+quality_assurance:
+  code_review: true
+  data_validation: true
+  result_verification: true
+  peer_review: true
+  
+validation:
+  dataset_integrity: true
+  model_consistency: true
+  metric_accuracy: true
+  statistical_validity: true

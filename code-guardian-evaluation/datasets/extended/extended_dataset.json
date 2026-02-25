@@ -1,0 +1,518 @@
+{
+  "metadata": {
+    "name": "extended",
+    "total_samples": 29,
+    "categories": [
+      "path-traversal",
+      "sql-injection",
+      "race-condition",
+      "improper-authentication",
+      "prototype-pollution",
+      "weak-cryptography",
+      "input-validation",
+      "memory-leak",
+      "command-injection",
+      "weak-encryption",
+      "xss",
+      "information-exposure",
+      "insecure-deserialization"
+    ],
+    "languages": [
+      "javascript"
+    ],
+    "sources": [
+      "Big-Vul Pattern (CVE-2021-23337)",
+      "Big-Vul Pattern (CVE-2022-24999)",
+      "Devign Pattern (fallback)",
+      "Extended Research Pattern",
+      "Big-Vul Pattern (CVE-2018-6341)",
+      "Big-Vul Pattern (CVE-2022-24771)",
+      "Big-Vul Pattern (CVE-2020-8203)",
+      "Big-Vul Pattern (fallback)"
+    ],
+    "cwe_ids": [
+      "CWE-89",
+      "CWE-79",
+      "CWE-362",
+      "CWE-327",
+      "CWE-401",
+      "CWE-502",
+      "CWE-78",
+      "CWE-22",
+      "CWE-326",
+      "CWE-200",
+      "CWE-1321",
+      "CWE-20",
+      "CWE-287"
+    ],
+    "generated_at": "2025-09-05T22:01:42.779385",
+    "collection_method": "authoritative_sources"
+  },
+  "samples": [
+    {
+      "id": "devign_fallback_01",
+      "cwe_id": "CWE-89",
+      "category": "sql-injection",
+      "language": "javascript",
+      "description": "SQL injection pattern (Devign-style)",
+      "code": "// Devign-style vulnerability pattern\nfunction queryUser(userId) {\n    const query = \"SELECT * FROM users WHERE id = \" + userId;\n    return database.execute(query);\n}",
+      "severity": "high",
+      "source": "Devign Pattern (fallback)",
+      "vulnerable_lines": [
+        3
+      ],
+      "is_vulnerable": true,
+      "created_at": "2025-09-05T22:01:30.953693"
+    },
+    {
+      "id": "devign_fallback_02",
+      "cwe_id": "CWE-78",
+      "category": "command-injection",
+      "language": "javascript",
+      "description": "Command injection vulnerability (Devign-style)",
+      "code": "// Devign-style command injection\nconst { exec } = require('child_process');\n\nfunction processFile(filename) {\n    // Vulnerable: Command injection\n    const command = `file ${filename}`;\n    exec(command, (error, stdout, stderr) => {\n        console.log(stdout);\n    });\n}",
+      "severity": "critical",
+      "source": "Devign Pattern (fallback)",
+      "vulnerable_lines": [
+        6
+      ],
+      "is_vulnerable": true,
+      "created_at": "2025-09-05T22:01:30.953700"
+    },
+    {
+      "id": "devign_fallback_03",
+      "cwe_id": "CWE-79",
+      "category": "xss",
+      "language": "javascript",
+      "description": "XSS vulnerability in DOM manipulation (Devign-style)",
+      "code": "// Devign-style XSS vulnerability\nfunction displayMessage(userMessage) {\n    const container = document.getElementById('messageContainer');\n    \n    // Vulnerable: Unescaped HTML insertion\n    container.innerHTML = '<div class=\"message\">' + userMessage + '</div>';\n}\n\nfunction updateProfile(name, bio) {\n    document.getElementById('userName').innerHTML = name;\n    document.getElementById('userBio').innerHTML = bio;\n}",
+      "severity": "high",
+      "source": "Devign Pattern (fallback)",
+      "vulnerable_lines": [
+        5,
+        9,
+        10
+      ],
+      "is_vulnerable": true,
+      "created_at": "2025-09-05T22:01:30.953703"
+    },
+    {
+      "id": "devign_fallback_04",
+      "cwe_id": "CWE-22",
+      "category": "path-traversal",
+      "language": "javascript",
+      "description": "Path traversal in file operations (Devign-style)",
+      "code": "// Devign-style path traversal\nconst fs = require('fs');\n\nfunction readUserFile(userId, filename) {\n    // Vulnerable: No path validation\n    const filepath = './users/' + userId + '/' + filename;\n    \n    try {\n        return fs.readFileSync(filepath, 'utf8');\n    } catch (error) {\n        throw new Error('File not found');\n    }\n}",
+      "severity": "high",
+      "source": "Devign Pattern (fallback)",
+      "vulnerable_lines": [
+        5
+      ],
+      "is_vulnerable": true,
+      "created_at": "2025-09-05T22:01:30.953706"
+    },
+    {
+      "id": "devign_fallback_05",
+      "cwe_id": "CWE-502",
+      "category": "insecure-deserialization",
+      "language": "javascript",
+      "description": "Insecure deserialization vulnerability (Devign-style)",
+      "code": "// Devign-style insecure deserialization\nfunction processUserData(serializedData) {\n    // Vulnerable: Using eval for deserialization\n    const userData = eval('(' + serializedData + ')');\n    \n    if (userData.isAdmin) {\n        return getAdminData();\n    }\n    \n    return getUserData(userData.id);\n}\n\nfunction deserializeConfig(configString) {\n    // Another vulnerable pattern\n    return eval('config = ' + configString);\n}",
+      "severity": "critical",
+      "source": "Devign Pattern (fallback)",
+      "vulnerable_lines": [
+        3,
+        12
+      ],
+      "is_vulnerable": true,
+      "created_at": "2025-09-05T22:01:30.953708"
+    },
+    {
+      "id": "devign_fallback_06",
+      "cwe_id": "CWE-287",
+      "category": "improper-authentication",
+      "language": "javascript",
+      "description": "Weak authentication bypass (Devign-style)",
+      "code": "// Devign-style authentication bypass\nfunction authenticateUser(username, password) {\n    const users = getUsers();\n    \n    // Vulnerable: Weak comparison allows bypass\n    if (username == 'admin' && password == 'admin') {\n        return { role: 'admin', authenticated: true };\n    }\n    \n    const user = users.find(u => u.username === username);\n    \n    // Vulnerable: Timing attack possible\n    if (user && user.password === password) {\n        return { role: user.role, authenticated: true };\n    }\n    \n    return { authenticated: false };\n}",
+      "severity": "high",
+      "source": "Devign Pattern (fallback)",
+      "vulnerable_lines": [
+        5,
+        12
+      ],
+      "is_vulnerable": true,
+      "created_at": "2025-09-05T22:01:30.953710"
+    },
+    {
+      "id": "bigvul_fallback_01",
+      "cve_id": "CVE-2021-EXAMPLE",
+      "cwe_id": "CWE-89",
+      "category": "sql-injection",
+      "language": "javascript",
+      "description": "SQL injection vulnerability (Big-Vul style)",
+      "code": "// Big-Vul style vulnerability\nfunction searchRecords(term) {\n    const sql = \"SELECT * FROM records WHERE title LIKE '%\" + term + \"%'\";\n    return db.query(sql);\n}",
+      "severity": "high",
+      "source": "Big-Vul Pattern (fallback)",
+      "vulnerable_lines": [
+        3
+      ],
+      "is_vulnerable": true,
+      "created_at": "2025-09-05T22:01:31.034840"
+    },
+    {
+      "id": "bigvul_fallback_02",
+      "cve_id": "CVE-2020-8203",
+      "cwe_id": "CWE-1321",
+      "category": "prototype-pollution",
+      "language": "javascript",
+      "description": "Prototype pollution vulnerability (Big-Vul style)",
+      "code": "// Big-Vul style prototype pollution (based on lodash CVE-2020-8203)\nfunction merge(target, source) {\n    for (let key in source) {\n        if (typeof source[key] === 'object' && source[key] !== null) {\n            if (!target[key]) target[key] = {};\n            \n            // Vulnerable: No protection against __proto__\n            merge(target[key], source[key]);\n        } else {\n            target[key] = source[key];\n        }\n    }\n    return target;\n}\n\nfunction setPath(object, path, value) {\n    const keys = path.split('.');\n    let current = object;\n    \n    for (let i = 0; i < keys.length - 1; i++) {\n        const key = keys[i];\n        if (!current[key]) current[key] = {};\n        current = current[key];\n    }\n    \n    // Vulnerable: No validation of key\n    current[keys[keys.length - 1]] = value;\n}",
+      "severity": "high",
+      "source": "Big-Vul Pattern (CVE-2020-8203)",
+      "vulnerable_lines": [
+        7,
+        22
+      ],
+      "is_vulnerable": true,
+      "created_at": "2025-09-05T22:01:31.034847"
+    },
+    {
+      "id": "bigvul_fallback_03",
+      "cve_id": "CVE-2022-24999",
+      "cwe_id": "CWE-22",
+      "category": "path-traversal",
+      "language": "javascript",
+      "description": "Express.js path traversal (Big-Vul style)",
+      "code": "// Big-Vul style Express.js path traversal\nconst express = require('express');\nconst path = require('path');\nconst fs = require('fs');\n\nconst app = express();\n\napp.get('/static/:file', (req, res) => {\n    const filename = req.params.file;\n    \n    // Vulnerable: No path validation (CVE-2022-24999 style)\n    const filePath = path.join('./static', filename);\n    \n    fs.readFile(filePath, (err, data) => {\n        if (err) {\n            res.status(404).send('File not found');\n        } else {\n            res.send(data);\n        }\n    });\n});",
+      "severity": "high",
+      "source": "Big-Vul Pattern (CVE-2022-24999)",
+      "vulnerable_lines": [
+        11
+      ],
+      "is_vulnerable": true,
+      "created_at": "2025-09-05T22:01:31.034850"
+    },
+    {
+      "id": "bigvul_fallback_04",
+      "cve_id": "CVE-2022-24771",
+      "cwe_id": "CWE-327",
+      "category": "weak-cryptography",
+      "language": "javascript",
+      "description": "Weak cryptographic implementation (Big-Vul style)",
+      "code": "// Big-Vul style weak cryptography (node-forge related)\nconst crypto = require('crypto');\n\nfunction generateApiKey() {\n    // Vulnerable: Weak random number generation\n    const randomBytes = Math.random().toString(36).substring(2, 15);\n    return Buffer.from(randomBytes).toString('base64');\n}\n\nfunction hashPassword(password, salt) {\n    // Vulnerable: Using weak hashing algorithm\n    return crypto.createHash('md5').update(password + salt).digest('hex');\n}\n\nfunction encryptData(data, key) {\n    // Vulnerable: Using deprecated cipher\n    const cipher = crypto.createCipher('des', key);\n    let encrypted = cipher.update(data, 'utf8', 'hex');\n    encrypted += cipher.final('hex');\n    return encrypted;\n}",
+      "severity": "medium",
+      "source": "Big-Vul Pattern (CVE-2022-24771)",
+      "vulnerable_lines": [
+        5,
+        11,
+        16
+      ],
+      "is_vulnerable": true,
+      "created_at": "2025-09-05T22:01:31.034852"
+    },
+    {
+      "id": "bigvul_fallback_05",
+      "cve_id": "CVE-2018-6341",
+      "cwe_id": "CWE-79",
+      "category": "xss",
+      "language": "javascript",
+      "description": "React DOM XSS vulnerability (Big-Vul style)",
+      "code": "// Big-Vul style React XSS vulnerability\nimport React from 'react';\n\nfunction UserProfile({ userData }) {\n    // Vulnerable: dangerouslySetInnerHTML without sanitization\n    return (\n        <div className=\"profile\">\n            <h1>Welcome, {userData.name}</h1>\n            <div \n                className=\"bio\"\n                dangerouslySetInnerHTML={{__html: userData.bio}}\n            />\n        </div>\n    );\n}\n\nfunction CommentComponent({ comment }) {\n    // Vulnerable: Direct HTML insertion\n    const commentHtml = comment.text.replace(/\\n/g, '<br>');\n    \n    return <div dangerouslySetInnerHTML={{__html: commentHtml}} />;\n}",
+      "severity": "high",
+      "source": "Big-Vul Pattern (CVE-2018-6341)",
+      "vulnerable_lines": [
+        10,
+        20
+      ],
+      "is_vulnerable": true,
+      "created_at": "2025-09-05T22:01:31.034854"
+    },
+    {
+      "id": "bigvul_fallback_06",
+      "cve_id": "CVE-2021-23337",
+      "cwe_id": "CWE-1321",
+      "category": "prototype-pollution",
+      "language": "javascript",
+      "description": "Lodash template prototype pollution (Big-Vul style)",
+      "code": "// Big-Vul style lodash template vulnerability\nfunction template(templateString, data) {\n    // Vulnerable: Template injection via prototype pollution\n    let result = templateString;\n    \n    for (let key in data) {\n        // Vulnerable: No validation of key names\n        const regex = new RegExp('\\\\{\\\\{\\\\s*' + key + '\\\\s*\\\\}\\\\}', 'g');\n        result = result.replace(regex, data[key]);\n    }\n    \n    return result;\n}\n\nfunction processTemplate(userInput, templateData) {\n    // Vulnerable: User input affects template processing\n    const merged = Object.assign({}, templateData, JSON.parse(userInput));\n    \n    return template('Hello {{name}}, your role is {{role}}', merged);\n}",
+      "severity": "high",
+      "source": "Big-Vul Pattern (CVE-2021-23337)",
+      "vulnerable_lines": [
+        7,
+        15
+      ],
+      "is_vulnerable": true,
+      "created_at": "2025-09-05T22:01:31.034856"
+    },
+    {
+      "id": "devign_fallback_01",
+      "cwe_id": "CWE-89",
+      "category": "sql-injection",
+      "language": "javascript",
+      "description": "SQL injection pattern (Devign-style)",
+      "code": "// Devign-style vulnerability pattern\nfunction queryUser(userId) {\n    const query = \"SELECT * FROM users WHERE id = \" + userId;\n    return database.execute(query);\n}",
+      "severity": "high",
+      "source": "Devign Pattern (fallback)",
+      "vulnerable_lines": [
+        3
+      ],
+      "is_vulnerable": true,
+      "created_at": "2025-09-05T22:01:31.036414"
+    },
+    {
+      "id": "devign_fallback_02",
+      "cwe_id": "CWE-78",
+      "category": "command-injection",
+      "language": "javascript",
+      "description": "Command injection vulnerability (Devign-style)",
+      "code": "// Devign-style command injection\nconst { exec } = require('child_process');\n\nfunction processFile(filename) {\n    // Vulnerable: Command injection\n    const command = `file ${filename}`;\n    exec(command, (error, stdout, stderr) => {\n        console.log(stdout);\n    });\n}",
+      "severity": "critical",
+      "source": "Devign Pattern (fallback)",
+      "vulnerable_lines": [
+        6
+      ],
+      "is_vulnerable": true,
+      "created_at": "2025-09-05T22:01:31.036417"
+    },
+    {
+      "id": "devign_fallback_03",
+      "cwe_id": "CWE-79",
+      "category": "xss",
+      "language": "javascript",
+      "description": "XSS vulnerability in DOM manipulation (Devign-style)",
+      "code": "// Devign-style XSS vulnerability\nfunction displayMessage(userMessage) {\n    const container = document.getElementById('messageContainer');\n    \n    // Vulnerable: Unescaped HTML insertion\n    container.innerHTML = '<div class=\"message\">' + userMessage + '</div>';\n}\n\nfunction updateProfile(name, bio) {\n    document.getElementById('userName').innerHTML = name;\n    document.getElementById('userBio').innerHTML = bio;\n}",
+      "severity": "high",
+      "source": "Devign Pattern (fallback)",
+      "vulnerable_lines": [
+        5,
+        9,
+        10
+      ],
+      "is_vulnerable": true,
+      "created_at": "2025-09-05T22:01:31.036420"
+    },
+    {
+      "id": "devign_fallback_04",
+      "cwe_id": "CWE-22",
+      "category": "path-traversal",
+      "language": "javascript",
+      "description": "Path traversal in file operations (Devign-style)",
+      "code": "// Devign-style path traversal\nconst fs = require('fs');\n\nfunction readUserFile(userId, filename) {\n    // Vulnerable: No path validation\n    const filepath = './users/' + userId + '/' + filename;\n    \n    try {\n        return fs.readFileSync(filepath, 'utf8');\n    } catch (error) {\n        throw new Error('File not found');\n    }\n}",
+      "severity": "high",
+      "source": "Devign Pattern (fallback)",
+      "vulnerable_lines": [
+        5
+      ],
+      "is_vulnerable": true,
+      "created_at": "2025-09-05T22:01:31.036422"
+    },
+    {
+      "id": "devign_fallback_05",
+      "cwe_id": "CWE-502",
+      "category": "insecure-deserialization",
+      "language": "javascript",
+      "description": "Insecure deserialization vulnerability (Devign-style)",
+      "code": "// Devign-style insecure deserialization\nfunction processUserData(serializedData) {\n    // Vulnerable: Using eval for deserialization\n    const userData = eval('(' + serializedData + ')');\n    \n    if (userData.isAdmin) {\n        return getAdminData();\n    }\n    \n    return getUserData(userData.id);\n}\n\nfunction deserializeConfig(configString) {\n    // Another vulnerable pattern\n    return eval('config = ' + configString);\n}",
+      "severity": "critical",
+      "source": "Devign Pattern (fallback)",
+      "vulnerable_lines": [
+        3,
+        12
+      ],
+      "is_vulnerable": true,
+      "created_at": "2025-09-05T22:01:31.036424"
+    },
+    {
+      "id": "devign_fallback_06",
+      "cwe_id": "CWE-287",
+      "category": "improper-authentication",
+      "language": "javascript",
+      "description": "Weak authentication bypass (Devign-style)",
+      "code": "// Devign-style authentication bypass\nfunction authenticateUser(username, password) {\n    const users = getUsers();\n    \n    // Vulnerable: Weak comparison allows bypass\n    if (username == 'admin' && password == 'admin') {\n        return { role: 'admin', authenticated: true };\n    }\n    \n    const user = users.find(u => u.username === username);\n    \n    // Vulnerable: Timing attack possible\n    if (user && user.password === password) {\n        return { role: user.role, authenticated: true };\n    }\n    \n    return { authenticated: false };\n}",
+      "severity": "high",
+      "source": "Devign Pattern (fallback)",
+      "vulnerable_lines": [
+        5,
+        12
+      ],
+      "is_vulnerable": true,
+      "created_at": "2025-09-05T22:01:31.036426"
+    },
+    {
+      "id": "bigvul_fallback_01",
+      "cve_id": "CVE-2021-EXAMPLE",
+      "cwe_id": "CWE-89",
+      "category": "sql-injection",
+      "language": "javascript",
+      "description": "SQL injection vulnerability (Big-Vul style)",
+      "code": "// Big-Vul style vulnerability\nfunction searchRecords(term) {\n    const sql = \"SELECT * FROM records WHERE title LIKE '%\" + term + \"%'\";\n    return db.query(sql);\n}",
+      "severity": "high",
+      "source": "Big-Vul Pattern (fallback)",
+      "vulnerable_lines": [
+        3
+      ],
+      "is_vulnerable": true,
+      "created_at": "2025-09-05T22:01:31.036428"
+    },
+    {
+      "id": "bigvul_fallback_02",
+      "cve_id": "CVE-2020-8203",
+      "cwe_id": "CWE-1321",
+      "category": "prototype-pollution",
+      "language": "javascript",
+      "description": "Prototype pollution vulnerability (Big-Vul style)",
+      "code": "// Big-Vul style prototype pollution (based on lodash CVE-2020-8203)\nfunction merge(target, source) {\n    for (let key in source) {\n        if (typeof source[key] === 'object' && source[key] !== null) {\n            if (!target[key]) target[key] = {};\n            \n            // Vulnerable: No protection against __proto__\n            merge(target[key], source[key]);\n        } else {\n            target[key] = source[key];\n        }\n    }\n    return target;\n}\n\nfunction setPath(object, path, value) {\n    const keys = path.split('.');\n    let current = object;\n    \n    for (let i = 0; i < keys.length - 1; i++) {\n        const key = keys[i];\n        if (!current[key]) current[key] = {};\n        current = current[key];\n    }\n    \n    // Vulnerable: No validation of key\n    current[keys[keys.length - 1]] = value;\n}",
+      "severity": "high",
+      "source": "Big-Vul Pattern (CVE-2020-8203)",
+      "vulnerable_lines": [
+        7,
+        22
+      ],
+      "is_vulnerable": true,
+      "created_at": "2025-09-05T22:01:31.036430"
+    },
+    {
+      "id": "bigvul_fallback_03",
+      "cve_id": "CVE-2022-24999",
+      "cwe_id": "CWE-22",
+      "category": "path-traversal",
+      "language": "javascript",
+      "description": "Express.js path traversal (Big-Vul style)",
+      "code": "// Big-Vul style Express.js path traversal\nconst express = require('express');\nconst path = require('path');\nconst fs = require('fs');\n\nconst app = express();\n\napp.get('/static/:file', (req, res) => {\n    const filename = req.params.file;\n    \n    // Vulnerable: No path validation (CVE-2022-24999 style)\n    const filePath = path.join('./static', filename);\n    \n    fs.readFile(filePath, (err, data) => {\n        if (err) {\n            res.status(404).send('File not found');\n        } else {\n            res.send(data);\n        }\n    });\n});",
+      "severity": "high",
+      "source": "Big-Vul Pattern (CVE-2022-24999)",
+      "vulnerable_lines": [
+        11
+      ],
+      "is_vulnerable": true,
+      "created_at": "2025-09-05T22:01:31.036432"
+    },
+    {
+      "id": "bigvul_fallback_04",
+      "cve_id": "CVE-2022-24771",
+      "cwe_id": "CWE-327",
+      "category": "weak-cryptography",
+      "language": "javascript",
+      "description": "Weak cryptographic implementation (Big-Vul style)",
+      "code": "// Big-Vul style weak cryptography (node-forge related)\nconst crypto = require('crypto');\n\nfunction generateApiKey() {\n    // Vulnerable: Weak random number generation\n    const randomBytes = Math.random().toString(36).substring(2, 15);\n    return Buffer.from(randomBytes).toString('base64');\n}\n\nfunction hashPassword(password, salt) {\n    // Vulnerable: Using weak hashing algorithm\n    return crypto.createHash('md5').update(password + salt).digest('hex');\n}\n\nfunction encryptData(data, key) {\n    // Vulnerable: Using deprecated cipher\n    const cipher = crypto.createCipher('des', key);\n    let encrypted = cipher.update(data, 'utf8', 'hex');\n    encrypted += cipher.final('hex');\n    return encrypted;\n}",
+      "severity": "medium",
+      "source": "Big-Vul Pattern (CVE-2022-24771)",
+      "vulnerable_lines": [
+        5,
+        11,
+        16
+      ],
+      "is_vulnerable": true,
+      "created_at": "2025-09-05T22:01:31.036434"
+    },
+    {
+      "id": "bigvul_fallback_05",
+      "cve_id": "CVE-2018-6341",
+      "cwe_id": "CWE-79",
+      "category": "xss",
+      "language": "javascript",
+      "description": "React DOM XSS vulnerability (Big-Vul style)",
+      "code": "// Big-Vul style React XSS vulnerability\nimport React from 'react';\n\nfunction UserProfile({ userData }) {\n    // Vulnerable: dangerouslySetInnerHTML without sanitization\n    return (\n        <div className=\"profile\">\n            <h1>Welcome, {userData.name}</h1>\n            <div \n                className=\"bio\"\n                dangerouslySetInnerHTML={{__html: userData.bio}}\n            />\n        </div>\n    );\n}\n\nfunction CommentComponent({ comment }) {\n    // Vulnerable: Direct HTML insertion\n    const commentHtml = comment.text.replace(/\\n/g, '<br>');\n    \n    return <div dangerouslySetInnerHTML={{__html: commentHtml}} />;\n}",
+      "severity": "high",
+      "source": "Big-Vul Pattern (CVE-2018-6341)",
+      "vulnerable_lines": [
+        10,
+        20
+      ],
+      "is_vulnerable": true,
+      "created_at": "2025-09-05T22:01:31.036436"
+    },
+    {
+      "id": "bigvul_fallback_06",
+      "cve_id": "CVE-2021-23337",
+      "cwe_id": "CWE-1321",
+      "category": "prototype-pollution",
+      "language": "javascript",
+      "description": "Lodash template prototype pollution (Big-Vul style)",
+      "code": "// Big-Vul style lodash template vulnerability\nfunction template(templateString, data) {\n    // Vulnerable: Template injection via prototype pollution\n    let result = templateString;\n    \n    for (let key in data) {\n        // Vulnerable: No validation of key names\n        const regex = new RegExp('\\\\{\\\\{\\\\s*' + key + '\\\\s*\\\\}\\\\}', 'g');\n        result = result.replace(regex, data[key]);\n    }\n    \n    return result;\n}\n\nfunction processTemplate(userInput, templateData) {\n    // Vulnerable: User input affects template processing\n    const merged = Object.assign({}, templateData, JSON.parse(userInput));\n    \n    return template('Hello {{name}}, your role is {{role}}', merged);\n}",
+      "severity": "high",
+      "source": "Big-Vul Pattern (CVE-2021-23337)",
+      "vulnerable_lines": [
+        7,
+        15
+      ],
+      "is_vulnerable": true,
+      "created_at": "2025-09-05T22:01:31.036438"
+    },
+    {
+      "id": "extended_memory_leak_01",
+      "cwe_id": "CWE-401",
+      "category": "memory-leak",
+      "language": "javascript",
+      "description": "Memory leak via event listener accumulation",
+      "code": "// Extended: Memory leak pattern\nclass EventManager {\n    constructor() {\n        this.listeners = [];\n    }\n    \n    addDynamicListener(element, event, callback) {\n        // Vulnerable: Listeners accumulate without cleanup\n        element.addEventListener(event, callback);\n        this.listeners.push({ element, event, callback });\n    }\n    \n    updateContent(data) {\n        data.forEach(item => {\n            const element = document.createElement('div');\n            // Vulnerable: New listeners on each update\n            this.addDynamicListener(element, 'click', () => {\n                console.log(item);\n            });\n            document.body.appendChild(element);\n        });\n    }\n}",
+      "severity": "medium",
+      "source": "Extended Research Pattern",
+      "vulnerable_lines": [
+        9,
+        16
+      ],
+      "created_at": "2025-09-05T22:01:31.036440"
+    },
+    {
+      "id": "extended_async_race_01",
+      "cwe_id": "CWE-362",
+      "category": "race-condition",
+      "language": "javascript",
+      "description": "Async race condition in data processing",
+      "code": "// Extended: Async race condition\nclass DataProcessor {\n    constructor() {\n        this.processing = false;\n        this.queue = [];\n    }\n    \n    async processData(data) {\n        // Vulnerable: Race condition in async processing\n        if (this.processing) {\n            this.queue.push(data);\n            return;\n        }\n        \n        this.processing = true;\n        \n        try {\n            await this.heavyProcessing(data);\n            \n            // Vulnerable: Queue processing without proper synchronization\n            while (this.queue.length > 0) {\n                const nextData = this.queue.shift();\n                await this.heavyProcessing(nextData);\n            }\n        } finally {\n            this.processing = false;\n        }\n    }\n}",
+      "severity": "medium",
+      "source": "Extended Research Pattern",
+      "vulnerable_lines": [
+        9,
+        19
+      ],
+      "created_at": "2025-09-05T22:01:31.036443"
+    },
+    {
+      "id": "extended_input_validation_01",
+      "cwe_id": "CWE-20",
+      "category": "input-validation",
+      "language": "javascript",
+      "description": "Insufficient input validation in API",
+      "code": "// Extended: Input validation bypass\nconst express = require('express');\nconst app = express();\n\napp.post('/api/users', (req, res) => {\n    const { name, email, age, role } = req.body;\n    \n    // Vulnerable: Insufficient validation\n    if (!name || !email) {\n        return res.status(400).json({ error: 'Name and email required' });\n    }\n    \n    // Vulnerable: No validation on role escalation\n    const user = {\n        name: name,\n        email: email,\n        age: parseInt(age) || 0,\n        role: role || 'user', // Can be manipulated to 'admin'\n        created: new Date()\n    };\n    \n    saveUser(user);\n    res.json({ success: true, user: user });\n});",
+      "severity": "medium",
+      "source": "Extended Research Pattern",
+      "vulnerable_lines": [
+        15
+      ],
+      "created_at": "2025-09-05T22:01:31.036445"
+    },
+    {
+      "id": "extended_crypto_weak_key_01",
+      "cwe_id": "CWE-326",
+      "category": "weak-encryption",
+      "language": "javascript",
+      "description": "Weak encryption key generation",
+      "code": "// Extended: Weak key generation\nconst crypto = require('crypto');\n\nfunction generateEncryptionKey(userSeed) {\n    // Vulnerable: Predictable key generation\n    const seed = userSeed || 'default_seed';\n    return crypto.createHash('md5').update(seed).digest('hex').substring(0, 16);\n}\n\nfunction encryptUserData(data, userPassword) {\n    // Vulnerable: Weak key derivation\n    const key = generateEncryptionKey(userPassword);\n    const cipher = crypto.createCipher('aes-128-ecb', key);\n    \n    let encrypted = cipher.update(data, 'utf8', 'hex');\n    encrypted += cipher.final('hex');\n    \n    return encrypted;\n}\n\nclass SecureStorage {\n    constructor() {\n        // Vulnerable: Fixed weak key\n        this.encryptionKey = 'weakKey123';\n    }\n    \n    store(data) {\n        return encryptUserData(JSON.stringify(data), this.encryptionKey);\n    }\n}",
+      "severity": "high",
+      "source": "Extended Research Pattern",
+      "vulnerable_lines": [
+        6,
+        11,
+        22
+      ],
+      "created_at": "2025-09-05T22:01:31.036447"
+    },
+    {
+      "id": "extended_information_exposure_01",
+      "cwe_id": "CWE-200",
+      "category": "information-exposure",
+      "language": "javascript",
+      "description": "Sensitive information exposure in error messages",
+      "code": "// Extended: Information exposure\nconst mysql = require('mysql');\n\nfunction authenticateUser(username, password) {\n    const connection = mysql.createConnection(dbConfig);\n    \n    return new Promise((resolve, reject) => {\n        const query = 'SELECT * FROM users WHERE username = ? AND password = ?';\n        \n        connection.query(query, [username, password], (error, results) => {\n            if (error) {\n                // Vulnerable: Exposing database errors\n                reject({\n                    error: 'Authentication failed',\n                    details: error.message,\n                    query: query,\n                    sqlState: error.sqlState\n                });\n                return;\n            }\n            \n            if (results.length === 0) {\n                // Vulnerable: Exposing user enumeration info\n                reject({\n                    error: username.includes('@') ? \n                           'Invalid email address' : \n                           'Username does not exist',\n                    timestamp: new Date(),\n                    attemptedUsername: username\n                });\n                return;\n            }\n            \n            resolve(results[0]);\n        });\n    });\n}",
+      "severity": "medium",
+      "source": "Extended Research Pattern",
+      "vulnerable_lines": [
+        13,
+        22
+      ],
+      "created_at": "2025-09-05T22:01:31.036449"
+    }
+  ]
+}

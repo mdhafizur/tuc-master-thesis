@@ -1,0 +1,99 @@
+# Semgrep Configuration for JavaScript/TypeScript Security Analysis
+# Version: 1.85.0
+# Last Updated: September 5, 2025
+
+rules:
+  # JavaScript/TypeScript Security Rules
+  - id: javascript-security
+    includes:
+      - "*.js"
+      - "*.jsx" 
+      - "*.ts"
+      - "*.tsx"
+      - "*.vue"
+    rulesets:
+      # Core security rules for JavaScript/TypeScript
+      - "p/security-audit"
+      - "p/javascript"
+      - "p/typescript"
+      - "p/nodejs"
+      - "p/react"
+      - "p/nextjs"
+      
+      # OWASP Top 10 specific rules
+      - "p/owasp-top-ten"
+      
+      # CWE-specific rules
+      - "p/cwe-top-25"
+      
+      # Additional security-focused rulesets
+      - "p/secrets"
+      - "p/supply-chain"
+
+# Output configuration
+output:
+  format: "json"
+  destination: "results.json"
+
+# Analysis configuration
+analysis:
+  # Enable all severity levels
+  severity:
+    - "ERROR"
+    - "WARNING" 
+    - "INFO"
+  
+  # Maximum number of findings to report (0 = unlimited)
+  max_findings: 0
+  
+  # Timeout settings (in seconds)
+  timeout: 300
+  
+  # Memory limit (in MB)
+  max_memory: 4096
+
+# Performance settings
+performance:
+  # Number of parallel jobs
+  jobs: 4
+  
+  # Skip files larger than this size (in bytes)
+  max_file_size: 1048576  # 1MB
+
+# Exclusions
+exclude:
+  # Common directories to exclude
+  paths:
+    - "node_modules/"
+    - "dist/"
+    - "build/"
+    - ".git/"
+    - "coverage/"
+    - "*.min.js"
+    - "*.bundle.js"
+    - "vendor/"
+    - "third_party/"
+  
+  # File patterns to exclude
+  patterns:
+    - "test/**"
+    - "tests/**" 
+    - "spec/**"
+    - "*.test.js"
+    - "*.test.ts"
+    - "*.spec.js"
+    - "*.spec.ts"
+
+# Custom rules directory (for additional rules)
+custom_rules_dir: "./custom_rules/"
+
+# Metrics and reporting
+metrics:
+  enable: true
+  
+# Baseline configuration for consistent results
+baseline:
+  # Pin specific rule versions for reproducibility
+  rule_config:
+    semgrep_version: "1.85.0"
+    rules_version: "2025-09-05"

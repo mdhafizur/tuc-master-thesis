@@ -1,0 +1,64 @@
+# Build outputs
+out/
+dist/
+*.vsix
+
+# Dependencies
+node_modules/
+
+# Secrets and tokens
+.vsce-pat
+.env
+*.key
+*.pem
+
+# Test artifacts
+.vscode-test/
+test-workspace*/
+coverage/
+.nyc_output/
+*.lcov
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+*.swp
+*.swo
+*~
+
+# TypeScript
+*.tsbuildinfo
+
+# Reports
+reports/
+
+# Evaluation logs
+evaluation/logs/*.json
+evaluation/logs/*.md
+evaluation/logs/*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# LaTeX artifacts (if applicable)
+*manual.bbl
+*manual.bcf
+*manual.blg
+*manual.fdb_latexmk
+*manual.fls
+*manual.aux
+*manual.lof
+*manual.lol
+*manual.lot
+*manual.out
+*manual.toc
