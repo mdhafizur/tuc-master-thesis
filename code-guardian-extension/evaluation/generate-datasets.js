@@ -180,8 +180,10 @@ function shouldIncludeSample(sample, datasetName, options) {
         return false;
     }
 
-    if (datasetName === 'adversarial' && !options.includeAdversarial) {
-        return false;
+    // Adversarial cases are controlled solely by the includeAdversarial flag so
+    // they can be adopted without broadening non-adversarial source policy.
+    if (datasetName === 'adversarial') {
+        return options.includeAdversarial;
     }
 
     if (options.sourcePolicy === 'all') {
@@ -346,4 +348,3 @@ generate().catch(error => {
     console.error('❌ Failed to generate datasets:', error.message);
     process.exit(1);
 });
-

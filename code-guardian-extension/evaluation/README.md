@@ -58,6 +58,11 @@ ollama pull qwen2.5-coder:1.5b
 ollama pull qwen2.5-coder:3b
 ```
 
+3. Optional baseline tools for SAST comparison:
+- `semgrep`
+- `codeql`
+- `eslint` + `eslint-plugin-security`
+
 ### Running Evaluation
 
 ```bash
@@ -79,6 +84,30 @@ You can explicitly pick a dataset file:
 node evaluation/evaluate-models.js --dataset=datasets/vulnerability-test-cases.generated.json
 ```
 
+Run LLM-only ablation (Base vs RAG):
+
+```bash
+npm run evaluate:ablation
+```
+
+Run full comparison (LLM + RAG+LLM + baselines):
+
+```bash
+npm run evaluate:comparison
+```
+
+Run baselines only:
+
+```bash
+node evaluation/evaluate-models.js --baselines-only --include-baselines
+```
+
+Select specific baseline tools:
+
+```bash
+node evaluation/evaluate-models.js --ablation --include-baselines --baseline-tools=codeql,semgrep,eslint-security
+```
+
 ### Generate Dataset from External Sources
 
 If you have the sibling repository folder `code-guardian-evaluation/`, you can generate extension-compatible datasets:
@@ -94,6 +123,12 @@ This writes:
 - `evaluation/datasets/all-test-cases.generated.json`
 
 The default generation policy is `external-only` (filters fallback/pattern-style samples).  
+To also pull adversarial stress tests (while keeping the external-only filter for core sets):
+
+```bash
+npm run datasets:generate:adversarial
+```
+
 To include everything from the source manifests:
 
 ```bash

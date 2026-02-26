@@ -7,13 +7,24 @@
  * security vulnerabilities in code using a curated test dataset.
  */
 
-const { Ollama } = require('ollama');
+const fsSync = require('fs');
 const fs = require('fs').promises;
 const path = require('path');
 const os = require('os');
-const { execSync } = require('child_process');
+const { execSync, execFile } = require('child_process');
+const { promisify } = require('util');
+const { fileURLToPath } = require('url');
 
-const ollama = new Ollama();
+const execFileAsync = promisify(execFile);
+let ollamaClient = null;
+
+function getOllamaClient() {
+    if (!ollamaClient) {
+        const { Ollama } = require('ollama');
+        ollamaClient = new Ollama();
+    }
+    return ollamaClient;
+}
 
 const DEFAULT_TIMEOUT_MS = 30000;
 const DEFAULT_DELAY_MS = 500;
@@ -21,12 +32,25 @@ const DEFAULT_TEMPERATURE = 0.1;
 const DEFAULT_NUM_PREDICT = 1000;
 const DEFAULT_RUNS_PER_SAMPLE = 1;
 const DEFAULT_RAG_K = 5;
+const DEFAULT_BASELINE_TIMEOUT_MS = 180000;
+const DEFAULT_BASELINE_TOOLS = ['codeql', 'semgrep', 'eslint-security'];
+const BASELINE_TOOL_ALIASES = {
+    codeql: 'codeql',
+    semgrep: 'semgrep',
+    semgrem: 'semgrep',
+    eslint: 'eslint-security',
+    'eslint-security': 'eslint-security',
+    eslintsecurity: 'eslint-security'
+};
 
 // Parse CLI flags
 const args = process.argv.slice(2);
 const ENABLE_RAG_ABLATION = args.includes('--ablation');
 const RAG_ONLY = args.includes('--rag-only');
 const NO_RAG_ONLY = args.includes('--no-rag-only');
+const INCLUDE_BASELINES = args.includes('--include-baselines');
+const BASELINES_ONLY = args.includes('--baselines-only');
+const KEEP_BASELINE_WORKDIR = args.includes('--keep-baseline-workdir');
 
 function getFlagValue(name) {
     const prefixed = `${name}=`;
@@ -63,7 +87,34 @@ const RUNS_PER_SAMPLE = parseIntFlag('--runs', DEFAULT_RUNS_PER_SAMPLE);
 const RAG_K = parseIntFlag('--rag-k', DEFAULT_RAG_K);
 const TEMPERATURE = parseFloatFlag('--temperature', DEFAULT_TEMPERATURE);
 const NUM_PREDICT = parseIntFlag('--num-predict', DEFAULT_NUM_PREDICT);
+const BASELINE_TIMEOUT_MS = parseIntFlag('--baseline-timeout-ms', DEFAULT_BASELINE_TIMEOUT_MS);
 const DATASET_FLAG = getFlagValue('--dataset');
+const SEMGREP_BIN = getFlagValue('--semgrep-bin') || 'semgrep';
+const CODEQL_BIN = getFlagValue('--codeql-bin') || 'codeql';
+const ESLINT_BIN_FLAG = getFlagValue('--eslint-bin');
+const EXTENSION_ROOT = path.resolve(__dirname, '..');
+
+function normalizeBaselineTool(tool) {
+    const key = String(tool || '').trim().toLowerCase();
+    return BASELINE_TOOL_ALIASES[key] || null;
+}
+
+function parseBaselineTools(rawValue) {
+    if (!rawValue) {
+        return [...DEFAULT_BASELINE_TOOLS];
+    }
+
+    const normalized = rawValue
+        .split(',')
+        .map(token => normalizeBaselineTool(token))
+        .filter(Boolean);
+
+    return normalized.length > 0
+        ? [...new Set(normalized)]
+        : [...DEFAULT_BASELINE_TOOLS];
+}
+
+const REQUESTED_BASELINE_TOOLS = parseBaselineTools(getFlagValue('--baseline-tools'));
 
 // Load test dataset
 async function resolveDatasetPath(datasetArg) {
@@ -239,6 +290,671 @@ function resolveModelsToTest(modelsToEvaluate, availableModelObjects) {
     return resolved;
 }
 
+function normalizeFilePath(filePath) {
+    return path.resolve(filePath).replace(/\\/g, '/');
+}
+
+function normalizeDatasetLanguage(language) {
+    const normalized = String(language || '').toLowerCase();
+    return normalized === 'typescript' ? 'typescript' : 'javascript';
+}
+
+function sanitizeSampleFileName(value) {
+    const safe = String(value || 'sample')
+        .toLowerCase()
+        .replace(/[^a-z0-9_.-]/g, '_')
+        .replace(/_+/g, '_')
+        .replace(/^_+|_+$/g, '');
+    return safe || 'sample';
+}
+
+function resolveEslintBinary() {
+    if (ESLINT_BIN_FLAG) {
+        return ESLINT_BIN_FLAG;
+    }
+
+    const ext = process.platform === 'win32' ? '.cmd' : '';
+    const local = path.join(EXTENSION_ROOT, 'node_modules', '.bin', `eslint${ext}`);
+    if (fsSync.existsSync(local)) {
+        return local;
+    }
+
+    return 'eslint';
+}
+
+function hasEslintSecurityPlugin() {
+    try {
+        require.resolve('eslint-plugin-security', { paths: [EXTENSION_ROOT] });
+        return true;
+    } catch (_error) {
+        return false;
+    }
+}
+
+async function runExecFileCommand(command, args, options = {}) {
+    const start = Date.now();
+    try {
+        const { stdout, stderr } = await execFileAsync(command, args, {
+            cwd: options.cwd,
+            env: options.env,
+            timeout: options.timeoutMs,
+            maxBuffer: options.maxBuffer || 50 * 1024 * 1024
+        });
+
+        return {
+            exitCode: 0,
+            stdout: stdout || '',
+            stderr: stderr || '',
+            durationMs: Date.now() - start,
+            executionError: null
+        };
+    } catch (error) {
+        const durationMs = Date.now() - start;
+        const hasNumericCode = Number.isInteger(error.code);
+
+        if (hasNumericCode) {
+            return {
+                exitCode: error.code,
+                stdout: error.stdout || '',
+                stderr: error.stderr || '',
+                durationMs,
+                executionError: null
+            };
+        }
+
+        return {
+            exitCode: null,
+            stdout: error.stdout || '',
+            stderr: error.stderr || '',
+            durationMs,
+            executionError: error
+        };
+    }
+}
+
+async function readToolVersion(command, args = ['--version']) {
+    const outcome = await runExecFileCommand(command, args, {
+        timeoutMs: 20000,
+        maxBuffer: 2 * 1024 * 1024
+    });
+
+    if (outcome.executionError || outcome.exitCode !== 0) {
+        return null;
+    }
+
+    const output = `${outcome.stdout}\n${outcome.stderr}`.trim();
+    if (!output) {
+        return null;
+    }
+
+    return output.split('\n')[0].trim();
+}
+
+function normalizeToolSeverity(rawSeverity) {
+    const severity = String(rawSeverity || '').toLowerCase();
+    if (severity === 'error' || severity === 'critical' || severity === 'high' || severity === '2') {
+        return 'high';
+    }
+    if (severity === 'warning' || severity === 'medium' || severity === '1') {
+        return 'medium';
+    }
+    return 'low';
+}
+
+const TOOL_TYPE_PATTERNS = [
+    { regex: /(nosql|mongodb|mongo\s*injection|cwe-943)/i, type: 'NoSQL Injection' },
+    { regex: /(sql\s*injection|sqli|cwe-89)/i, type: 'SQL Injection' },
+    { regex: /(xss|cross[\s-]*site[\s-]*scripting|cwe-79)/i, type: 'Cross-Site Scripting (XSS)' },
+    { regex: /(command[\s-]*injection|shell[\s-]*injection|child_process|exec\(|cwe-78)/i, type: 'Command Injection' },
+    { regex: /(path[\s-]*traversal|directory[\s-]*traversal|zip[\s-]*slip|non-literal-fs-filename|cwe-22)/i, type: 'Path Traversal' },
+    { regex: /(prototype[\s-]*pollution|object[\s-]*injection|__proto__|cwe-1321)/i, type: 'Prototype Pollution' },
+    { regex: /(ldap[\s-]*injection|cwe-90)/i, type: 'LDAP Injection' },
+    { regex: /(header[\s-]*injection|response[\s-]*splitting|cwe-113)/i, type: 'Header Injection' },
+    { regex: /(xml external entity|xxe|entity expansion|cwe-611|cwe-776)/i, type: 'XML External Entity (XXE)' },
+    { regex: /(ssrf|server[\s-]*side request forgery|request forgery|cwe-918)/i, type: 'Server-Side Request Forgery (SSRF)' },
+    { regex: /(regex|re?dos|catastrophic backtracking|cwe-1333)/i, type: 'Regular Expression DoS' },
+    { regex: /(deserializ|unsafe deserialization|cwe-502)/i, type: 'Insecure Deserialization' },
+    { regex: /(weak\s*(crypto|cryptography)|broken crypto|insecure random|md5|sha1|\\bdes\\b|cwe-327|cwe-338)/i, type: 'Weak Cryptography' },
+    { regex: /(hardcoded credential|hardcoded secret|embedded secret|api key|cwe-798)/i, type: 'Hardcoded Credentials' },
+    { regex: /(authentication bypass|auth[\s-]*bypass|jwt.+(none|verify)|cwe-287)/i, type: 'Authentication Bypass' },
+    { regex: /(improper authentication|weak authentication)/i, type: 'Improper Authentication' },
+    { regex: /(race condition|toctou|cwe-362)/i, type: 'Race Condition' },
+    { regex: /(information exposure|sensitive data|data leak|cwe-200|cwe-532)/i, type: 'Information Exposure' },
+    { regex: /(input validation|validation bypass|unsanitized input|cwe-20)/i, type: 'Input Validation' },
+    { regex: /(weak encryption|insufficient key|cwe-326)/i, type: 'Weak Encryption' },
+    { regex: /(crypto verification|signature verification|timing safe)/i, type: 'Crypto Verification' },
+    { regex: /(code injection|eval-with-expression|eval injection|template injection|cwe-94)/i, type: 'Code Injection' }
+];
+
+function inferVulnerabilityType(hintText, fallback = 'Security Issue') {
+    const normalized = String(hintText || '').trim();
+    for (const entry of TOOL_TYPE_PATTERNS) {
+        if (entry.regex.test(normalized)) {
+            return entry.type;
+        }
+    }
+    return fallback;
+}
+
+async function createBaselineWorkspace(testCases) {
+    const workspaceDir = await fs.mkdtemp(path.join(os.tmpdir(), 'code-guardian-baseline-'));
+    const usedNames = new Set();
+    const byNormalizedPath = new Map();
+    const byBasename = new Map();
+
+    for (let index = 0; index < testCases.length; index++) {
+        const testCase = testCases[index];
+        const extension = normalizeDatasetLanguage(testCase.language) === 'typescript' ? '.ts' : '.js';
+        const seedName = sanitizeSampleFileName(testCase.id || `sample_${index + 1}`);
+        let fileName = `${seedName}${extension}`;
+        let suffix = 1;
+        while (usedNames.has(fileName)) {
+            fileName = `${seedName}_${suffix}${extension}`;
+            suffix += 1;
+        }
+        usedNames.add(fileName);
+
+        const filePath = path.join(workspaceDir, fileName);
+        await fs.writeFile(filePath, `${testCase.code}\n`, 'utf8');
+
+        byNormalizedPath.set(normalizeFilePath(filePath), testCase);
+        byBasename.set(fileName, testCase);
+    }
+
+    return {
+        workspaceDir,
+        byNormalizedPath,
+        byBasename
+    };
+}
+
+function resolveTestCaseFromResultPath(filePath, workspace) {
+    if (!filePath) {
+        return null;
+    }
+
+    let rawPath = String(filePath);
+    if (rawPath.startsWith('file://')) {
+        try {
+            rawPath = fileURLToPath(rawPath);
+        } catch (_error) {
+            // Keep rawPath as-is if URL parsing fails.
+        }
+    }
+
+    const candidates = [];
+    if (path.isAbsolute(rawPath)) {
+        candidates.push(rawPath);
+    } else {
+        candidates.push(path.resolve(workspace.workspaceDir, rawPath));
+        candidates.push(path.resolve(rawPath));
+    }
+
+    for (const candidate of candidates) {
+        const resolved = workspace.byNormalizedPath.get(normalizeFilePath(candidate));
+        if (resolved) {
+            return resolved;
+        }
+    }
+
+    return workspace.byBasename.get(path.basename(rawPath)) || null;
+}
+
+function createFindingsMap(testCases) {
+    const map = new Map();
+    for (const testCase of testCases) {
+        map.set(testCase.id, []);
+    }
+    return map;
+}
+
+function appendFinding(findingsByCase, testCase, finding) {
+    if (!testCase || !findingsByCase.has(testCase.id)) {
+        return;
+    }
+
+    findingsByCase.get(testCase.id).push(finding);
+}
+
+function buildBaselineEvaluationResult({
+    toolName,
+    toolVersion,
+    findingsByCase,
+    testCases,
+    totalDurationMs
+}) {
+    const details = [];
+    const metrics = [];
+    const latencySamples = [];
+    const perSampleLatency = testCases.length > 0
+        ? Math.max(1, Math.round(totalDurationMs / testCases.length))
+        : 0;
+
+    for (const testCase of testCases) {
+        const detectedIssues = findingsByCase.get(testCase.id) || [];
+        const caseMetrics = calculateMetrics(
+            detectedIssues,
+            testCase.expectedVulnerabilities,
+            testCase.code
+        );
+
+        metrics.push(caseMetrics);
+        latencySamples.push(perSampleLatency);
+
+        details.push({
+            testCaseId: testCase.id,
+            testCaseName: testCase.name,
+            run: 1,
+            success: true,
+            responseTime: perSampleLatency,
+            detected: detectedIssues.length,
+            expected: testCase.expectedVulnerabilities.length,
+            parseSuccess: true,
+            detectedIssues,
+            expectedVulnerabilities: testCase.expectedVulnerabilities,
+            expectedFix: testCase.expectedFix || null,
+            metrics: caseMetrics,
+            ragEnabled: false
+        });
+    }
+
+    const aggregateMetrics = calculateAggregateMetrics(metrics);
+    const meanLatencyMs = latencySamples.length > 0 ? Math.round(mean(latencySamples)) : 0;
+    const medianLatencyMs = latencySamples.length > 0 ? Math.round(median(latencySamples)) : 0;
+
+    return {
+        requestedModel: toolName,
+        model: toolName,
+        modelVersion: {
+            digest: null,
+            sizeBytes: null,
+            modifiedAt: null,
+            details: {
+                toolVersion: toolVersion || 'unknown'
+            }
+        },
+        promptMode: 'SAST baseline',
+        evaluationFamily: 'baseline',
+        ragEnabled: false,
+        ragConfig: {
+            retrievalMode: 'none',
+            k: 0
+        },
+        runsPerSample: 1,
+        testCases: testCases.length,
+        totalRequests: testCases.length,
+        successfulRequests: testCases.length,
+        meanLatencyMs,
+        medianLatencyMs,
+        parseSuccessRate: '100.00',
+        metrics: aggregateMetrics,
+        detailedResults: details
+    };
+}
+
+async function runSemgrepBaseline(testCases, workspace, options) {
+    console.log(`\n${'='.repeat(80)}`);
+    console.log('🔧 Baseline: Semgrep');
+    console.log(`${'='.repeat(80)}\n`);
+
+    const version = await readToolVersion(options.semgrepBin);
+    if (!version) {
+        return { skipped: true, reason: `binary not available: ${options.semgrepBin}` };
+    }
+
+    const args = [
+        '--config=p/security-audit',
+        '--config=p/javascript',
+        '--config=p/typescript',
+        '--config=p/owasp-top-ten',
+        '--json',
+        '--metrics=off',
+        '--quiet',
+        workspace.workspaceDir
+    ];
+
+    const outcome = await runExecFileCommand(options.semgrepBin, args, {
+        timeoutMs: options.timeoutMs
+    });
+
+    if (outcome.executionError || ![0, 1].includes(outcome.exitCode)) {
+        return {
+            skipped: true,
+            reason: `failed to execute (exit=${outcome.exitCode ?? 'n/a'}): ${String(outcome.executionError?.message || outcome.stderr || 'unknown error').trim()}`
+        };
+    }
+
+    let parsed;
+    try {
+        parsed = JSON.parse(outcome.stdout || '{"results": []}');
+    } catch (_error) {
+        return { skipped: true, reason: 'output parse failure' };
+    }
+
+    const findingsByCase = createFindingsMap(testCases);
+    for (const finding of parsed.results || []) {
+        const testCase = resolveTestCaseFromResultPath(finding.path, workspace);
+        if (!testCase) {
+            continue;
+        }
+
+        const message = String(finding.extra?.message || '').trim();
+        const ruleId = String(finding.check_id || '');
+        const cwe = Array.isArray(finding.extra?.metadata?.cwe)
+            ? finding.extra.metadata.cwe.join(' ')
+            : String(finding.extra?.metadata?.cwe || '');
+
+        appendFinding(findingsByCase, testCase, {
+            message: message || 'Semgrep finding',
+            type: inferVulnerabilityType(`${ruleId} ${message} ${cwe}`),
+            startLine: finding.start?.line || 1,
+            endLine: finding.end?.line || finding.start?.line || 1,
+            severity: normalizeToolSeverity(finding.extra?.severity || 'warning'),
+            ruleId,
+            tool: 'semgrep'
+        });
+    }
+
+    return {
+        skipped: false,
+        result: buildBaselineEvaluationResult({
+            toolName: 'semgrep',
+            toolVersion: version,
+            findingsByCase,
+            testCases,
+            totalDurationMs: outcome.durationMs
+        })
+    };
+}
+
+async function runCodeqlBaseline(testCases, workspace, options) {
+    console.log(`\n${'='.repeat(80)}`);
+    console.log('🔧 Baseline: CodeQL');
+    console.log(`${'='.repeat(80)}\n`);
+
+    const version = await readToolVersion(options.codeqlBin);
+    if (!version) {
+        return { skipped: true, reason: `binary not available: ${options.codeqlBin}` };
+    }
+
+    const dbPath = path.join(workspace.workspaceDir, '.codeql-db');
+    const outputPath = path.join(workspace.workspaceDir, 'codeql-results.sarif');
+
+    const createArgs = [
+        'database',
+        'create',
+        dbPath,
+        '--language=javascript',
+        '--source-root',
+        workspace.workspaceDir,
+        '--overwrite'
+    ];
+
+    const createOutcome = await runExecFileCommand(options.codeqlBin, createArgs, {
+        timeoutMs: options.timeoutMs
+    });
+
+    if (createOutcome.executionError || createOutcome.exitCode !== 0) {
+        return {
+            skipped: true,
+            reason: `database creation failed (exit=${createOutcome.exitCode ?? 'n/a'})`
+        };
+    }
+
+    const analyzeArgs = [
+        'database',
+        'analyze',
+        dbPath,
+        'codeql/javascript-queries:codeql-suites/javascript-security-and-quality.qls',
+        '--format=sarif-latest',
+        '--output',
+        outputPath
+    ];
+
+    const analyzeOutcome = await runExecFileCommand(options.codeqlBin, analyzeArgs, {
+        timeoutMs: options.timeoutMs
+    });
+
+    if (analyzeOutcome.executionError || analyzeOutcome.exitCode !== 0) {
+        return {
+            skipped: true,
+            reason: `analysis failed (exit=${analyzeOutcome.exitCode ?? 'n/a'})`
+        };
+    }
+
+    let sarif;
+    try {
+        const raw = await fs.readFile(outputPath, 'utf8');
+        sarif = JSON.parse(raw);
+    } catch (_error) {
+        return { skipped: true, reason: 'output parse failure' };
+    }
+
+    const findingsByCase = createFindingsMap(testCases);
+
+    for (const run of sarif.runs || []) {
+        const ruleInfo = new Map();
+        for (const rule of run.tool?.driver?.rules || []) {
+            const id = String(rule.id || '');
+            const shortDescription = String(rule.shortDescription?.text || '');
+            const name = String(rule.name || '');
+            ruleInfo.set(id, `${name} ${shortDescription}`.trim());
+        }
+
+        for (const result of run.results || []) {
+            const ruleId = String(result.ruleId || '');
+            const message = String(result.message?.text || '').trim();
+            const ruleDetails = ruleInfo.get(ruleId) || '';
+            const location = result.locations?.[0]?.physicalLocation || {};
+            const uri = location.artifactLocation?.uri;
+            const testCase = resolveTestCaseFromResultPath(uri, workspace);
+            if (!testCase) {
+                continue;
+            }
+
+            appendFinding(findingsByCase, testCase, {
+                message: message || 'CodeQL finding',
+                type: inferVulnerabilityType(`${ruleId} ${ruleDetails} ${message}`),
+                startLine: location.region?.startLine || 1,
+                endLine: location.region?.endLine || location.region?.startLine || 1,
+                severity: normalizeToolSeverity(result.level || 'warning'),
+                ruleId,
+                tool: 'codeql'
+            });
+        }
+    }
+
+    return {
+        skipped: false,
+        result: buildBaselineEvaluationResult({
+            toolName: 'codeql',
+            toolVersion: version,
+            findingsByCase,
+            testCases,
+            totalDurationMs: createOutcome.durationMs + analyzeOutcome.durationMs
+        })
+    };
+}
+
+async function runEslintSecurityBaseline(testCases, workspace, options) {
+    console.log(`\n${'='.repeat(80)}`);
+    console.log('🔧 Baseline: ESLint Security');
+    console.log(`${'='.repeat(80)}\n`);
+
+    if (!hasEslintSecurityPlugin()) {
+        return {
+            skipped: true,
+            reason: 'eslint-plugin-security not installed in extension workspace'
+        };
+    }
+
+    const eslintBin = options.eslintBin;
+    const version = await readToolVersion(eslintBin, ['--version']);
+    if (!version) {
+        return { skipped: true, reason: `binary not available: ${eslintBin}` };
+    }
+
+    const configPath = path.join(workspace.workspaceDir, 'eslint.config.cjs');
+    const configContents = `'use strict';
+const path = require('path');
+
+const candidates = [
+  path.join(${JSON.stringify(EXTENSION_ROOT)}, 'node_modules', 'eslint-plugin-security'),
+  'eslint-plugin-security'
+];
+
+let security;
+for (const candidate of candidates) {
+  try {
+    security = require(candidate);
+    break;
+  } catch (_error) {
+    // Try next candidate.
+  }
+}
+
+if (!security) {
+  throw new Error('eslint-plugin-security is required for baseline evaluation.');
+}
+
+module.exports = [
+  {
+    files: ['**/*.js', '**/*.ts'],
+    languageOptions: {
+      ecmaVersion: 'latest',
+      sourceType: 'module'
+    },
+    plugins: {
+      security
+    },
+    rules: {
+      ...(security.configs.recommended?.rules || {})
+    }
+  }
+];
+`;
+    await fs.writeFile(configPath, configContents, 'utf8');
+
+    const nodePath = path.join(EXTENSION_ROOT, 'node_modules');
+    const env = {
+        ...process.env,
+        NODE_PATH: process.env.NODE_PATH
+            ? `${nodePath}${path.delimiter}${process.env.NODE_PATH}`
+            : nodePath
+    };
+
+    const args = [
+        workspace.workspaceDir,
+        '--ext',
+        '.js,.ts',
+        '--format',
+        'json',
+        '--no-error-on-unmatched-pattern'
+    ];
+
+    const outcome = await runExecFileCommand(eslintBin, args, {
+        cwd: workspace.workspaceDir,
+        env,
+        timeoutMs: options.timeoutMs
+    });
+
+    if (outcome.executionError || ![0, 1].includes(outcome.exitCode)) {
+        return {
+            skipped: true,
+            reason: `analysis failed (exit=${outcome.exitCode ?? 'n/a'})`
+        };
+    }
+
+    let parsed;
+    try {
+        parsed = JSON.parse(outcome.stdout || '[]');
+    } catch (_error) {
+        return { skipped: true, reason: 'output parse failure' };
+    }
+
+    const findingsByCase = createFindingsMap(testCases);
+    for (const fileEntry of parsed) {
+        const testCase = resolveTestCaseFromResultPath(fileEntry.filePath, workspace);
+        if (!testCase) {
+            continue;
+        }
+
+        for (const message of fileEntry.messages || []) {
+            const ruleId = String(message.ruleId || '');
+            const text = String(message.message || '').trim();
+            appendFinding(findingsByCase, testCase, {
+                message: text || 'ESLint finding',
+                type: inferVulnerabilityType(`${ruleId} ${text}`),
+                startLine: message.line || 1,
+                endLine: message.endLine || message.line || 1,
+                severity: normalizeToolSeverity(String(message.severity || '1')),
+                ruleId,
+                tool: 'eslint-security'
+            });
+        }
+    }
+
+    return {
+        skipped: false,
+        result: buildBaselineEvaluationResult({
+            toolName: 'eslint-security',
+            toolVersion: version,
+            findingsByCase,
+            testCases,
+            totalDurationMs: outcome.durationMs
+        })
+    };
+}
+
+async function evaluateBaselines(testCases, options) {
+    const status = {
+        requestedTools: options.requestedTools,
+        completedTools: [],
+        skippedTools: []
+    };
+    const results = [];
+
+    if (!Array.isArray(options.requestedTools) || options.requestedTools.length === 0) {
+        return { results, status };
+    }
+
+    const workspace = await createBaselineWorkspace(testCases);
+
+    try {
+        for (const tool of options.requestedTools) {
+            let outcome;
+            if (tool === 'semgrep') {
+                outcome = await runSemgrepBaseline(testCases, workspace, options);
+            } else if (tool === 'codeql') {
+                outcome = await runCodeqlBaseline(testCases, workspace, options);
+            } else if (tool === 'eslint-security') {
+                outcome = await runEslintSecurityBaseline(testCases, workspace, options);
+            } else {
+                status.skippedTools.push({ tool, reason: 'unsupported baseline identifier' });
+                continue;
+            }
+
+            if (outcome.skipped) {
+                console.log(`⚠️  Skipping baseline ${tool}: ${outcome.reason}`);
+                status.skippedTools.push({ tool, reason: outcome.reason });
+                continue;
+            }
+
+            results.push(outcome.result);
+            status.completedTools.push(tool);
+            console.log(`✅ Baseline ${tool} completed`);
+        }
+    } finally {
+        if (!options.keepWorkspace) {
+            await fs.rm(workspace.workspaceDir, { recursive: true, force: true });
+        } else {
+            console.log(`ℹ️  Baseline workspace retained at: ${workspace.workspaceDir}`);
+        }
+    }
+
+    return { results, status };
+}
+
 // Analyze code with a specific model
 async function analyzeWithModel(modelName, code, options) {
     const {
@@ -248,6 +964,7 @@ async function analyzeWithModel(modelName, code, options) {
         temperature,
         numPredict
     } = options;
+    const ollama = getOllamaClient();
 
     try {
         const startTime = Date.now();
@@ -488,6 +1205,7 @@ async function evaluateModel(modelInfo, testCases, options) {
             details: modelInfo.details
         },
         promptMode: useRAG ? 'LLM+RAG' : 'LLM-only',
+        evaluationFamily: 'llm',
         ragEnabled: useRAG,
         ragConfig: {
             retrievalMode: useRAG ? 'static_security_snippets' : 'none',
@@ -508,6 +1226,12 @@ async function evaluateModel(modelInfo, testCases, options) {
 function printExecutionConfig(config) {
     console.log('\n⚙️  Execution Config');
     console.log(`   Prompt mode: ${config.modeLabel}`);
+    console.log(`   LLM evaluation: ${config.runLlm ? 'enabled' : 'disabled'}`);
+    console.log(`   Baseline comparison: ${config.runBaselines ? 'enabled' : 'disabled'}`);
+    if (config.runBaselines) {
+        console.log(`   Baseline tools: ${config.baselineTools.join(', ')}`);
+        console.log(`   Baseline timeout: ${config.baselineTimeoutMs}ms`);
+    }
     console.log(`   Runs per sample: ${config.runsPerSample}`);
     console.log(`   RAG k: ${config.ragK}`);
     console.log(`   Temperature: ${config.temperature}`);
@@ -518,9 +1242,18 @@ function printExecutionConfig(config) {
 
 async function runEvaluation() {
     const startTimestamp = new Date();
+    let shouldRunLlm = !BASELINES_ONLY;
+    const shouldRunBaselines = INCLUDE_BASELINES || BASELINES_ONLY;
+
     console.log('🚀 Code Guardian Model Evaluation Framework');
-    if (ENABLE_RAG_ABLATION) {
+    if (ENABLE_RAG_ABLATION && shouldRunLlm) {
         console.log('📋 Mode: RAG Ablation Study (comparing Base vs RAG)');
+    }
+    if (shouldRunBaselines) {
+        console.log(`📋 Baseline comparison enabled: ${REQUESTED_BASELINE_TOOLS.join(', ')}`);
+    }
+    if (BASELINES_ONLY) {
+        console.log('📋 Mode: Baselines only (LLM disabled)');
     }
     console.log('='.repeat(80));
 
@@ -541,39 +1274,63 @@ async function runEvaluation() {
         'CodeLlama:latest',
     ];
 
-    console.log('\n🔍 Checking available models...');
-    let availableModelObjects;
-    try {
-        const modelList = await ollama.list();
-        availableModelObjects = modelList.models || [];
-        console.log(`✅ Found ${availableModelObjects.length} installed models`);
-    } catch (error) {
-        console.error('❌ Failed to connect to Ollama:', error.message);
-        process.exit(1);
-    }
-
-    const modelsToTest = resolveModelsToTest(modelsToEvaluate, availableModelObjects);
-
-    if (modelsToTest.length === 0) {
-        console.error('❌ No models available for testing. Please install at least one model.');
-        process.exit(1);
-    }
-
-    console.log(`\n📋 Testing ${modelsToTest.length} resolved model(s): ${modelsToTest.map(m => m.resolvedModel).join(', ')}`);
-
     const ragModes = [];
-    if (ENABLE_RAG_ABLATION) {
+    if (ENABLE_RAG_ABLATION && shouldRunLlm) {
         ragModes.push(false, true);
-    } else if (RAG_ONLY) {
+    } else if (RAG_ONLY && shouldRunLlm) {
         ragModes.push(true);
-    } else if (NO_RAG_ONLY) {
+    } else if (NO_RAG_ONLY && shouldRunLlm) {
         ragModes.push(false);
-    } else {
+    } else if (shouldRunLlm) {
         ragModes.push(false);
     }
+
+    let llmUnavailableReason = null;
+    let modelsToTest = [];
+    if (shouldRunLlm) {
+        console.log('\n🔍 Checking available models...');
+        let availableModelObjects;
+        try {
+            const ollama = getOllamaClient();
+            const modelList = await ollama.list();
+            availableModelObjects = modelList.models || [];
+            console.log(`✅ Found ${availableModelObjects.length} installed models`);
+        } catch (error) {
+            llmUnavailableReason = `failed to connect to Ollama (${error.message})`;
+            if (!shouldRunBaselines) {
+                console.error(`❌ ${llmUnavailableReason}`);
+                process.exit(1);
+            }
+            console.log(`⚠️  Skipping LLM evaluation: ${llmUnavailableReason}`);
+            shouldRunLlm = false;
+        }
+
+        if (shouldRunLlm) {
+            modelsToTest = resolveModelsToTest(modelsToEvaluate, availableModelObjects);
+            if (modelsToTest.length === 0) {
+                llmUnavailableReason = 'no configured models are installed';
+                if (!shouldRunBaselines) {
+                    console.error('❌ No models available for testing. Please install at least one model.');
+                    process.exit(1);
+                }
+                console.log(`⚠️  Skipping LLM evaluation: ${llmUnavailableReason}`);
+                shouldRunLlm = false;
+            } else {
+                console.log(`\n📋 Testing ${modelsToTest.length} resolved model(s): ${modelsToTest.map(m => m.resolvedModel).join(', ')}`);
+            }
+        }
+    }
+
+    const modeLabel = shouldRunLlm
+        ? (ENABLE_RAG_ABLATION ? 'Base + RAG' : (RAG_ONLY ? 'RAG only' : 'Base only'))
+        : (shouldRunBaselines ? 'Baselines only' : 'Disabled');
 
     printExecutionConfig({
-        modeLabel: ENABLE_RAG_ABLATION ? 'Base + RAG' : (RAG_ONLY ? 'RAG only' : 'Base only'),
+        modeLabel,
+        runLlm: shouldRunLlm,
+        runBaselines: shouldRunBaselines,
+        baselineTools: REQUESTED_BASELINE_TOOLS,
+        baselineTimeoutMs: BASELINE_TIMEOUT_MS,
         runsPerSample: RUNS_PER_SAMPLE,
         ragK: RAG_K,
         temperature: TEMPERATURE,
@@ -583,19 +1340,44 @@ async function runEvaluation() {
     });
 
     const evaluationResults = [];
-    for (const modelInfo of modelsToTest) {
-        for (const useRAG of ragModes) {
-            const result = await evaluateModel(modelInfo, testCases, {
-                useRAG,
-                runsPerSample: RUNS_PER_SAMPLE,
-                timeoutMs: TIMEOUT_MS,
-                delayMs: REQUEST_DELAY_MS,
-                ragK: RAG_K,
-                temperature: TEMPERATURE,
-                numPredict: NUM_PREDICT
-            });
-            evaluationResults.push(result);
+    if (shouldRunLlm) {
+        for (const modelInfo of modelsToTest) {
+            for (const useRAG of ragModes) {
+                const result = await evaluateModel(modelInfo, testCases, {
+                    useRAG,
+                    runsPerSample: RUNS_PER_SAMPLE,
+                    timeoutMs: TIMEOUT_MS,
+                    delayMs: REQUEST_DELAY_MS,
+                    ragK: RAG_K,
+                    temperature: TEMPERATURE,
+                    numPredict: NUM_PREDICT
+                });
+                evaluationResults.push(result);
+            }
         }
+    }
+
+    let baselineStatus = {
+        requestedTools: REQUESTED_BASELINE_TOOLS,
+        completedTools: [],
+        skippedTools: []
+    };
+    if (shouldRunBaselines) {
+        const baselineEvaluation = await evaluateBaselines(testCases, {
+            requestedTools: REQUESTED_BASELINE_TOOLS,
+            semgrepBin: SEMGREP_BIN,
+            codeqlBin: CODEQL_BIN,
+            eslintBin: resolveEslintBinary(),
+            timeoutMs: BASELINE_TIMEOUT_MS,
+            keepWorkspace: KEEP_BASELINE_WORKDIR
+        });
+        evaluationResults.push(...baselineEvaluation.results);
+        baselineStatus = baselineEvaluation.status;
+    }
+
+    if (evaluationResults.length === 0) {
+        console.error('❌ No evaluation results were produced. Ensure Ollama models and/or baseline tools are available.');
+        process.exit(1);
     }
 
     console.log('\n\n' + '='.repeat(80));
@@ -622,15 +1404,16 @@ async function runEvaluation() {
         console.log('');
     });
 
-    if (ENABLE_RAG_ABLATION) {
+    if (shouldRunLlm && ENABLE_RAG_ABLATION) {
         console.log('\n📊 RAG ABLATION COMPARISON:\n');
         console.log('| Model | Mode | F1 Score | Precision | Recall | FPR | Parse Rate | Mean Lat. | Median Lat. |');
         console.log('|-------|------|----------|-----------|--------|-----|------------|-----------|-------------|');
 
-        const uniqueModels = [...new Set(evaluationResults.map(r => r.model))];
+        const llmResults = evaluationResults.filter(r => r.evaluationFamily === 'llm');
+        const uniqueModels = [...new Set(llmResults.map(r => r.model))];
         for (const model of uniqueModels) {
-            const base = evaluationResults.find(r => r.model === model && !r.ragEnabled);
-            const rag = evaluationResults.find(r => r.model === model && r.ragEnabled);
+            const base = llmResults.find(r => r.model === model && !r.ragEnabled);
+            const rag = llmResults.find(r => r.model === model && r.ragEnabled);
 
             if (base) {
                 console.log(`| ${model} | Base | ${base.metrics.f1Score}% | ${base.metrics.precision}% | ${base.metrics.recall}% | ${base.metrics.falsePositiveRate}% | ${base.parseSuccessRate}% | ${base.meanLatencyMs}ms | ${base.medianLatencyMs}ms |`);
@@ -642,18 +1425,48 @@ async function runEvaluation() {
         console.log('');
     }
 
+    if (shouldRunBaselines) {
+        console.log('\n🧰 BASELINE TOOL STATUS:\n');
+        if (baselineStatus.completedTools.length > 0) {
+            console.log(`✅ Completed: ${baselineStatus.completedTools.join(', ')}`);
+        }
+        if (baselineStatus.skippedTools.length > 0) {
+            baselineStatus.skippedTools.forEach(item => {
+                console.log(`⚠️  ${item.tool}: ${item.reason}`);
+            });
+        }
+        if (baselineStatus.completedTools.length === 0 && baselineStatus.skippedTools.length === 0) {
+            console.log('⚠️  No baseline tools were executed.');
+        }
+    }
+
     const bestModel = sortedResults[0];
     console.log(`💡 Recommended Model: ${bestModel.model} (${bestModel.promptMode})`);
     console.log(`   Best F1: ${bestModel.metrics.f1Score}% | Mean latency: ${bestModel.meanLatencyMs}ms`);
 
     const endTimestamp = new Date();
     const timestamp = endTimestamp.toISOString().replace(/[:.]/g, '-');
-    const suffix = ENABLE_RAG_ABLATION ? '-ablation' : '';
+    const suffixParts = [];
+    if (shouldRunLlm && ENABLE_RAG_ABLATION) {
+        suffixParts.push('ablation');
+    }
+    if (shouldRunBaselines) {
+        suffixParts.push('baselines');
+    }
+    if (!shouldRunLlm && shouldRunBaselines) {
+        suffixParts.push('only');
+    }
+    const suffix = suffixParts.length > 0 ? `-${suffixParts.join('-')}` : '';
     const reportPath = path.join(__dirname, 'logs', `evaluation-${timestamp}${suffix}.json`);
 
     const executionConfig = {
-        mode: ENABLE_RAG_ABLATION ? 'ablation' : (RAG_ONLY ? 'rag-only' : 'base-only'),
-        ragAblation: ENABLE_RAG_ABLATION,
+        mode: !shouldRunLlm && shouldRunBaselines
+            ? 'baselines-only'
+            : (ENABLE_RAG_ABLATION ? 'ablation' : (RAG_ONLY ? 'rag-only' : 'base-only')),
+        ragAblation: shouldRunLlm && ENABLE_RAG_ABLATION,
+        runLlm: shouldRunLlm,
+        runBaselines: shouldRunBaselines,
+        llmUnavailableReason,
         testCases: testCases.length,
         secureCases: secureCount,
         vulnerableCases: vulnCount,
@@ -661,8 +1474,14 @@ async function runEvaluation() {
         runsPerSample: RUNS_PER_SAMPLE,
         promptModes: ragModes.map(r => r ? 'LLM+RAG' : 'LLM-only'),
         rag: {
-            strategy: 'static_security_snippets',
-            k: RAG_K
+            strategy: shouldRunLlm ? 'static_security_snippets' : 'none',
+            k: shouldRunLlm ? RAG_K : 0
+        },
+        baselines: {
+            requestedTools: REQUESTED_BASELINE_TOOLS,
+            completedTools: baselineStatus.completedTools,
+            skippedTools: baselineStatus.skippedTools,
+            timeoutMs: BASELINE_TIMEOUT_MS
         },
         modelGeneration: {
             temperature: TEMPERATURE,
@@ -725,7 +1544,20 @@ function generateMarkdownReport({ results, testCases, executionConfig, execution
 
     report += '\n## Configuration\n\n';
     report += `- **Evaluation Mode:** ${executionConfig.mode}\n`;
-    report += `- **Prompt Modes:** ${executionConfig.promptModes.join(', ')}\n`;
+    report += `- **LLM Evaluation:** ${executionConfig.runLlm ? 'enabled' : 'disabled'}\n`;
+    report += `- **Prompt Modes:** ${executionConfig.promptModes.length > 0 ? executionConfig.promptModes.join(', ') : 'none'}\n`;
+    report += `- **Baseline Comparison:** ${executionConfig.runBaselines ? 'enabled' : 'disabled'}\n`;
+    if (executionConfig.runBaselines) {
+        report += `- **Baseline Tools (requested):** ${executionConfig.baselines.requestedTools.join(', ')}\n`;
+        report += `- **Baseline Tools (completed):** ${executionConfig.baselines.completedTools.length > 0 ? executionConfig.baselines.completedTools.join(', ') : 'none'}\n`;
+        report += `- **Baseline Timeout:** ${executionConfig.baselines.timeoutMs}ms\n`;
+        if (executionConfig.baselines.skippedTools.length > 0) {
+            const skipped = executionConfig.baselines.skippedTools
+                .map(item => `${item.tool} (${item.reason})`)
+                .join('; ');
+            report += `- **Baseline Tools (skipped):** ${skipped}\n`;
+        }
+    }
     report += `- **RAG Strategy:** ${executionConfig.rag.strategy}\n`;
     report += `- **RAG k:** ${executionConfig.rag.k}\n`;
     report += `- **Temperature:** ${executionConfig.modelGeneration.temperature}\n`;
