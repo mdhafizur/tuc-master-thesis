@@ -1,0 +1,45 @@
+{
+  "name": "code-guardian-testing-framework",
+  "version": "1.0.0",
+  "description": "VS Code Extension Testing Framework for Code Guardian evaluation",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "vscode:prepublish": "npm run build",
+    "test": "npm run build && node dist/runTest.js",
+    "test:integration": "npm run test",
+    "test:performance": "npm run test",
+    "test:validate": "node standalone-validator.js",
+    "quick-start": "npm run build && node quick-start.js",
+    "start": "npm run test:validate",
+    "clean": "rimraf dist",
+    "pretest": "npm run build"
+  },
+  "keywords": [
+    "vscode",
+    "extension",
+    "testing",
+    "security",
+    "evaluation"
+  ],
+  "author": "Code Guardian Research Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/fs-extra": "^11.0.4",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.98.0",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.4.1",
+    "mocha": "^10.7.3",
+    "rimraf": "^5.0.5",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "fs-extra": "^11.2.0",
+    "glob": "^10.3.10",
+    "json5": "^2.2.3",
+    "performance-now": "^2.1.0"
+  }
+}

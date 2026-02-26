@@ -1,0 +1,349 @@
+[
+  {
+    "id": "owasp_bench_sql_concat",
+    "name": "SQL Injection - SQL injection via string concatenation (OWASP Benchmark)",
+    "code": "// OWASP Benchmark: SQL injection via concatenation\nconst sqlite3 = require('sqlite3').verbose();\n\nfunction searchProducts(searchTerm) {\n    const db = new sqlite3.Database('products.db');\n    \n    // Vulnerable: Direct string concatenation\n    const query = \"SELECT * FROM products WHERE name LIKE '%\" + searchTerm + \"%'\";\n    \n    return new Promise((resolve, reject) => {\n        db.all(query, [], (err, rows) => {\n            if (err) reject(err);\n            else resolve(rows);\n        });\n    });\n}",
+    "language": "javascript",
+    "expectedVulnerabilities": [
+      {
+        "type": "SQL Injection",
+        "cwe": "CWE-89",
+        "severity": "high",
+        "description": "SQL injection via string concatenation (OWASP Benchmark)"
+      }
+    ],
+    "expectedFix": "Use parameterized SQL queries or prepared statements.",
+    "metadata": {
+      "sourceDataset": "benchmark",
+      "sourcePolicy": "external-only",
+      "source": "OWASP Benchmark SQL-01",
+      "originalId": "owasp_bench_sql_concat",
+      "vulnerableLines": [
+        7
+      ]
+    }
+  },
+  {
+    "id": "owasp_bench_sql_template",
+    "name": "SQL Injection - SQL injection via template literals (OWASP Benchmark)",
+    "code": "// OWASP Benchmark: SQL injection via template literals\nconst mysql = require('mysql');\n\nfunction loginUser(username, password) {\n    const connection = mysql.createConnection(dbConfig);\n    \n    // Vulnerable: Template literal without escaping\n    const sql = `SELECT id, role FROM users WHERE username='${username}' AND password='${password}'`;\n    \n    return new Promise((resolve, reject) => {\n        connection.query(sql, (error, results) => {\n            if (error) reject(error);\n            resolve(results[0] || null);\n        });\n    });\n}",
+    "language": "javascript",
+    "expectedVulnerabilities": [
+      {
+        "type": "SQL Injection",
+        "cwe": "CWE-89",
+        "severity": "high",
+        "description": "SQL injection via template literals (OWASP Benchmark)"
+      }
+    ],
+    "expectedFix": "Use parameterized SQL queries or prepared statements.",
+    "metadata": {
+      "sourceDataset": "benchmark",
+      "sourcePolicy": "external-only",
+      "source": "OWASP Benchmark SQL-02",
+      "originalId": "owasp_bench_sql_template",
+      "vulnerableLines": [
+        7
+      ]
+    }
+  },
+  {
+    "id": "owasp_bench_xss_innerHTML",
+    "name": "Cross-Site Scripting (XSS) - XSS via innerHTML assignment (OWASP Benchmark)",
+    "code": "// OWASP Benchmark: XSS via innerHTML\nfunction displayUserProfile(userName, userBio) {\n    const profileContainer = document.getElementById('profileContainer');\n    \n    // Vulnerable: Unescaped template literal in innerHTML\n    const profileHtml = `\n        <div class=\"profile\">\n            <h2>Profile: ${userName}</h2>\n            <div class=\"bio\">${userBio}</div>\n        </div>\n    `;\n    \n    profileContainer.innerHTML = profileHtml;\n}\n\nfunction showAlert(message) {\n    // Vulnerable: Direct innerHTML assignment\n    document.getElementById('alerts').innerHTML = \"<div class='alert'>\" + message + \"</div>\";\n}",
+    "language": "javascript",
+    "expectedVulnerabilities": [
+      {
+        "type": "Cross-Site Scripting (XSS)",
+        "cwe": "CWE-79",
+        "severity": "high",
+        "description": "XSS via innerHTML assignment (OWASP Benchmark)"
+      }
+    ],
+    "expectedFix": "Escape/sanitize untrusted content and avoid unsafe DOM sinks.",
+    "metadata": {
+      "sourceDataset": "benchmark",
+      "sourcePolicy": "external-only",
+      "source": "OWASP Benchmark XSS-01",
+      "originalId": "owasp_bench_xss_innerHTML",
+      "vulnerableLines": [
+        11,
+        16
+      ]
+    }
+  },
+  {
+    "id": "owasp_bench_xss_document_write",
+    "name": "Cross-Site Scripting (XSS) - XSS via document.write (OWASP Benchmark)",
+    "code": "// OWASP Benchmark: XSS via document.write\nfunction renderPage(title, content) {\n    // Vulnerable: Unescaped content in document.write\n    document.write(`\n        <html>\n            <head><title>${title}</title></head>\n            <body>\n                <h1>${title}</h1>\n                <div>${content}</div>\n            </body>\n        </html>\n    `);\n}\n\nfunction insertScript(scriptContent) {\n    // Vulnerable: Direct script injection\n    document.write(\"<script>\" + scriptContent + \"</script>\");\n}",
+    "language": "javascript",
+    "expectedVulnerabilities": [
+      {
+        "type": "Cross-Site Scripting (XSS)",
+        "cwe": "CWE-79",
+        "severity": "high",
+        "description": "XSS via document.write (OWASP Benchmark)"
+      }
+    ],
+    "expectedFix": "Escape/sanitize untrusted content and avoid unsafe DOM sinks.",
+    "metadata": {
+      "sourceDataset": "benchmark",
+      "sourcePolicy": "external-only",
+      "source": "OWASP Benchmark XSS-02",
+      "originalId": "owasp_bench_xss_document_write",
+      "vulnerableLines": [
+        3,
+        15
+      ]
+    }
+  },
+  {
+    "id": "owasp_bench_cmd_exec",
+    "name": "Command Injection - Command injection via exec (OWASP Benchmark)",
+    "code": "// OWASP Benchmark: Command injection\nconst { exec } = require('child_process');\n\nfunction analyzeFile(filename) {\n    // Vulnerable: Unvalidated filename in command\n    const command = `file ${filename}`;\n    \n    return new Promise((resolve, reject) => {\n        exec(command, (error, stdout, stderr) => {\n            if (error) reject(error);\n            else resolve(stdout);\n        });\n    });\n}\n\nfunction compressFile(inputFile, outputFile) {\n    // Vulnerable: Multiple injection points\n    exec(`gzip -c ${inputFile} > ${outputFile}`, (error, stdout) => {\n        console.log('Compression complete');\n    });\n}",
+    "language": "javascript",
+    "expectedVulnerabilities": [
+      {
+        "type": "Command Injection",
+        "cwe": "CWE-78",
+        "severity": "high",
+        "description": "Command injection via exec (OWASP Benchmark)"
+      }
+    ],
+    "expectedFix": "Use safe process APIs and never concatenate untrusted input into commands.",
+    "metadata": {
+      "sourceDataset": "benchmark",
+      "sourcePolicy": "external-only",
+      "source": "OWASP Benchmark CMD-01",
+      "originalId": "owasp_bench_cmd_exec",
+      "vulnerableLines": [
+        6,
+        16
+      ]
+    }
+  },
+  {
+    "id": "owasp_bench_path_traversal",
+    "name": "Path Traversal - Path traversal in file serving (OWASP Benchmark)",
+    "code": "// OWASP Benchmark: Path traversal\nconst fs = require('fs');\nconst express = require('express');\nconst app = express();\n\napp.get('/files/:filename', (req, res) => {\n    const filename = req.params.filename;\n    \n    // Vulnerable: No path validation\n    const filepath = './uploads/' + filename;\n    \n    try {\n        const content = fs.readFileSync(filepath, 'utf8');\n        res.send(content);\n    } catch (error) {\n        res.status(404).send('File not found');\n    }\n});\n\nfunction readConfigFile(configName) {\n    // Vulnerable: Path traversal in config reading\n    const configPath = './config/' + configName + '.json';\n    return JSON.parse(fs.readFileSync(configPath, 'utf8'));\n}",
+    "language": "javascript",
+    "expectedVulnerabilities": [
+      {
+        "type": "Path Traversal",
+        "cwe": "CWE-22",
+        "severity": "high",
+        "description": "Path traversal in file serving (OWASP Benchmark)"
+      }
+    ],
+    "expectedFix": "Canonicalize paths and restrict access to approved directories.",
+    "metadata": {
+      "sourceDataset": "benchmark",
+      "sourcePolicy": "external-only",
+      "source": "OWASP Benchmark PATH-01",
+      "originalId": "owasp_bench_path_traversal",
+      "vulnerableLines": [
+        9,
+        20
+      ]
+    }
+  },
+  {
+    "id": "owasp_bench_weak_crypto",
+    "name": "Weak Cryptography - Weak cryptographic algorithms (OWASP Benchmark)",
+    "code": "// OWASP Benchmark: Weak cryptography\nconst crypto = require('crypto');\n\nfunction hashPassword(password) {\n    // Vulnerable: Using weak MD5 algorithm\n    return crypto.createHash('md5').update(password).digest('hex');\n}\n\nfunction encryptData(data, key) {\n    // Vulnerable: Using DES encryption\n    const cipher = crypto.createCipher('des', key);\n    let encrypted = cipher.update(data, 'utf8', 'hex');\n    encrypted += cipher.final('hex');\n    return encrypted;\n}\n\nfunction generateToken() {\n    // Vulnerable: Weak random number generation\n    return Math.random().toString(36).substring(2, 15);\n}",
+    "language": "javascript",
+    "expectedVulnerabilities": [
+      {
+        "type": "Weak Cryptography",
+        "cwe": "CWE-327",
+        "severity": "medium",
+        "description": "Weak cryptographic algorithms (OWASP Benchmark)"
+      }
+    ],
+    "expectedFix": "Use strong algorithms and secure key generation/management.",
+    "metadata": {
+      "sourceDataset": "benchmark",
+      "sourcePolicy": "external-only",
+      "source": "OWASP Benchmark CRYPTO-01",
+      "originalId": "owasp_bench_weak_crypto",
+      "vulnerableLines": [
+        5,
+        10,
+        17
+      ]
+    }
+  },
+  {
+    "id": "owasp_bench_ldap_injection",
+    "name": "LDAP Injection - LDAP injection vulnerability (OWASP Benchmark)",
+    "code": "// OWASP Benchmark: LDAP injection\nconst ldap = require('ldapjs');\n\nfunction authenticateUser(username, password) {\n    const client = ldap.createClient({\n        url: 'ldap://localhost:389'\n    });\n    \n    // Vulnerable: Unescaped LDAP filter\n    const filter = `(&(uid=${username})(userPassword=${password}))`;\n    \n    const searchOptions = {\n        filter: filter,\n        scope: 'sub'\n    };\n    \n    client.search('dc=example,dc=com', searchOptions, (err, result) => {\n        if (err) throw err;\n        // Process results\n    });\n}",
+    "language": "javascript",
+    "expectedVulnerabilities": [
+      {
+        "type": "LDAP Injection",
+        "cwe": "CWE-90",
+        "severity": "high",
+        "description": "LDAP injection vulnerability (OWASP Benchmark)"
+      }
+    ],
+    "expectedFix": "Use parameterized LDAP queries and sanitize user-controlled input.",
+    "metadata": {
+      "sourceDataset": "benchmark",
+      "sourcePolicy": "external-only",
+      "source": "OWASP Benchmark LDAP-01",
+      "originalId": "owasp_bench_ldap_injection",
+      "vulnerableLines": [
+        10
+      ]
+    }
+  },
+  {
+    "id": "owasp_bench_header_injection",
+    "name": "Header Injection - HTTP header injection (OWASP Benchmark)",
+    "code": "// OWASP Benchmark: HTTP header injection\nconst express = require('express');\nconst app = express();\n\napp.get('/redirect', (req, res) => {\n    const target = req.query.url;\n    \n    // Vulnerable: Unvalidated redirect URL\n    res.redirect(target);\n});\n\napp.get('/cookie', (req, res) => {\n    const value = req.query.value;\n    \n    // Vulnerable: Unvalidated cookie value\n    res.setHeader('Set-Cookie', `userdata=${value}`);\n    res.send('Cookie set');\n});\n\nfunction setCustomHeader(response, headerValue) {\n    // Vulnerable: Header injection\n    response.setHeader('X-Custom-Header', headerValue);\n}",
+    "language": "javascript",
+    "expectedVulnerabilities": [
+      {
+        "type": "Header Injection",
+        "cwe": "CWE-113",
+        "severity": "medium",
+        "description": "HTTP header injection (OWASP Benchmark)"
+      }
+    ],
+    "expectedFix": "Sanitize header values and enforce strict header construction.",
+    "metadata": {
+      "sourceDataset": "benchmark",
+      "sourcePolicy": "external-only",
+      "source": "OWASP Benchmark HEADER-01",
+      "originalId": "owasp_bench_header_injection",
+      "vulnerableLines": [
+        8,
+        15,
+        21
+      ]
+    }
+  },
+  {
+    "id": "nodejs_cve_2021_23337",
+    "name": "Prototype Pollution - Prototype pollution in lodash merge function",
+    "code": "// CVE-2021-23337: Prototype pollution in lodash\nconst _ = require('lodash');\n\nfunction mergeUserSettings(defaultSettings, userPreferences) {\n    // Vulnerable: lodash.merge susceptible to prototype pollution\n    return _.merge({}, defaultSettings, userPreferences);\n}\n\nfunction updateUserConfig(userId, configData) {\n    const defaults = {\n        theme: 'light',\n        notifications: true,\n        language: 'en'\n    };\n    \n    // Parse user input (potentially malicious)\n    const userConfig = JSON.parse(configData);\n    \n    // This can pollute Object.prototype if userConfig contains __proto__\n    const mergedConfig = mergeUserSettings(defaults, userConfig);\n    \n    return mergedConfig;\n}\n\n// Attack payload example:\n// {\"__proto__\": {\"polluted\": true}}",
+    "language": "javascript",
+    "expectedVulnerabilities": [
+      {
+        "type": "Prototype Pollution",
+        "cwe": "CWE-1321",
+        "severity": "high",
+        "description": "Prototype pollution in lodash merge function"
+      }
+    ],
+    "expectedFix": "Block dangerous keys and clone/validate objects before merge operations.",
+    "metadata": {
+      "sourceDataset": "benchmark",
+      "sourcePolicy": "external-only",
+      "source": "CVE-2021-23337",
+      "originalId": "nodejs_cve_2021_23337",
+      "vulnerableLines": [
+        5
+      ]
+    }
+  },
+  {
+    "id": "nodejs_cve_2022_24999",
+    "name": "Path Traversal - Path traversal in express static file serving",
+    "code": "// CVE-2022-24999: Path traversal in express static\nconst express = require('express');\nconst path = require('path');\nconst fs = require('fs');\n\nconst app = express();\n\n// Vulnerable static file serving implementation\napp.get('/files/:filename', (req, res) => {\n    const filename = req.params.filename;\n    const filePath = path.join(__dirname, 'public', filename);\n    \n    // Vulnerable: No validation of path traversal\n    if (fs.existsSync(filePath)) {\n        res.sendFile(filePath);\n    } else {\n        res.status(404).send('File not found');\n    }\n});\n\n// Attack example: GET /files/../../../etc/passwd",
+    "language": "javascript",
+    "expectedVulnerabilities": [
+      {
+        "type": "Path Traversal",
+        "cwe": "CWE-22",
+        "severity": "high",
+        "description": "Path traversal in express static file serving"
+      }
+    ],
+    "expectedFix": "Canonicalize paths and restrict access to approved directories.",
+    "metadata": {
+      "sourceDataset": "benchmark",
+      "sourcePolicy": "external-only",
+      "source": "CVE-2022-24999",
+      "originalId": "nodejs_cve_2022_24999",
+      "vulnerableLines": [
+        10
+      ]
+    }
+  },
+  {
+    "id": "real_world_express_cve_2022_24999",
+    "name": "Path Traversal - Real CVE-2022-24999 vulnerability in express",
+    "code": "// Real CVE-2022-24999 in Express.js\nconst path = require('path');\nconst fs = require('fs');\n\n// Vulnerable implementation from Express\nfunction sendFile(req, res, options) {\n    const filePath = req.params.path;\n    const root = options.root || './public';\n    \n    // VULNERABILITY: Insufficient path traversal protection\n    const fullPath = path.resolve(root, filePath);\n    \n    if (fs.existsSync(fullPath)) {\n        res.sendFile(fullPath);\n    } else {\n        res.status(404).send('File not found');\n    }\n}\n\n// Attack: GET /files/../../../../etc/passwd",
+    "language": "javascript",
+    "expectedVulnerabilities": [
+      {
+        "type": "Path Traversal",
+        "cwe": "CWE-22",
+        "severity": "high",
+        "description": "Real CVE-2022-24999 vulnerability in express"
+      }
+    ],
+    "expectedFix": "Canonicalize paths and restrict access to approved directories.",
+    "metadata": {
+      "sourceDataset": "real-world",
+      "sourcePolicy": "external-only",
+      "source": "express - CVE-2022-24999",
+      "originalId": "real_world_express_cve_2022_24999",
+      "vulnerableLines": [
+        8,
+        9
+      ]
+    }
+  },
+  {
+    "id": "real_world_lodash_cve_2021_23337",
+    "name": "Prototype Pollution - Real CVE-2021-23337 vulnerability in lodash",
+    "code": "// Real CVE-2021-23337 in Lodash\nfunction merge(object, sources) {\n    // Simplified version of vulnerable lodash merge\n    sources.forEach(source => {\n        for (let key in source) {\n            if (source.hasOwnProperty(key)) {\n                // VULNERABILITY: No protection against __proto__ pollution\n                if (typeof source[key] === 'object' && typeof object[key] === 'object') {\n                    merge(object[key], [source[key]]);\n                } else {\n                    object[key] = source[key];\n                }\n            }\n        }\n    });\n    return object;\n}\n\n// Attack payload: {\"__proto__\": {\"polluted\": true}}",
+    "language": "javascript",
+    "expectedVulnerabilities": [
+      {
+        "type": "Prototype Pollution",
+        "cwe": "CWE-1321",
+        "severity": "high",
+        "description": "Real CVE-2021-23337 vulnerability in lodash"
+      }
+    ],
+    "expectedFix": "Block dangerous keys and clone/validate objects before merge operations.",
+    "metadata": {
+      "sourceDataset": "real-world",
+      "sourcePolicy": "external-only",
+      "source": "lodash - CVE-2021-23337",
+      "originalId": "real_world_lodash_cve_2021_23337",
+      "vulnerableLines": [
+        8,
+        9
+      ]
+    }
+  },
+  {
+    "id": "real_world_node-forge_cve_2022_24771",
+    "name": "Crypto Verification - Real CVE-2022-24771 vulnerability in node-forge",
+    "code": "// Real CVE-2022-24771 in node-forge\nconst crypto = require('crypto');\n\nfunction verifySignature(message, signature, publicKey) {\n    try {\n        // VULNERABILITY: Improper signature verification\n        const verify = crypto.createVerify('RSA-SHA256');\n        verify.update(message);\n        \n        // Missing proper signature format validation\n        return verify.verify(publicKey, signature, 'base64');\n    } catch (error) {\n        // Silently return true on error (vulnerable behavior)\n        return true;\n    }\n}",
+    "language": "javascript",
+    "expectedVulnerabilities": [
+      {
+        "type": "Crypto Verification",
+        "cwe": "CWE-347",
+        "severity": "high",
+        "description": "Real CVE-2022-24771 vulnerability in node-forge"
+      }
+    ],
+    "expectedFix": "Use constant-time comparison and verified cryptographic APIs.",
+    "metadata": {
+      "sourceDataset": "real-world",
+      "sourcePolicy": "external-only",
+      "source": "node-forge - CVE-2022-24771",
+      "originalId": "real_world_node-forge_cve_2022_24771",
+      "vulnerableLines": [
+        8,
+        9
+      ]
+    }
+  }
+]

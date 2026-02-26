@@ -1,0 +1,137 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/28.2.8 Chrome/140.0.7339.240 Electron/38.4.0 Safari/537.36" version="28.2.8">
+  <diagram name="Secure Coding Assistant Architecture" id="code-guardian-arch">
+    <mxGraphModel dx="3169" dy="1960" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="Privacy-Preserving Secure Coding Assistant" style="text;html=1;strokeColor=none;fillColor=none;fontSize=20;fontStyle=1;align=center;" parent="1" vertex="1">
+          <mxGeometry x="530" y="80" width="600" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="subtitle" value="Master Thesis | Md Hafizur Rahman | 2025-10-27" style="text;html=1;strokeColor=none;fillColor=none;fontSize=11;align=center;fontColor=#666666;" parent="1" vertex="1">
+          <mxGeometry x="530" y="110" width="600" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="trust-boundary" value="LOCAL MACHINE (All processing on-device)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#2e7d32;strokeWidth=3;dashed=1;fontSize=13;fontStyle=1;verticalAlign=top;align=center;" parent="1" vertex="1">
+          <mxGeometry x="10" y="160" width="1580" height="760" as="geometry" />
+        </mxCell>
+        <mxCell id="developer" value="Developer" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1f5fe;strokeColor=#0277bd;fontSize=15;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="50" y="410" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="vscode" value="VS Code IDE" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff9c4;strokeColor=#f57f17;fontSize=15;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="270" y="410" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="extension" value="VS Code Extension" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f5e9;strokeColor=#388e3c;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;" parent="1" vertex="1">
+          <mxGeometry x="470" y="220" width="320" height="560" as="geometry" />
+        </mxCell>
+        <mxCell id="inline-mode" value="Real-time Inline Mode&#xa;(LLM only, ≤2 s target)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e3f2fd;strokeColor=#1976d2;fontSize=12;" parent="extension" vertex="1">
+          <mxGeometry x="20" y="53.84615384615384" width="280" height="53.84615384615384" as="geometry" />
+        </mxCell>
+        <mxCell id="audit-mode" value="On-demand Audit Mode&#xa;(LLM + RAG, ≤30 s budget)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f3e5f5;strokeColor=#7b1fa2;fontSize=12;" parent="extension" vertex="1">
+          <mxGeometry x="20" y="129.23076923076923" width="280" height="53.84615384615384" as="geometry" />
+        </mxCell>
+        <mxCell id="qa-panel" value="Q&amp;A Panel&#xa;(LLM + RAG)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fce4ec;strokeColor=#c2185b;fontSize=12;" parent="extension" vertex="1">
+          <mxGeometry x="20" y="204.61538461538458" width="280" height="53.84615384615384" as="geometry" />
+        </mxCell>
+        <mxCell id="diagnostics" value="Diagnostics &amp; Code Actions&#xa;(CWE/CVE mapping, repair suggestions)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff3e0;strokeColor=#f57c00;fontSize=12;" parent="extension" vertex="1">
+          <mxGeometry x="20" y="279.99999999999994" width="280" height="53.84615384615384" as="geometry" />
+        </mxCell>
+        <mxCell id="config" value="Config: Model TBD (7B–13B) | temp=0 | JS/TS" style="rounded=1;dashed=1;whiteSpace=wrap;html=1;fillColor=#e0f7fa;strokeColor=#00838f;fontSize=11;align=center;" parent="extension" vertex="1">
+          <mxGeometry x="20" y="430.7692307692307" width="280" height="43.07692307692307" as="geometry" />
+        </mxCell>
+        <mxCell id="ext-note" value="Inline: LLM-only for responsiveness&#xa;Audit/Q&amp;A: RAG-enabled (async retrieval + caching)" style="rounded=1;dashed=1;whiteSpace=wrap;html=1;fillColor=#f1f8e9;strokeColor=#558b2f;fontSize=11;align=left;" parent="extension" vertex="1">
+          <mxGeometry x="20" y="484.6153846153846" width="280" height="53.84615384615384" as="geometry" />
+        </mxCell>
+        <mxCell id="prompt-engine" value="Prompt Engineering&#xa;(context injection)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e0f2f1;strokeColor=#00796b;fontSize=12;" parent="extension" vertex="1">
+          <mxGeometry x="20" y="355.38461538461536" width="280" height="53.84615384615384" as="geometry" />
+        </mxCell>
+        <mxCell id="flow-audit" style="endArrow=classic;html=1;strokeColor=#7b1fa2;strokeWidth=1.5;exitX=0.225;exitY=0.974;exitDx=0;exitDy=0;exitPerimeter=0;" parent="extension" source="audit-mode" target="prompt-engine" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="flow-qa" style="endArrow=classic;html=1;strokeColor=#c2185b;strokeWidth=1.5;entryX=0.75;entryY=0;entryDx=0;entryDy=0;" parent="extension" source="qa-panel" target="prompt-engine" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="conn4" style="endArrow=classic;html=1;strokeColor=#512da8;strokeWidth=3;dashed=1;" parent="extension" source="prompt-engine" target="diagnostics" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="llm-server" value="Local LLM Server" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ede7f6;strokeColor=#512da8;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;" parent="1" vertex="1">
+          <mxGeometry x="910" y="220" width="240" height="520" as="geometry" />
+        </mxCell>
+        <mxCell id="model" value="Model: TBD&#xa;Candidates: Llama 3.1 / Mistral /&#xa;CodeLlama / Qwen (7B–13B)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d1c4e9;strokeColor=#512da8;fontSize=11;" parent="llm-server" vertex="1">
+          <mxGeometry x="20" y="50" width="200" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="rag-retriever" value="RAG Retriever&#xa;(embedding + similarity)&#xa;Used: Audit + Q&amp;A only&#xa;Async retrieval + cache" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f3e5f5;strokeColor=#7b1fa2;fontSize=11;" parent="llm-server" vertex="1">
+          <mxGeometry x="20" y="125" width="200" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="async-cache" value="Async Retrieval Cache&#xa;(top-k, TTL, eviction policy)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f3e5f5;strokeColor=#6a1b9a;fontSize=11;" parent="llm-server" vertex="1">
+          <mxGeometry x="20" y="215" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="inference" value="Inference Engine&#xa;(temp=0, deterministic)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d1c4e9;strokeColor=#512da8;fontSize=11;" parent="llm-server" vertex="1">
+          <mxGeometry x="20" y="275" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="api" value="Local HTTP API&#xa;(localhost or Unix socket)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d1c4e9;strokeColor=#512da8;fontSize=11;" parent="llm-server" vertex="1">
+          <mxGeometry x="20" y="335" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="metrics" value="Resource Monitor&#xa;(CPU/RAM/VRAM)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d1c4e9;strokeColor=#512da8;fontSize=11;" parent="llm-server" vertex="1">
+          <mxGeometry x="20" y="395" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="corpus" value="Security Knowledge Corpus" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f3e5f5;strokeColor=#6a1b9a;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;" parent="1" vertex="1">
+          <mxGeometry x="1310" y="295" width="240" height="300" as="geometry" />
+        </mxCell>
+        <mxCell id="corpus-details" value="Vector Store: TBD&#xa;Candidates: ChromaDB / Qdrant /&#xa;FAISS / Milvus&#xa;(versioned YYYY-MM-DD)&#xa;&#xa;• CWE Definitions (888)&#xa;• CVE Summaries (JS/TS)&#xa;• OWASP Top 10&#xa;• Secure examples&#xa;&#xa;Cryptographically signed&#xa;SHA256 verified&#xa;&#xa;Used: Audit + Q&amp;A only" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3e5f5;strokeColor=none;fontSize=11;align=left;" parent="corpus" vertex="1">
+          <mxGeometry x="10" y="50" width="220" height="240" as="geometry" />
+        </mxCell>
+        <mxCell id="eval" value="Evaluation: LLM-only | SAST-only (Semgrep/CodeQL) | LLM+RAG&#xa;Datasets: Juliet (JS/TS), CVEs, Real projects | Metrics: Precision, Recall, F1&#xa;Latency: measured separately (inline LLM-only vs. audit/Q&amp;A LLM+RAG)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e3f2fd;strokeColor=#1976d2;fontSize=11;align=center;" parent="1" vertex="1">
+          <mxGeometry x="510" y="830" width="640" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="privacy" value="✓ All local execution&#xa;✓ No code leaves machine&#xa;✓ No telemetry" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff9c4;strokeColor=#f57f17;fontSize=11;align=left;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="50" y="580" width="180" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="legend" value="🟦 LLM-only  🟪 RAG-enabled  🟧 Output" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;align=center;" parent="1" vertex="1">
+          <mxGeometry x="50" y="740" width="360" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="conn1" style="endArrow=classic;startArrow=classic;html=1;strokeColor=#0277bd;strokeWidth=2;" parent="1" source="developer" target="vscode" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="label1" value="Code edits" style="edgeLabel;html=1;align=center;verticalAlign=middle;fontSize=10;fontColor=#0277bd;fontStyle=1;" parent="conn1" vertex="1" connectable="0">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-10" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="conn2" style="endArrow=classic;startArrow=classic;html=1;strokeColor=#388e3c;strokeWidth=2;" parent="1" source="vscode" target="extension" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="label2" value="Commands / Diagnostics" style="edgeLabel;html=1;align=center;verticalAlign=middle;fontSize=10;fontColor=#388e3c;fontStyle=1;" parent="conn2" vertex="1" connectable="0">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-10" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="conn3" style="endArrow=classic;html=1;strokeColor=#512da8;strokeWidth=3;exitX=1;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=1;entryDx=0;entryDy=0;" parent="1" source="prompt-engine" target="api" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="label3" value="Code + context&#xa;(inline: no RAG | audit/Q&amp;A: +RAG)" style="edgeLabel;html=1;align=center;verticalAlign=middle;fontSize=10;fontColor=#512da8;fontStyle=1;backgroundColor=#ffffff;" parent="conn3" vertex="1" connectable="0">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-18" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="conn5" style="endArrow=classic;startArrow=classic;html=1;strokeColor=#7b1fa2;strokeWidth=2;" parent="1" source="rag-retriever" target="corpus-details" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="label5" value="Retrieval (top-5)&#xa;Audit + Q&amp;A only" style="edgeLabel;html=1;align=center;verticalAlign=middle;fontSize=10;fontColor=#7b1fa2;fontStyle=1;backgroundColor=#ffffff;" parent="conn5" vertex="1" connectable="0">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-15" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p-lx8IUc23ijla35zl26-1" value="" style="endArrow=classic;html=1;strokeColor=#512da8;strokeWidth=3;dashed=1;exitX=0;exitY=0;exitDx=0;exitDy=0;" parent="1" source="inference" target="prompt-engine" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="910" y="515" as="sourcePoint" />
+            <mxPoint x="760" y="515" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p-lx8IUc23ijla35zl26-2" value="Vulnerabilities + repair suggestions" style="edgeLabel;html=1;align=center;verticalAlign=middle;fontSize=10;fontColor=#512da8;fontStyle=1;backgroundColor=#ffffff;" parent="p-lx8IUc23ijla35zl26-1" vertex="1" connectable="0">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="15" as="offset" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

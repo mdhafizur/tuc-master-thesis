@@ -1,0 +1,179 @@
+name: Publish Code Guardian
+
+on:
+  push:
+    tags:
+      - "v*.*.*" # e.g., v1.2.3 triggers release
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  # ============================================================
+  # Stage 1: Validation
+  # ============================================================
+  validate:
+    name: 🛡️ Validate
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get_version.outputs.version }}
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 📄 Get version from package.json
+        id: get_version
+        run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+
+      - name: 🛡️ Verify tag matches package.json version
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+        run: |
+          TAG="${{ github.ref_name }}"
+          PKG_VERSION="v${{ steps.get_version.outputs.version }}"
+          if [ "$TAG" != "$PKG_VERSION" ]; then
+            echo "::error file=package.json,line=1::Tag '$TAG' does not match package.json version '$PKG_VERSION'"
+            exit 1
+          fi
+          echo "✅ Tag $TAG matches package.json version $PKG_VERSION"
+
+  # ============================================================
+  # Stage 2: Build & Test (runs in parallel)
+  # ============================================================
+  lint:
+    name: 🔍 Lint & Type Check
+    runs-on: ubuntu-latest
+    needs: validate
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: 📦 Install dependencies
+        run: npm install --prefer-offline --no-audit
+
+      - name: 🧪 Type-check
+        run: npm run check-types
+
+      - name: 🔍 Lint
+        run: npm run lint
+
+  test:
+    name: 🧪 Test
+    runs-on: ubuntu-latest
+    needs: validate
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: 📦 Install dependencies
+        run: npm install --prefer-offline --no-audit
+
+      - name: 🛠️ Build extension
+        run: npm run compile
+
+      - name: 🧪 Run tests
+        run: xvfb-run -a npm test
+
+  # ============================================================
+  # Stage 3: Build & Package
+  # ============================================================
+  build:
+    name: 📦 Build & Package
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: 📦 Install dependencies
+        run: npm install --prefer-offline --no-audit
+
+      - name: 🛠️ Build extension
+        run: npm run compile
+
+      - name: 📦 Package VSIX
+        run: npx @vscode/vsce package --no-dependencies
+
+      - name: 📋 List generated files
+        run: ls -la *.vsix
+
+      - name: 📤 Upload VSIX artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: code-guardian-${{ needs.validate.outputs.version }}
+          path: "*.vsix"
+          retention-days: 30
+          if-no-files-found: error
+
+  # ============================================================
+  # Stage 4: Publish
+  # ============================================================
+  publish:
+    name: 🚀 Publish
+    runs-on: ubuntu-latest
+    needs: [validate, build]
+    environment: production
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: 📥 Download VSIX artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: code-guardian-${{ needs.validate.outputs.version }}
+
+      - name: 🚀 Publish to VS Code Marketplace
+        run: npx @vscode/vsce publish --no-dependencies --pat ${{ secrets.VSCE_TOKEN }} --packagePath *.vsix
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_TOKEN }}
+
+  # ============================================================
+  # Stage 5: Create GitHub Release
+  # ============================================================
+  release:
+    name: 📋 GitHub Release
+    runs-on: ubuntu-latest
+    needs: [validate, publish]
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+
+    steps:
+      - name: 📥 Download VSIX artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: code-guardian-${{ needs.validate.outputs.version }}
+
+      - name: 📋 Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: "*.vsix"
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

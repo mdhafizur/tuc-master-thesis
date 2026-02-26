@@ -1,0 +1,220 @@
+{
+  "metadata": {
+    "name": "real-world",
+    "total_samples": 11,
+    "categories": [
+      "path-traversal",
+      "input-validation",
+      "prototype-pollution",
+      "crypto-verification"
+    ],
+    "languages": [
+      "javascript"
+    ],
+    "sources": [
+      "moment - Pattern Analysis",
+      "lodash - CVE-2021-23337",
+      "react-dom - Pattern Analysis",
+      "express - CVE-2022-24999",
+      "node-forge - CVE-2022-24771",
+      "serialize-javascript - Pattern Analysis",
+      "lodash - Pattern Analysis",
+      "mongoose - Pattern Analysis"
+    ],
+    "cwe_ids": [
+      "CWE-1321",
+      "CWE-20",
+      "CWE-22",
+      "CWE-347"
+    ],
+    "generated_at": "2025-09-05T22:01:42.781018",
+    "collection_method": "authoritative_sources"
+  },
+  "samples": [
+    {
+      "id": "real_world_express_cve_2022_24999",
+      "cve_id": "CVE-2022-24999",
+      "cwe_id": "CWE-22",
+      "category": "path-traversal",
+      "language": "javascript",
+      "description": "Real CVE-2022-24999 vulnerability in express",
+      "code": "// Real CVE-2022-24999 in Express.js\nconst path = require('path');\nconst fs = require('fs');\n\n// Vulnerable implementation from Express\nfunction sendFile(req, res, options) {\n    const filePath = req.params.path;\n    const root = options.root || './public';\n    \n    // VULNERABILITY: Insufficient path traversal protection\n    const fullPath = path.resolve(root, filePath);\n    \n    if (fs.existsSync(fullPath)) {\n        res.sendFile(fullPath);\n    } else {\n        res.status(404).send('File not found');\n    }\n}\n\n// Attack: GET /files/../../../../etc/passwd",
+      "severity": "high",
+      "source": "express - CVE-2022-24999",
+      "vulnerable_lines": [
+        8,
+        9
+      ],
+      "project_name": "express",
+      "project_type": "Node.js backend",
+      "is_vulnerable": true,
+      "created_at": "2025-09-05T22:01:31.743112"
+    },
+    {
+      "id": "real_world_lodash_cve_2021_23337",
+      "cve_id": "CVE-2021-23337",
+      "cwe_id": "CWE-1321",
+      "category": "prototype-pollution",
+      "language": "javascript",
+      "description": "Real CVE-2021-23337 vulnerability in lodash",
+      "code": "// Real CVE-2021-23337 in Lodash\nfunction merge(object, sources) {\n    // Simplified version of vulnerable lodash merge\n    sources.forEach(source => {\n        for (let key in source) {\n            if (source.hasOwnProperty(key)) {\n                // VULNERABILITY: No protection against __proto__ pollution\n                if (typeof source[key] === 'object' && typeof object[key] === 'object') {\n                    merge(object[key], [source[key]]);\n                } else {\n                    object[key] = source[key];\n                }\n            }\n        }\n    });\n    return object;\n}\n\n// Attack payload: {\"__proto__\": {\"polluted\": true}}",
+      "severity": "high",
+      "source": "lodash - CVE-2021-23337",
+      "vulnerable_lines": [
+        8,
+        9
+      ],
+      "project_name": "lodash",
+      "project_type": "npm utility library",
+      "is_vulnerable": true,
+      "created_at": "2025-09-05T22:01:32.610462"
+    },
+    {
+      "id": "real_world_lodash_pattern_1",
+      "cwe_id": "CWE-20",
+      "category": "input-validation",
+      "language": "javascript",
+      "description": "Vulnerability pattern found in lodash",
+      "code": "// Extracted from real project file\n// Line 1478: \n// Line 1479:     /** Used to detect methods masquerading as native. */\n// Line 1480:     var maskSrcKey = (function() {\n// Line 1481:       var uid = /[^.]+$/.exec(coreJsData && coreJsData.keys && coreJsData.keys.IE_PROTO || '');\n// Line 1482:       return uid ? ('Symbol(src)_1.' + uid) : '';\n// Line 1483:     }());\n// Line 1484: \n// Line 1485:     /**\n// Line 1486:      * Used to resolve the\n// Line 1487:      * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)",
+      "severity": "medium",
+      "source": "lodash - Pattern Analysis",
+      "file_path": "lodash.js",
+      "vulnerable_lines": [
+        1
+      ],
+      "is_vulnerable": true,
+      "created_at": "2025-09-05T22:01:32.628052"
+    },
+    {
+      "id": "real_world_lodash_pattern_3",
+      "cwe_id": "CWE-20",
+      "category": "input-validation",
+      "language": "javascript",
+      "description": "Vulnerability pattern found in lodash",
+      "code": "// Extracted from real project file\n// Line 242:   });\n// Line 243: \n// Line 244:   /** The basename of the lodash file to test. */\n// Line 245:   var basename = /[\\w.-]+$/.exec(filePath)[0];\n// Line 246: \n// Line 247:   /** Used to indicate testing a modularized build. */\n// Line 248:   var isModularize = ui.isModularize;\n// Line 249: \n// Line 250:   /** Detect if testing `npm` modules. */\n// Line 251:   var isNpm = isModularize && /\\bnpm\\b/.test([ui.buildPath, ui.urlParams.build]);",
+      "severity": "medium",
+      "source": "lodash - Pattern Analysis",
+      "file_path": "test/test.js",
+      "vulnerable_lines": [
+        1
+      ],
+      "is_vulnerable": true,
+      "created_at": "2025-09-05T22:01:32.644486"
+    },
+    {
+      "id": "real_world_lodash_pattern_7",
+      "cwe_id": "CWE-20",
+      "category": "input-validation",
+      "language": "javascript",
+      "description": "Vulnerability pattern found in lodash",
+      "code": "// Extracted from real project file\n// Line 5:   var basePath = '../';\n// Line 6: \n// Line 7:   /** The lodash build to load. */\n// Line 8:   var build = (build = /build=([^&]+)/.exec(location.search)) && decodeURIComponent(build[1]);\n// Line 9: \n// Line 10:   /** The module loader to use. */\n// Line 11:   var loader = (loader = /loader=([^&]+)/.exec(location.search)) && decodeURIComponent(loader[1]);\n// Line 12: \n// Line 13:   /** The `ui` object. */\n// Line 14:   var ui = {};",
+      "severity": "medium",
+      "source": "lodash - Pattern Analysis",
+      "file_path": "test/asset/test-ui.js",
+      "vulnerable_lines": [
+        1
+      ],
+      "is_vulnerable": true,
+      "created_at": "2025-09-05T22:01:32.647127"
+    },
+    {
+      "id": "real_world_lodash_pattern_9",
+      "cwe_id": "CWE-20",
+      "category": "input-validation",
+      "language": "javascript",
+      "description": "Vulnerability pattern found in lodash",
+      "code": "// Extracted from real project file\n// Line 47: var o=n[r],f=t?t(o):o;if(!r||!Gf(f,c)){var c=f;i[u++]=0===o?0:o}}return i}function _u(n){return\"number\"==typeof n?n:bc(n)?Cn:+n}function vu(n){if(\"string\"==typeof n)return n;if(bh(n))return c(n,vu)+\"\";if(bc(n))return vs?vs.call(n):\"\";var t=n+\"\";return\"0\"==t&&1/n==-Sn?\"-0\":t}function gu(n,t,r){var e=-1,u=o,i=n.length,c=!0,a=[],l=a;if(r)c=!1,u=f;else if(i>=tn){var s=t?null:ks(n);if(s)return P(s);c=!1,u=S,l=new yr}else l=t?[]:a;n:for(;++e<i;){var h=n[e],p=t?t(h):h;if(h=r||0!==h?h:0,c&&p===p){for(var _=l.length;_--;)if(l[_]===p)continue n;\n// Line 48: t&&l.push(p),a.push(h)}else u(l,p,r)||(l!==a&&l.push(p),a.push(h))}return a}function yu(n,t){return t=ku(t,n),n=Gi(n,t),null==n||delete n[no(jo(t))]}function du(n,t,r,e){return fu(n,t,r(_e(n,t)),e)}function bu(n,t,r,e){for(var u=n.length,i=e?u:-1;(e?i--:++i<u)&&t(n[i],i,n););return r?au(n,e?0:i,e?i+1:u):au(n,e?i+1:0,e?u:i)}function wu(n,t){var r=n;return r instanceof Ct&&(r=r.value()),l(t,function(n,t){return t.func.apply(t.thisArg,a([n],t.args))},r)}function mu(n,t,r){var e=n.length;if(e<2)return e?gu(n[0]):[];\n// Line 49: for(var u=-1,i=il(e);++u<e;)for(var o=n[u],f=-1;++f<e;)f!=u&&(i[u]=Hr(i[u]||o,n[f],t,r));return gu(ee(i,1),t,r)}function xu(n,t,r){for(var e=-1,u=n.length,i=t.length,o={};++e<u;){r(o,n[e],e<i?t[e]:X)}return o}function ju(n){return Jf(n)?n:[]}function Au(n){return\"function\"==typeof n?n:La}function ku(n,t){return bh(n)?n:Bi(n,t)?[n]:Cs(Ec(n))}function Ou(n,t,r){var e=n.length;return r=r===X?e:r,!t&&r>=e?n:au(n,t,r)}function Iu(n,t){if(t)return n.slice();var r=n.length,e=zl?zl(r):new n.constructor(r);\n// Line 50: return n.copy(e),e}function Ru(n){var t=new n.constructor(n.byteLength);return new Rl(t).set(new Rl(n)),t}function zu(n,t){return new n.constructor(t?Ru(n.buffer):n.buffer,n.byteOffset,n.byteLength)}function Eu(n){var t=new n.constructor(n.source,Nt.exec(n));return t.lastIndex=n.lastIndex,t}function Su(n){return _s?ll(_s.call(n)):{}}function Wu(n,t){return new n.constructor(t?Ru(n.buffer):n.buffer,n.byteOffset,n.length)}function Lu(n,t){if(n!==t){var r=n!==X,e=null===n,u=n===n,i=bc(n),o=t!==X,f=null===t,c=t===t,a=bc(t);\n// Line 51: if(!f&&!a&&!i&&n>t||i&&o&&c&&!f&&!a||e&&o&&c||!r&&c||!u)return 1;if(!e&&!i&&!a&&n<t||a&&r&&u&&!e&&!i||f&&r&&u||!o&&u||!c)return-1}return 0}function Cu(n,t,r){for(var e=-1,u=n.criteria,i=t.criteria,o=u.length,f=r.length;++e<o;){var c=Lu(u[e],i[e]);if(c){if(e>=f)return c;return c*(\"desc\"==r[e]?-1:1)}}return n.index-t.index}function Uu(n,t,r,e){for(var u=-1,i=n.length,o=r.length,f=-1,c=t.length,a=Gl(i-o,0),l=il(c+a),s=!e;++f<c;)l[f]=t[f];for(;++u<o;)(s||u<i)&&(l[r[u]]=n[u]);for(;a--;)l[f++]=n[u++];return l;\n// Line 52: }function Bu(n,t,r,e){for(var u=-1,i=n.length,o=-1,f=r.length,c=-1,a=t.length,l=Gl(i-f,0),s=il(l+a),h=!e;++u<l;)s[u]=n[u];for(var p=u;++c<a;)s[p+c]=t[c];for(;++o<f;)(h||u<i)&&(s[p+r[o]]=n[u++]);return s}function Tu(n,t){var r=-1,e=n.length;for(t||(t=il(e));++r<e;)t[r]=n[r];return t}function $u(n,t,r,e){var u=!r;r||(r={});for(var i=-1,o=t.length;++i<o;){var f=t[i],c=e?e(r[f],n[f],f,r,n):X;c===X&&(c=n[f]),u?Br(r,f,c):Sr(r,f,c)}return r}function Du(n,t){return $u(n,Is(n),t)}function Mu(n,t){return $u(n,Rs(n),t);\n// Line 53: }function Fu(n,r){return function(e,u){var i=bh(e)?t:Lr,o=r?r():{};return i(e,n,mi(u,2),o)}}function Nu(n){return uu(function(t,r){var e=-1,u=r.length,i=u>1?r[u-1]:X,o=u>2?r[2]:X;for(i=n.length>3&&\"function\"==typeof i?(u--,i):X,o&&Ui(r[0],r[1],o)&&(i=u<3?X:i,u=1),t=ll(t);++e<u;){var f=r[e];f&&n(t,f,e,i)}return t})}function Pu(n,t){return function(r,e){if(null==r)return r;if(!Hf(r))return n(r,e);for(var u=r.length,i=t?u:-1,o=ll(r);(t?i--:++i<u)&&e(o[i],i,o)!==!1;);return r}}function qu(n){return function(t,r,e){\n// Line 54: for(var u=-1,i=ll(t),o=e(t),f=o.length;f--;){var c=o[n?f:++u];if(r(i[c],c,i)===!1)break}return t}}function Zu(n,t,r){function e(){return(this&&this!==re&&this instanceof e?i:n).apply(u?r:this,arguments)}var u=t&_n,i=Gu(n);return e}function Ku(n){return function(t){t=Ec(t);var r=T(t)?G(t):X,e=r?r[0]:t.charAt(0),u=r?Ou(r,1).join(\"\"):t.slice(1);return e[n]()+u}}function Vu(n){return function(t){return l(Ra(ca(t).replace($r,\"\")),n,\"\")}}function Gu(n){return function(){var t=arguments;switch(t.length){\n// Line 55: case 0:return new n;case 1:return new n(t[0]);case 2:return new n(t[0],t[1]);case 3:return new n(t[0],t[1],t[2]);case 4:return new n(t[0],t[1],t[2],t[3]);case 5:return new n(t[0],t[1],t[2],t[3],t[4]);case 6:return new n(t[0],t[1],t[2],t[3],t[4],t[5]);case 7:return new n(t[0],t[1],t[2],t[3],t[4],t[5],t[6])}var r=gs(n.prototype),e=n.apply(r,t);return fc(e)?e:r}}function Hu(t,r,e){function u(){for(var o=arguments.length,f=il(o),c=o,a=wi(u);c--;)f[c]=arguments[c];var l=o<3&&f[0]!==a&&f[o-1]!==a?[]:N(f,a);\n// Line 56: return o-=l.length,o<e?oi(t,r,Qu,u.placeholder,X,f,l,X,X,e-o):n(this&&this!==re&&this instanceof u?i:t,this,f)}var i=Gu(t);return u}function Ju(n){return function(t,r,e){var u=ll(t);if(!Hf(t)){var i=mi(r,3);t=Pc(t),r=function(n){return i(u[n],n,u)}}var o=n(t,r,e);return o>-1?u[i?t[o]:o]:X}}function Yu(n){return gi(function(t){var r=t.length,e=r,u=Y.prototype.thru;for(n&&t.reverse();e--;){var i=t[e];if(\"function\"!=typeof i)throw new pl(en);if(u&&!o&&\"wrapper\"==bi(i))var o=new Y([],!0)}for(e=o?e:r;++e<r;){",
+      "severity": "medium",
+      "source": "lodash - Pattern Analysis",
+      "file_path": "dist/lodash.min.js",
+      "vulnerable_lines": [
+        1
+      ],
+      "is_vulnerable": true,
+      "created_at": "2025-09-05T22:01:32.649680"
+    },
+    {
+      "id": "real_world_node-forge_cve_2022_24771",
+      "cve_id": "CVE-2022-24771",
+      "cwe_id": "CWE-347",
+      "category": "crypto-verification",
+      "language": "javascript",
+      "description": "Real CVE-2022-24771 vulnerability in node-forge",
+      "code": "// Real CVE-2022-24771 in node-forge\nconst crypto = require('crypto');\n\nfunction verifySignature(message, signature, publicKey) {\n    try {\n        // VULNERABILITY: Improper signature verification\n        const verify = crypto.createVerify('RSA-SHA256');\n        verify.update(message);\n        \n        // Missing proper signature format validation\n        return verify.verify(publicKey, signature, 'base64');\n    } catch (error) {\n        // Silently return true on error (vulnerable behavior)\n        return true;\n    }\n}",
+      "severity": "high",
+      "source": "node-forge - CVE-2022-24771",
+      "vulnerable_lines": [
+        8,
+        9
+      ],
+      "project_name": "node-forge",
+      "project_type": "JS cryptography package",
+      "is_vulnerable": true,
+      "created_at": "2025-09-05T22:01:33.429656"
+    },
+    {
+      "id": "real_world_react-dom_pattern_9",
+      "cwe_id": "CWE-20",
+      "category": "input-validation",
+      "language": "javascript",
+      "description": "Vulnerability pattern found in react-dom",
+      "code": "// Extracted from real project file\n// Line 15: \n// Line 16: function executeCommand(command) {\n// Line 17:   return new Promise(_resolve =>\n// Line 18:     exec(command, error => {\n// Line 19:       if (!error) {\n// Line 20:         _resolve();\n// Line 21:       } else {\n// Line 22:         console.error(error);\n// Line 23:         process.exit(1);\n// Line 24:       }",
+      "severity": "medium",
+      "source": "react-dom - Pattern Analysis",
+      "file_path": "scripts/bench/build.js",
+      "vulnerable_lines": [
+        1
+      ],
+      "is_vulnerable": true,
+      "created_at": "2025-09-05T22:01:35.993038"
+    },
+    {
+      "id": "real_world_serialize-javascript_pattern_2",
+      "cwe_id": "CWE-20",
+      "category": "input-validation",
+      "language": "javascript",
+      "description": "Vulnerability pattern found in serialize-javascript",
+      "code": "// Extracted from real project file\n// Line 31:         });\n// Line 32: \n// Line 33:         it('should deserialize \"undefined\" to `undefined`', function () {\n// Line 34:             strictEqual(eval(serialize()), undefined);\n// Line 35:             strictEqual(eval(serialize(undefined)), undefined);\n// Line 36:         });\n// Line 37:     });\n// Line 38: \n// Line 39:     describe('null', function () {\n// Line 40:         it('should serialize `null` to a string', function () {",
+      "severity": "medium",
+      "source": "serialize-javascript - Pattern Analysis",
+      "file_path": "test/unit/serialize.js",
+      "vulnerable_lines": [
+        1
+      ],
+      "is_vulnerable": true,
+      "created_at": "2025-09-05T22:01:36.620394"
+    },
+    {
+      "id": "real_world_moment_pattern_1",
+      "cwe_id": "CWE-20",
+      "category": "input-validation",
+      "language": "javascript",
+      "description": "Vulnerability pattern found in moment",
+      "code": "// Extracted from real project file\n// Line 2428:         var i,\n// Line 2429:             l,\n// Line 2430:             string = config._i,\n// Line 2431:             match = extendedIsoRegex.exec(string) || basicIsoRegex.exec(string),\n// Line 2432:             allowTime,\n// Line 2433:             dateFormat,\n// Line 2434:             timeFormat,\n// Line 2435:             tzFormat,\n// Line 2436:             isoDatesLen = isoDates.length,\n// Line 2437:             isoTimesLen = isoTimes.length;",
+      "severity": "medium",
+      "source": "moment - Pattern Analysis",
+      "file_path": "moment.js",
+      "vulnerable_lines": [
+        1
+      ],
+      "is_vulnerable": true,
+      "created_at": "2025-09-05T22:01:41.318994"
+    },
+    {
+      "id": "real_world_mongoose_pattern_7",
+      "cwe_id": "CWE-20",
+      "category": "input-validation",
+      "language": "javascript",
+      "description": "Vulnerability pattern found in mongoose",
+      "code": "// Extracted from real project file\n// Line 974:     const n = await N.create({ g: m._id });\n// Line 975:     const o = await O.create({ i: n._id });\n// Line 976: \n// Line 977:     const doc = await O.findOne({ _id: o._id }).populate('i').exec();\n// Line 978:     const finalDoc = await doc.populate('i.g');\n// Line 979: \n// Line 980:     assert.ok(finalDoc.populated('i.g'));\n// Line 981:     assert.ok(finalDoc.i.populated('g'));\n// Line 982:   });\n// Line 983: ",
+      "severity": "medium",
+      "source": "mongoose - Pattern Analysis",
+      "file_path": "test/document.populate.test.js",
+      "vulnerable_lines": [
+        1
+      ],
+      "is_vulnerable": true,
+      "created_at": "2025-09-05T22:01:42.350771"
+    }
+  ]
+}

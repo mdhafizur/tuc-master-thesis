@@ -1,0 +1,94 @@
+// Place your settings in this file to overwrite default and user settings.
+{
+    "codeGuardian.githubToken": "",
+    "files.exclude": {
+        "out": false, // set this to true to hide the "out" folder with the compiled JS files
+        "dist": false // set this to true to hide the "dist" folder with the compiled JS files
+    },
+    "search.exclude": {
+        "out": true, // set this to false to include "out" folder in search results
+        "dist": true // set this to false to include "dist" folder in search results
+    },
+    // Turn off tsc task auto detection since we have the necessary tasks as npm scripts
+    "typescript.tsc.autoDetect": "off",
+    // Use the following if you want to use the LaTeX Workshop extension
+    "latex-workshop.latex.tools": [
+        {
+            "name": "latexmk-pdf",
+            "command": "/Library/TeX/texbin/latexmk",
+            "args": [
+                "-pdf",
+                "-synctex=1",
+                "-interaction=nonstopmode",
+                "-file-line-error",
+                "-f",
+                "%DOC%"
+            ],
+            "env": {
+                "PATH": "/opt/homebrew/opt/perl/bin:/Library/TeX/texbin:${env:PATH}"
+            }
+        }
+    ],
+    "latex-workshop.latex.recipes": [
+        {
+            "name": "Build LaTeX (latexmk)",
+            "tools": [
+                "latexmk-pdf"
+            ]
+        }
+    ],
+    "latex-workshop.latex.autoBuild.run": "onFileChange",
+    "latex-workshop.latex.autoClean.run": "onBuilt",
+    "latex-workshop.latex.recipe.default": "first",
+    "latex-workshop.view.pdf.viewer": "tab",
+    "latex-workshop.view.pdf.refresh.auto": true,
+    "latex-workshop.view.pdf.refresh.timeout": 200,
+    "latex-workshop.synctex.afterBuild.enabled": true,
+    "latex-workshop.view.pdf.refocus": false,
+    "latex-workshop.latex.rootFile.doNotPrompt": true,
+    "latex-workshop.latex.rootFile.useSubFile": true,
+    "latex-workshop.intellisense.package.enabled": true,
+    "latex-workshop.progress.enabled": true,
+    "latex-workshop.progress.location": "Status Bar",
+    "latex-workshop.latex.watch.files.ignore": [
+        "**/*.aux",
+        "**/*.log",
+        "**/*.synctex.gz"
+    ],
+    "latex-workshop.latex.watch.delay": 500,
+    "latex-workshop.latex.magic.args": [
+        "-pdf",
+        "-interaction=nonstopmode",
+        "-file-line-error",
+        "-synctex=1",
+        "%DOC%"
+    ],
+    "latex-workshop.latex.clean.fileTypes": [
+        "**/*.aux",
+        "**/*.bbl",
+        "**/*.blg",
+        "**/*.idx",
+        "**/*.ind",
+        "**/*.lof",
+        "**/*.lot",
+        "**/*.out",
+        "**/*.toc",
+        "**/*.acn",
+        "**/*.acr",
+        "**/*.alg",
+        "**/*.glg",
+        "**/*.glo",
+        "**/*.gls",
+        "**/*.fls",
+        "**/*.log",
+        "**/*.fdb_latexmk",
+        "**/*.snm",
+        "**/*.synctex(busy)",
+        "**/*.synctex.gz(busy)",
+        "**/*.nav",
+        "**/*.vrb",
+        "**/*.bcf",
+        "**/*.run.xml",
+        "**/*.xdv"
+    ]
+}

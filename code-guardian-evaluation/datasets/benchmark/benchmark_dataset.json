@@ -1,0 +1,367 @@
+{
+  "metadata": {
+    "name": "benchmark",
+    "total_samples": 21,
+    "categories": [
+      "path-traversal",
+      "sql-injection",
+      "improper-authentication",
+      "prototype-pollution",
+      "weak-cryptography",
+      "ssrf",
+      "command-injection",
+      "xss",
+      "insecure-deserialization",
+      "ldap-injection",
+      "hardcoded-credentials",
+      "header-injection"
+    ],
+    "languages": [
+      "javascript"
+    ],
+    "sources": [
+      "CVE-2021-23337",
+      "CVE-2022-24999",
+      "OWASP Benchmark CRYPTO-01",
+      "OWASP Benchmark HEADER-01",
+      "OWASP Benchmark SQL-02",
+      "OWASP Benchmark XSS-02",
+      "OWASP Benchmark XSS-01",
+      "OWASP Benchmark LDAP-01",
+      "OWASP Benchmark CMD-01",
+      "Additional Benchmark Pattern",
+      "OWASP Benchmark PATH-01",
+      "OWASP Benchmark SQL-01"
+    ],
+    "cwe_ids": [
+      "CWE-89",
+      "CWE-79",
+      "CWE-918",
+      "CWE-798",
+      "CWE-327",
+      "CWE-90",
+      "CWE-502",
+      "CWE-78",
+      "CWE-22",
+      "CWE-1321",
+      "CWE-287",
+      "CWE-113"
+    ],
+    "generated_at": "2025-09-05T22:01:42.777710",
+    "collection_method": "authoritative_sources"
+  },
+  "samples": [
+    {
+      "id": "owasp_bench_sql_concat",
+      "cwe_id": "CWE-89",
+      "category": "sql-injection",
+      "language": "javascript",
+      "description": "SQL injection via string concatenation (OWASP Benchmark)",
+      "code": "// OWASP Benchmark: SQL injection via concatenation\nconst sqlite3 = require('sqlite3').verbose();\n\nfunction searchProducts(searchTerm) {\n    const db = new sqlite3.Database('products.db');\n    \n    // Vulnerable: Direct string concatenation\n    const query = \"SELECT * FROM products WHERE name LIKE '%\" + searchTerm + \"%'\";\n    \n    return new Promise((resolve, reject) => {\n        db.all(query, [], (err, rows) => {\n            if (err) reject(err);\n            else resolve(rows);\n        });\n    });\n}",
+      "severity": "critical",
+      "source": "OWASP Benchmark SQL-01",
+      "vulnerable_lines": [
+        7
+      ],
+      "created_at": "2025-09-05T22:01:30.839498"
+    },
+    {
+      "id": "owasp_bench_sql_template",
+      "cwe_id": "CWE-89",
+      "category": "sql-injection",
+      "language": "javascript",
+      "description": "SQL injection via template literals (OWASP Benchmark)",
+      "code": "// OWASP Benchmark: SQL injection via template literals\nconst mysql = require('mysql');\n\nfunction loginUser(username, password) {\n    const connection = mysql.createConnection(dbConfig);\n    \n    // Vulnerable: Template literal without escaping\n    const sql = `SELECT id, role FROM users WHERE username='${username}' AND password='${password}'`;\n    \n    return new Promise((resolve, reject) => {\n        connection.query(sql, (error, results) => {\n            if (error) reject(error);\n            resolve(results[0] || null);\n        });\n    });\n}",
+      "severity": "critical",
+      "source": "OWASP Benchmark SQL-02",
+      "vulnerable_lines": [
+        7
+      ],
+      "created_at": "2025-09-05T22:01:30.839514"
+    },
+    {
+      "id": "owasp_bench_xss_innerHTML",
+      "cwe_id": "CWE-79",
+      "category": "xss",
+      "language": "javascript",
+      "description": "XSS via innerHTML assignment (OWASP Benchmark)",
+      "code": "// OWASP Benchmark: XSS via innerHTML\nfunction displayUserProfile(userName, userBio) {\n    const profileContainer = document.getElementById('profileContainer');\n    \n    // Vulnerable: Unescaped template literal in innerHTML\n    const profileHtml = `\n        <div class=\"profile\">\n            <h2>Profile: ${userName}</h2>\n            <div class=\"bio\">${userBio}</div>\n        </div>\n    `;\n    \n    profileContainer.innerHTML = profileHtml;\n}\n\nfunction showAlert(message) {\n    // Vulnerable: Direct innerHTML assignment\n    document.getElementById('alerts').innerHTML = \"<div class='alert'>\" + message + \"</div>\";\n}",
+      "severity": "high",
+      "source": "OWASP Benchmark XSS-01",
+      "vulnerable_lines": [
+        11,
+        16
+      ],
+      "created_at": "2025-09-05T22:01:30.839517"
+    },
+    {
+      "id": "owasp_bench_xss_document_write",
+      "cwe_id": "CWE-79",
+      "category": "xss",
+      "language": "javascript",
+      "description": "XSS via document.write (OWASP Benchmark)",
+      "code": "// OWASP Benchmark: XSS via document.write\nfunction renderPage(title, content) {\n    // Vulnerable: Unescaped content in document.write\n    document.write(`\n        <html>\n            <head><title>${title}</title></head>\n            <body>\n                <h1>${title}</h1>\n                <div>${content}</div>\n            </body>\n        </html>\n    `);\n}\n\nfunction insertScript(scriptContent) {\n    // Vulnerable: Direct script injection\n    document.write(\"<script>\" + scriptContent + \"</script>\");\n}",
+      "severity": "high",
+      "source": "OWASP Benchmark XSS-02",
+      "vulnerable_lines": [
+        3,
+        15
+      ],
+      "created_at": "2025-09-05T22:01:30.839520"
+    },
+    {
+      "id": "owasp_bench_cmd_exec",
+      "cwe_id": "CWE-78",
+      "category": "command-injection",
+      "language": "javascript",
+      "description": "Command injection via exec (OWASP Benchmark)",
+      "code": "// OWASP Benchmark: Command injection\nconst { exec } = require('child_process');\n\nfunction analyzeFile(filename) {\n    // Vulnerable: Unvalidated filename in command\n    const command = `file ${filename}`;\n    \n    return new Promise((resolve, reject) => {\n        exec(command, (error, stdout, stderr) => {\n            if (error) reject(error);\n            else resolve(stdout);\n        });\n    });\n}\n\nfunction compressFile(inputFile, outputFile) {\n    // Vulnerable: Multiple injection points\n    exec(`gzip -c ${inputFile} > ${outputFile}`, (error, stdout) => {\n        console.log('Compression complete');\n    });\n}",
+      "severity": "critical",
+      "source": "OWASP Benchmark CMD-01",
+      "vulnerable_lines": [
+        6,
+        16
+      ],
+      "created_at": "2025-09-05T22:01:30.839522"
+    },
+    {
+      "id": "owasp_bench_path_traversal",
+      "cwe_id": "CWE-22",
+      "category": "path-traversal",
+      "language": "javascript",
+      "description": "Path traversal in file serving (OWASP Benchmark)",
+      "code": "// OWASP Benchmark: Path traversal\nconst fs = require('fs');\nconst express = require('express');\nconst app = express();\n\napp.get('/files/:filename', (req, res) => {\n    const filename = req.params.filename;\n    \n    // Vulnerable: No path validation\n    const filepath = './uploads/' + filename;\n    \n    try {\n        const content = fs.readFileSync(filepath, 'utf8');\n        res.send(content);\n    } catch (error) {\n        res.status(404).send('File not found');\n    }\n});\n\nfunction readConfigFile(configName) {\n    // Vulnerable: Path traversal in config reading\n    const configPath = './config/' + configName + '.json';\n    return JSON.parse(fs.readFileSync(configPath, 'utf8'));\n}",
+      "severity": "high",
+      "source": "OWASP Benchmark PATH-01",
+      "vulnerable_lines": [
+        9,
+        20
+      ],
+      "created_at": "2025-09-05T22:01:30.839525"
+    },
+    {
+      "id": "owasp_bench_weak_crypto",
+      "cwe_id": "CWE-327",
+      "category": "weak-cryptography",
+      "language": "javascript",
+      "description": "Weak cryptographic algorithms (OWASP Benchmark)",
+      "code": "// OWASP Benchmark: Weak cryptography\nconst crypto = require('crypto');\n\nfunction hashPassword(password) {\n    // Vulnerable: Using weak MD5 algorithm\n    return crypto.createHash('md5').update(password).digest('hex');\n}\n\nfunction encryptData(data, key) {\n    // Vulnerable: Using DES encryption\n    const cipher = crypto.createCipher('des', key);\n    let encrypted = cipher.update(data, 'utf8', 'hex');\n    encrypted += cipher.final('hex');\n    return encrypted;\n}\n\nfunction generateToken() {\n    // Vulnerable: Weak random number generation\n    return Math.random().toString(36).substring(2, 15);\n}",
+      "severity": "medium",
+      "source": "OWASP Benchmark CRYPTO-01",
+      "vulnerable_lines": [
+        5,
+        10,
+        17
+      ],
+      "created_at": "2025-09-05T22:01:30.839527"
+    },
+    {
+      "id": "owasp_bench_ldap_injection",
+      "cwe_id": "CWE-90",
+      "category": "ldap-injection",
+      "language": "javascript",
+      "description": "LDAP injection vulnerability (OWASP Benchmark)",
+      "code": "// OWASP Benchmark: LDAP injection\nconst ldap = require('ldapjs');\n\nfunction authenticateUser(username, password) {\n    const client = ldap.createClient({\n        url: 'ldap://localhost:389'\n    });\n    \n    // Vulnerable: Unescaped LDAP filter\n    const filter = `(&(uid=${username})(userPassword=${password}))`;\n    \n    const searchOptions = {\n        filter: filter,\n        scope: 'sub'\n    };\n    \n    client.search('dc=example,dc=com', searchOptions, (err, result) => {\n        if (err) throw err;\n        // Process results\n    });\n}",
+      "severity": "high",
+      "source": "OWASP Benchmark LDAP-01",
+      "vulnerable_lines": [
+        10
+      ],
+      "created_at": "2025-09-05T22:01:30.839530"
+    },
+    {
+      "id": "owasp_bench_header_injection",
+      "cwe_id": "CWE-113",
+      "category": "header-injection",
+      "language": "javascript",
+      "description": "HTTP header injection (OWASP Benchmark)",
+      "code": "// OWASP Benchmark: HTTP header injection\nconst express = require('express');\nconst app = express();\n\napp.get('/redirect', (req, res) => {\n    const target = req.query.url;\n    \n    // Vulnerable: Unvalidated redirect URL\n    res.redirect(target);\n});\n\napp.get('/cookie', (req, res) => {\n    const value = req.query.value;\n    \n    // Vulnerable: Unvalidated cookie value\n    res.setHeader('Set-Cookie', `userdata=${value}`);\n    res.send('Cookie set');\n});\n\nfunction setCustomHeader(response, headerValue) {\n    // Vulnerable: Header injection\n    response.setHeader('X-Custom-Header', headerValue);\n}",
+      "severity": "medium",
+      "source": "OWASP Benchmark HEADER-01",
+      "vulnerable_lines": [
+        8,
+        15,
+        21
+      ],
+      "created_at": "2025-09-05T22:01:30.839532"
+    },
+    {
+      "id": "nodejs_cve_2021_23337",
+      "cve_id": "CVE-2021-23337",
+      "cwe_id": "CWE-1321",
+      "category": "prototype-pollution",
+      "language": "javascript",
+      "description": "Prototype pollution in lodash merge function",
+      "code": "// CVE-2021-23337: Prototype pollution in lodash\nconst _ = require('lodash');\n\nfunction mergeUserSettings(defaultSettings, userPreferences) {\n    // Vulnerable: lodash.merge susceptible to prototype pollution\n    return _.merge({}, defaultSettings, userPreferences);\n}\n\nfunction updateUserConfig(userId, configData) {\n    const defaults = {\n        theme: 'light',\n        notifications: true,\n        language: 'en'\n    };\n    \n    // Parse user input (potentially malicious)\n    const userConfig = JSON.parse(configData);\n    \n    // This can pollute Object.prototype if userConfig contains __proto__\n    const mergedConfig = mergeUserSettings(defaults, userConfig);\n    \n    return mergedConfig;\n}\n\n// Attack payload example:\n// {\"__proto__\": {\"polluted\": true}}",
+      "severity": "high",
+      "source": "CVE-2021-23337",
+      "vulnerable_lines": [
+        5
+      ],
+      "created_at": "2025-09-05T22:01:30.839930"
+    },
+    {
+      "id": "nodejs_cve_2022_24999",
+      "cve_id": "CVE-2022-24999",
+      "cwe_id": "CWE-22",
+      "category": "path-traversal",
+      "language": "javascript",
+      "description": "Path traversal in express static file serving",
+      "code": "// CVE-2022-24999: Path traversal in express static\nconst express = require('express');\nconst path = require('path');\nconst fs = require('fs');\n\nconst app = express();\n\n// Vulnerable static file serving implementation\napp.get('/files/:filename', (req, res) => {\n    const filename = req.params.filename;\n    const filePath = path.join(__dirname, 'public', filename);\n    \n    // Vulnerable: No validation of path traversal\n    if (fs.existsSync(filePath)) {\n        res.sendFile(filePath);\n    } else {\n        res.status(404).send('File not found');\n    }\n});\n\n// Attack example: GET /files/../../../etc/passwd",
+      "severity": "high",
+      "source": "CVE-2022-24999",
+      "vulnerable_lines": [
+        10
+      ],
+      "created_at": "2025-09-05T22:01:30.839938"
+    },
+    {
+      "id": "benchmark_additional_01",
+      "cwe_id": "CWE-79",
+      "category": "xss",
+      "language": "javascript",
+      "description": "DOM-based XSS via URL parameters",
+      "code": "// Additional benchmark: DOM-based XSS\nfunction parseUrlParams() {\n    const params = new URLSearchParams(window.location.search);\n    const message = params.get('message');\n    \n    // Vulnerable: Direct DOM manipulation\n    if (message) {\n        document.getElementById('content').innerHTML = message;\n    }\n}\n\nwindow.onload = parseUrlParams;",
+      "severity": "high",
+      "source": "Additional Benchmark Pattern",
+      "vulnerable_lines": [
+        6
+      ],
+      "created_at": "2025-09-05T22:01:30.839982"
+    },
+    {
+      "id": "benchmark_additional_02",
+      "cwe_id": "CWE-89",
+      "category": "sql-injection",
+      "language": "javascript",
+      "description": "SQL injection in ORDER BY clause",
+      "code": "// Additional benchmark: SQL injection in ORDER BY\nconst mysql = require('mysql');\n\nfunction getUsers(sortBy, sortOrder) {\n    const connection = mysql.createConnection(dbConfig);\n    \n    // Vulnerable: Unvalidated ORDER BY parameters\n    const query = `SELECT * FROM users ORDER BY ${sortBy} ${sortOrder}`;\n    \n    return new Promise((resolve, reject) => {\n        connection.query(query, (error, results) => {\n            if (error) reject(error);\n            else resolve(results);\n        });\n    });\n}",
+      "severity": "high",
+      "source": "Additional Benchmark Pattern",
+      "vulnerable_lines": [
+        7
+      ],
+      "created_at": "2025-09-05T22:01:30.839984"
+    },
+    {
+      "id": "benchmark_additional_03",
+      "cwe_id": "CWE-78",
+      "category": "command-injection",
+      "language": "javascript",
+      "description": "Command injection via file processing",
+      "code": "// Additional benchmark: Command injection\nconst { spawn } = require('child_process');\n\nfunction convertImage(inputFile, outputFormat) {\n    // Vulnerable: Unvalidated file parameters\n    const args = ['-format', outputFormat, inputFile, `output.${outputFormat}`];\n    \n    const convert = spawn('convert', args);\n    \n    convert.on('error', (error) => {\n        console.error('Conversion failed:', error);\n    });\n    \n    return convert;\n}",
+      "severity": "critical",
+      "source": "Additional Benchmark Pattern",
+      "vulnerable_lines": [
+        6
+      ],
+      "created_at": "2025-09-05T22:01:30.839987"
+    },
+    {
+      "id": "benchmark_additional_04",
+      "cwe_id": "CWE-22",
+      "category": "path-traversal",
+      "language": "javascript",
+      "description": "Path traversal in template inclusion",
+      "code": "// Additional benchmark: Template path traversal\nconst fs = require('fs');\nconst path = require('path');\n\nfunction includeTemplate(templateName) {\n    // Vulnerable: No path validation\n    const templatePath = path.join('./templates', templateName + '.html');\n    \n    try {\n        return fs.readFileSync(templatePath, 'utf8');\n    } catch (error) {\n        return '<div>Template not found</div>';\n    }\n}\n\nfunction renderPage(template, data) {\n    const templateContent = includeTemplate(template);\n    return templateContent.replace(/{{(\\w+)}}/g, (match, key) => data[key] || '');\n}",
+      "severity": "medium",
+      "source": "Additional Benchmark Pattern",
+      "vulnerable_lines": [
+        6
+      ],
+      "created_at": "2025-09-05T22:01:30.839989"
+    },
+    {
+      "id": "benchmark_additional_05",
+      "cwe_id": "CWE-502",
+      "category": "insecure-deserialization",
+      "language": "javascript",
+      "description": "Unsafe deserialization in session handling",
+      "code": "// Additional benchmark: Unsafe deserialization\nfunction deserializeSession(sessionData) {\n    try {\n        // Vulnerable: eval-based deserialization\n        return eval('(' + sessionData + ')');\n    } catch (error) {\n        return null;\n    }\n}\n\nfunction restoreUserSession(req, res, next) {\n    const sessionCookie = req.cookies.session;\n    \n    if (sessionCookie) {\n        // Vulnerable: Deserializing untrusted data\n        req.user = deserializeSession(decodeURIComponent(sessionCookie));\n    }\n    \n    next();\n}",
+      "severity": "critical",
+      "source": "Additional Benchmark Pattern",
+      "vulnerable_lines": [
+        4,
+        13
+      ],
+      "created_at": "2025-09-05T22:01:30.839992"
+    },
+    {
+      "id": "benchmark_additional_06",
+      "cwe_id": "CWE-798",
+      "category": "hardcoded-credentials",
+      "language": "javascript",
+      "description": "Hardcoded database credentials",
+      "code": "// Additional benchmark: Hardcoded credentials\nconst mysql = require('mysql');\n\nfunction createDatabaseConnection() {\n    // Vulnerable: Hardcoded credentials\n    const connection = mysql.createConnection({\n        host: 'localhost',\n        user: 'admin',\n        password: 'SuperSecret123!',\n        database: 'production_db'\n    });\n    \n    return connection;\n}\n\nconst dbConfig = {\n    // Vulnerable: Another hardcoded credential\n    apiKey: 'sk-1234567890abcdef',\n    secretKey: 'secret_key_hardcoded_here'\n};",
+      "severity": "high",
+      "source": "Additional Benchmark Pattern",
+      "vulnerable_lines": [
+        9,
+        17
+      ],
+      "created_at": "2025-09-05T22:01:30.839994"
+    },
+    {
+      "id": "benchmark_additional_07",
+      "cwe_id": "CWE-327",
+      "category": "weak-cryptography",
+      "language": "javascript",
+      "description": "Weak cryptographic hash functions",
+      "code": "// Additional benchmark: Weak cryptography\nconst crypto = require('crypto');\n\nfunction hashUserPassword(password, salt) {\n    // Vulnerable: Using SHA1 for password hashing\n    return crypto.createHash('sha1').update(password + salt).digest('hex');\n}\n\nfunction generateSessionId() {\n    // Vulnerable: Weak random generation\n    return Math.random().toString(36).substring(2, 15) + \n           Math.random().toString(36).substring(2, 15);\n}\n\nfunction encryptSensitiveData(data, key) {\n    // Vulnerable: Using RC4 cipher\n    const cipher = crypto.createCipher('rc4', key);\n    let encrypted = cipher.update(data, 'utf8', 'hex');\n    encrypted += cipher.final('hex');\n    return encrypted;\n}",
+      "severity": "medium",
+      "source": "Additional Benchmark Pattern",
+      "vulnerable_lines": [
+        5,
+        10,
+        16
+      ],
+      "created_at": "2025-09-05T22:01:30.839996"
+    },
+    {
+      "id": "benchmark_additional_08",
+      "cwe_id": "CWE-287",
+      "category": "improper-authentication",
+      "language": "javascript",
+      "description": "Authentication bypass via parameter manipulation",
+      "code": "// Additional benchmark: Authentication bypass\nfunction authenticateUser(username, password, isAdmin) {\n    const users = getUserDatabase();\n    const user = users.find(u => u.username === username);\n    \n    // Vulnerable: Client-controlled admin flag\n    if (isAdmin === 'true') {\n        return { authenticated: true, role: 'admin', user: user };\n    }\n    \n    if (user && user.password === password) {\n        return { authenticated: true, role: user.role, user: user };\n    }\n    \n    return { authenticated: false };\n}\n\nfunction checkAdminAccess(req, res, next) {\n    // Vulnerable: No proper authentication check\n    if (req.query.admin === 'true') {\n        req.user = { role: 'admin' };\n    }\n    next();\n}",
+      "severity": "critical",
+      "source": "Additional Benchmark Pattern",
+      "vulnerable_lines": [
+        6,
+        19
+      ],
+      "created_at": "2025-09-05T22:01:30.839999"
+    },
+    {
+      "id": "benchmark_additional_09",
+      "cwe_id": "CWE-918",
+      "category": "ssrf",
+      "language": "javascript",
+      "description": "Server-Side Request Forgery in webhook",
+      "code": "// Additional benchmark: SSRF vulnerability\nconst axios = require('axios');\n\nasync function processWebhook(webhookUrl, data) {\n    try {\n        // Vulnerable: No URL validation\n        const response = await axios.post(webhookUrl, data);\n        return response.data;\n    } catch (error) {\n        throw new Error('Webhook failed');\n    }\n}\n\nasync function fetchExternalResource(url) {\n    // Vulnerable: Unrestricted URL access\n    const response = await fetch(url);\n    return response.text();\n}\n\nfunction proxyRequest(targetUrl) {\n    // Vulnerable: Open proxy functionality\n    return fetch(targetUrl).then(r => r.text());\n}",
+      "severity": "high",
+      "source": "Additional Benchmark Pattern",
+      "vulnerable_lines": [
+        6,
+        13,
+        19
+      ],
+      "created_at": "2025-09-05T22:01:30.840002"
+    },
+    {
+      "id": "benchmark_additional_10",
+      "cwe_id": "CWE-1321",
+      "category": "prototype-pollution",
+      "language": "javascript",
+      "description": "Prototype pollution via recursive merge",
+      "code": "// Additional benchmark: Prototype pollution\nfunction recursiveMerge(target, source) {\n    for (const key in source) {\n        if (source.hasOwnProperty(key)) {\n            if (typeof source[key] === 'object' && source[key] !== null) {\n                if (!target[key]) target[key] = {};\n                // Vulnerable: No __proto__ protection\n                recursiveMerge(target[key], source[key]);\n            } else {\n                target[key] = source[key];\n            }\n        }\n    }\n    return target;\n}\n\nfunction updateConfig(userConfig) {\n    const defaultConfig = { timeout: 5000, retries: 3 };\n    // Vulnerable: Merging untrusted user input\n    return recursiveMerge(defaultConfig, userConfig);\n}",
+      "severity": "high",
+      "source": "Additional Benchmark Pattern",
+      "vulnerable_lines": [
+        8,
+        18
+      ],
+      "created_at": "2025-09-05T22:01:30.840005"
+    }
+  ]
+}
