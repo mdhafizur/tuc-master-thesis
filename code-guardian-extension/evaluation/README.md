@@ -108,6 +108,16 @@ Select specific baseline tools:
 node evaluation/evaluate-models.js --ablation --include-baselines --baseline-tools=codeql,semgrep,eslint-security
 ```
 
+Parse-debug options:
+
+```bash
+# Keep structured output, but allow model thinking channel
+node evaluation/evaluate-models.js --ablation --allow-thinking
+
+# Disable schema-constrained output (legacy behavior)
+node evaluation/evaluate-models.js --ablation --no-structured-output
+```
+
 ### Generate Dataset from External Sources
 
 If you have the sibling repository folder `code-guardian-evaluation/`, you can generate extension-compatible datasets:
@@ -115,6 +125,26 @@ If you have the sibling repository folder `code-guardian-evaluation/`, you can g
 ```bash
 # From code-guardian-extension root
 npm run datasets:generate
+```
+
+To enrich the dataset with additional source-backed JS files that are present on disk
+(for example OWASP Juice Shop / OWASP NodeGoat / Juliet-labeled snippets) but missing
+from manifest JSON:
+
+```bash
+npm run datasets:generate:authentic
+```
+
+Relaxed variant (keeps entries even if provenance cannot be inferred):
+
+```bash
+npm run datasets:generate:authentic:relaxed
+```
+
+Maximum coverage (all manifests + file-backed additions + adversarial + curated negatives):
+
+```bash
+npm run datasets:generate:all-sources
 ```
 
 This writes:
@@ -134,6 +164,25 @@ To include everything from the source manifests:
 ```bash
 npm run datasets:generate:all
 ```
+
+`datasets:generate:adversarial` and `datasets:generate:all` run with relaxed provenance
+(`--allow-missing-provenance`) so synthetic stress/pattern cases are not dropped.
+
+CLI note:
+- `--include-file-sources`: scans `code-guardian-evaluation/datasets/**/**/*.js` and adds
+  file-backed samples not already present in manifest JSON.
+- `--include-curated-negatives`: adds secure/negative examples from
+  `evaluation/datasets/vulnerability-test-cases.json`.
+- Provenance is required by default (`metadata.provenance.referenceId` + `sourceUrl`).
+- `--allow-missing-provenance`: disable strict provenance filtering when needed.
+
+Generated sample metadata includes:
+- `metadata.provenance.sourceType` (`cve`, `owasp-benchmark`, `nist-juliet`, etc.)
+- `metadata.provenance.referenceId` (for example `CVE-2022-24999`)
+- `metadata.provenance.sourceUrl` (canonical URL such as NVD / OWASP repo / NIST SARD)
+- `metadata.provenance.sourceProject` (for project-derived labels like `lodash - Pattern Analysis`)
+- `metadata.provenance.collectedFrom` (`manifest` or `file-source`)
+- `metadata.provenance.sourcePath` (relative file path when ingested from source files)
 
 ### Customizing Tests
 

@@ -20,7 +20,7 @@ The prototype includes a curated benchmark of security test cases and a local ev
 The thesis supports feasibility with caveats. Code Guardian demonstrates that useful vulnerability analysis and repair suggestions can be generated inside VS Code using fully local inference, satisfying the no-code-exfiltration objective. However, practical usefulness depends on selecting a model profile that matches the deployment context (interactive editing vs.\ audit workflows).
 
 \textbf{RQ2 (Grounding).}
-Retrieval augmentation is beneficial only under model-dependent conditions. In this run, RAG improved \texttt{qwen3:8b} (F1 35.64\% $\rightarrow$ 42.70\%) and slightly improved \texttt{gemma3:4b} (F1 30.67\% $\rightarrow$ 31.37\%), but reduced \texttt{gemma3:1b} recall to zero true positives. Grounding should therefore be treated as a tunable strategy rather than a universally positive default.
+Retrieval augmentation is beneficial only under model-dependent conditions. In this run, RAG improved \texttt{qwen3:8b} (F1 58.12\% $\rightarrow$ 63.76\%) and \texttt{qwen3:4b} (F1 54.90\% $\rightarrow$ 58.67\%), but reduced \texttt{gemma3:4b} (56.05\% $\rightarrow$ 49.68\%) and \texttt{CodeLlama:latest} (41.88\% $\rightarrow$ 31.45\%). Grounding should therefore be treated as a tunable strategy rather than a universally positive default.
 
 \textbf{RQ3 (Practicality).}
 IDE practicality is achievable when inference is constrained by function-level scoping, debounced triggers, and caching. These mechanisms keep local analysis responsive for small models, while larger models remain better suited to on-demand scans where higher latency is acceptable.
@@ -38,10 +38,10 @@ Table~\ref{tab:conclusion-deployment-profiles} summarizes pragmatic deployment c
     \toprule
     Use case & Preferred configuration & Main advantage & Main risk \\
     \midrule
-    Real-time editor feedback & \texttt{gemma3:1b} (LLM-only) & Very low latency (about 178 ms median) and stable parsing & Misses many vulnerabilities (recall 5.56\%) \\
-    Moderate-latency audit pass & \texttt{gemma3:4b} (LLM+RAG) & Higher recall (44.44\%) with about 1.3 s median latency & Severe alert noise on secure samples (FPR 100\%) \\
-    Higher-precision deep audit & \texttt{qwen3:8b} (LLM+RAG) & Best F1 (42.70\%) and lower FPR (27.12\%) than other high-recall modes & Multi-second latency (median 7809 ms) and non-perfect parse rate (84.85\%) \\
-    Unstable model profiles & \texttt{qwen3:4b} / \texttt{CodeLlama:latest} & N/A in this run & Parse-collapse regimes (1.01--5.05\% parse), yielding near-zero recall \\
+    Real-time editor feedback & \texttt{gemma3:1b} (LLM-only) & Lower latency profile (about 333 ms median) & Lower recall than higher-capacity models (25.66\%) and severe secure-sample over-warning (FPR 100\%) \\
+    Moderate-latency audit pass & \texttt{qwen3:4b} (LLM+RAG) & Good recall (64.90\%) with about 1.1 s median latency & Severe alert noise on secure samples (FPR 100\%) \\
+    Higher-quality deep audit & \texttt{qwen3:8b} (LLM+RAG) & Best F1 (63.76\%) and best LLM FPR (26.67\%) in this run & Higher latency (median 1524 ms) and still non-trivial false-positive behavior \\
+    High-noise model profiles & \texttt{gemma3:4b} / \texttt{qwen3:4b} / \texttt{CodeLlama:latest} & Strong vulnerable recall in some modes & Persistent secure-sample over-warning (FPR 100\%) \\
     \bottomrule
   \end{tabularx}
 \end{table}
@@ -63,8 +63,10 @@ This thesis treats Code Guardian as a decision-support system, not an autonomous
 
 \section{Conclusion}
 
-Privacy-preserving secure coding assistance is feasible within the IDE when local LLM inference is combined with careful prompt structuring, optional retrieval grounding, and developer-controlled remediation workflows. The evaluation shows a clear quality-latency-robustness trade-off: \texttt{gemma3:1b} remained fast (about 178--180 ms median) but had very low recall, \texttt{gemma3:4b} increased recall at around 1.3--1.4 s median latency but over-warned on secure code, and \texttt{qwen3:8b} achieved the best F1 with markedly higher multi-second latency.
+Privacy-preserving secure coding assistance is feasible within the IDE when local LLM inference is combined with careful prompt structuring, optional retrieval grounding, and developer-controlled remediation workflows. The evaluation shows a clear quality-latency-robustness trade-off: \texttt{gemma3:1b} remained relatively fast (about 0.3--0.9 s median) but lower recall than larger models, \texttt{gemma3:4b} and \texttt{qwen3:4b} reached higher recall but over-warned on secure code, and \texttt{qwen3:8b} achieved the best F1 with higher per-call latency.
 
-The results also show that retrieval augmentation is not universally beneficial; its effect is model-dependent. In this study, RAG improved \texttt{qwen3:8b} and marginally improved \texttt{gemma3:4b}, but reduced \texttt{gemma3:1b} to zero true positives and did not recover parse-collapse regimes for \texttt{qwen3:4b} and \texttt{CodeLlama:latest}. This indicates that RAG integration must be calibrated per model and prompt format, not assumed to improve security detection by default.
+Compared with the requested SAST baselines, LLM modes in this run provided substantially higher vulnerable-case recall (up to 64.90\% vs.\ 9.73\% for Semgrep/CodeQL) but generally weaker false-positive control on secure samples (most LLM modes at 100\% FPR, \texttt{qwen3:8b} at 26.67\%, versus 6.67\% for Semgrep).
+
+The results also show that retrieval augmentation is not universally beneficial; its effect is model-dependent. In this study, RAG improved both \texttt{qwen3} variants but degraded \texttt{gemma3:4b} and \texttt{CodeLlama:latest}. This indicates that RAG integration must be calibrated per model and prompt format, not assumed to improve security detection by default.
 
 Overall, Code Guardian demonstrates that locally deployed LLMs can provide useful vulnerability detection and repair suggestions without transmitting source code off-device, but practical deployment requires explicit configuration choices for model class, latency budget, and acceptable false-positive behavior.

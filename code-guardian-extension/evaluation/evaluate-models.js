@@ -51,6 +51,8 @@ const NO_RAG_ONLY = args.includes('--no-rag-only');
 const INCLUDE_BASELINES = args.includes('--include-baselines');
 const BASELINES_ONLY = args.includes('--baselines-only');
 const KEEP_BASELINE_WORKDIR = args.includes('--keep-baseline-workdir');
+const DISABLE_THINKING = !args.includes('--allow-thinking');
+const ENABLE_STRUCTURED_OUTPUT = !args.includes('--no-structured-output');
 
 function getFlagValue(name) {
     const prefixed = `${name}=`;
@@ -207,6 +209,334 @@ function buildRAGPrompt(ragK) {
         : 'No retrieval snippets selected (k=0).';
 
     return `${SYSTEM_PROMPT}\n\nRELEVANT SECURITY KNOWLEDGE (top-k=${ragK}):\n${ragContext}`;
+}
+
+const MODEL_RESPONSE_SCHEMA = {
+    type: 'array',
+    items: {
+        type: 'object',
+        properties: {
+            message: { type: 'string' },
+            type: { type: 'string' },
+            startLine: { type: 'integer' },
+            endLine: { type: 'integer' },
+            severity: { type: 'string' },
+            suggestedFix: { type: 'string' }
+        },
+        required: ['message', 'type', 'startLine', 'endLine', 'severity']
+    }
+};
+
+function toPositiveInteger(value, fallback) {
+    const parsed = Number.parseInt(String(value), 10);
+    return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function normalizeModelSeverity(value) {
+    const severity = String(value || '').toLowerCase().trim();
+    if (severity === 'critical' || severity === 'high' || severity === 'error') return 'high';
+    if (severity === 'medium' || severity === 'warning') return 'medium';
+    if (severity === 'low' || severity === 'info') return 'low';
+    return 'medium';
+}
+
+function normalizeIssueObject(issue) {
+    if (!issue || typeof issue !== 'object') {
+        return null;
+    }
+
+    const message = String(
+        issue.message ||
+        issue.description ||
+        issue.issue ||
+        issue.title ||
+        'Potential security issue'
+    ).trim();
+
+    const type = String(
+        issue.type ||
+        issue.vulnerability ||
+        issue.vulnerabilityType ||
+        issue.issueType ||
+        issue.category ||
+        'Security Issue'
+    ).trim();
+
+    const startLine = toPositiveInteger(
+        issue.startLine ?? issue.start_line ?? issue.line ?? issue.start ?? 1,
+        1
+    );
+    let endLine = toPositiveInteger(
+        issue.endLine ?? issue.end_line ?? issue.line ?? issue.end ?? startLine,
+        startLine
+    );
+
+    if (endLine < startLine) {
+        endLine = startLine;
+    }
+
+    const suggestedFixRaw =
+        issue.suggestedFix ??
+        issue.fix ??
+        issue.recommendation ??
+        issue.remediation;
+
+    const normalized = {
+        message: message || 'Potential security issue',
+        type: type || 'Security Issue',
+        startLine,
+        endLine,
+        severity: normalizeModelSeverity(issue.severity)
+    };
+
+    if (typeof suggestedFixRaw === 'string' && suggestedFixRaw.trim().length > 0) {
+        normalized.suggestedFix = suggestedFixRaw.trim();
+    }
+
+    return normalized;
+}
+
+function normalizeIssuePayload(payload) {
+    if (Array.isArray(payload)) {
+        return payload
+            .map(normalizeIssueObject)
+            .filter(Boolean);
+    }
+
+    if (!payload || typeof payload !== 'object') {
+        return null;
+    }
+
+    const arrayKeys = ['issues', 'vulnerabilities', 'results', 'findings'];
+    for (const key of arrayKeys) {
+        if (Array.isArray(payload[key])) {
+            return payload[key]
+                .map(normalizeIssueObject)
+                .filter(Boolean);
+        }
+    }
+
+    if (
+        payload.message ||
+        payload.description ||
+        payload.issue ||
+        payload.type ||
+        payload.vulnerability
+    ) {
+        const normalized = normalizeIssueObject(payload);
+        return normalized ? [normalized] : null;
+    }
+
+    return null;
+}
+
+function stripMarkdownFences(text) {
+    return String(text || '')
+        .replace(/```json\s*/gi, '')
+        .replace(/```\s*/g, '')
+        .trim();
+}
+
+function extractFirstBalancedSegment(text, openChar, closeChar) {
+    const input = String(text || '');
+    let start = -1;
+    let depth = 0;
+    let inString = false;
+    let escaping = false;
+
+    for (let i = 0; i < input.length; i++) {
+        const ch = input[i];
+
+        if (inString) {
+            if (escaping) {
+                escaping = false;
+                continue;
+            }
+            if (ch === '\\') {
+                escaping = true;
+                continue;
+            }
+            if (ch === '"') {
+                inString = false;
+            }
+            continue;
+        }
+
+        if (ch === '"') {
+            inString = true;
+            continue;
+        }
+
+        if (ch === openChar) {
+            if (depth === 0) {
+                start = i;
+            }
+            depth += 1;
+            continue;
+        }
+
+        if (ch === closeChar && depth > 0) {
+            depth -= 1;
+            if (depth === 0 && start !== -1) {
+                return input.slice(start, i + 1);
+            }
+        }
+    }
+
+    return null;
+}
+
+function tryParseModelPayload(rawText, source) {
+    const cleaned = stripMarkdownFences(rawText);
+    if (!cleaned) {
+        return {
+            success: false,
+            parseReason: `empty_${source}`
+        };
+    }
+
+    try {
+        const parsed = JSON.parse(cleaned);
+        const normalized = normalizeIssuePayload(parsed);
+        if (normalized) {
+            return {
+                success: true,
+                issues: normalized,
+                parseReason: Array.isArray(parsed)
+                    ? `${source}_direct_array`
+                    : `${source}_direct_object`
+            };
+        }
+        return {
+            success: false,
+            parseReason: `unusable_json_${source}`
+        };
+    } catch (_error) {
+        // Try substring extraction below.
+    }
+
+    const arraySegment = extractFirstBalancedSegment(cleaned, '[', ']');
+    if (arraySegment) {
+        try {
+            const parsedArray = JSON.parse(arraySegment);
+            const normalized = normalizeIssuePayload(parsedArray);
+            if (normalized) {
+                return {
+                    success: true,
+                    issues: normalized,
+                    parseReason: `${source}_extracted_array`
+                };
+            }
+            return {
+                success: false,
+                parseReason: `unusable_extracted_array_${source}`
+            };
+        } catch (_error) {
+            // Try object extraction below.
+        }
+    }
+
+    const objectSegment = extractFirstBalancedSegment(cleaned, '{', '}');
+    if (objectSegment) {
+        try {
+            const parsedObject = JSON.parse(objectSegment);
+            const normalized = normalizeIssuePayload(parsedObject);
+            if (normalized) {
+                return {
+                    success: true,
+                    issues: normalized,
+                    parseReason: `${source}_extracted_object`
+                };
+            }
+            return {
+                success: false,
+                parseReason: `unusable_extracted_object_${source}`
+            };
+        } catch (_error) {
+            return {
+                success: false,
+                parseReason: `invalid_json_${source}`
+            };
+        }
+    }
+
+    return {
+        success: false,
+        parseReason: `non_json_${source}`
+    };
+}
+
+function parseModelIssues(message) {
+    const content = String(message?.content || '');
+    const thinking = String(message?.thinking || '');
+    const hasContent = content.trim().length > 0;
+    const hasThinking = thinking.trim().length > 0;
+
+    if (!hasContent && !hasThinking) {
+        return {
+            issues: [],
+            parseSuccess: false,
+            parseReason: 'no_output',
+            parsedFrom: null
+        };
+    }
+
+    const primary = tryParseModelPayload(content, 'content');
+    if (primary.success) {
+        return {
+            issues: primary.issues,
+            parseSuccess: true,
+            parseReason: primary.parseReason,
+            parsedFrom: 'content'
+        };
+    }
+
+    if (!hasContent && hasThinking) {
+        const fallback = tryParseModelPayload(thinking, 'thinking');
+        if (fallback.success) {
+            return {
+                issues: fallback.issues,
+                parseSuccess: true,
+                parseReason: fallback.parseReason,
+                parsedFrom: 'thinking'
+            };
+        }
+
+        return {
+            issues: [],
+            parseSuccess: false,
+            parseReason: fallback.parseReason || 'empty_content_with_thinking',
+            parsedFrom: null
+        };
+    }
+
+    return {
+        issues: [],
+        parseSuccess: false,
+        parseReason: primary.parseReason || 'parse_failed',
+        parsedFrom: null
+    };
+}
+
+function incrementCount(counts, key) {
+    const normalized = String(key || 'unknown');
+    counts[normalized] = (counts[normalized] || 0) + 1;
+}
+
+function formatTopReasonCounts(counts, limit = 3) {
+    if (!counts || typeof counts !== 'object') {
+        return '';
+    }
+
+    const ranked = Object.entries(counts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, limit);
+
+    if (ranked.length === 0) {
+        return '';
+    }
+
+    return ranked.map(([reason, count]) => `${reason}: ${count}`).join(', ');
 }
 
 function mean(values) {
@@ -550,6 +880,8 @@ function buildBaselineEvaluationResult({
             detected: detectedIssues.length,
             expected: testCase.expectedVulnerabilities.length,
             parseSuccess: true,
+            parseReason: 'baseline_tool_output',
+            parsedFrom: 'tool',
             detectedIssues,
             expectedVulnerabilities: testCase.expectedVulnerabilities,
             expectedFix: testCase.expectedFix || null,
@@ -587,6 +919,12 @@ function buildBaselineEvaluationResult({
         meanLatencyMs,
         medianLatencyMs,
         parseSuccessRate: '100.00',
+        parseDiagnostics: {
+            reasons: {
+                baseline_tool_output: testCases.length
+            },
+            failures: {}
+        },
         metrics: aggregateMetrics,
         detailedResults: details
     };
@@ -969,19 +1307,27 @@ async function analyzeWithModel(modelName, code, options) {
     try {
         const startTime = Date.now();
         const systemPrompt = useRAG ? buildRAGPrompt(ragK) : SYSTEM_PROMPT;
+        const requestPayload = {
+            model: modelName,
+            messages: [
+                { role: 'system', content: systemPrompt },
+                { role: 'user', content: `Analyze the following code for security vulnerabilities:\n\n${code}` }
+            ],
+            options: {
+                temperature,
+                num_predict: numPredict
+            }
+        };
+
+        if (ENABLE_STRUCTURED_OUTPUT) {
+            requestPayload.format = MODEL_RESPONSE_SCHEMA;
+        }
+        if (DISABLE_THINKING) {
+            requestPayload.think = false;
+        }
 
         const response = await Promise.race([
-            ollama.chat({
-                model: modelName,
-                messages: [
-                    { role: 'system', content: systemPrompt },
-                    { role: 'user', content: `Analyze the following code for security vulnerabilities:\n\n${code}` }
-                ],
-                options: {
-                    temperature,
-                    num_predict: numPredict
-                }
-            }),
+            ollama.chat(requestPayload),
             new Promise((_, reject) =>
                 setTimeout(() => reject(new Error('Timeout')), timeoutMs)
             )
@@ -989,29 +1335,21 @@ async function analyzeWithModel(modelName, code, options) {
 
         const endTime = Date.now();
         const responseTime = endTime - startTime;
+        const parsed = parseModelIssues(response.message);
 
-        let issues = [];
-        let parseSuccess = false;
-
-        try {
-            const content = response.message.content.trim();
-            const cleanContent = content
-                .replace(/```json\n?/g, '')
-                .replace(/```\n?/g, '')
-                .trim();
-
-            issues = JSON.parse(cleanContent);
-            parseSuccess = Array.isArray(issues);
-        } catch (parseError) {
-            console.log(`   ⚠️  JSON parsing failed for ${modelName}`);
+        if (!parsed.parseSuccess) {
+            console.log(`   ⚠️  JSON parsing failed for ${modelName} (${parsed.parseReason})`);
         }
 
         return {
             success: true,
             responseTime,
-            issues,
-            parseSuccess,
-            rawResponse: response.message.content,
+            issues: parsed.issues,
+            parseSuccess: parsed.parseSuccess,
+            parseReason: parsed.parseReason,
+            parsedFrom: parsed.parsedFrom,
+            rawResponse: response.message?.content || '',
+            rawThinking: response.message?.thinking || '',
             ragEnabled: useRAG
         };
     } catch (error) {
@@ -1021,6 +1359,8 @@ async function analyzeWithModel(modelName, code, options) {
             responseTime: null,
             issues: [],
             parseSuccess: false,
+            parseReason: 'request_failure',
+            parsedFrom: null,
             ragEnabled: useRAG
         };
     }
@@ -1030,6 +1370,7 @@ async function analyzeWithModel(modelName, code, options) {
 function calculateMetrics(detected, expected, code) {
     const detectedTypes = new Set(detected.map(d => d.type?.toLowerCase() || ''));
     const expectedTypes = new Set(expected.map(e => e.type.toLowerCase()));
+    const isSecureSample = expected.length === 0;
 
     const truePositives = [...detectedTypes].filter(d =>
         [...expectedTypes].some(e => e.includes(d) || d.includes(e))
@@ -1037,7 +1378,9 @@ function calculateMetrics(detected, expected, code) {
 
     const falsePositives = detectedTypes.size - truePositives;
     const falseNegatives = expectedTypes.size - truePositives;
-    const trueNegatives = expected.length === 0 && detected.length === 0 ? 1 : 0;
+    const secureFalsePositiveCases = isSecureSample && detected.length > 0 ? 1 : 0;
+    const secureTrueNegativeCases = isSecureSample && detected.length === 0 ? 1 : 0;
+    const trueNegatives = secureTrueNegativeCases;
 
     const codeLines = code.split('\n').length;
     let lineAccuracyCount = 0;
@@ -1059,6 +1402,8 @@ function calculateMetrics(detected, expected, code) {
         falsePositives,
         falseNegatives,
         trueNegatives,
+        secureFalsePositiveCases,
+        secureTrueNegativeCases,
         lineAccuracy: lineAccuracyTotal > 0 ? lineAccuracyCount / lineAccuracyTotal : null
     };
 }
@@ -1068,12 +1413,14 @@ function calculateAggregateMetrics(allMetrics) {
     const fp = allMetrics.reduce((sum, m) => sum + m.falsePositives, 0);
     const fn = allMetrics.reduce((sum, m) => sum + m.falseNegatives, 0);
     const tn = allMetrics.reduce((sum, m) => sum + m.trueNegatives, 0);
+    const secureFpCases = allMetrics.reduce((sum, m) => sum + (m.secureFalsePositiveCases || 0), 0);
+    const secureTnCases = allMetrics.reduce((sum, m) => sum + (m.secureTrueNegativeCases || 0), 0);
 
     const precision = tp + fp > 0 ? tp / (tp + fp) : 0;
     const recall = tp + fn > 0 ? tp / (tp + fn) : 0;
     const f1Score = precision + recall > 0 ? 2 * (precision * recall) / (precision + recall) : 0;
     const accuracy = (tp + tn) / (tp + fp + fn + tn || 1);
-    const fpr = fp + tn > 0 ? fp / (fp + tn) : 0;
+    const fpr = secureFpCases + secureTnCases > 0 ? secureFpCases / (secureFpCases + secureTnCases) : 0;
 
     const lineAccuracies = allMetrics
         .filter(m => m.lineAccuracy !== null)
@@ -1092,8 +1439,51 @@ function calculateAggregateMetrics(allMetrics) {
         truePositives: tp,
         falsePositives: fp,
         falseNegatives: fn,
-        trueNegatives: tn
+        trueNegatives: tn,
+        secureFalsePositiveCases: secureFpCases,
+        secureTrueNegativeCases: secureTnCases
     };
+}
+
+function getRankingStrategy(testCases) {
+    const secureCount = testCases.filter(tc => tc.expectedVulnerabilities.length === 0).length;
+    const vulnerableCount = testCases.length - secureCount;
+
+    if (vulnerableCount === 0) {
+        return {
+            key: 'fpr',
+            label: 'by Lowest FPR (secure-only dataset)'
+        };
+    }
+
+    return {
+        key: 'f1',
+        label: 'by F1 Score'
+    };
+}
+
+function sortEvaluationResults(results, rankingKey) {
+    if (rankingKey === 'fpr') {
+        return [...results].sort((a, b) => {
+            const fprDiff = Number.parseFloat(a.metrics.falsePositiveRate) - Number.parseFloat(b.metrics.falsePositiveRate);
+            if (fprDiff !== 0) return fprDiff;
+
+            const parseDiff = Number.parseFloat(b.parseSuccessRate) - Number.parseFloat(a.parseSuccessRate);
+            if (parseDiff !== 0) return parseDiff;
+
+            return a.meanLatencyMs - b.meanLatencyMs;
+        });
+    }
+
+    return [...results].sort((a, b) => {
+        const f1Diff = Number.parseFloat(b.metrics.f1Score) - Number.parseFloat(a.metrics.f1Score);
+        if (f1Diff !== 0) return f1Diff;
+
+        const precisionDiff = Number.parseFloat(b.metrics.precision) - Number.parseFloat(a.metrics.precision);
+        if (precisionDiff !== 0) return precisionDiff;
+
+        return a.meanLatencyMs - b.meanLatencyMs;
+    });
 }
 
 async function evaluateModel(modelInfo, testCases, options) {
@@ -1117,6 +1507,8 @@ async function evaluateModel(modelInfo, testCases, options) {
     const latencies = [];
     let successfulParses = 0;
     let successfulRequests = 0;
+    const parseReasonCounts = {};
+    const parseFailureReasonCounts = {};
 
     const totalRequests = testCases.length * runsPerSample;
     let requestCounter = 0;
@@ -1139,9 +1531,12 @@ async function evaluateModel(modelInfo, testCases, options) {
             if (result.success) {
                 successfulRequests++;
                 latencies.push(result.responseTime);
+                incrementCount(parseReasonCounts, result.parseReason);
 
                 if (result.parseSuccess) {
                     successfulParses++;
+                } else {
+                    incrementCount(parseFailureReasonCounts, result.parseReason);
                 }
 
                 const caseMetrics = calculateMetrics(
@@ -1164,6 +1559,8 @@ async function evaluateModel(modelInfo, testCases, options) {
                     detected: result.issues.length,
                     expected: testCase.expectedVulnerabilities.length,
                     parseSuccess: result.parseSuccess,
+                    parseReason: result.parseReason,
+                    parsedFrom: result.parsedFrom,
                     detectedIssues: result.issues,
                     expectedVulnerabilities: testCase.expectedVulnerabilities,
                     expectedFix: testCase.expectedFix || null,
@@ -1179,11 +1576,15 @@ async function evaluateModel(modelInfo, testCases, options) {
                     success: false,
                     error: result.error,
                     parseSuccess: false,
+                    parseReason: result.parseReason || 'request_failure',
+                    parsedFrom: null,
                     detectedIssues: [],
                     expectedVulnerabilities: testCase.expectedVulnerabilities,
                     expectedFix: testCase.expectedFix || null,
                     ragEnabled: useRAG
                 });
+                incrementCount(parseReasonCounts, result.parseReason || 'request_failure');
+                incrementCount(parseFailureReasonCounts, result.parseReason || 'request_failure');
             }
 
             await new Promise(resolve => setTimeout(resolve, delayMs));
@@ -1218,6 +1619,10 @@ async function evaluateModel(modelInfo, testCases, options) {
         meanLatencyMs,
         medianLatencyMs,
         parseSuccessRate,
+        parseDiagnostics: {
+            reasons: parseReasonCounts,
+            failures: parseFailureReasonCounts
+        },
         metrics: aggregateMetrics,
         detailedResults: results
     };
@@ -1232,6 +1637,8 @@ function printExecutionConfig(config) {
         console.log(`   Baseline tools: ${config.baselineTools.join(', ')}`);
         console.log(`   Baseline timeout: ${config.baselineTimeoutMs}ms`);
     }
+    console.log(`   Structured output: ${config.structuredOutput ? 'enabled' : 'disabled'}`);
+    console.log(`   Thinking mode: ${config.disableThinking ? 'disabled' : 'enabled'}`);
     console.log(`   Runs per sample: ${config.runsPerSample}`);
     console.log(`   RAG k: ${config.ragK}`);
     console.log(`   Temperature: ${config.temperature}`);
@@ -1331,6 +1738,8 @@ async function runEvaluation() {
         runBaselines: shouldRunBaselines,
         baselineTools: REQUESTED_BASELINE_TOOLS,
         baselineTimeoutMs: BASELINE_TIMEOUT_MS,
+        structuredOutput: ENABLE_STRUCTURED_OUTPUT,
+        disableThinking: DISABLE_THINKING,
         runsPerSample: RUNS_PER_SAMPLE,
         ragK: RAG_K,
         temperature: TEMPERATURE,
@@ -1384,11 +1793,10 @@ async function runEvaluation() {
     console.log('📊 EVALUATION SUMMARY');
     console.log('='.repeat(80));
 
-    const sortedResults = [...evaluationResults].sort((a, b) =>
-        Number.parseFloat(b.metrics.f1Score) - Number.parseFloat(a.metrics.f1Score)
-    );
+    const rankingStrategy = getRankingStrategy(testCases);
+    const sortedResults = sortEvaluationResults(evaluationResults, rankingStrategy.key);
 
-    console.log('\n🏆 Model Rankings (by F1 Score):\n');
+    console.log(`\n🏆 Model Rankings (${rankingStrategy.label}):\n`);
 
     sortedResults.forEach((result, index) => {
         const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '  ';
@@ -1399,6 +1807,10 @@ async function runEvaluation() {
         console.log(`   Recall:       ${result.metrics.recall}%`);
         console.log(`   FPR:          ${result.metrics.falsePositiveRate}%`);
         console.log(`   Parse Rate:   ${result.parseSuccessRate}%`);
+        const topFailureReasons = formatTopReasonCounts(result.parseDiagnostics?.failures, 2);
+        if (topFailureReasons) {
+            console.log(`   Parse Fail:   ${topFailureReasons}`);
+        }
         console.log(`   Mean Latency: ${result.meanLatencyMs}ms`);
         console.log(`   Median Lat.:  ${result.medianLatencyMs}ms`);
         console.log('');
@@ -1442,7 +1854,11 @@ async function runEvaluation() {
 
     const bestModel = sortedResults[0];
     console.log(`💡 Recommended Model: ${bestModel.model} (${bestModel.promptMode})`);
-    console.log(`   Best F1: ${bestModel.metrics.f1Score}% | Mean latency: ${bestModel.meanLatencyMs}ms`);
+    if (rankingStrategy.key === 'fpr') {
+        console.log(`   Best FPR: ${bestModel.metrics.falsePositiveRate}% | Mean latency: ${bestModel.meanLatencyMs}ms`);
+    } else {
+        console.log(`   Best F1: ${bestModel.metrics.f1Score}% | Mean latency: ${bestModel.meanLatencyMs}ms`);
+    }
 
     const endTimestamp = new Date();
     const timestamp = endTimestamp.toISOString().replace(/[:.]/g, '-');
@@ -1489,6 +1905,11 @@ async function runEvaluation() {
             timeoutMs: TIMEOUT_MS,
             requestDelayMs: REQUEST_DELAY_MS
         },
+        outputContract: {
+            structuredOutput: ENABLE_STRUCTURED_OUTPUT,
+            disableThinking: DISABLE_THINKING,
+            schema: ENABLE_STRUCTURED_OUTPUT ? 'MODEL_RESPONSE_SCHEMA' : 'none'
+        },
         startedAt: startTimestamp.toISOString(),
         finishedAt: endTimestamp.toISOString(),
         totalDurationMs: endTimestamp.getTime() - startTimestamp.getTime(),
@@ -1528,6 +1949,7 @@ async function runEvaluation() {
 function generateMarkdownReport({ results, testCases, executionConfig, executionEnvironment }) {
     const secureCount = testCases.filter(tc => tc.expectedVulnerabilities.length === 0).length;
     const vulnCount = testCases.length - secureCount;
+    const rankingStrategy = getRankingStrategy(testCases);
 
     let report = '# Code Guardian Model Evaluation Report\n\n';
     report += `**Date:** ${new Date().toISOString()}\n\n`;
@@ -1537,7 +1959,7 @@ function generateMarkdownReport({ results, testCases, executionConfig, execution
     report += '| Model | Digest | Prompt Mode | Precision | Recall | F1 | FPR | Parse Rate | Mean Latency | Median Latency | Runs/Sample |\n';
     report += '|-------|--------|-------------|-----------|--------|----|-----|------------|--------------|----------------|-------------|\n';
 
-    const sorted = [...results].sort((a, b) => Number.parseFloat(b.metrics.f1Score) - Number.parseFloat(a.metrics.f1Score));
+    const sorted = sortEvaluationResults(results, rankingStrategy.key);
     sorted.forEach(result => {
         report += `| ${result.model} | ${result.modelVersion.digest || 'N/A'} | ${result.promptMode} | ${result.metrics.precision}% | ${result.metrics.recall}% | ${result.metrics.f1Score}% | ${result.metrics.falsePositiveRate}% | ${result.parseSuccessRate}% | ${result.meanLatencyMs}ms | ${result.medianLatencyMs}ms | ${result.runsPerSample} |\n`;
     });
@@ -1560,6 +1982,8 @@ function generateMarkdownReport({ results, testCases, executionConfig, execution
     }
     report += `- **RAG Strategy:** ${executionConfig.rag.strategy}\n`;
     report += `- **RAG k:** ${executionConfig.rag.k}\n`;
+    report += `- **Structured Output:** ${executionConfig.outputContract?.structuredOutput ? 'enabled' : 'disabled'}\n`;
+    report += `- **Thinking Mode:** ${executionConfig.outputContract?.disableThinking ? 'disabled' : 'enabled'}\n`;
     report += `- **Temperature:** ${executionConfig.modelGeneration.temperature}\n`;
     report += `- **Num Predict:** ${executionConfig.modelGeneration.numPredict}\n`;
     report += `- **Runs per Sample:** ${executionConfig.runsPerSample}\n`;
@@ -1595,6 +2019,7 @@ function generateMarkdownReport({ results, testCases, executionConfig, execution
         report += `- **F1 Score:** ${result.metrics.f1Score}%\n`;
         report += `- **FPR:** ${result.metrics.falsePositiveRate}%\n`;
         report += `- **Parse Rate:** ${result.parseSuccessRate}%\n`;
+        report += `- **Parse Failure Reasons:** ${formatTopReasonCounts(result.parseDiagnostics?.failures, 5) || 'none'}\n`;
         report += `- **Mean Latency:** ${result.meanLatencyMs} ms\n`;
         report += `- **Median Latency:** ${result.medianLatencyMs} ms\n`;
         report += `- **Line Accuracy:** ${result.metrics.lineAccuracy}%\n`;

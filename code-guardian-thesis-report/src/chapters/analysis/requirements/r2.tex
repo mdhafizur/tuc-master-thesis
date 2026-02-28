@@ -15,7 +15,7 @@ Retrieval-Augmented Generation supports this requirement by grounding vulnerabil
 
 The advantages of strong context-aware vulnerability reasoning are multifold. It improves detection accuracy by reducing false positives and false negatives caused by superficial pattern matching. It enhances robustness to coding style variation by focusing on semantic behavior rather than syntactic form. It also improves developer trust, as reported vulnerabilities more closely align with actual security risks in the codebase.
 
-For evaluation, context-aware reasoning is assessed using classification metrics that measure the correctness of vulnerability detection and categorization in context-rich scenarios. Precision, recall, and macro-averaged F1-score are computed over benchmarks containing both vulnerable and non-vulnerable code samples with similar surface patterns. In addition, localization accuracy is measured by evaluating whether the system correctly identifies the relevant code regions contributing to the vulnerability. These metrics collectively capture the system’s ability to reason about vulnerabilities in context rather than in isolation.
+For evaluation, context-aware reasoning is assessed using classification metrics over context-rich scenarios where surface patterns alone are insufficient. In this thesis run, the operational quantitative proxy is pooled issue-level precision/recall/F1 under fixed scoring rules, complemented by localization observations and qualitative case studies (mitigation recognition, representative misses, and over-warning behavior). Macro-averaged class-wise context metrics remain a preferred extension when class-balanced paired outputs are exported at finer granularity.
 
 \begin{table}[h!]
 \centering
@@ -23,23 +23,23 @@ For evaluation, context-aware reasoning is assessed using classification metrics
 \setlength{\tabcolsep}{12pt}
 \begin{tabularx}{\textwidth}{|>{\centering\arraybackslash}m{3cm}|>{\arraybackslash}X|}
 \hline
-\textbf{Reasoning Level} & \textbf{Interpretation (example criteria)} \\
+\textbf{Reasoning Level} & \textbf{Interpretation (operational proxy criteria)} \\
 \hline
 High &
-\textbf{High context awareness.} The system correctly integrates dispersed context, recognizes mitigation logic, and avoids unsupported inference. Vulnerability classification and localization are accurate (macro F1 $\geq 0.80$). \\
+\textbf{High context awareness.} The system correctly integrates dispersed context, recognizes mitigation logic, and avoids unsupported inference. Vulnerability classification and localization are accurate (pooled issue-level F1 $\geq 0.80$ plus strong qualitative evidence). \\
 \hline
 Medium &
-\textbf{Moderate context awareness.} The system integrates some contextual information but occasionally misses mitigations or misinterprets dependencies (macro F1 in $[0.65, 0.80)$). \\
+\textbf{Moderate context awareness.} The system integrates some contextual information but occasionally misses mitigations or misinterprets dependencies (pooled issue-level F1 in $[0.65, 0.80)$). \\
 \hline
 Low &
-\textbf{Low context awareness.} The system relies primarily on surface patterns, leading to frequent false positives or missed vulnerabilities (macro F1 in $[0.50, 0.65)$). \\
+\textbf{Low context awareness.} The system relies primarily on surface patterns, leading to frequent false positives or missed vulnerabilities (pooled issue-level F1 in $[0.50, 0.65)$). \\
 \hline
 None &
-\textbf{No context awareness.} The system fails to incorporate contextual information and produces unreliable vulnerability assessments (macro F1 $< 0.50$). \\
+\textbf{No context awareness.} The system fails to incorporate contextual information and produces unreliable vulnerability assessments (pooled issue-level F1 $< 0.50$). \\
 \hline
 \end{tabularx}
 \caption{Evaluation scale for R2: Context-Aware Vulnerability Reasoning.}
 \label{tab:r2-context-awareness}
 \end{table}
 
-In summary, R2 ensures that vulnerability detection is grounded in semantic and structural understanding of source code rather than superficial pattern matching. By integrating dispersed context, accounting for mitigation logic, and avoiding unsupported assumptions, the system provides accurate and trustworthy vulnerability assessments that reflect real-world security risks in modern codebases.
+R2 requires semantic reasoning beyond surface patterns. When the assistant can combine dispersed context, account for mitigation logic, and explicitly handle uncertainty, vulnerability assessments align more closely with real security risk.

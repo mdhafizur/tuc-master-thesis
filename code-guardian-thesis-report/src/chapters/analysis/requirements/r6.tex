@@ -11,7 +11,7 @@ Unlike other requirements—such as detection accuracy (R1), contextual reasonin
 
 Latency, however, is not an absolute property of the system alone. It is strongly influenced by the \textbf{hardware and deployment environment} on which the system operates. Dedicated accelerators such as GPUs can significantly reduce inference time, whereas CPU-only or resource-constrained environments typically incur higher latency. Additionally, factors such as model size, retrieval depth, and concurrency affect responsiveness. For this reason, all latency measurements must be reported together with the corresponding hardware profile, including processor type, available memory, and accelerator configuration. This ensures that usability claims are interpreted relative to realistic deployment scenarios rather than as hardware-agnostic performance guarantees.
 
-For evaluation, usability is measured using the 95th percentile end-to-end (p95 E2E) latency across representative interaction scenarios. The p95 metric captures worst-case responsiveness experienced by users while remaining robust to isolated outliers. Separate latency measurements are reported for interactive inline detection and for more comprehensive, explicitly triggered analyses.
+For evaluation in this thesis run, usability is operationalized with \textbf{median} end-to-end latency (typical interaction cost) and \textbf{mean} latency (slow-tail sensitivity proxy) across representative interaction scenarios. This matches the current harness output and avoids overstating p95 claims that are not directly exported in the reported artifacts. Separate latency measurements are still reported for interactive inline detection and more comprehensive explicitly triggered analyses.
 
 \begin{table}[h!]
 \centering
@@ -19,20 +19,20 @@ For evaluation, usability is measured using the 95th percentile end-to-end (p95 
 \setlength{\tabcolsep}{12pt}
 \begin{tabularx}{\textwidth}{|>{\centering\arraybackslash}m{3cm}|>{\arraybackslash}X|}
 \hline
-\textbf{Visual Score} & \textbf{Interpretation} \\
+\textbf{Visual Score} & \textbf{Interpretation (median/mean criteria)} \\
 \hline
 \centering\raisebox{0pt}{\tikz[baseline]{\filldraw[fill=black] (0,0) circle (0.4cm);}} 
-& \textbf{High usability.} p95 end-to-end latency $\leq$ 2\,s for inline detection on the declared hardware profile. Interaction remains fluid and non-disruptive. \\
+& \textbf{High usability.} Median end-to-end latency $\leq$ 2\,s and mean latency $\leq$ 3\,s for inline detection on the declared hardware profile. Interaction remains fluid and non-disruptive. \\
 \hline
 \centering\raisebox{0pt}{\tikz[baseline]{\filldraw[fill=black] (0,0) -- (90:0.4cm) arc (90:-90:0.4cm) -- cycle; \draw (0,0) circle (0.4cm);}}
-& \textbf{Medium usability.} p95 end-to-end latency in $(2, 5)$\,s. Delay is noticeable but acceptable for security feedback that is not continuously triggered. \\
+& \textbf{Medium usability.} Median latency in $(2, 5)$\,s or mean latency in $(3, 6)$\,s. Delay is noticeable but acceptable for non-continuous security feedback. \\
 \hline
 \centering\raisebox{0pt}{\tikz[baseline]{\draw (0,0) circle (0.4cm);}} 
-& \textbf{No usability.} p95 end-to-end latency $>$ 5\,s for inline scenarios or frequent timeouts. Feedback is too slow for practical integration into the development workflow. \\
+& \textbf{No usability.} Median latency $>$ 5\,s, mean latency $>$ 6\,s, or frequent timeouts in inline scenarios. Feedback is too slow for practical integration into the development workflow. \\
 \hline
 \end{tabularx}
-\caption{Evaluation scale for R6: Usability (Latency).}
+\caption{Evaluation scale for R6: Usability (Latency, median/mean operationalization).}
 \label{tab:r6-usability}
 \end{table}
 
-In summary, usability in this framework is defined as responsiveness measured through end-to-end latency for IDE-integrated vulnerability detection and repair. Because latency is inherently dependent on hardware and deployment conditions, all usability evaluations must be contextualized by reporting the corresponding execution environment. This ensures that results are comparable, interpretable, and grounded in realistic usage scenarios.
+In this thesis, usability is evaluated primarily through responsiveness under realistic hardware constraints. Reporting latency together with environment details keeps performance claims comparable and interpretable.

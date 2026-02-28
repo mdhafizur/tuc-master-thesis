@@ -1,7 +1,7 @@
 \section{System Workflow}
 \label{sec:system-workflow}
 
-This section describes the operational workflow of the Code Guardian system, tracing how JavaScript/TypeScript code inside Visual Studio Code is transformed into vulnerability findings and repair suggestions. The workflow operationalizes the conceptual design from Chapter~\ref{chap:concept} and aligns the implementation with the requirements defined in Chapter~\ref{chap:analysis}, especially privacy-preserving operation (R5), responsiveness (R6), and explainability (R3).
+This section explains how Code Guardian turns JavaScript/TypeScript code in Visual Studio Code into vulnerability findings and repair suggestions. The workflow implements the design from Chapter~\ref{chap:concept} and ties it to the requirements in Chapter~\ref{chap:analysis}, especially privacy-preserving operation (R5), responsiveness (R6), and explainability (R3).
 
 \subsection*{End-to-End Processing Flow}
 
@@ -26,6 +26,45 @@ Code Guardian exposes multiple analysis triggers (real-time and explicit command
 
     \item \textbf{Caching and statistics}: Results are cached by (code snippet, model) to avoid repeated inference. The cache uses LRU-style eviction and a time-to-live policy, and cache statistics can be inspected from the UI to validate responsiveness improvements under repeated edits.
 \end{enumerate}
+
+\subsection*{Deterministic Orchestration Contract}
+
+Although model inference is probabilistic, orchestration in the extension is intentionally deterministic. For a fixed input snapshot, active model, and prompt mode, the non-model part of the pipeline (scope extraction, prompt assembly structure, parsing, localization mapping, and diagnostic emission) follows a fixed sequence with explicit guard conditions. This reduces operational variance and isolates model effects during debugging and evaluation.
+
+The runtime control flow can be summarized as:
+\begin{lstlisting}[caption={Simplified orchestration logic for diagnostics flow}, label={lst:impl-orchestration}]
+onTrigger(event):
+  scope = extractScope(event, mode)
+  if scope.isEmpty or scope.size > scopeLimit: return
+
+  key = hash(scope.text, model, ragEnabled)
+  if cache.hasFresh(key):
+    return render(cache.get(key), scope.offset)
+
+  prompt = buildPrompt(scope.text, ragContextIfEnabled)
+  raw = callLocalModel(prompt, timeout, retries)
+  issues = parseAndValidateJsonArray(raw)
+  mapped = mapSnippetLinesToDocument(issues, scope.offset)
+
+  cache.put(key, mapped)
+  render(mapped, scope.offset)
+\end{lstlisting}
+
+\subsection*{Cost and Latency Drivers}
+
+In practice, end-to-end latency is driven by a small set of controllable factors:
+\begin{itemize}
+  \item \textbf{Scope size}: larger snippets increase prompt length and token-generation time.
+  \item \textbf{Model profile}: higher-capacity models generally improve reasoning capacity at the cost of slower response.
+  \item \textbf{RAG context volume}: retrieval adds embedding/search overhead and prompt expansion.
+  \item \textbf{Cache hit rate}: repeated edits over similar snippets can avoid most model calls.
+\end{itemize}
+
+This can be interpreted with a simple additive model:
+\[
+T_{\text{e2e}} \approx T_{\text{extract}} + T_{\text{retrieve}} + T_{\text{infer}} + T_{\text{parse/map}} + T_{\text{render}},
+\]
+where \(T_{\text{retrieve}}\) is near zero in LLM-only mode and \(T_{\text{infer}}\) dominates in most non-cached calls. The implementation choices in this chapter primarily target the dominant terms (\(T_{\text{infer}}\) and, when enabled, \(T_{\text{retrieve}}\)).
 
 \subsection*{Interactive vs.\ Batch Workflows}
 

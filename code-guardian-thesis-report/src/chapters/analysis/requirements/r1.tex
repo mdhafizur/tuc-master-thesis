@@ -14,7 +14,7 @@ This requirement is particularly critical because modern development workflows i
 
 From a system design perspective, achieving consistency requires controlling sources of nondeterminism in LLM inference and grounding vulnerability reasoning in structured security knowledge. Retrieval-Augmented Generation contributes to this goal by anchoring model outputs to curated vulnerability descriptions and examples, thereby reducing reliance on purely generative reasoning and mitigating hallucination.
 
-For evaluation, detection consistency is assessed using repeated analyses of identical code samples under fixed configurations. We measure agreement between runs using macro-averaged precision, recall, and F1-score for vulnerability presence and classification. In addition, label agreement metrics are used to quantify stability in vulnerability categorization across runs. A high degree of agreement indicates that the system produces stable and reliable security findings.
+For evaluation, detection consistency is assessed using repeated analyses of identical code samples under fixed configurations. In this thesis run, the operational primary indicator is \emph{pooled issue-level F1} across repeated runs, complemented by parse stability and qualitative checks of label/localization stability. Macro-averaged class-wise agreement remains the preferred long-term measure when per-class paired outputs are fully exported, but is not the scoring primitive used by the current harness.
 
 \begin{table}[h!]
 \centering
@@ -22,23 +22,23 @@ For evaluation, detection consistency is assessed using repeated analyses of ide
 \setlength{\tabcolsep}{12pt}
 \begin{tabularx}{\textwidth}{|>{\centering\arraybackslash}m{3cm}|>{\arraybackslash}X|}
 \hline
-\textbf{Consistency Level} & \textbf{Interpretation (example thresholds)} \\
+\textbf{Consistency Level} & \textbf{Interpretation (operational proxy thresholds)} \\
 \hline
 High &
-\textbf{High consistency.} Vulnerability presence and classification are stable across runs (macro F1 $\geq 0.80$), with minimal variation in localization and explanation structure. \\
+\textbf{High consistency.} Vulnerability presence and classification are stable across runs (pooled issue-level F1 $\geq 0.80$), with minimal variation in localization and explanation structure. \\
 \hline
 Medium &
-\textbf{Moderate consistency.} Minor variations in classification or explanation occur (macro F1 in $[0.65, 0.80)$), but core vulnerability detection remains stable. \\
+\textbf{Moderate consistency.} Minor variations in classification or explanation occur (pooled issue-level F1 in $[0.65, 0.80)$), but core vulnerability detection remains stable. \\
 \hline
 Low &
-\textbf{Low consistency.} Frequent changes in vulnerability presence or classification (macro F1 in $[0.50, 0.65)$), indicating unstable detection behavior. \\
+\textbf{Low consistency.} Frequent changes in vulnerability presence or classification (pooled issue-level F1 in $[0.50, 0.65)$), indicating unstable detection behavior. \\
 \hline
 None &
-\textbf{No consistency.} Detection results vary substantially across runs (macro F1 $< 0.50$), undermining trust in the system. \\
+\textbf{No consistency.} Detection results vary substantially across runs (pooled issue-level F1 $< 0.50$), undermining trust in the system. \\
 \hline
 \end{tabularx}
-\caption{Evaluation scale for R1: Detection Consistency (example thresholds).}
+\caption{Evaluation scale for R1: Detection Consistency (operational proxy thresholds).}
 \label{tab:r1-detection-consistency}
 \end{table}
 
-In summary, R1 ensures that vulnerability detection results are stable, reproducible, and uniformly structured across repeated analyses. By enforcing consistency across detection outcomes, classification, explanation, and localization, the system provides developers with reliable security feedback that can be trusted and acted upon within real-world development workflows.
+R1 is fundamentally about predictable behavior: the same code should lead to comparable findings, labels, explanations, and localization across runs. Without that stability, developers cannot reliably act on the tool’s output in day-to-day workflows.

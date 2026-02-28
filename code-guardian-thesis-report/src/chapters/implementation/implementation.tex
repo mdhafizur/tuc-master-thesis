@@ -1,5 +1,7 @@
 Building on the conceptual architecture introduced in the previous chapter, this chapter describes the implementation of \textit{Code Guardian}: a privacy-preserving vulnerability detection and repair assistant integrated into Visual Studio Code. It details the technology stack, end-to-end workflow, core component implementation, orchestration modes (LLM-only vs.\ LLM+RAG), and the user interface exposed inside the IDE.
 
+The implementation focus is intentionally engineering-oriented: how design requirements are translated into runtime behavior, guardrails, and failure handling on real developer hardware. Where relevant, this chapter emphasizes reproducibility-relevant details (execution order, schema contracts, caching behavior, and local privacy boundaries) so that evaluation outcomes in Chapter~\ref{chap:evaluation} can be interpreted against concrete implementation mechanisms rather than high-level architecture alone.
+
 \input{src/chapters/implementation/tech_stack}
 \input{src/chapters/implementation/system_workflow}
 \input{src/chapters/implementation/agent}

@@ -19,6 +19,9 @@ When a finding includes a suggested fix, Code Guardian offers a \textit{Quick Fi
 \paragraph{Developer control.}
 The prototype does not apply patches automatically. Instead, suggested fixes are attached to diagnostics and surfaced through the standard lightbulb UI. This design reflects the practical risk that an LLM-generated patch may be security-improving but behavior-changing; keeping the developer in the loop is therefore essential for safe adoption.
 
+\paragraph{Interaction contract for fixes.}
+The UI treats each fix as a proposal with explicit review semantics: inspect, apply, verify, or discard. This interaction contract reduces automation surprise and makes remediation decisions auditable in normal editor history. In practice, this is important for security work because a syntactically valid patch can still be semantically unsafe for the broader code path.
+
 \subsection{Interactive Analysis View and Contextual Q\&A}
 \label{subsec:ui-webview}
 
@@ -35,6 +38,9 @@ The workspace dashboard aggregates findings across the codebase. It provides a s
 \paragraph{Score and prioritization.}
 To support triage, the dashboard computes a coarse security score based on issue density and severity heuristics, and surfaces the files with the highest concentration of findings. The score is intended as a prioritization aid rather than a formal risk metric; the underlying findings should still be inspected and validated by the developer.
 
+\paragraph{Triage workflow support.}
+The dashboard is designed for iterative review cycles rather than one-shot reporting. Developers can jump from aggregate views to file-level findings, apply fixes, and rescan to observe trend changes. This feedback loop helps convert raw detection output into actionable remediation planning at repository scale.
+
 \subsection{Model and RAG Controls}
 \label{subsec:ui-controls}
 
@@ -42,3 +48,15 @@ Because Code Guardian is intended to run on developer hardware with varying reso
 
 \paragraph{RAG and cache management.}
 The prototype also exposes maintenance commands for (i) updating vulnerability metadata used for the local knowledge base, (ii) rebuilding or searching the knowledge base, and (iii) inspecting and clearing the analysis cache. These controls help developers validate performance improvements (cache hit rates) and keep the retrieval corpus current without sacrificing source-code privacy.
+
+\subsection{Human Factors and Safe Adoption}
+\label{subsec:ui-human-factors}
+
+Beyond visual presentation, safe adoption depends on how the interface shapes trust and attention. Three patterns are used in the prototype:
+\begin{itemize}
+  \item \textbf{Proximity:} findings appear at the relevant code location to minimize context switching.
+  \item \textbf{Progressive depth:} concise diagnostics for inline use, richer rationale in WebViews when needed.
+  \item \textbf{Reversibility:} quick-fix actions remain undoable, preserving safe experimentation.
+\end{itemize}
+
+These patterns do not guarantee correctness, but they reduce operational friction and over-automation risk. In security-sensitive workflows, this balance between assistance and control is a prerequisite for sustained usage.

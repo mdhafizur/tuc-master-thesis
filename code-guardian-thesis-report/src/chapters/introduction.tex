@@ -64,6 +64,15 @@ This work makes the following contributions:
   \item \textbf{Implementation insights:} practical patterns for integrating local LLM inference into IDE feedback loops (debounced triggers, function-level scoping, and caching).
 \end{itemize}
 
+\section{Research Method and Evaluation Strategy}
+\label{sec:intro-method}
+
+The thesis follows a design-and-evaluate methodology. First, requirements are derived from the problem analysis and related work, with explicit attention to privacy constraints, explainability needs, and IDE usability. Second, these requirements are translated into a concrete architecture and implemented as a working VS Code extension. Third, the implemented system is assessed through reproducible local experiments that compare models and prompt modes under matched runtime settings.
+
+Methodologically, this work combines quantitative and qualitative evidence. Quantitative scoring focuses on detection behavior (precision, recall, F1, false-positive behavior on secure samples), structured-output reliability (JSON parse success), and responsiveness (latency). Qualitative analysis complements these metrics by examining representative true-positive, false-positive, and false-negative cases, with emphasis on explanation quality and practical repair usefulness in editor workflows.
+
+This mixed evidence strategy is intentional: security tooling quality cannot be inferred from one metric alone. High recall with persistent secure-sample over-warning can still be operationally expensive, and low latency without sufficient recall provides limited security value. By reporting both measurable outcomes and workflow-level observations, the thesis aims to provide a decision-relevant assessment of when local LLM assistance is useful and where stronger safeguards are still required.
+
 \section{Thesis Structure}
 \label{sec:intro-structure}
 

@@ -28,9 +28,9 @@ The system must generate concrete, security-aware repair suggestions that addres
 All analysis, retrieval, and generation steps must be performed locally without transmitting source code or derived artifacts to external services. The system must operate with locally deployed models and locally stored vulnerability knowledge, ensuring that proprietary code remains confidential and that results are reproducible across environments.
 
 \textbf{R6 – Usability and Responsiveness:}  
-The system must integrate smoothly into the IDE and provide feedback within acceptable latency bounds. Inline detection should support near–real-time interaction to avoid disrupting the development flow, while more comprehensive audit operations may tolerate higher latency. Usability is evaluated with respect to end-to-end response time, clarity of presented information, and compatibility with typical developer hardware configurations.
+The system must integrate smoothly into the IDE and provide feedback within acceptable latency bounds. Inline detection should support near-real-time interaction to avoid disrupting the development flow, while more comprehensive audit operations may tolerate higher latency. Usability is evaluated with respect to end-to-end response time, clarity of presented information, and compatibility with typical developer hardware configurations.
 
-These six requirements define the evaluation criteria for the proposed system. In the following chapters, each requirement is addressed through specific architectural choices and implementation strategies. The evaluation chapter assesses to what extent the system satisfies these requirements in practice, using quantitative metrics and reproducible benchmarks.
+These six requirements define the evaluation baseline for the proposed system. The following chapters map them to concrete architectural and implementation choices, and Chapter~\ref{chap:evaluation} tests them using reproducible quantitative evidence.
 
 \subsection{R1: Detection Accuracy and Consistency}\vspace{-2mm}
 \input{src/chapters/analysis/requirements/r1} 
@@ -70,3 +70,28 @@ This section reviews prior research relevant to LLM-based vulnerability detectio
 
 \subsection{Positioning of This Thesis}\vspace{-2mm}
 \input{src/chapters/analysis/related_works/positioning}
+
+\subsection{Critical Comparison Across Paradigms}
+\label{sec:related-work-critical-comparison}
+
+The reviewed literature suggests that security-assistance approaches should be compared as \emph{design paradigms}, not as isolated tools. Table~\ref{tab:related-work-paradigm-compare} summarizes the dominant trade-offs that motivate the architecture of this thesis.
+
+\begin{table}[H]
+  \centering
+  \caption{Critical comparison of major security-assistance paradigms.}
+  \label{tab:related-work-paradigm-compare}
+  \footnotesize
+  \renewcommand{\arraystretch}{1.15}
+  \begin{tabularx}{\textwidth}{p{0.18\textwidth}XXX}
+    \toprule
+    Paradigm & Primary strengths & Primary limitations & Implication for this thesis \\
+    \midrule
+    Rule-based SAST & Deterministic behavior, reproducible CI/CD integration, explicit audit trails. & Limited semantic adaptation; triage burden under noisy rule sets; weak fix guidance. & Keep deterministic diagnostics integration and baseline comparison, but augment reasoning and remediation support. \\
+    LLM-only IDE assistant & Flexible reasoning, natural-language explanation, candidate repair generation in context. & Probabilistic behavior, hallucination risk, format instability, variable false-positive control. & Enforce strict output contracts, conservative failure handling, and developer-controlled patch application. \\
+    RAG-assisted LLM & Better grounding to external security knowledge; improved explanation alignment in favorable configurations. & Retrieval sensitivity (quality, chunking, top-$k$), model-dependent gains, additional latency/cost. & Treat RAG as a tunable strategy per model/workflow, not a universal default. \\
+    Local-first deployment & Strong source-code privacy boundary, reproducibility across runs, suitability for restricted environments. & Higher dependence on local hardware and operational hardening; local compromise remains in scope. & Prioritize no-code-exfiltration architecture while making assumptions and residual risks explicit. \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+Two conclusions follow from this comparison. First, no single paradigm dominates all requirements R1--R6 simultaneously; practical systems must combine complementary mechanisms. Second, evaluation must include both quality and operational metrics, because deployment-relevant value depends on the joint behavior of recall, false-positive control, output robustness, latency, and privacy guarantees.

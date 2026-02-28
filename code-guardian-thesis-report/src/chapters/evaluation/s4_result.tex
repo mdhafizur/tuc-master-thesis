@@ -36,9 +36,9 @@ Because Code Guardian operates inside the IDE, repair suggestions are intentiona
 
 Observed failure modes in the run include:
 \begin{itemize}
-  \item \textbf{Parse instability:} some model/mode combinations return malformed or non-JSON outputs at high rates.
-  \item \textbf{Over-warning:} secure patterns flagged as vulnerable, especially with \texttt{gemma3:4b}.
-  \item \textbf{Under-warning:} conservative configurations (notably \texttt{gemma3:1b} with RAG) missing most vulnerable samples.
+  \item \textbf{Over-warning:} many secure patterns are still flagged as vulnerable in multiple configurations.
+  \item \textbf{Model-dependent recall shifts under RAG:} some models improve (notably \texttt{qwen3} variants), while others degrade.
+  \item \textbf{Conservative under-warning:} low-latency configurations can miss many vulnerable samples.
   \item \textbf{High-latency audit modes:} strongest F1 configurations may still be too slow for inline workflows.
 \end{itemize}
 
@@ -54,10 +54,10 @@ Observed failure modes in the run include:
     \toprule
     Error pattern & Representative evidence & Quantitative impact in this run \\
     \midrule
-    Parse-collapse regimes & \texttt{qwen3:4b} and \texttt{CodeLlama:latest} (both modes) & Parse rates dropped to 1.01--5.05\%, and recall remained 0.00\% in all but one configuration (\texttt{CodeLlama:latest} LLM-only: 3.70\%). \\
-    Secure-sample over-warning & \texttt{gemma3:4b} (LLM-only and LLM+RAG) & FPR reached 100\% in both modes (45/45 secure evaluations flagged). \\
-    Conservative under-detection & \texttt{gemma3:1b} (especially LLM+RAG) & Recall was 5.56\% (3/54) in LLM-only and 0.00\% (0/54) with RAG. \\
-    High-latency high-F1 mode & \texttt{qwen3:8b} (LLM+RAG) & Best F1 (42.70\%) and lower FPR (27.12\%) came with high latency (median 7809\,ms; mean 9012\,ms). \\
+    Persistent secure-sample over-warning & \texttt{gemma3:4b}, \texttt{qwen3:4b}, \texttt{CodeLlama:latest} (both modes) & FPR remained 100\% in merged evaluation (all secure samples were flagged in these modes). \\
+    Model-dependent RAG effect & \texttt{qwen3} vs.\ \texttt{gemma3:4b}/\texttt{CodeLlama} & RAG improved \texttt{qwen3:8b} (F1 58.12\% $\rightarrow$ 63.76\%) and \texttt{qwen3:4b} (54.90\% $\rightarrow$ 58.67\%), but reduced \texttt{gemma3:4b} and \texttt{CodeLlama:latest}. \\
+    Conservative under-detection & \texttt{gemma3:1b} (LLM-only) & Recall remained comparatively low at 25.66\% (87/339) despite fast latency. \\
+    High-latency high-F1 mode & \texttt{qwen3:8b} (LLM+RAG) & Best F1 (63.76\%) and best LLM FPR (26.67\%) came with higher latency (median 1524\,ms; mean 1827\,ms). \\
     \bottomrule
   \end{tabular}
 \end{table}

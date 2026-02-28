@@ -1,16 +1,16 @@
 \section{Datasets}
 \label{sec:eval-dataset}
 
-The evaluation dataset is a project-authored curated set of JavaScript and TypeScript security cases maintained alongside the Code Guardian prototype in \path{code-guardian/evaluation/datasets/}. Cases are aligned to CWE/OWASP concepts. Each test case consists of (i) a short code snippet, (ii) a list of expected vulnerabilities with CWE identifiers and severities, and (iii) an expected remediation description. Two datasets are provided:
+The evaluation dataset is a project-authored curated set of JavaScript and TypeScript security cases maintained alongside the Code Guardian prototype in \path{code-guardian-extension/evaluation/datasets/}. Cases are aligned to CWE/OWASP concepts. Each test case consists of (i) a short code snippet, (ii) a list of expected vulnerabilities with CWE identifiers and severities, and (iii) an expected remediation description. Two datasets are provided:
 \begin{itemize}
   \item \textbf{Core dataset:} \texttt{vulnerability-test-cases.json} contains representative examples for common vulnerability classes (e.g., SQL injection, XSS, command injection, path traversal) as well as a small number of secure examples to measure false positives.
   \item \textbf{Advanced dataset:} \texttt{advanced-test-cases.json} contains additional vulnerability types and more nuanced patterns (e.g., insecure CORS configuration, timing attacks, mass assignment).
 \end{itemize}
 
-In the evaluated prototype version used for this thesis run, the scored dataset (\texttt{vulnerability-test-cases.json}) contains \textbf{33} test cases (\textbf{18} vulnerable and \textbf{15} secure). Expected findings are annotated with CWE identifiers to support aggregation by vulnerability class.
+In the evaluated prototype version used for this thesis run, the scored thesis result set combines \textbf{128} test cases (\textbf{113} vulnerable and \textbf{15} secure). The vulnerable portion comes from \texttt{all-test-cases.generated.json} (all-sources generation), while secure cases are merged from \texttt{negatives-only.generated.json}. Expected findings are annotated with CWE identifiers to support aggregation by vulnerability class.
 
 \paragraph{Which dataset is scored in this chapter.}
-The repository-contained evaluation harness used in this thesis (\path{code-guardian/evaluation/evaluate-models.js}) was run in ablation mode with \texttt{--ablation --runs=3}. Unless stated otherwise, quantitative results in Chapter~\ref{chap:evaluation} refer to this 33-case dataset.
+The repository-contained evaluation harness used in this thesis (\path{code-guardian-extension/evaluation/evaluate-models.js}) was run in ablation mode with \texttt{--ablation --runs=3} for the generated vulnerable set, and complemented with a negatives-only run to restore secure-sample coverage for FPR/TN interpretation. Unless stated otherwise, quantitative results in Chapter~\ref{chap:evaluation} refer to this merged 128-case thesis result set.
 
 Vulnerability classes are aligned with the Common Weakness Enumeration taxonomy \cite{mitreCWE}, and severities are recorded as coarse labels to support prioritization and reporting. Where applicable, severity can be related back to standardized scoring systems such as CVSS and public vulnerability databases such as CVE/NVD \cite{firstCvss31,mitreCVE,nistNVD}.
 
