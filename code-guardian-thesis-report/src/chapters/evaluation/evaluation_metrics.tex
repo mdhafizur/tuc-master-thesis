@@ -1,7 +1,7 @@
 \section{Evaluation Metrics}
 \label{sec:eval-metrics}
 
-We evaluate Code Guardian along complementary axes aligned with Chapter~\ref{chap:analysis}: detection quality (R1--R2), explainability/structure (R3), and responsiveness (R6).
+We evaluate Code Guardian along complementary axes aligned with Chapter~\ref{chap:analysis}: detection quality (R1--R2), explainability/structure (R3), and responsiveness (R6). Unless explicitly stated otherwise, quantitative values are reported as descriptive point estimates for this run configuration, with uncertainty intervals added for key decision metrics in Section~\ref{sec:eval-summary}.
 
 \subsection*{Detection Quality}
 
@@ -10,14 +10,23 @@ Given an expected set of vulnerability types per test case and a detected set of
   \item \textbf{Precision:} $\mathrm{TP}/(\mathrm{TP}+\mathrm{FP})$
   \item \textbf{Recall:} $\mathrm{TP}/(\mathrm{TP}+\mathrm{FN})$
   \item \textbf{F1 score:} harmonic mean of precision and recall
-  \item \textbf{False positive rate (FPR):} $\mathrm{FP}/(\mathrm{FP}+\mathrm{TN})$ on secure examples
+  \item \textbf{False positive rate (FPR):} $\mathrm{FP}/(\mathrm{FP}+\mathrm{TN})$ on secure examples, computed at \emph{sample level} (a secure sample counts as FP if any issue is emitted)
   \item \textbf{Accuracy:} $(\mathrm{TP}+\mathrm{TN})/N$
 \end{itemize}
 
 Matching is performed at the vulnerability-type level. To account for naming variation (e.g., ``Cross-Site Scripting'' vs.\ ``XSS''), the evaluation script applies case-insensitive substring matching between expected and detected type strings.
 
+\paragraph{Interpretation of precision and recall in this setup.}
+In this thesis, precision primarily reflects \emph{alert quality} under the chosen ontology and matching rule, while recall reflects \emph{coverage} of expected vulnerability classes. Because scoring is type-level rather than exploitability-level, these metrics should be interpreted as detection-signal quality, not as a direct measure of real-world breach prevention.
+
+\paragraph{Operational metric alignment for R1--R2.}
+The current harness exports pooled issue-level confusion counts, so R1 and R2 are operationalized with pooled issue-level precision/recall/F1 plus qualitative evidence (localization behavior, representative TP/FN/FP cases). Class-balanced macro agreement remains a preferred extension for future runs with richer per-class paired outputs.
+
 \paragraph{Secure examples.}
-The scored dataset used in this chapter includes \textbf{15} intentionally secure snippets. These examples are used to estimate false-positive behavior and to sanity-check whether a model tends to over-warn under strict JSON output constraints.
+The scored dataset used in this chapter includes \textbf{15} intentionally secure snippets. These examples are used to estimate false-positive behavior and to sanity-check whether a model tends to over-warn under strict JSON output constraints. Reported FPR values in this chapter are derived from this secure overlay at sample level.
+
+\paragraph{Why sample-level FPR matters operationally.}
+In IDE workflows, a secure snippet that triggers \emph{any} warning still creates developer triage overhead. Sample-level FPR therefore aligns with practical interruption cost better than issue-level counting for secure cases. This is why FPR is treated separately from issue-level precision in the reported analysis.
 
 \subsection*{Structured Output Robustness}
 
@@ -29,6 +38,9 @@ Because Code Guardian integrates findings into IDE diagnostics, structured outpu
 \paragraph{How parse failures are treated.}
 In the evaluation harness, responses that do not parse as a JSON array are counted as parse failures and are scored as producing an empty set of issues. For vulnerable test cases, this manifests as false negatives (missed findings); for secure test cases, it can appear as a true negative but still indicates that the system is not usable for IDE automation. Reporting parse success rate separately is therefore important to avoid over-interpreting accuracy numbers when a model frequently produces malformed output.
 
+\paragraph{Structured-output robustness as a gating metric.}
+For editor automation, parse reliability is not optional. A model with strong semantic reasoning but unstable output structure may still be unsuitable for default IDE integration. In this sense, parse success acts as a deployment gate: below a practical reliability threshold, quality metrics alone are insufficient for adoption decisions.
+
 \subsection*{Responsiveness}
 
 We measure:
@@ -36,7 +48,10 @@ We measure:
   \item \textbf{Response time:} wall-clock time per analysis call (milliseconds), summarized by mean and median.
 \end{itemize}
 
-Latency is interpreted in the context of IDE workflows: function-level analysis has tighter budgets than file-level or workspace scans.
+Latency is interpreted in the context of IDE workflows: function-level analysis has tighter budgets than file-level or workspace scans. In this thesis revision, R6 is evaluated with median latency as the primary usability indicator and mean latency as a tail-sensitivity proxy, matching the exported harness statistics.
+
+\paragraph{Latency distribution matters more than mean latency alone.}
+Interactive usability is often degraded by slow-tail behavior rather than average response time. Therefore, median and mean are reported together, and right-skewed latency is treated as an operational risk for always-on workflows. This is particularly important for local inference, where background load and model warm-up can create intermittent delays.
 
 \paragraph{Limits of the scoring setup.}
 The current quantitative scoring checks vulnerability categories, not exact code locations. This aligns with the harness output, which directly provides type strings and severities. Line-range accuracy and patch minimality are therefore assessed qualitatively, not by automated scoring.

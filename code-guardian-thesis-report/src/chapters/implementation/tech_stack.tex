@@ -9,7 +9,7 @@ The extension is implemented in \textbf{TypeScript} using the VS Code Extension 
 
 \subsection*{Local LLM Inference via Ollama}
 
-All model inference is performed through \textbf{Ollama} running on \texttt{localhost:11434} \cite{ollamaDocs}. Code Guardian supports multiple local code models (e.g., Qwen2.5-Coder, CodeLlama) and allows switching models at runtime through settings. Requests are configured for low-temperature decoding to improve determinism and schema adherence, and retry logic with exponential backoff is applied to handle transient failures (e.g., model warm-up, timeouts).
+All model inference is performed through \textbf{Ollama} running on \texttt{localhost:11434} \cite{ollamaDocs}. Code Guardian supports multiple local model families (e.g., \texttt{qwen3}, \texttt{gemma3}, \texttt{CodeLlama}) and allows switching models at runtime through settings. Requests are configured for low-temperature decoding to reduce randomness and improve schema adherence, and retry logic with exponential backoff is applied to handle transient failures (e.g., model warm-up, timeouts).
 
 \subsection*{Retrieval-Augmented Generation (RAG)}
 
@@ -22,3 +22,15 @@ The knowledge base is designed to be refreshable. Code Guardian supports updatin
 \subsection*{Performance Mechanisms}
 
 To support near-real-time feedback, the system uses (i) debounced analysis triggers during editing, (ii) a lightweight function-level analysis mode for continuous feedback, and (iii) an LRU-style analysis cache that avoids repeated model calls for unchanged snippets. These mechanisms directly support R6 while keeping the user experience consistent.
+
+\subsection*{Engineering Selection Criteria}
+
+Technology choices were guided by four practical criteria:
+\begin{itemize}
+  \item \textbf{Local deployability:} all core components must run on a developer workstation without managed cloud dependencies.
+  \item \textbf{Operational transparency:} outputs and failure modes must be inspectable for debugging and thesis reproducibility.
+  \item \textbf{Incremental integration:} the solution should align with VS Code-native diagnostics and command workflows instead of requiring a separate toolchain.
+  \item \textbf{Replaceability:} model backends and retrieval components should be swappable without redesigning the full extension.
+\end{itemize}
+
+These criteria explain the concrete stack decisions: Ollama for local model serving, TypeScript for extension maintainability and VS Code API fit, and local vector retrieval for optional grounding. Together they form a modular but operationally coherent baseline for privacy-preserving IDE security assistance.

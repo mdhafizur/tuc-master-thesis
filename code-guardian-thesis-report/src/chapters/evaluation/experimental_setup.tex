@@ -1,7 +1,7 @@
 \section{Experimental Setup}
 \label{sec:eval-setup}
 
-All experiments are executed locally using the Code Guardian evaluation harness in \path{code-guardian/evaluation/evaluate-models.js}. The harness iterates over the curated dataset described in Section~\ref{sec:eval-dataset} and invokes Ollama with a strict JSON-only system prompt. Model decoding is configured for low randomness (\texttt{temperature=0.1}) to improve determinism and parsing stability.
+All experiments are executed locally using the Code Guardian evaluation harness in \path{code-guardian-extension/evaluation/evaluate-models.js}. The harness iterates over the curated dataset described in Section~\ref{sec:eval-dataset} and invokes Ollama with a strict JSON-only system prompt. Model decoding is configured for low randomness (\texttt{temperature=0.1}) to reduce output variance and improve parsing stability.
 
 \subsection*{Response Schema for Scoring}
 
@@ -19,11 +19,31 @@ Where relevant, results can also be stratified by model size or model family to 
 
 \subsection*{Models and Hardware}
 
-The reported run evaluated five local Ollama models: \texttt{gemma3:1b}, \texttt{gemma3:4b}, \texttt{qwen3:4b}, \texttt{qwen3:8b}, and \texttt{CodeLlama:latest}. The execution environment was macOS (Darwin 25.3.0, arm64) on Apple M4 Max (16 CPU cores, 64\,GB RAM), Node.js v20.19.5, and Ollama 0.17.0.
+The reported run evaluated five local Ollama models: \texttt{gemma3:1b}, \texttt{gemma3:4b}, \texttt{qwen3:4b}, \texttt{qwen3:8b}, and \texttt{CodeLlama:latest}. The execution environment was macOS (Darwin 25.3.0, arm64) on Apple M4 Max (16 CPU cores, 64\,GB RAM), Node.js v20.19.5, and Ollama 0.17.1.
 
 \subsection*{Runtime Parameters}
 
 The evaluation harness enforces a per-request timeout (\texttt{timeoutMs=30000}) and limits generation length (\texttt{num\_predict=1000}). A request delay of \texttt{500\,ms} is inserted between calls to reduce burstiness on developer hardware. Runs were executed sequentially with no warm-up and no retries.
+
+\subsection*{Baseline Tool Configuration}
+
+To contextualize LLM and LLM+RAG behavior, three SAST baselines are executed through the same harness: Semgrep, CodeQL, and ESLint with \texttt{eslint-plugin-security}. Each baseline tool runs on a temporary workspace created by the harness that contains one \texttt{.js} or \texttt{.ts} file per snippet. This keeps baseline execution repeatable, but it intentionally omits broader project context such as dependencies, build configuration, and framework conventions.
+
+Semgrep is run with the Semgrep Registry packs \texttt{p/security-audit}, \texttt{p/javascript}, \texttt{p/typescript}, and \texttt{p/owasp-top-ten} in JSON mode. CodeQL constructs a JavaScript database over the same workspace and analyzes it with the \texttt{javascript-security-and-quality} query suite (\texttt{codeql/javascript-queries}). ESLint uses the recommended rule set from \texttt{eslint-plugin-security} via a generated configuration file.
+
+Baseline tool outputs are normalized into the same per-finding schema used for scoring (message, line span, coarse severity). Because tools report heterogeneous taxonomies, the harness infers the vulnerability \texttt{type} for baseline findings from rule identifiers, messages, and (when available) CWE metadata. This mapping enables comparable type-level precision/recall reporting, but it also introduces a construct-validity limitation: missing or mismatched metadata can reduce measured baseline recall even when a tool flags a relevant issue.
+
+\subsection*{Comparability and Fairness Controls}
+
+To support fair comparison across models and modes, the harness keeps the following controls fixed unless explicitly varied in the experiment:
+\begin{itemize}
+  \item identical dataset artifacts per run stage (vulnerable main set and secure overlay set),
+  \item identical decoding/runtime limits (temperature, token budget, timeout, request delay),
+  \item identical scoring logic for matching, parsing, and metric aggregation,
+  \item identical execution order policy (sequential calls, no warm-up).
+\end{itemize}
+
+These controls reduce avoidable variance, but they do not remove all confounders. Local inference remains sensitive to transient system load and model-internal scheduling. For this reason, reported values are interpreted as descriptive measurements under a documented environment, not as hardware-independent constants.
 
 \subsection*{Reproducibility Snapshot}
 
@@ -36,8 +56,8 @@ The evaluation harness enforces a per-request timeout (\texttt{timeoutMs=30000})
     \toprule
     Item & Value \\
     \midrule
-    Dataset file & \texttt{vulnerability-test-cases.json} (33 cases: 18 vulnerable, 15 secure) \\
-    Runs per sample & 3 \\
+    Dataset files & \texttt{all-test-cases.generated.json} (113 vulnerable) + \texttt{negatives-only.generated.json} (15 secure) \\
+    Runs per sample & 3 (main ablation run) + 1 (negatives-only overlay) \\
     Prompt modes & LLM-only, LLM+RAG \\
     RAG settings & static security snippets, \texttt{k=5} \\
     Generation settings & \texttt{temperature=0.1}, \texttt{num\_predict=1000} \\
@@ -45,7 +65,7 @@ The evaluation harness enforces a per-request timeout (\texttt{timeoutMs=30000})
     Execution mode & sequential, no warm-up, no retries \\
     Models requested & \texttt{gemma3:1b}, \texttt{gemma3:4b}, \texttt{qwen3:4b}, \texttt{qwen3:8b}, \texttt{CodeLlama:latest} \\
     Model resolution & All models resolved to the same tags as requested in this run \\
-    Software & Ollama 0.17.0, Node.js v20.19.5 \\
+    Software & Ollama 0.17.1, Node.js v20.19.5 \\
     Hardware/OS & Apple M4 Max (16 CPU cores, 64 GB RAM), macOS Darwin 25.3.0 (arm64) \\
     \bottomrule
   \end{tabular}
@@ -64,12 +84,12 @@ To document run provenance, Table~\ref{tab:eval-artifact-manifest} records the m
     \toprule
     Field & Value \\
     \midrule
-    Report repository commit & not captured by the harness in this run \\
-    Run window (UTC) & 2026-02-25 18:26:56 to 2026-02-25 20:00:54 \\
-    Total runtime & 5\,638\,211 ms \\
+    Report repository commit & not captured by the harness in this run; repository HEAD at report build: \texttt{4fbeca1786ca} \\
+    Run window (UTC) & 2026-02-27 08:36:19 to 2026-02-27 10:37:54 (main) + 2026-02-27 10:46:09 to 2026-02-27 10:51:51 (negatives overlay) \\
+    Total runtime & 7\,295\,016 ms (main) + 341\,765 ms (negatives overlay) \\
     Execution policy & sequential order, no retries, no warm-up \\
-    Dataset path & \path{code-guardian/evaluation/datasets/vulnerability-test-cases.json} \\
-    Invocation command & \texttt{node evaluation/evaluate-models.js --ablation --runs=3 --rag-k=5 --temperature=0.1 --num-predict=1000 --timeout-ms=30000 --delay-ms=500} \\
+    Dataset path & \path{code-guardian-extension/evaluation/datasets/all-test-cases.generated.json} + \path{code-guardian-extension/evaluation/datasets/negatives-only.generated.json} \\
+    Invocation command & \texttt{node evaluation/evaluate-models.js --ablation --include-baselines --dataset=datasets/all-test-cases.generated.json --runs=3 --rag-k=5 --temperature=0.1 --num-predict=1000 --timeout-ms=30000 --delay-ms=500} \\
     Model fingerprint (\texttt{gemma3:1b}) & digest prefix \texttt{8648f39daa8f} \\
     Model fingerprint (\texttt{gemma3:4b}) & digest prefix \texttt{a2af6cc3eb7f} \\
     Model fingerprint (\texttt{qwen3:4b}) & digest prefix \texttt{359d7dd4bcda} \\
@@ -83,7 +103,12 @@ For archival reproducibility, the recommended artifact bundle includes: (i) raw 
 
 \subsection*{Run-to-Run Variability (Descriptive)}
 
-Each sample is evaluated three times in each configuration. Reported values are descriptive percentages and counts over pooled evaluations (e.g., recall over vulnerable evaluations, parse success over total requests). Because repeated runs reuse the same snippets and paired per-sample mode outputs were not exported by the harness, mode-to-mode differences are interpreted descriptively for this run only.
+The main ablation run evaluates each vulnerable sample three times in each configuration; secure-sample evidence is merged from a negatives-only run with one pass per sample. Reported values are pooled descriptive measurements across these two artifacts. Because repeated runs reuse the same snippets and the final tables merge outputs from two runs, mode-to-mode differences are interpreted descriptively for this specific run.
+
+\paragraph{Implications of merged-run reporting.}
+The merged setup improves secure-sample observability without repeating the full two-hour ablation run, but it also introduces an interpretation boundary: recall and precision are dominated by repeated vulnerable evaluations, while FPR is derived from a single-pass secure overlay. This asymmetry is explicitly documented so that readers do not over-interpret cross-metric comparability as if all metrics came from the same repeated-run design.
+
+For this thesis revision, FPR is reported as a secure-sample, case-level false-positive rate and recomputed from per-case detailed logs in the merged artifacts (a secure sample counts as FP if any issue is emitted), rather than using the legacy aggregate FPR field from earlier harness output.
 
 \paragraph{Response parsing.}
 The harness strips Markdown code fences if present and then attempts to parse the remaining content as JSON. Responses that fail to parse are counted toward the parse failure rate and are scored as producing no issues, which impacts recall on vulnerable samples.
@@ -92,11 +117,15 @@ The harness strips Markdown code fences if present and then attempts to parse th
 
 The evaluation can be reproduced by running:
 \begin{lstlisting}[language=Java, caption={Running the Code Guardian evaluation harness}, label={lst:eval-run}]
-cd code-guardian
-node evaluation/evaluate-models.js --ablation --runs=3 --rag-k=5 --temperature=0.1 \
+cd code-guardian-extension
+node evaluation/evaluate-models.js --ablation --include-baselines \
+  --dataset=datasets/all-test-cases.generated.json --runs=3 --rag-k=5 --temperature=0.1 \
+  --num-predict=1000 --timeout-ms=30000 --delay-ms=500
+node evaluation/evaluate-models.js --ablation --include-baselines \
+  --dataset=datasets/negatives-only.generated.json --runs=1 --rag-k=5 --temperature=0.1 \
   --num-predict=1000 --timeout-ms=30000 --delay-ms=500
 \end{lstlisting}
 
-The script produces per-model metrics and can be extended to emit JSON/Markdown reports under \path{code-guardian/evaluation/logs/} for inclusion in the thesis appendix. For strict comparability with the reported tables, the evaluated model list should match the run configuration (\texttt{gemma3:1b}, \texttt{gemma3:4b}, \texttt{qwen3:4b}, \texttt{qwen3:8b}, and \texttt{CodeLlama:latest}).
+The script produces per-model metrics and can be extended to emit JSON/Markdown reports under \path{code-guardian-extension/evaluation/logs/} for inclusion in the thesis appendix. For strict comparability with the reported tables, the evaluated model list should match the run configuration (\texttt{gemma3:1b}, \texttt{gemma3:4b}, \texttt{qwen3:4b}, \texttt{qwen3:8b}, and \texttt{CodeLlama:latest}).
 
-The reported results in this thesis were produced with \texttt{runsPerSample=3} for both prompt modes.
+The reported results in this thesis combine a \texttt{runsPerSample=3} ablation run (vulnerable set) with a \texttt{runsPerSample=1} negatives-only overlay to recover secure-sample coverage for FPR computation.

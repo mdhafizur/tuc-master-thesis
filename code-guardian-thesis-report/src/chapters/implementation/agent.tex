@@ -1,7 +1,7 @@
 \section{Core Component Implementation}
 \label{sec:impl-components}
 
-This section details the concrete implementation of Code Guardian’s main components. The prototype is implemented as a single VS Code extension located in \texttt{code-guardian/}. Its primary tasks are (i) extracting relevant code context inside the IDE, (ii) invoking local LLM inference, (iii) optionally grounding the prompt with retrieved security knowledge (RAG), and (iv) presenting findings and repairs in an IDE-native way.
+This section details the concrete implementation of Code Guardian’s main components. The prototype is implemented as a single VS Code extension located in \texttt{code-guardian-extension/}. Its primary tasks are (i) extracting relevant code context inside the IDE, (ii) invoking local LLM inference, (iii) optionally grounding the prompt with retrieved security knowledge (RAG), and (iv) presenting findings and repairs in an IDE-native way.
 
 \subsection{Extension Entry Point and Event Wiring}
 \label{subsec:impl-extension}
@@ -11,16 +11,19 @@ The extension entry point registers event listeners and commands. Real-time anal
 \subsection{Context Extraction and Scoping}
 \label{subsec:impl-context}
 
-Code Guardian extracts the smallest useful unit of code for interactive analysis: the enclosing function at the cursor position. This design reduces prompt size and improves responsiveness without requiring full-program analysis. Function extraction is implemented as a lightweight syntactic pass (\texttt{code-guardian/src/functionExtractor.ts}) and returns both the extracted snippet and its start-line offset within the original document. When a snippet is analyzed, the offset is later used to map model-reported line numbers back to the full file, so that diagnostics are placed correctly in the editor.
+Code Guardian extracts the smallest useful unit of code for interactive analysis: the enclosing function at the cursor position. This design reduces prompt size and improves responsiveness without requiring full-program analysis. Function extraction is implemented as a lightweight syntactic pass (\texttt{code-guardian-extension/src/functionExtractor.ts}) and returns both the extracted snippet and its start-line offset within the original document. When a snippet is analyzed, the offset is later used to map model-reported line numbers back to the full file, so that diagnostics are placed correctly in the editor.
 
 For explicit commands, the scope expands to (i) a selected region (or current line if no selection exists) and (ii) the full file. These scopes prioritize completeness and are typically used for deeper inspection or before committing changes.
+
+\paragraph{Extraction algorithm and fallback behavior.}
+The extractor parses the active document, locates the innermost function-like node covering the cursor, and returns that span as analysis scope. If parsing fails or no suitable node is found, the implementation falls back to a conservative line/selection scope so the editor workflow remains functional. This fallback-first behavior favors availability over strict completeness in real-time mode.
 
 \subsection{LLM Analyzer (Local JSON-Only Output)}
 \label{subsec:impl-analyzer}
 
 The analyzer performs local inference through Ollama and requires the model to return \emph{only} a JSON array of findings. The output schema is intentionally minimal to keep parsing robust and IDE rendering straightforward.
 
-\begin{lstlisting}[language=TypeScript, caption={Security issue output schema used by Code Guardian}, label={lst:cg-issue-schema}]
+\begin{lstlisting}[caption={Security issue output schema used by Code Guardian}, label={lst:cg-issue-schema}]
 interface SecurityIssue {
   message: string;
   startLine: number;   // 1-based
@@ -36,13 +39,27 @@ To increase reliability, the implementation includes:
   \item \textbf{Retry logic:} transient errors (timeouts, temporary unavailability) are retried with exponential backoff.
 \end{itemize}
 
+\paragraph{Parse-and-validate pipeline.}
+The response handler applies staged normalization before JSON parsing: (i) trim wrapper text, (ii) strip code fences, (iii) extract the first array-like substring, and (iv) parse and validate field types. Invalid entries are discarded rather than partially accepted, and hard parse failures produce an empty issue list with a categorized parse error. This keeps downstream diagnostics stable and prevents malformed outputs from propagating into editor state.
+
+\begin{lstlisting}[caption={Simplified parsing and validation stages}, label={lst:impl-parse-pipeline}]
+normalize(raw):
+  cleaned = stripCodeFences(raw).trim()
+  candidate = firstJsonArraySubstring(cleaned)
+  data = JSON.parse(candidate)
+  return validateIssueArray(data)
+\end{lstlisting}
+
 \paragraph{Failure handling and safe defaults.}
-In a developer tool, a false crash is often worse than a missed warning because it interrupts the workflow. Therefore, non-recoverable failures (e.g., repeated timeouts, model-not-found) are handled by showing a user-facing message and returning an empty issue list. This keeps the editor responsive while preserving explicit control over model configuration (e.g., prompting the user to pull a missing model).
+In a developer tool, a hard failure can be more disruptive than a missed warning because it interrupts the workflow. Therefore, non-recoverable failures (e.g., repeated timeouts, model-not-found) are handled by showing a user-facing message and returning an empty issue list. This keeps the editor responsive while preserving explicit control over model configuration (e.g., prompting the user to pull a missing model).
+
+\paragraph{Retry and timeout policy.}
+The analyzer combines fixed request timeouts with bounded retries. Backoff spacing increases between attempts to absorb short-lived local runtime contention (for example, model warm-up or concurrent local inference load). Retries are intentionally capped to prevent cascading delays in interactive workflows.
 
 \subsection{Diagnostics Mapping and Localization}
 \label{subsec:impl-localization}
 
-The diagnostic adapter converts the model’s 1-based line numbering into VS Code’s 0-based ranges and clamps indices to valid document bounds (\texttt{code-guardian/src/diagnostic.ts}). When a function snippet is analyzed, the previously computed start-line offset is added to each finding’s range. If a suggested fix is included, it is attached to the diagnostic as related information and surfaced as a quick-fix action.
+The diagnostic adapter converts the model’s 1-based line numbering into VS Code’s 0-based ranges and clamps indices to valid document bounds (\texttt{code-guardian-extension/src/diagnostic.ts}). When a function snippet is analyzed, the previously computed start-line offset is added to each finding’s range. If a suggested fix is included, it is attached to the diagnostic as related information and surfaced as a quick-fix action.
 
 \subsection{RAG Manager (Local Retrieval)}
 \label{subsec:impl-rag}
@@ -50,12 +67,12 @@ The diagnostic adapter converts the model’s 1-based line numbering into VS Cod
 When enabled, the RAG manager maintains a local security knowledge base and a persistent vector index. Knowledge items are embedded using a local embedding model accessed through Ollama (\texttt{nomic-embed-text}) and stored in an HNSW vector store. For each analysis request, the manager retrieves the top-$k$ relevant snippets and augments the prompt with (i) short vulnerability definitions and (ii) mitigation guidance. This grounding supports consistency and explainability (R1--R3).
 
 \paragraph{Indexing and chunking.}
-Knowledge entries are chunked using a recursive text splitter to balance semantic coherence and retrieval recall. The index is persisted under the extension’s storage path so it can be reused across sessions without rebuilding. RAG initialization is performed lazily at runtime to avoid slowing down extension activation when retrieval is not used.
+Knowledge entries are chunked using a recursive text splitter to balance semantic coherence and retrieval recall. The index is persisted in an extension-managed local directory so it can be reused across sessions without rebuilding. RAG initialization is performed lazily at runtime to avoid slowing down extension activation when retrieval is not used.
 
 \subsection{Vulnerability Knowledge Updates}
 \label{subsec:impl-knowledge}
 
-To keep retrieved content current, the vulnerability data manager periodically refreshes public security sources (e.g., OWASP Top~10 entries, a curated set of CWE patterns, and a configurable number of recent CVEs). Retrieved metadata is cached on disk and only public vulnerability information is fetched. No user source code or extracted code context is transmitted off-device, preserving the privacy goal (R5).
+To keep retrieved content current, the vulnerability data manager can refresh public security sources on demand (e.g., OWASP Top~10 entries, a curated set of CWE patterns, and a bounded number of recent CVEs). Retrieved metadata is cached on disk and only public vulnerability information is fetched. No user source code or extracted code context is transmitted off-device, preserving the privacy goal (R5).
 
 \paragraph{Offline fallback.}
 Because network access may be restricted in sensitive environments, the system includes a minimal baseline knowledge bundle that is used when updates fail. This ensures that RAG-enabled prompting remains functional offline, even though coverage is reduced relative to a refreshed knowledge base.
@@ -68,7 +85,10 @@ Findings are mapped to VS Code diagnostics with appropriate text ranges. If the 
 \subsection{Caching and Responsiveness Mechanisms}
 \label{subsec:impl-cache}
 
-To avoid repeated inference on unchanged snippets, Code Guardian caches analysis results keyed by the code snippet, active model, and prompt mode (RAG enabled/disabled) (\texttt{code-guardian/src/analysisCache.ts}). In addition to caching, real-time analysis is debounced to reduce request volume during rapid edits. Together, these mechanisms reduce redundant local LLM calls and make continuous feedback feasible on developer hardware (R6), while also improving run-to-run consistency by limiting stochastic re-analysis.
+To avoid repeated inference on unchanged snippets, Code Guardian caches analysis results keyed by the code snippet, active model, and prompt mode (RAG enabled/disabled) (\texttt{code-guardian-extension/src/analysisCache.ts}). In addition to caching, real-time analysis is debounced to reduce request volume during rapid edits. Together, these mechanisms reduce redundant local LLM calls and make continuous feedback feasible on developer hardware (R6), while also improving run-to-run consistency by limiting stochastic re-analysis.
+
+\paragraph{Cache-key design and invalidation.}
+The cache key intentionally includes both content and execution context (model identity and prompt mode) to avoid cross-mode contamination. Entries are evicted through a bounded-size LRU policy and expire via TTL to prevent stale reuse during longer sessions. This combination balances memory usage with practical hit-rate gains during iterative editing patterns (undo/redo, small refactors, formatting cycles).
 
 \subsection{Workspace Scanner and Dashboard}
 \label{subsec:impl-workspace}
@@ -76,6 +96,9 @@ To avoid repeated inference on unchanged snippets, Code Guardian caches analysis
 For project-level visibility, Code Guardian includes a workspace scanner that analyzes JavaScript and TypeScript files in batch and aggregates results into a dashboard WebView. The dashboard summarizes severity distribution and surfaces the most vulnerable files, supporting risk-based prioritization and iterative hardening.
 
 The scanner enumerates files by extension, excludes dependency folders (e.g., \texttt{node\_modules}), and skips very large files to bound runtime. Because the JSON-only analyzer does not mandate a severity field, the scanner applies a conservative keyword-based severity heuristic to support coarse prioritization in the dashboard; this is treated as a presentation aid rather than a ground-truth classifier.
+
+\paragraph{Batch-scan execution strategy.}
+Workspace scanning uses bounded, sequential processing with file-size guards to keep runtime predictable on developer laptops. This design avoids aggressive parallelization that could saturate local inference capacity and degrade the interactive IDE experience. The scanner is therefore optimized for reproducible periodic audits rather than maximum throughput.
 
 \subsection{Privacy Boundary and Threat Model Considerations}
 \label{subsec:impl-privacy-boundary}

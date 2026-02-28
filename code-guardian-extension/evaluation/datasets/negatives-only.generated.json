@@ -1,0 +1,122 @@
+[
+  {
+    "id": "secure-code-1",
+    "name": "Secure Code - Parameterized Query (No Vulnerability)",
+    "code": "async function getUserData(userId) {\n    const query = 'SELECT * FROM users WHERE id = ?';\n    return await db.query(query, [userId]);\n}",
+    "language": "javascript",
+    "expectedVulnerabilities": [],
+    "expectedFix": null
+  },
+  {
+    "id": "secure-code-2",
+    "name": "Secure Code - textContent Usage (No Vulnerability)",
+    "code": "function displayMessage(userInput) {\n    const element = document.getElementById('output');\n    element.textContent = userInput;\n}",
+    "language": "javascript",
+    "expectedVulnerabilities": [],
+    "expectedFix": null
+  },
+  {
+    "id": "secure-code-3",
+    "name": "Secure Code - execFile with Array Arguments (No Vulnerability)",
+    "code": "const { execFile } = require('child_process');\nfunction listDir(dirName) {\n    const sanitized = dirName.replace(/[^a-zA-Z0-9_\\-\\/]/g, '');\n    execFile('ls', ['-la', sanitized], (error, stdout) => {\n        console.log(stdout);\n    });\n}",
+    "language": "javascript",
+    "expectedVulnerabilities": [],
+    "expectedFix": null
+  },
+  {
+    "id": "secure-code-4",
+    "name": "Secure Code - bcrypt Password Hashing (No Vulnerability)",
+    "code": "const bcrypt = require('bcrypt');\nasync function hashPassword(password) {\n    const saltRounds = 12;\n    return await bcrypt.hash(password, saltRounds);\n}\nasync function verifyPassword(password, hash) {\n    return await bcrypt.compare(password, hash);\n}",
+    "language": "javascript",
+    "expectedVulnerabilities": [],
+    "expectedFix": null
+  },
+  {
+    "id": "secure-code-5",
+    "name": "Secure Code - Path Traversal Prevention (No Vulnerability)",
+    "code": "const path = require('path');\nconst fs = require('fs');\nfunction readUserFile(filename) {\n    const uploadsDir = path.resolve('./uploads');\n    const filePath = path.resolve(path.join(uploadsDir, filename));\n    if (!filePath.startsWith(uploadsDir)) {\n        throw new Error('Access denied: path traversal attempt');\n    }\n    return fs.readFileSync(filePath, 'utf8');\n}",
+    "language": "javascript",
+    "expectedVulnerabilities": [],
+    "expectedFix": null
+  },
+  {
+    "id": "secure-code-6",
+    "name": "Secure Code - CSRF Token Validation (No Vulnerability)",
+    "code": "const crypto = require('crypto');\nfunction generateCsrfToken(session) {\n    const token = crypto.randomBytes(32).toString('hex');\n    session.csrfToken = token;\n    return token;\n}\nfunction validateCsrfToken(req) {\n    const token = req.headers['x-csrf-token'];\n    return token && token === req.session.csrfToken;\n}",
+    "language": "javascript",
+    "expectedVulnerabilities": [],
+    "expectedFix": null
+  },
+  {
+    "id": "secure-code-7",
+    "name": "Secure Code - Input Validation with Joi (No Vulnerability)",
+    "code": "const Joi = require('joi');\nconst schema = Joi.object({\n    username: Joi.string().alphanum().min(3).max(30).required(),\n    email: Joi.string().email().required(),\n    age: Joi.number().integer().min(0).max(120)\n});\nfunction validateInput(data) {\n    const { error, value } = schema.validate(data);\n    if (error) throw new Error(`Validation failed: ${error.message}`);\n    return value;\n}",
+    "language": "javascript",
+    "expectedVulnerabilities": [],
+    "expectedFix": null
+  },
+  {
+    "id": "secure-code-8",
+    "name": "Secure Code - Helmet Security Headers (No Vulnerability)",
+    "code": "const express = require('express');\nconst helmet = require('helmet');\nconst app = express();\napp.use(helmet());\napp.use(helmet.contentSecurityPolicy({\n    directives: {\n        defaultSrc: [\"'self'\"],\n        scriptSrc: [\"'self'\"],\n        styleSrc: [\"'self'\"]\n    }\n}));",
+    "language": "javascript",
+    "expectedVulnerabilities": [],
+    "expectedFix": null
+  },
+  {
+    "id": "secure-code-9",
+    "name": "Secure Code - Rate Limiting (No Vulnerability)",
+    "code": "const rateLimit = require('express-rate-limit');\nconst limiter = rateLimit({\n    windowMs: 15 * 60 * 1000,\n    max: 100,\n    standardHeaders: true,\n    legacyHeaders: false,\n    message: 'Too many requests, please try again later.'\n});\napp.use('/api/', limiter);",
+    "language": "javascript",
+    "expectedVulnerabilities": [],
+    "expectedFix": null
+  },
+  {
+    "id": "secure-code-10",
+    "name": "Secure Code - JWT with Proper Verification (No Vulnerability)",
+    "code": "const jwt = require('jsonwebtoken');\nconst SECRET = process.env.JWT_SECRET;\nfunction verifyToken(token) {\n    try {\n        return jwt.verify(token, SECRET, { algorithms: ['HS256'] });\n    } catch (err) {\n        throw new Error('Invalid token');\n    }\n}",
+    "language": "javascript",
+    "expectedVulnerabilities": [],
+    "expectedFix": null
+  },
+  {
+    "id": "secure-code-11",
+    "name": "Secure Code - DOMPurify Sanitization (No Vulnerability)",
+    "code": "const DOMPurify = require('dompurify');\nfunction renderUserContent(htmlInput) {\n    const clean = DOMPurify.sanitize(htmlInput, { ALLOWED_TAGS: ['b', 'i', 'em', 'strong'] });\n    document.getElementById('content').innerHTML = clean;\n}",
+    "language": "javascript",
+    "expectedVulnerabilities": [],
+    "expectedFix": null
+  },
+  {
+    "id": "secure-code-12",
+    "name": "Secure Code - Prototype Pollution Prevention (No Vulnerability)",
+    "code": "function safeMerge(target, source) {\n    for (const key of Object.keys(source)) {\n        if (key === '__proto__' || key === 'constructor' || key === 'prototype') {\n            continue;\n        }\n        target[key] = source[key];\n    }\n    return target;\n}",
+    "language": "javascript",
+    "expectedVulnerabilities": [],
+    "expectedFix": null
+  },
+  {
+    "id": "secure-code-13",
+    "name": "Secure Code - Crypto Random Values (No Vulnerability)",
+    "code": "const crypto = require('crypto');\nfunction generateSecureToken(length = 32) {\n    return crypto.randomBytes(length).toString('hex');\n}\nfunction generateSecureOTP() {\n    return crypto.randomInt(100000, 999999);\n}",
+    "language": "javascript",
+    "expectedVulnerabilities": [],
+    "expectedFix": null
+  },
+  {
+    "id": "secure-code-14",
+    "name": "Secure Code - Environment Variable Config (No Vulnerability)",
+    "code": "function getDbConfig() {\n    return {\n        host: process.env.DB_HOST || 'localhost',\n        port: parseInt(process.env.DB_PORT || '5432', 10),\n        database: process.env.DB_NAME,\n        user: process.env.DB_USER,\n        password: process.env.DB_PASSWORD,\n        ssl: process.env.DB_SSL === 'true'\n    };\n}",
+    "language": "javascript",
+    "expectedVulnerabilities": [],
+    "expectedFix": null
+  },
+  {
+    "id": "secure-code-15",
+    "name": "Secure Code - Safe Redirect with Allowlist (No Vulnerability)",
+    "code": "const ALLOWED_REDIRECTS = ['/dashboard', '/profile', '/settings'];\nfunction safeRedirect(req, res) {\n    const target = req.query.redirect;\n    if (ALLOWED_REDIRECTS.includes(target)) {\n        return res.redirect(target);\n    }\n    return res.redirect('/dashboard');\n}",
+    "language": "javascript",
+    "expectedVulnerabilities": [],
+    "expectedFix": null
+  }
+]

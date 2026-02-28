@@ -2,4 +2,15 @@ Retrieval-Augmented Generation (RAG) is a general paradigm for grounding languag
 
 In secure coding settings, the retrieved context typically corresponds to vulnerability taxonomies (e.g., CWE), secure coding guidelines (e.g., OWASP cheat sheets), and historical vulnerability examples. This is a natural fit for vulnerability detection and repair because many issues are best explained by mapping code patterns to known weakness classes and well-established mitigations \cite{mitreCWE,owaspCheatSheets,owaspTop10_2021}. By grounding the model in such sources, the system can improve consistency (R1) and explanation quality (R3), while reducing unsupported guesses.
 
+Nevertheless, RAG introduces its own failure modes. If retrieval returns weakly related snippets, the generator can become distracted and produce confident but misaligned explanations. If retrieval returns overly generic security text, outputs may drift toward checklist-style warnings that increase false positives. In security tooling, retrieval quality is therefore as important as model quality: grounding helps only when retrieved context is both relevant and specific to the analyzed code pattern.
+
 Implementation-wise, RAG depends on embedding models and efficient nearest-neighbor search. Sentence-level embedding methods such as Sentence-BERT are commonly used to map text into vector space \cite{reimers2019sentencebert}. Approximate nearest-neighbor indices such as HNSW provide high recall with practical latency \cite{malkov2018hnsw}, and libraries such as FAISS popularized large-scale similarity search in practice \cite{johnson2017faiss}. In Code Guardian, these ideas are realized through local embeddings and a persistent HNSW vector store to keep retrieval on-device and compatible with IDE latency constraints.
+
+From an engineering perspective, RAG design involves a three-way trade-off among latency, grounding depth, and noise:
+\begin{itemize}
+  \item increasing top-$k$ retrieved chunks can improve recall of relevant guidance but expands prompt size and latency;
+  \item larger chunks preserve context but may dilute precision in similarity search;
+  \item aggressive knowledge refresh increases topicality but can introduce quality variance if source curation is weak.
+\end{itemize}
+
+These trade-offs motivate model-specific calibration rather than one global RAG configuration. The same retrieval setup can improve one model while degrading another, depending on how each model integrates external context under strict output constraints. This observation is central to the ablation design in this thesis.

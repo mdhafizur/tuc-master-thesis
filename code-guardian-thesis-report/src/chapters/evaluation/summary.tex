@@ -6,13 +6,76 @@ The evaluation framework provides reproducible measurements of detection quality
 \subsection*{Key Takeaways}
 
 \begin{itemize}
-  \item \textbf{R1--R2 (quality and consistency):} Model behavior differs strongly. In this run, \texttt{qwen3:8b} (LLM+RAG) achieved the highest F1 (42.70\%) with lower FPR (27.12\%) than other high-recall configurations, while \texttt{gemma3:1b} remained highly conservative (precision 100.00\%, recall 5.56\%).
-  \item \textbf{RAG impact is model-dependent:} RAG improved \texttt{qwen3:8b} (F1: 35.64\% $\rightarrow$ 42.70\%; median latency: 8774 $\rightarrow$ 7809 ms) and slightly improved \texttt{gemma3:4b} (F1: 30.67\% $\rightarrow$ 31.37\%), but reduced \texttt{gemma3:1b} recall to zero. \texttt{qwen3:4b} and \texttt{CodeLlama:latest} remained ineffective due to parse instability.
+  \item \textbf{R1--R2 (quality and consistency):} Model behavior differs strongly. In this merged thesis result set, \texttt{qwen3:8b} (LLM+RAG) achieved the highest F1 (63.76\%) with the lowest LLM FPR (26.67\%), while several other configurations remained at FPR 100\%.
+  \item \textbf{RAG impact is model-dependent:} RAG improved \texttt{qwen3:8b} (F1: 58.12\% $\rightarrow$ 63.76\%) and \texttt{qwen3:4b} (54.90\% $\rightarrow$ 58.67\%), but reduced \texttt{gemma3:4b} (56.05\% $\rightarrow$ 49.68\%) and \texttt{CodeLlama:latest} (41.88\% $\rightarrow$ 31.45\%).
+  \item \textbf{Baseline contrast (SAST tools):} Semgrep reached higher baseline precision (57.89\%) with low recall (9.73\%) and low secure-case FPR (6.67\%), while CodeQL remained low-recall with higher FPR (53.33\%); \texttt{eslint-security} produced no true positives in this dataset.
   \item \textbf{R3 (explainability):} IDE-native rendering (diagnostics, hovers) keeps explanations close to code, but message quality depends on prompt design and knowledge coverage.
   \item \textbf{R4 (repairs):} Quick fixes are effective as an assistive mechanism when suggestions are minimal and context-appropriate; developer confirmation remains essential.
-  \item \textbf{R5 (privacy):} All source code analysis and model inference remain local; only public vulnerability metadata may be fetched for knowledge updates.
-  \item \textbf{R6 (responsiveness):} Responsiveness depends heavily on model profile (about 178--180 ms median for \texttt{gemma3:1b}, about 1.3--1.4 s for \texttt{gemma3:4b}, and about 7.8--9.9 s for \texttt{qwen3} variants).
+  \item \textbf{R5 (privacy):} Architectural evidence supports a local source-code boundary (no code exfiltration path in the evaluated setup); only public vulnerability metadata may be fetched for knowledge updates.
+  \item \textbf{R6 (responsiveness):} Responsiveness depends heavily on model profile (about 0.3--0.9 s median for \texttt{gemma3:1b}, about 1.7--1.9 s for \texttt{gemma3:4b}, and about 1.1--1.5 s for \texttt{qwen3} variants).
 \end{itemize}
+
+\subsection*{Operational Interpretation for Deployment}
+
+For practical adoption, the results suggest treating model selection as a risk-budgeting decision rather than a purely accuracy-driven ranking. In an IDE setting, teams implicitly trade off three costs: missed vulnerabilities (false negatives), investigation overhead from noisy alerts (false positives), and interaction delay during coding. The measured configurations occupy different points on this trade-off surface, so there is no single universally best default.
+
+A pragmatic rollout strategy is to align configuration with development phase:
+\begin{itemize}
+  \item \textbf{During active coding:} prioritize responsiveness and stable output structure, accept lower recall, and reserve deeper checks for explicit scans.
+  \item \textbf{Pre-merge or review:} use higher-capacity configurations to improve vulnerable-case coverage, while requiring developer triage for residual alert noise.
+  \item \textbf{Periodic security review:} combine LLM findings with deterministic SAST outputs to balance semantic coverage and false-positive control.
+\end{itemize}
+
+The baseline comparison reinforces this phased interpretation. In this run, Semgrep and CodeQL provide lower recall than the best LLM configurations, but deterministic behavior and lower secure-sample FPR can still make them valuable as anchoring signals in a hybrid workflow. This supports the thesis position that local LLM analysis should complement, not replace, conventional static analysis in production-oriented secure development.
+
+\subsection*{Practical Significance and Decision Boundaries}
+
+From an engineering-management perspective, the absolute metric differences should be interpreted against workflow cost. For example, a modest recall gain may be valuable in pre-merge audits, but the same gain can be unattractive for always-on editing if it comes with persistent secure-sample over-warning. Conversely, lower-noise configurations can remain useful despite lower recall when the primary objective is preserving developer flow during implementation.
+
+This motivates using \emph{deployment profiles} rather than a single global default:
+\begin{itemize}
+  \item \textbf{Flow-preserving profile:} prioritize parse stability and latency, accept lower recall.
+  \item \textbf{Coverage-oriented profile:} prioritize vulnerable-case recall, accept higher triage burden.
+  \item \textbf{Hybrid profile:} combine deterministic SAST anchors with LLM reasoning for contextual interpretation and remediation suggestions.
+\end{itemize}
+
+Under this framing, the main contribution of the evaluation is not a leaderboard claim but an explicit map of quality/noise/latency trade-offs that can guide configuration choices per workflow stage.
+
+\subsection*{Sensitivity to Scoring Assumptions}
+
+The reported outcomes depend on several scoring assumptions that are appropriate for this thesis goal but should be made explicit:
+\begin{itemize}
+  \item \textbf{Type-level matching:} rewards category detection rather than exact exploit reasoning.
+  \item \textbf{Substring normalization:} improves tolerance to naming variation but can over-credit broad labels.
+  \item \textbf{Sample-level secure FPR:} aligns with developer interruption cost, but is stricter than issue-level counting for secure snippets.
+  \item \textbf{Parse-failure treatment as empty output:} penalizes vulnerable-case recall while potentially improving secure-case outcomes.
+\end{itemize}
+
+These assumptions are defensible for IDE integration analysis, yet they imply that the reported metrics are \emph{system-level operational indicators}, not formal proof of exploit-level correctness.
+
+\subsection*{Uncertainty Intervals for Key Metrics}
+
+To avoid over-interpreting point estimates, Table~\ref{tab:eval-ci-key} reports 95\% Wilson intervals for precision, recall, and secure-sample FPR on representative configurations (best LLM mode, direct LLM control, and baseline anchors). This is especially important for FPR because secure evaluation uses only 15 negative samples.
+
+\begin{table}[H]
+  \centering
+  \caption{Key metric uncertainty intervals (95\% Wilson).}
+  \label{tab:eval-ci-key}
+  \footnotesize
+  \renewcommand{\arraystretch}{1.15}
+  \begin{tabularx}{\textwidth}{p{0.26\textwidth}XXX}
+    \toprule
+    Configuration & Precision (\%, 95\% CI) & Recall (\%, 95\% CI) & Secure-sample FPR (\%, 95\% CI) \\
+    \midrule
+    \texttt{qwen3:8b} (LLM+RAG) & 62.93 [57.74, 67.84] (219/348) & 64.60 [59.37, 69.50] (219/339) & 26.67 [10.90, 51.95] (4/15) \\
+    \texttt{qwen3:8b} (LLM-only) & 54.06 [49.12, 58.92] (213/394) & 62.83 [57.57, 67.81] (213/339) & 26.67 [10.90, 51.95] (4/15) \\
+    \texttt{semgrep} baseline & 57.89 [36.28, 76.86] (11/19) & 9.73 [5.52, 16.59] (11/113) & 6.67 [1.19, 29.82] (1/15) \\
+    \texttt{codeql} baseline & 15.71 [9.01, 25.99] (11/70) & 9.73 [5.52, 16.59] (11/113) & 53.33 [30.12, 75.19] (8/15) \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+The intervals show that directionality remains clear for major effects (e.g., very low baseline recall, higher noise for \texttt{codeql}), while secure-case FPR remains statistically wide due to the small negative sample count. Therefore, FPR values are interpreted as operationally useful but uncertainty-sensitive indicators. F1 is derived from precision and recall and is interpreted together with these interval estimates rather than as an independent interval target in this run.
 
 \subsection*{Claim-to-Evidence Map}
 
@@ -29,15 +92,42 @@ Table~\ref{tab:claim-evidence-map} links the thesis research questions to the co
     RQ & Claim tested & Evidence used & Outcome in this thesis run \\
     \midrule
     RQ1 (Feasibility) & Local IDE assistant can provide useful security findings without source-code exfiltration. & Privacy boundary and local deployment design (Chapter~\ref{chap:concept}); detection/latency measurements (Sections~\ref{sec:eval-llm-only}--\ref{sec:eval-models}). & Supported with caveats: useful findings are produced locally, but model choice strongly affects recall and false positives. \\
-    RQ2 (Grounding) & Retrieval augmentation improves quality and consistency versus LLM-only. & Ablation results across prompt modes and models (Section~\ref{sec:eval-models}); descriptive mode-to-mode comparison in this section. & Partially supported and model-dependent: clear gains for \texttt{qwen3:8b}, marginal gain for \texttt{gemma3:4b}, degradation for \texttt{gemma3:1b}. \\
-    RQ3 (Practicality) & Real-time IDE use is achievable with scoping/caching/debouncing. & Runtime design and guardrails (Chapter~\ref{chap:implementation}); measured latency distributions (Sections~\ref{sec:eval-llm-only}, \ref{sec:eval-rag}). & Supported for small models and constrained workflows; high-performing large models remain primarily audit-mode due to multi-second latency. \\
+    RQ2 (Grounding) & Retrieval augmentation improves quality and consistency versus LLM-only. & Ablation results across prompt modes and models (Section~\ref{sec:eval-models}); descriptive mode-to-mode comparison in this section. & Partially supported and model-dependent: clear gains for \texttt{qwen3:8b} and \texttt{qwen3:4b}, degradation for \texttt{gemma3:4b} and \texttt{CodeLlama:latest}. \\
+    RQ3 (Practicality) & Real-time IDE use is achievable with scoping/caching/debouncing. & Runtime design and guardrails (Chapter~\ref{chap:implementation}); measured latency distributions (Sections~\ref{sec:eval-llm-only}, \ref{sec:eval-rag}). & Supported for smaller models and constrained workflows; highest-quality modes remain better suited to explicit audit scans due to higher latency and alert noise. \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\subsection*{Requirement Compliance (R1--R6)}
+
+Table~\ref{tab:requirement-compliance} provides an explicit requirement-level judgment using the operational criteria and evidence in this chapter.
+
+\paragraph{How status labels are used.}
+The status labels (\emph{Pass/Partial/Fail}) in Table~\ref{tab:requirement-compliance} express overall deployability for this specific run and are not strict one-to-one replacements for the \emph{High/Medium/Low/None} interpretation scales defined in Chapter~\ref{chap:analysis}. For R1 and R2, the judgment combines pooled issue-level quantitative proxies with qualitative evidence from case analyses.
+
+\begin{table}[H]
+  \centering
+  \caption{Requirement compliance assessment for this thesis run.}
+  \label{tab:requirement-compliance}
+  \footnotesize
+  \renewcommand{\arraystretch}{1.15}
+  \begin{tabularx}{\textwidth}{p{0.10\textwidth}p{0.36\textwidth}p{0.34\textwidth}p{0.12\textwidth}}
+    \toprule
+    Req. & Operational criterion in this thesis & Run outcome evidence & Status \\
+    \midrule
+    R1 & Stable repeated detection under fixed settings (pooled issue-level consistency proxy and parse stability). & Best mode reached F1 63.76\% with 100\% parse; consistency is usable but still model-sensitive and below high-stability thresholds. & Partial \\
+    R2 & Context-aware vulnerability reasoning beyond surface patterns (quantitative proxy + qualitative case evidence). & Strong TP performance on injection-style cases; representative misses remain (e.g., deserialization-like patterns), with persistent over-warning in multiple modes. & Partial \\
+    R3 & Explanations should be interpretable and mapped to code context. & IDE-native diagnostics/hovers provide traceable explanations, but explanation quality is model- and prompt-sensitive. & Partial \\
+    R4 & Suggested repairs should be actionable and security-improving. & Qualitative cases show useful fix patterns (parameterization/sanitization), but no automated functional/security correctness verification is included. & Partial \\
+    R5 & Local privacy boundary (no source-code exfiltration during analysis). & Architectural/configuration evidence indicates local inference and analysis; only public vulnerability metadata may be fetched. Dedicated outbound-traffic verification logs were not collected in this run. & Partial \\
+    R6 & Usability via responsiveness (median/mean latency operationalization on declared hardware). & Inline-friendly median latency is achievable for selected profiles; highest-quality modes remain slower and better suited to explicit audits. & Partial \\
     \bottomrule
   \end{tabularx}
 \end{table}
 
 \subsection*{Run Variability (Descriptive)}
 
-Each configuration was evaluated three times per sample. Reported percentages are run-level descriptive values over pooled evaluations (e.g., recall over 54 vulnerable evaluations and parse rate over 99 total requests). Because repeated runs reuse the same snippets and paired per-sample mode outputs were not exported by the harness, this thesis reports directional mode-to-mode differences descriptively and does not make inferential claims.
+The primary ablation run evaluated vulnerable samples with \texttt{runsPerSample=3}; secure/negative coverage was then merged from an existing \texttt{runsPerSample=1} negatives-only run. Reported percentages are descriptive pooled values from this merged setup (e.g., recall over 339 vulnerable evaluations and FPR over 15 secure samples). Because repeated runs reuse the same snippets and the final thesis tables are post-hoc merged from two run artifacts, mode-to-mode differences are interpreted descriptively only.
 
 Latency was measured across repeated calls per sample. For high-latency configurations (\texttt{qwen3:8b}, \texttt{qwen3:4b}, and \texttt{CodeLlama:latest}), mean latency remained above median in both modes, indicating right-skewed response-time tails under local inference.
 
@@ -54,11 +144,11 @@ Table~\ref{tab:eval-recall-delta} summarizes recall changes between LLM-only and
     \toprule
     Model & Recall LLM (\%) & Recall RAG (\%) & $\Delta$ Recall (pp) \\
     \midrule
-    \texttt{gemma3:1b} & 5.56 (3/54) & 0.00 (0/54) & -5.56 \\
-    \texttt{gemma3:4b} & 42.59 (23/54) & 44.44 (24/54) & +1.85 \\
-    \texttt{qwen3:4b} & 0.00 (0/54) & 0.00 (0/54) & +0.00 \\
-    \texttt{qwen3:8b} & 33.33 (18/54) & 35.19 (19/54) & +1.86 \\
-    \texttt{CodeLlama:latest} & 3.70 (2/54) & 0.00 (0/54) & -3.70 \\
+    \texttt{gemma3:1b} & 25.66 (87/339) & 44.25 (150/339) & +18.59 \\
+    \texttt{gemma3:4b} & 62.83 (213/339) & 56.93 (193/339) & -5.90 \\
+    \texttt{qwen3:4b} & 62.83 (213/339) & 64.90 (220/339) & +2.07 \\
+    \texttt{qwen3:8b} & 62.83 (213/339) & 64.60 (219/339) & +1.77 \\
+    \texttt{CodeLlama:latest} & 46.02 (156/339) & 34.51 (117/339) & -11.51 \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -67,17 +157,19 @@ These differences are reported as run-level directional deltas. Because repeated
 
 \subsection*{Limitations}
 
-The scored dataset in this run is intentionally small (\texttt{n=33}: 18 vulnerable, 15 secure) and synthetic; therefore, a single additional correct or incorrect detection can shift percentages noticeably, and the results should be interpreted as directional rather than definitive. The setup may not capture the full diversity of real-world codebases (framework-specific patterns, multi-file flows, and complex validation logic). In addition, R6 is operationalized primarily through latency and workflow observations in this thesis run; no dedicated developer user study was conducted.
+The scored dataset in this run is larger than the original curated core and combines 128 cases (\texttt{n=128}: 113 vulnerable, 15 secure) from generated all-sources data plus curated negatives. Although this improves FPR visibility, the set is still snippet-centric and partly synthetic; results should therefore be interpreted as indicative rather than definitive for production repositories. The setup does not capture the full diversity of framework-specific multi-file flows and validation logic. In addition, R6 is operationalized mainly through latency and workflow observations; no dedicated developer user study was conducted.
 
-The task description targets broader benchmark/real-world coverage (e.g., Juliet/OWASP benchmark subsets and one actively maintained project), but this run reports the repository-curated 33-case suite for controlled, reproducible model ablation. Future work should extend the same harness to larger public benchmarks and tool baselines (e.g., Semgrep/CodeQL comparisons), as discussed in Chapter~\ref{chap:future-work}.
+Privacy evidence in this run is primarily architectural/configurational; a dedicated outbound-network monitoring log and formal offline test log were not captured as separate artifacts.
+
+The task description targets broader benchmark/real-world coverage (e.g., Juliet/OWASP benchmark subsets and actively maintained projects), and this thesis run partially addresses that through an expanded all-sources dataset and baseline tools (Semgrep/CodeQL/ESLint-security). Future work should extend the same harness to larger public multi-file benchmarks and repository-level evaluations, as discussed in Chapter~\ref{chap:future-work}.
 
 \subsection*{Negative Results and Boundary Conditions}
 
 To avoid overstating system performance, the following negative outcomes are explicit boundary conditions of this thesis run:
 \begin{itemize}
-  \item \textbf{RAG is not uniformly beneficial:} for \texttt{gemma3:1b}, enabling RAG reduced recall from 5.56\% to 0.00\%.
+  \item \textbf{RAG is not uniformly beneficial:} while RAG improved \texttt{qwen3} variants, it reduced F1 for \texttt{gemma3:4b} and \texttt{CodeLlama:latest}.
   \item \textbf{Higher recall can come with high alert noise:} \texttt{gemma3:4b} flagged all secure evaluations in both modes (FPR 100\%).
-  \item \textbf{Parse robustness can dominate measured quality:} \texttt{qwen3:4b} and \texttt{CodeLlama:latest} showed parse rates between 1.01\% and 5.05\%, with near-zero recall.
+  \item \textbf{False-positive control remains weak for most LLM modes:} only \texttt{qwen3:8b} reduced FPR below 30\% (26.67\%), while many configurations remained at 100\%.
   \item \textbf{Run-level deltas are descriptive only:} mode-to-mode changes should be interpreted as measurements from this run, not inferential effects.
 \end{itemize}
 
@@ -95,7 +187,7 @@ These results indicate that practical deployment requires explicit tuning of mod
     \toprule
     Threat type & Main risk & Mitigation in this thesis & Residual risk \\
     \midrule
-    Internal & Label-matching and issue-level FP counting can bias precision/FPR. & Fixed JSON schema, repeated runs, explicit reporting of scoring rules. & Partial label mismatches still distort measured precision/recall. \\
+    Internal & Label-matching and issue-level FP counting can bias precision estimates. & Fixed JSON schema, repeated runs, explicit reporting of scoring rules and secure-case FPR computation. & Partial label mismatches still distort measured precision/recall. \\
     Construct & Core metrics may miss practical developer value (localization, fix quality). & Added qualitative case studies and repair-quality criteria. & No fully automated metric for fix correctness/minimality yet. \\
     External & Curated synthetic snippets may not reflect real multi-file systems. & Included diverse CWE/OWASP-aligned classes and secure cases. & Generalization to production repositories remains uncertain. \\
     Measurement interpretation & Repeated measurements on the same snippets reduce independence of pooled counts. & Reported raw counts/percentages and explicit mode-to-mode recall deltas. & Paired per-sample mode comparison remains limited by current exported outputs. \\
@@ -103,11 +195,15 @@ These results indicate that practical deployment requires explicit tuning of mod
   \end{tabularx}
 \end{table}
 
-\textbf{Internal validity.} The evaluation harness scores detections at the vulnerability-type level using substring matching between expected and predicted category names. This reduces brittleness to naming variation but can also over-credit partially correct labels (e.g., a broad ``Injection'' label matching multiple injection subclasses) or under-credit semantically correct but differently phrased labels. In addition, false positives are counted at issue level, so precision/FPR denominators are sensitive to how many issues a model emits per sample. A stricter label ontology plus CWE-level normalization would improve precision of the evaluation itself.
+\textbf{Internal validity.} The evaluation harness scores detections at the vulnerability-type level using substring matching between expected and predicted category names. This reduces brittleness to naming variation but can also over-credit partially correct labels (e.g., a broad ``Injection'' label matching multiple injection subclasses) or under-credit semantically correct but differently phrased labels. In addition, precision uses issue-level false-positive counts and is therefore sensitive to how many issues a model emits per sample. A stricter label ontology plus CWE-level normalization would improve precision of the evaluation itself.
 
 \textbf{Construct validity.} Precision/recall and parse success rate measure important properties for IDE integration, but they do not fully capture developer value. In practice, usefulness also depends on (i) localization quality (correct lines), (ii) explanation clarity, and (iii) the security adequacy and minimality of suggested fixes. These are addressed in part through qualitative case studies (Section~\ref{sec:eval-case-studies}) but are not yet fully quantified.
 
-\textbf{External validity.} Synthetic snippets are easier than real codebases with frameworks, configuration files, and cross-file flows. Results on the curated datasets should therefore be interpreted as an estimate of core capability under controlled conditions rather than a definitive measure of real-world performance. The most likely failure modes in practice are missing context when only a small scope (e.g., a single function) is analyzed, and output-structure instability for certain model families.
+\textbf{External validity.} Synthetic snippets are easier than real codebases with frameworks, configuration files, and cross-file flows. Results on the curated datasets should therefore be interpreted as an estimate of core capability under controlled conditions rather than a definitive measure of real-world performance. The most likely failure modes in practice are missing context when only a small scope (e.g., a single function) is analyzed, together with persistent over-warning in high-noise model configurations.
+
+\textbf{Statistical conclusion validity.} This thesis reports descriptive pooled measurements rather than inferential statistics. Repeated evaluations over the same snippets improve stability estimates for this run, but they do not provide independent sampling from the full space of real-world programs. As a result, differences between nearby configurations should be interpreted as directional evidence, not as statistically generalized effects.
+
+\textbf{Ecological validity.} The evaluation emphasizes controlled snippet analysis and does not include full developer studies under sustained project pressure. Therefore, operational outcomes such as alert fatigue, long-term trust calibration, and actual remediation speed remain partially unobserved in this thesis run.
 
 \subsection*{Reproducibility Notes}
 

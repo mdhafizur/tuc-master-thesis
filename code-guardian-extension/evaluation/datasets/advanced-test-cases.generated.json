@@ -15,12 +15,21 @@
     "expectedFix": "Use parameterized SQL queries or prepared statements.",
     "metadata": {
       "sourceDataset": "adversarial",
-      "sourcePolicy": "external-only",
+      "sourcePolicy": "all",
       "source": "Adversarial - Original Pattern",
       "originalId": "adversarial_sqli_parameter_injection_original",
       "vulnerableLines": [
         12
-      ]
+      ],
+      "provenance": {
+        "sourceType": "code-guardian-evaluation",
+        "referenceId": "Adversarial - Original Pattern",
+        "sourceUrl": "https://github.com/mdhafizur/code-guardian",
+        "sourceLabel": "Adversarial - Original Pattern",
+        "sourceProject": "adversarial",
+        "collectedFrom": "manifest",
+        "sourcePath": null
+      }
     }
   },
   {
@@ -39,12 +48,21 @@
     "expectedFix": "Use parameterized SQL queries or prepared statements.",
     "metadata": {
       "sourceDataset": "adversarial",
-      "sourcePolicy": "external-only",
+      "sourcePolicy": "all",
       "source": "Adversarial - Obfuscated",
       "originalId": "adversarial_sqli_parameter_injection_obfuscated",
       "vulnerableLines": [
         1
-      ]
+      ],
+      "provenance": {
+        "sourceType": "code-guardian-evaluation",
+        "referenceId": "Adversarial - Obfuscated",
+        "sourceUrl": "https://github.com/mdhafizur/code-guardian",
+        "sourceLabel": "Adversarial - Obfuscated",
+        "sourceProject": "adversarial",
+        "collectedFrom": "manifest",
+        "sourcePath": null
+      }
     }
   },
   {
@@ -63,12 +81,21 @@
     "expectedFix": "Use parameterized SQL queries or prepared statements.",
     "metadata": {
       "sourceDataset": "adversarial",
-      "sourcePolicy": "external-only",
+      "sourcePolicy": "all",
       "source": "Adversarial - Minimal",
       "originalId": "adversarial_sqli_parameter_injection_minimal",
       "vulnerableLines": [
         1
-      ]
+      ],
+      "provenance": {
+        "sourceType": "code-guardian-evaluation",
+        "referenceId": "Adversarial - Minimal",
+        "sourceUrl": "https://github.com/mdhafizur/code-guardian",
+        "sourceLabel": "Adversarial - Minimal",
+        "sourceProject": "adversarial",
+        "collectedFrom": "manifest",
+        "sourcePath": null
+      }
     }
   },
   {
@@ -87,12 +114,21 @@
     "expectedFix": "Escape/sanitize untrusted content and avoid unsafe DOM sinks.",
     "metadata": {
       "sourceDataset": "adversarial",
-      "sourcePolicy": "external-only",
+      "sourcePolicy": "all",
       "source": "Adversarial - Original Pattern",
       "originalId": "adversarial_xss_context_switching_original",
       "vulnerableLines": [
         13
-      ]
+      ],
+      "provenance": {
+        "sourceType": "code-guardian-evaluation",
+        "referenceId": "Adversarial - Original Pattern",
+        "sourceUrl": "https://github.com/mdhafizur/code-guardian",
+        "sourceLabel": "Adversarial - Original Pattern",
+        "sourceProject": "adversarial",
+        "collectedFrom": "manifest",
+        "sourcePath": null
+      }
     }
   },
   {
@@ -111,12 +147,21 @@
     "expectedFix": "Escape/sanitize untrusted content and avoid unsafe DOM sinks.",
     "metadata": {
       "sourceDataset": "adversarial",
-      "sourcePolicy": "external-only",
+      "sourcePolicy": "all",
       "source": "Adversarial - Obfuscated",
       "originalId": "adversarial_xss_context_switching_obfuscated",
       "vulnerableLines": [
         1
-      ]
+      ],
+      "provenance": {
+        "sourceType": "code-guardian-evaluation",
+        "referenceId": "Adversarial - Obfuscated",
+        "sourceUrl": "https://github.com/mdhafizur/code-guardian",
+        "sourceLabel": "Adversarial - Obfuscated",
+        "sourceProject": "adversarial",
+        "collectedFrom": "manifest",
+        "sourcePath": null
+      }
     }
   },
   {
@@ -135,12 +180,21 @@
     "expectedFix": "Escape/sanitize untrusted content and avoid unsafe DOM sinks.",
     "metadata": {
       "sourceDataset": "adversarial",
-      "sourcePolicy": "external-only",
+      "sourcePolicy": "all",
       "source": "Adversarial - Minimal",
       "originalId": "adversarial_xss_context_switching_minimal",
       "vulnerableLines": [
         1
-      ]
+      ],
+      "provenance": {
+        "sourceType": "code-guardian-evaluation",
+        "referenceId": "Adversarial - Minimal",
+        "sourceUrl": "https://github.com/mdhafizur/code-guardian",
+        "sourceLabel": "Adversarial - Minimal",
+        "sourceProject": "adversarial",
+        "collectedFrom": "manifest",
+        "sourcePath": null
+      }
     }
   },
   {
@@ -159,14 +213,23 @@
     "expectedFix": "Canonicalize paths and restrict access to approved directories.",
     "metadata": {
       "sourceDataset": "adversarial",
-      "sourcePolicy": "external-only",
+      "sourcePolicy": "all",
       "source": "Adversarial - Original Pattern",
       "originalId": "adversarial_path_traversal_double_encoding_original",
       "vulnerableLines": [
         2,
         3,
         14
-      ]
+      ],
+      "provenance": {
+        "sourceType": "code-guardian-evaluation",
+        "referenceId": "Adversarial - Original Pattern",
+        "sourceUrl": "https://github.com/mdhafizur/code-guardian",
+        "sourceLabel": "Adversarial - Original Pattern",
+        "sourceProject": "adversarial",
+        "collectedFrom": "manifest",
+        "sourcePath": null
+      }
     }
   },
   {
@@ -185,12 +248,21 @@
     "expectedFix": "Canonicalize paths and restrict access to approved directories.",
     "metadata": {
       "sourceDataset": "adversarial",
-      "sourcePolicy": "external-only",
+      "sourcePolicy": "all",
       "source": "Adversarial - Obfuscated",
       "originalId": "adversarial_path_traversal_double_encoding_obfuscated",
       "vulnerableLines": [
         1
-      ]
+      ],
+      "provenance": {
+        "sourceType": "code-guardian-evaluation",
+        "referenceId": "Adversarial - Obfuscated",
+        "sourceUrl": "https://github.com/mdhafizur/code-guardian",
+        "sourceLabel": "Adversarial - Obfuscated",
+        "sourceProject": "adversarial",
+        "collectedFrom": "manifest",
+        "sourcePath": null
+      }
     }
   },
   {
@@ -209,12 +281,21 @@
     "expectedFix": "Canonicalize paths and restrict access to approved directories.",
     "metadata": {
       "sourceDataset": "adversarial",
-      "sourcePolicy": "external-only",
+      "sourcePolicy": "all",
       "source": "Adversarial - Minimal",
       "originalId": "adversarial_path_traversal_double_encoding_minimal",
       "vulnerableLines": [
         1
-      ]
+      ],
+      "provenance": {
+        "sourceType": "code-guardian-evaluation",
+        "referenceId": "Adversarial - Minimal",
+        "sourceUrl": "https://github.com/mdhafizur/code-guardian",
+        "sourceLabel": "Adversarial - Minimal",
+        "sourceProject": "adversarial",
+        "collectedFrom": "manifest",
+        "sourcePath": null
+      }
     }
   },
   {
@@ -233,12 +314,21 @@
     "expectedFix": "Block dangerous keys and clone/validate objects before merge operations.",
     "metadata": {
       "sourceDataset": "adversarial",
-      "sourcePolicy": "external-only",
+      "sourcePolicy": "all",
       "source": "Adversarial - Original Pattern",
       "originalId": "adversarial_prototype_pollution_nested_original",
       "vulnerableLines": [
         1
-      ]
+      ],
+      "provenance": {
+        "sourceType": "code-guardian-evaluation",
+        "referenceId": "Adversarial - Original Pattern",
+        "sourceUrl": "https://github.com/mdhafizur/code-guardian",
+        "sourceLabel": "Adversarial - Original Pattern",
+        "sourceProject": "adversarial",
+        "collectedFrom": "manifest",
+        "sourcePath": null
+      }
     }
   },
   {
@@ -257,12 +347,21 @@
     "expectedFix": "Block dangerous keys and clone/validate objects before merge operations.",
     "metadata": {
       "sourceDataset": "adversarial",
-      "sourcePolicy": "external-only",
+      "sourcePolicy": "all",
       "source": "Adversarial - Obfuscated",
       "originalId": "adversarial_prototype_pollution_nested_obfuscated",
       "vulnerableLines": [
         1
-      ]
+      ],
+      "provenance": {
+        "sourceType": "code-guardian-evaluation",
+        "referenceId": "Adversarial - Obfuscated",
+        "sourceUrl": "https://github.com/mdhafizur/code-guardian",
+        "sourceLabel": "Adversarial - Obfuscated",
+        "sourceProject": "adversarial",
+        "collectedFrom": "manifest",
+        "sourcePath": null
+      }
     }
   },
   {
@@ -281,12 +380,21 @@
     "expectedFix": "Block dangerous keys and clone/validate objects before merge operations.",
     "metadata": {
       "sourceDataset": "adversarial",
-      "sourcePolicy": "external-only",
+      "sourcePolicy": "all",
       "source": "Adversarial - Minimal",
       "originalId": "adversarial_prototype_pollution_nested_minimal",
       "vulnerableLines": [
         1
-      ]
+      ],
+      "provenance": {
+        "sourceType": "code-guardian-evaluation",
+        "referenceId": "Adversarial - Minimal",
+        "sourceUrl": "https://github.com/mdhafizur/code-guardian",
+        "sourceLabel": "Adversarial - Minimal",
+        "sourceProject": "adversarial",
+        "collectedFrom": "manifest",
+        "sourcePath": null
+      }
     }
   },
   {
@@ -305,14 +413,23 @@
     "expectedFix": "Use safe process APIs and never concatenate untrusted input into commands.",
     "metadata": {
       "sourceDataset": "adversarial",
-      "sourcePolicy": "external-only",
+      "sourcePolicy": "all",
       "source": "Adversarial - Original Pattern",
       "originalId": "adversarial_command_injection_template_original",
       "vulnerableLines": [
         2,
         9,
         16
-      ]
+      ],
+      "provenance": {
+        "sourceType": "code-guardian-evaluation",
+        "referenceId": "Adversarial - Original Pattern",
+        "sourceUrl": "https://github.com/mdhafizur/code-guardian",
+        "sourceLabel": "Adversarial - Original Pattern",
+        "sourceProject": "adversarial",
+        "collectedFrom": "manifest",
+        "sourcePath": null
+      }
     }
   },
   {
@@ -331,12 +448,21 @@
     "expectedFix": "Use safe process APIs and never concatenate untrusted input into commands.",
     "metadata": {
       "sourceDataset": "adversarial",
-      "sourcePolicy": "external-only",
+      "sourcePolicy": "all",
       "source": "Adversarial - Obfuscated",
       "originalId": "adversarial_command_injection_template_obfuscated",
       "vulnerableLines": [
         1
-      ]
+      ],
+      "provenance": {
+        "sourceType": "code-guardian-evaluation",
+        "referenceId": "Adversarial - Obfuscated",
+        "sourceUrl": "https://github.com/mdhafizur/code-guardian",
+        "sourceLabel": "Adversarial - Obfuscated",
+        "sourceProject": "adversarial",
+        "collectedFrom": "manifest",
+        "sourcePath": null
+      }
     }
   },
   {
@@ -355,12 +481,21 @@
     "expectedFix": "Use safe process APIs and never concatenate untrusted input into commands.",
     "metadata": {
       "sourceDataset": "adversarial",
-      "sourcePolicy": "external-only",
+      "sourcePolicy": "all",
       "source": "Adversarial - Minimal",
       "originalId": "adversarial_command_injection_template_minimal",
       "vulnerableLines": [
         1
-      ]
+      ],
+      "provenance": {
+        "sourceType": "code-guardian-evaluation",
+        "referenceId": "Adversarial - Minimal",
+        "sourceUrl": "https://github.com/mdhafizur/code-guardian",
+        "sourceLabel": "Adversarial - Minimal",
+        "sourceProject": "adversarial",
+        "collectedFrom": "manifest",
+        "sourcePath": null
+      }
     }
   },
   {
@@ -379,12 +514,21 @@
     "expectedFix": "Replace weak cryptographic primitives with modern approved algorithms.",
     "metadata": {
       "sourceDataset": "adversarial",
-      "sourcePolicy": "external-only",
+      "sourcePolicy": "all",
       "source": "Adversarial - Original Pattern",
       "originalId": "adversarial_crypto_timing_attack_original",
       "vulnerableLines": [
         1
-      ]
+      ],
+      "provenance": {
+        "sourceType": "code-guardian-evaluation",
+        "referenceId": "Adversarial - Original Pattern",
+        "sourceUrl": "https://github.com/mdhafizur/code-guardian",
+        "sourceLabel": "Adversarial - Original Pattern",
+        "sourceProject": "adversarial",
+        "collectedFrom": "manifest",
+        "sourcePath": null
+      }
     }
   },
   {
@@ -403,12 +547,21 @@
     "expectedFix": "Replace weak cryptographic primitives with modern approved algorithms.",
     "metadata": {
       "sourceDataset": "adversarial",
-      "sourcePolicy": "external-only",
+      "sourcePolicy": "all",
       "source": "Adversarial - Obfuscated",
       "originalId": "adversarial_crypto_timing_attack_obfuscated",
       "vulnerableLines": [
         1
-      ]
+      ],
+      "provenance": {
+        "sourceType": "code-guardian-evaluation",
+        "referenceId": "Adversarial - Obfuscated",
+        "sourceUrl": "https://github.com/mdhafizur/code-guardian",
+        "sourceLabel": "Adversarial - Obfuscated",
+        "sourceProject": "adversarial",
+        "collectedFrom": "manifest",
+        "sourcePath": null
+      }
     }
   },
   {
@@ -427,12 +580,21 @@
     "expectedFix": "Replace weak cryptographic primitives with modern approved algorithms.",
     "metadata": {
       "sourceDataset": "adversarial",
-      "sourcePolicy": "external-only",
+      "sourcePolicy": "all",
       "source": "Adversarial - Minimal",
       "originalId": "adversarial_crypto_timing_attack_minimal",
       "vulnerableLines": [
         1
-      ]
+      ],
+      "provenance": {
+        "sourceType": "code-guardian-evaluation",
+        "referenceId": "Adversarial - Minimal",
+        "sourceUrl": "https://github.com/mdhafizur/code-guardian",
+        "sourceLabel": "Adversarial - Minimal",
+        "sourceProject": "adversarial",
+        "collectedFrom": "manifest",
+        "sourcePath": null
+      }
     }
   },
   {
@@ -451,13 +613,22 @@
     "expectedFix": "Avoid unsafe deserialization and enforce strict schema validation.",
     "metadata": {
       "sourceDataset": "adversarial",
-      "sourcePolicy": "external-only",
+      "sourcePolicy": "all",
       "source": "Adversarial - Original Pattern",
       "originalId": "adversarial_deserialization_gadget_original",
       "vulnerableLines": [
         4,
         12
-      ]
+      ],
+      "provenance": {
+        "sourceType": "code-guardian-evaluation",
+        "referenceId": "Adversarial - Original Pattern",
+        "sourceUrl": "https://github.com/mdhafizur/code-guardian",
+        "sourceLabel": "Adversarial - Original Pattern",
+        "sourceProject": "adversarial",
+        "collectedFrom": "manifest",
+        "sourcePath": null
+      }
     }
   },
   {
@@ -476,12 +647,21 @@
     "expectedFix": "Avoid unsafe deserialization and enforce strict schema validation.",
     "metadata": {
       "sourceDataset": "adversarial",
-      "sourcePolicy": "external-only",
+      "sourcePolicy": "all",
       "source": "Adversarial - Obfuscated",
       "originalId": "adversarial_deserialization_gadget_obfuscated",
       "vulnerableLines": [
         1
-      ]
+      ],
+      "provenance": {
+        "sourceType": "code-guardian-evaluation",
+        "referenceId": "Adversarial - Obfuscated",
+        "sourceUrl": "https://github.com/mdhafizur/code-guardian",
+        "sourceLabel": "Adversarial - Obfuscated",
+        "sourceProject": "adversarial",
+        "collectedFrom": "manifest",
+        "sourcePath": null
+      }
     }
   },
   {
@@ -500,12 +680,21 @@
     "expectedFix": "Avoid unsafe deserialization and enforce strict schema validation.",
     "metadata": {
       "sourceDataset": "adversarial",
-      "sourcePolicy": "external-only",
+      "sourcePolicy": "all",
       "source": "Adversarial - Minimal",
       "originalId": "adversarial_deserialization_gadget_minimal",
       "vulnerableLines": [
         1
-      ]
+      ],
+      "provenance": {
+        "sourceType": "code-guardian-evaluation",
+        "referenceId": "Adversarial - Minimal",
+        "sourceUrl": "https://github.com/mdhafizur/code-guardian",
+        "sourceLabel": "Adversarial - Minimal",
+        "sourceProject": "adversarial",
+        "collectedFrom": "manifest",
+        "sourcePath": null
+      }
     }
   },
   {
@@ -524,12 +713,21 @@
     "expectedFix": "Use parameterized query objects and validate query operators/fields.",
     "metadata": {
       "sourceDataset": "adversarial",
-      "sourcePolicy": "external-only",
+      "sourcePolicy": "all",
       "source": "Adversarial - Original Pattern",
       "originalId": "adversarial_nosql_injection_aggregation_original",
       "vulnerableLines": [
         10
-      ]
+      ],
+      "provenance": {
+        "sourceType": "code-guardian-evaluation",
+        "referenceId": "Adversarial - Original Pattern",
+        "sourceUrl": "https://github.com/mdhafizur/code-guardian",
+        "sourceLabel": "Adversarial - Original Pattern",
+        "sourceProject": "adversarial",
+        "collectedFrom": "manifest",
+        "sourcePath": null
+      }
     }
   },
   {
@@ -548,12 +746,21 @@
     "expectedFix": "Use parameterized query objects and validate query operators/fields.",
     "metadata": {
       "sourceDataset": "adversarial",
-      "sourcePolicy": "external-only",
+      "sourcePolicy": "all",
       "source": "Adversarial - Obfuscated",
       "originalId": "adversarial_nosql_injection_aggregation_obfuscated",
       "vulnerableLines": [
         1
-      ]
+      ],
+      "provenance": {
+        "sourceType": "code-guardian-evaluation",
+        "referenceId": "Adversarial - Obfuscated",
+        "sourceUrl": "https://github.com/mdhafizur/code-guardian",
+        "sourceLabel": "Adversarial - Obfuscated",
+        "sourceProject": "adversarial",
+        "collectedFrom": "manifest",
+        "sourcePath": null
+      }
     }
   },
   {
@@ -572,12 +779,21 @@
     "expectedFix": "Use parameterized query objects and validate query operators/fields.",
     "metadata": {
       "sourceDataset": "adversarial",
-      "sourcePolicy": "external-only",
+      "sourcePolicy": "all",
       "source": "Adversarial - Minimal",
       "originalId": "adversarial_nosql_injection_aggregation_minimal",
       "vulnerableLines": [
         1
-      ]
+      ],
+      "provenance": {
+        "sourceType": "code-guardian-evaluation",
+        "referenceId": "Adversarial - Minimal",
+        "sourceUrl": "https://github.com/mdhafizur/code-guardian",
+        "sourceLabel": "Adversarial - Minimal",
+        "sourceProject": "adversarial",
+        "collectedFrom": "manifest",
+        "sourcePath": null
+      }
     }
   },
   {
@@ -596,12 +812,21 @@
     "expectedFix": "Avoid catastrophic regex patterns and enforce input/time limits.",
     "metadata": {
       "sourceDataset": "adversarial",
-      "sourcePolicy": "external-only",
+      "sourcePolicy": "all",
       "source": "Adversarial - Original Pattern",
       "originalId": "adversarial_regex_dos_backtrack_original",
       "vulnerableLines": [
         1
-      ]
+      ],
+      "provenance": {
+        "sourceType": "code-guardian-evaluation",
+        "referenceId": "Adversarial - Original Pattern",
+        "sourceUrl": "https://github.com/mdhafizur/code-guardian",
+        "sourceLabel": "Adversarial - Original Pattern",
+        "sourceProject": "adversarial",
+        "collectedFrom": "manifest",
+        "sourcePath": null
+      }
     }
   },
   {
@@ -620,12 +845,21 @@
     "expectedFix": "Avoid catastrophic regex patterns and enforce input/time limits.",
     "metadata": {
       "sourceDataset": "adversarial",
-      "sourcePolicy": "external-only",
+      "sourcePolicy": "all",
       "source": "Adversarial - Obfuscated",
       "originalId": "adversarial_regex_dos_backtrack_obfuscated",
       "vulnerableLines": [
         1
-      ]
+      ],
+      "provenance": {
+        "sourceType": "code-guardian-evaluation",
+        "referenceId": "Adversarial - Obfuscated",
+        "sourceUrl": "https://github.com/mdhafizur/code-guardian",
+        "sourceLabel": "Adversarial - Obfuscated",
+        "sourceProject": "adversarial",
+        "collectedFrom": "manifest",
+        "sourcePath": null
+      }
     }
   },
   {
@@ -644,12 +878,21 @@
     "expectedFix": "Avoid catastrophic regex patterns and enforce input/time limits.",
     "metadata": {
       "sourceDataset": "adversarial",
-      "sourcePolicy": "external-only",
+      "sourcePolicy": "all",
       "source": "Adversarial - Minimal",
       "originalId": "adversarial_regex_dos_backtrack_minimal",
       "vulnerableLines": [
         1
-      ]
+      ],
+      "provenance": {
+        "sourceType": "code-guardian-evaluation",
+        "referenceId": "Adversarial - Minimal",
+        "sourceUrl": "https://github.com/mdhafizur/code-guardian",
+        "sourceLabel": "Adversarial - Minimal",
+        "sourceProject": "adversarial",
+        "collectedFrom": "manifest",
+        "sourcePath": null
+      }
     }
   },
   {
@@ -668,14 +911,23 @@
     "expectedFix": "Harden authentication checks and validate token/session integrity.",
     "metadata": {
       "sourceDataset": "adversarial",
-      "sourcePolicy": "external-only",
+      "sourcePolicy": "all",
       "source": "Adversarial - Original Pattern",
       "originalId": "adversarial_jwt_algorithm_confusion_original",
       "vulnerableLines": [
         2,
         3,
         14
-      ]
+      ],
+      "provenance": {
+        "sourceType": "code-guardian-evaluation",
+        "referenceId": "Adversarial - Original Pattern",
+        "sourceUrl": "https://github.com/mdhafizur/code-guardian",
+        "sourceLabel": "Adversarial - Original Pattern",
+        "sourceProject": "adversarial",
+        "collectedFrom": "manifest",
+        "sourcePath": null
+      }
     }
   },
   {
@@ -694,12 +946,21 @@
     "expectedFix": "Harden authentication checks and validate token/session integrity.",
     "metadata": {
       "sourceDataset": "adversarial",
-      "sourcePolicy": "external-only",
+      "sourcePolicy": "all",
       "source": "Adversarial - Obfuscated",
       "originalId": "adversarial_jwt_algorithm_confusion_obfuscated",
       "vulnerableLines": [
         1
-      ]
+      ],
+      "provenance": {
+        "sourceType": "code-guardian-evaluation",
+        "referenceId": "Adversarial - Obfuscated",
+        "sourceUrl": "https://github.com/mdhafizur/code-guardian",
+        "sourceLabel": "Adversarial - Obfuscated",
+        "sourceProject": "adversarial",
+        "collectedFrom": "manifest",
+        "sourcePath": null
+      }
     }
   },
   {
@@ -718,12 +979,21 @@
     "expectedFix": "Harden authentication checks and validate token/session integrity.",
     "metadata": {
       "sourceDataset": "adversarial",
-      "sourcePolicy": "external-only",
+      "sourcePolicy": "all",
       "source": "Adversarial - Minimal",
       "originalId": "adversarial_jwt_algorithm_confusion_minimal",
       "vulnerableLines": [
         1
-      ]
+      ],
+      "provenance": {
+        "sourceType": "code-guardian-evaluation",
+        "referenceId": "Adversarial - Minimal",
+        "sourceUrl": "https://github.com/mdhafizur/code-guardian",
+        "sourceLabel": "Adversarial - Minimal",
+        "sourceProject": "adversarial",
+        "collectedFrom": "manifest",
+        "sourcePath": null
+      }
     }
   },
   {
@@ -742,13 +1012,22 @@
     "expectedFix": "Validate outbound targets and restrict requests with allowlists/network controls.",
     "metadata": {
       "sourceDataset": "adversarial",
-      "sourcePolicy": "external-only",
+      "sourcePolicy": "all",
       "source": "Adversarial - Original Pattern",
       "originalId": "adversarial_ssrf_url_bypass_original",
       "vulnerableLines": [
         2,
         3
-      ]
+      ],
+      "provenance": {
+        "sourceType": "code-guardian-evaluation",
+        "referenceId": "Adversarial - Original Pattern",
+        "sourceUrl": "https://github.com/mdhafizur/code-guardian",
+        "sourceLabel": "Adversarial - Original Pattern",
+        "sourceProject": "adversarial",
+        "collectedFrom": "manifest",
+        "sourcePath": null
+      }
     }
   },
   {
@@ -767,12 +1046,21 @@
     "expectedFix": "Validate outbound targets and restrict requests with allowlists/network controls.",
     "metadata": {
       "sourceDataset": "adversarial",
-      "sourcePolicy": "external-only",
+      "sourcePolicy": "all",
       "source": "Adversarial - Obfuscated",
       "originalId": "adversarial_ssrf_url_bypass_obfuscated",
       "vulnerableLines": [
         1
-      ]
+      ],
+      "provenance": {
+        "sourceType": "code-guardian-evaluation",
+        "referenceId": "Adversarial - Obfuscated",
+        "sourceUrl": "https://github.com/mdhafizur/code-guardian",
+        "sourceLabel": "Adversarial - Obfuscated",
+        "sourceProject": "adversarial",
+        "collectedFrom": "manifest",
+        "sourcePath": null
+      }
     }
   },
   {
@@ -791,12 +1079,21 @@
     "expectedFix": "Validate outbound targets and restrict requests with allowlists/network controls.",
     "metadata": {
       "sourceDataset": "adversarial",
-      "sourcePolicy": "external-only",
+      "sourcePolicy": "all",
       "source": "Adversarial - Minimal",
       "originalId": "adversarial_ssrf_url_bypass_minimal",
       "vulnerableLines": [
         1
-      ]
+      ],
+      "provenance": {
+        "sourceType": "code-guardian-evaluation",
+        "referenceId": "Adversarial - Minimal",
+        "sourceUrl": "https://github.com/mdhafizur/code-guardian",
+        "sourceLabel": "Adversarial - Minimal",
+        "sourceProject": "adversarial",
+        "collectedFrom": "manifest",
+        "sourcePath": null
+      }
     }
   },
   {
@@ -815,12 +1112,21 @@
     "expectedFix": "Use parameterized LDAP queries and sanitize user-controlled input.",
     "metadata": {
       "sourceDataset": "adversarial",
-      "sourcePolicy": "external-only",
+      "sourcePolicy": "all",
       "source": "Adversarial - Original Pattern",
       "originalId": "adversarial_ldap_injection_blind_original",
       "vulnerableLines": [
         2
-      ]
+      ],
+      "provenance": {
+        "sourceType": "code-guardian-evaluation",
+        "referenceId": "Adversarial - Original Pattern",
+        "sourceUrl": "https://github.com/mdhafizur/code-guardian",
+        "sourceLabel": "Adversarial - Original Pattern",
+        "sourceProject": "adversarial",
+        "collectedFrom": "manifest",
+        "sourcePath": null
+      }
     }
   },
   {
@@ -839,12 +1145,21 @@
     "expectedFix": "Use parameterized LDAP queries and sanitize user-controlled input.",
     "metadata": {
       "sourceDataset": "adversarial",
-      "sourcePolicy": "external-only",
+      "sourcePolicy": "all",
       "source": "Adversarial - Obfuscated",
       "originalId": "adversarial_ldap_injection_blind_obfuscated",
       "vulnerableLines": [
         1
-      ]
+      ],
+      "provenance": {
+        "sourceType": "code-guardian-evaluation",
+        "referenceId": "Adversarial - Obfuscated",
+        "sourceUrl": "https://github.com/mdhafizur/code-guardian",
+        "sourceLabel": "Adversarial - Obfuscated",
+        "sourceProject": "adversarial",
+        "collectedFrom": "manifest",
+        "sourcePath": null
+      }
     }
   },
   {
@@ -863,12 +1178,21 @@
     "expectedFix": "Use parameterized LDAP queries and sanitize user-controlled input.",
     "metadata": {
       "sourceDataset": "adversarial",
-      "sourcePolicy": "external-only",
+      "sourcePolicy": "all",
       "source": "Adversarial - Minimal",
       "originalId": "adversarial_ldap_injection_blind_minimal",
       "vulnerableLines": [
         1
-      ]
+      ],
+      "provenance": {
+        "sourceType": "code-guardian-evaluation",
+        "referenceId": "Adversarial - Minimal",
+        "sourceUrl": "https://github.com/mdhafizur/code-guardian",
+        "sourceLabel": "Adversarial - Minimal",
+        "sourceProject": "adversarial",
+        "collectedFrom": "manifest",
+        "sourcePath": null
+      }
     }
   },
   {
@@ -887,13 +1211,22 @@
     "expectedFix": "Use synchronization/atomic operations to protect shared state.",
     "metadata": {
       "sourceDataset": "adversarial",
-      "sourcePolicy": "external-only",
+      "sourcePolicy": "all",
       "source": "Adversarial - Original Pattern",
       "originalId": "adversarial_race_condition_toctou_original",
       "vulnerableLines": [
         2,
         21
-      ]
+      ],
+      "provenance": {
+        "sourceType": "code-guardian-evaluation",
+        "referenceId": "Adversarial - Original Pattern",
+        "sourceUrl": "https://github.com/mdhafizur/code-guardian",
+        "sourceLabel": "Adversarial - Original Pattern",
+        "sourceProject": "adversarial",
+        "collectedFrom": "manifest",
+        "sourcePath": null
+      }
     }
   },
   {
@@ -912,12 +1245,21 @@
     "expectedFix": "Use synchronization/atomic operations to protect shared state.",
     "metadata": {
       "sourceDataset": "adversarial",
-      "sourcePolicy": "external-only",
+      "sourcePolicy": "all",
       "source": "Adversarial - Obfuscated",
       "originalId": "adversarial_race_condition_toctou_obfuscated",
       "vulnerableLines": [
         1
-      ]
+      ],
+      "provenance": {
+        "sourceType": "code-guardian-evaluation",
+        "referenceId": "Adversarial - Obfuscated",
+        "sourceUrl": "https://github.com/mdhafizur/code-guardian",
+        "sourceLabel": "Adversarial - Obfuscated",
+        "sourceProject": "adversarial",
+        "collectedFrom": "manifest",
+        "sourcePath": null
+      }
     }
   },
   {
@@ -936,12 +1278,21 @@
     "expectedFix": "Use synchronization/atomic operations to protect shared state.",
     "metadata": {
       "sourceDataset": "adversarial",
-      "sourcePolicy": "external-only",
+      "sourcePolicy": "all",
       "source": "Adversarial - Minimal",
       "originalId": "adversarial_race_condition_toctou_minimal",
       "vulnerableLines": [
         1
-      ]
+      ],
+      "provenance": {
+        "sourceType": "code-guardian-evaluation",
+        "referenceId": "Adversarial - Minimal",
+        "sourceUrl": "https://github.com/mdhafizur/code-guardian",
+        "sourceLabel": "Adversarial - Minimal",
+        "sourceProject": "adversarial",
+        "collectedFrom": "manifest",
+        "sourcePath": null
+      }
     }
   },
   {
@@ -960,12 +1311,21 @@
     "expectedFix": "Disable external entities and DTD processing in XML parsers.",
     "metadata": {
       "sourceDataset": "adversarial",
-      "sourcePolicy": "external-only",
+      "sourcePolicy": "all",
       "source": "Adversarial - Original Pattern",
       "originalId": "adversarial_xml_external_entity_original",
       "vulnerableLines": [
         2
-      ]
+      ],
+      "provenance": {
+        "sourceType": "code-guardian-evaluation",
+        "referenceId": "Adversarial - Original Pattern",
+        "sourceUrl": "https://github.com/mdhafizur/code-guardian",
+        "sourceLabel": "Adversarial - Original Pattern",
+        "sourceProject": "adversarial",
+        "collectedFrom": "manifest",
+        "sourcePath": null
+      }
     }
   },
   {
@@ -984,12 +1344,21 @@
     "expectedFix": "Disable external entities and DTD processing in XML parsers.",
     "metadata": {
       "sourceDataset": "adversarial",
-      "sourcePolicy": "external-only",
+      "sourcePolicy": "all",
       "source": "Adversarial - Obfuscated",
       "originalId": "adversarial_xml_external_entity_obfuscated",
       "vulnerableLines": [
         1
-      ]
+      ],
+      "provenance": {
+        "sourceType": "code-guardian-evaluation",
+        "referenceId": "Adversarial - Obfuscated",
+        "sourceUrl": "https://github.com/mdhafizur/code-guardian",
+        "sourceLabel": "Adversarial - Obfuscated",
+        "sourceProject": "adversarial",
+        "collectedFrom": "manifest",
+        "sourcePath": null
+      }
     }
   },
   {
@@ -1008,12 +1377,21 @@
     "expectedFix": "Disable external entities and DTD processing in XML parsers.",
     "metadata": {
       "sourceDataset": "adversarial",
-      "sourcePolicy": "external-only",
+      "sourcePolicy": "all",
       "source": "Adversarial - Minimal",
       "originalId": "adversarial_xml_external_entity_minimal",
       "vulnerableLines": [
         1
-      ]
+      ],
+      "provenance": {
+        "sourceType": "code-guardian-evaluation",
+        "referenceId": "Adversarial - Minimal",
+        "sourceUrl": "https://github.com/mdhafizur/code-guardian",
+        "sourceLabel": "Adversarial - Minimal",
+        "sourceProject": "adversarial",
+        "collectedFrom": "manifest",
+        "sourcePath": null
+      }
     }
   }
 ]

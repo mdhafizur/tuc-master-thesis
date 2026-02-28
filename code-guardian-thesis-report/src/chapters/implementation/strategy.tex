@@ -30,6 +30,34 @@ RAG can be toggled at runtime through settings and is surfaced via a status-bar 
 
 To reduce repeated inference calls, Code Guardian caches analysis results keyed by (code snippet, model). Under typical editing patterns, small changes frequently return to previously seen states (undo/redo, formatting), making caching effective. Debouncing and caching together aim to keep real-time diagnostics responsive (R6) while maintaining stable behavior across repeated runs (R1).
 
+\subsection{Cost-Aware Mode Selection}
+\label{subsec:impl-cost-aware-selection}
+
+Mode selection in Code Guardian is intentionally tied to interaction cost. Real-time diagnostics prioritize bounded latency, so they use smaller scopes and stricter guards. On-demand and workspace workflows tolerate higher latency in exchange for broader context.
+
+In practice, the extension follows an implicit decision policy:
+\begin{itemize}
+  \item if interaction is continuous (typing), prefer function scope and minimal prompt overhead;
+  \item if interaction is explicit (command-triggered), allow larger scopes and richer context;
+  \item if repository-wide insight is needed, run bounded batch scans with aggregation.
+\end{itemize}
+
+This policy is not a static rulebook; it is a practical control layer that maps developer intent to an appropriate latency/coverage profile. It also reduces the risk of ``always-on heavy analysis'' that would otherwise degrade IDE usability.
+
+\subsection{Guardrail Ordering and Failure Containment}
+\label{subsec:impl-guardrail-order}
+
+Guardrails are applied in a fixed order to fail fast and preserve responsiveness:
+\begin{enumerate}
+  \item scope extraction and size validation,
+  \item cache lookup,
+  \item optional retrieval preparation,
+  \item model invocation with timeout/retry bounds,
+  \item strict parse/validation and diagnostic rendering.
+\end{enumerate}
+
+Ordering matters operationally. Early rejection of oversized scopes avoids unnecessary retrieval and inference work, and early cache hits bypass the most expensive stage entirely. This containment strategy is one of the main reasons the extension remains usable on commodity developer hardware.
+
 \subsection{Repair Suggestion Handling}
 \label{subsec:impl-repair}
 

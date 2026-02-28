@@ -9,32 +9,65 @@ Table~\ref{tab:eval-ablation-summary} compares all measured model/prompt-mode co
 
 \begin{table}[H]
   \centering
-  \caption{Ablation summary across model and prompt mode.}
+  \caption{Ablation summary across model and prompt mode (merged thesis result set).}
   \label{tab:eval-ablation-summary}
   \resizebox{\textwidth}{!}{%
   \begin{tabular}{lcccccc}
       \toprule
       Configuration & Precision (\%) & Recall (\%) & F1 (\%) & FPR (\%) & Parse (\%) & Median (ms) \\
       \midrule
-      \texttt{qwen3:8b} (LLM+RAG) & 54.29 & 35.19 & 42.70 & 27.12 & 84.85 & 7809 \\
-      \texttt{qwen3:8b} (LLM-only) & 38.30 & 33.33 & 35.64 & 39.73 & 77.78 & 8774 \\
-      \texttt{gemma3:4b} (LLM+RAG) & 24.24 & 44.44 & 31.37 & 100.00 & 100.00 & 1335 \\
-      \texttt{gemma3:4b} (LLM-only) & 23.96 & 42.59 & 30.67 & 100.00 & 96.97 & 1415 \\
-      \texttt{gemma3:1b} (LLM-only) & 100.00 & 5.56 & 10.53 & 0.00 & 100.00 & 178 \\
-      \texttt{CodeLlama:latest} (LLM-only) & 40.00 & 3.70 & 6.78 & 6.25 & 5.05 & 3987 \\
-      \texttt{gemma3:1b} (LLM+RAG) & 0.00 & 0.00 & 0.00 & 0.00 & 100.00 & 180 \\
-      \texttt{qwen3:4b} (LLM-only) & 0.00 & 0.00 & 0.00 & 0.00 & 1.01 & 9549 \\
-      \texttt{qwen3:4b} (LLM+RAG) & 0.00 & 0.00 & 0.00 & 0.00 & 4.04 & 9852 \\
-      \texttt{CodeLlama:latest} (LLM+RAG) & 0.00 & 0.00 & 0.00 & 10.00 & 1.01 & 5478 \\
+      \texttt{qwen3:8b} (LLM+RAG) & 62.93 & 64.60 & 63.76 & 26.67 & 100.00 & 1524 \\
+      \texttt{qwen3:4b} (LLM+RAG) & 53.53 & 64.90 & 58.67 & 100.00 & 100.00 & 1087 \\
+      \texttt{qwen3:8b} (LLM-only) & 54.06 & 62.83 & 58.12 & 26.67 & 100.00 & 1548 \\
+      \texttt{gemma3:4b} (LLM-only) & 50.59 & 62.83 & 56.05 & 100.00 & 100.00 & 1932 \\
+      \texttt{qwen3:4b} (LLM-only) & 48.74 & 62.83 & 54.90 & 100.00 & 100.00 & 1178 \\
+      \texttt{gemma3:4b} (LLM+RAG) & 44.06 & 56.93 & 49.68 & 100.00 & 100.00 & 1744 \\
+      \texttt{CodeLlama:latest} (LLM-only) & 38.42 & 46.02 & 41.88 & 100.00 & 100.00 & 1314 \\
+      \texttt{gemma3:1b} (LLM+RAG) & 30.49 & 44.25 & 36.10 & 100.00 & 99.72 & 881 \\
+      \texttt{gemma3:1b} (LLM-only) & 45.31 & 25.66 & 32.77 & 100.00 & 100.00 & 333 \\
+      \texttt{CodeLlama:latest} (LLM+RAG) & 28.89 & 34.51 & 31.45 & 100.00 & 100.00 & 1347 \\
       \bottomrule
     \end{tabular}%
   }
 \end{table}
 
+\subsection*{SAST Baseline Comparison}
+
+To contextualize LLM and LLM+RAG behavior, Table~\ref{tab:eval-baseline-summary} reports merged-run results for the requested static-analysis baselines.
+
+\begin{table}[H]
+  \centering
+  \caption{SAST baseline results on the merged thesis result set.}
+  \label{tab:eval-baseline-summary}
+  \small
+  \begin{tabular}{lcccccc}
+    \toprule
+    Tool & Precision (\%) & Recall (\%) & F1 (\%) & FPR (\%) & Parse (\%) & Median (ms) \\
+    \midrule
+    \texttt{semgrep} & 57.89 & 9.73 & 16.67 & 6.67 & 100.00 & 52 \\
+    \texttt{codeql} & 15.71 & 9.73 & 12.02 & 53.33 & 100.00 & 146 \\
+    \texttt{eslint-security} & 0.00 & 0.00 & 0.00 & 0.00 & 100.00 & 1 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+These baseline results should be interpreted in the context of the baseline integration described in Section~\ref{sec:eval-setup}: tools run on a synthetic snippet workspace and findings are mapped into the harness schema via heuristic type inference. Therefore, low recall can reflect both tool limitations on snippet-only context and taxonomy mismatches in the mapping layer. In this run, Semgrep achieved the strongest baseline precision with low recall, while CodeQL had similarly low recall with much higher secure-sample over-warning. ESLint-security produced no true positives on this dataset.
+
 \subsection*{Per-Category Observations}
 
-Based on detailed run logs, injection-style cases (SQL injection and XSS) were consistently detected by \texttt{qwen3:8b} in the best-performing configuration. At the same time, representative misses remained (e.g., NoSQL injection), and secure samples still produced false alarms in several configurations. The most extreme alert-noise behavior appears in \texttt{gemma3:4b}, where secure evaluations were flagged in every run (FPR 100\% in both modes).
+Based on detailed run logs, injection-style cases (SQL injection and XSS) were consistently detected by \texttt{qwen3:8b} in the best-performing configuration. At the same time, representative misses remained (e.g., insecure deserialization/NoSQL-style cases), and secure samples still produced false alarms in several configurations. The most extreme alert-noise behavior appears in \texttt{gemma3:4b}, \texttt{qwen3:4b}, and \texttt{CodeLlama:latest}, where merged FPR remains 100\%.
 
 \subsection*{Interpretation}
 
-These results motivate two practical follow-ups: stronger output-contract enforcement for models with low parse reliability, and stricter abstention behavior on secure samples for high-noise configurations. They also support differentiated defaults: a fast conservative model for inline checks and a higher-accuracy model for audit mode when higher latency is acceptable.
+These results motivate stricter abstention behavior on secure samples and additional calibration for high-noise configurations. They also support differentiated defaults: \texttt{qwen3:8b} for higher-quality audit mode and smaller models for faster inline checks where recall can be traded off against latency.
+
+\subsection*{Comparative Pattern Analysis}
+
+Across both prompt modes, three recurring patterns appear:
+\begin{itemize}
+  \item \textbf{Capacity helps, but does not solve noise alone:} larger models improve aggregate quality more consistently than very small models, yet many configurations still over-warn on secure samples.
+  \item \textbf{RAG is interactional, not additive:} retrieval context can improve one model while degrading another, indicating dependence on model-specific context integration behavior.
+  \item \textbf{Baseline tools remain operationally relevant:} despite lower recall, deterministic SAST signals can provide lower-noise anchors that are valuable in hybrid workflows.
+\end{itemize}
+
+These patterns support a mixed-tool deployment model: use deterministic tools for stable guardrails and local LLM analysis for contextual interpretation and repair ideation. The empirical results in this chapter provide run-level evidence for that division of labor.

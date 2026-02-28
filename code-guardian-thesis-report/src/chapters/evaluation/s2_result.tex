@@ -5,22 +5,22 @@ This section reports Code Guardian with retrieval augmentation enabled. In this 
 
 \subsection*{Detection Quality}
 
-Table~\ref{tab:eval-rag} summarizes detection metrics for the RAG-enhanced configuration. Comparing Table~\ref{tab:eval-rag} against Table~\ref{tab:eval-llm-only} isolates the empirical impact of retrieval augmentation on precision/recall trade-offs.
+Table~\ref{tab:eval-rag} summarizes detection metrics for the RAG-enhanced configuration on the merged thesis result set (113 vulnerable + 15 secure/negative cases). Comparing Table~\ref{tab:eval-rag} against Table~\ref{tab:eval-llm-only} isolates the empirical impact of retrieval augmentation on precision/recall trade-offs.
 
 \begin{table}[H]
   \centering
-  \caption{LLM+RAG evaluation metrics on the curated dataset.}
+  \caption{LLM+RAG evaluation metrics on the merged thesis result set.}
   \label{tab:eval-rag}
   \small
   \begin{tabular}{lccccc}
     \toprule
     Model & Precision (\%) & Recall (\%) & F1 (\%) & FPR (\%) & Parse rate (\%) \\
     \midrule
-    \texttt{gemma3:1b} & 0.00 & 0.00 & 0.00 & 0.00 & 100.00 \\
-    \texttt{gemma3:4b} & 24.24 & 44.44 & 31.37 & 100.00 & 100.00 \\
-    \texttt{qwen3:4b} & 0.00 & 0.00 & 0.00 & 0.00 & 4.04 \\
-    \texttt{qwen3:8b} & 54.29 & 35.19 & 42.70 & 27.12 & 84.85 \\
-    \texttt{CodeLlama:latest} & 0.00 & 0.00 & 0.00 & 10.00 & 1.01 \\
+    \texttt{gemma3:1b} & 30.49 & 44.25 & 36.10 & 100.00 & 99.72 \\
+    \texttt{gemma3:4b} & 44.06 & 56.93 & 49.68 & 100.00 & 100.00 \\
+    \texttt{qwen3:4b} & 53.53 & 64.90 & 58.67 & 100.00 & 100.00 \\
+    \texttt{qwen3:8b} & 62.93 & 64.60 & 63.76 & 26.67 & 100.00 \\
+    \texttt{CodeLlama:latest} & 28.89 & 34.51 & 31.45 & 100.00 & 100.00 \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -38,15 +38,15 @@ Retrieval introduces overhead from embedding, vector search, and prompt expansio
     \toprule
     Model & Median (ms) & Mean (ms) \\
     \midrule
-    \texttt{gemma3:1b} & 180 & 180 \\
-    \texttt{gemma3:4b} & 1335 & 1334 \\
-    \texttt{qwen3:4b} & 9852 & 9959 \\
-    \texttt{qwen3:8b} & 7809 & 9012 \\
-    \texttt{CodeLlama:latest} & 5478 & 5768 \\
+    \texttt{gemma3:1b} & 881 & 1157 \\
+    \texttt{gemma3:4b} & 1744 & 2183 \\
+    \texttt{qwen3:4b} & 1087 & 1390 \\
+    \texttt{qwen3:8b} & 1524 & 1827 \\
+    \texttt{CodeLlama:latest} & 1347 & 1836 \\
     \bottomrule
   \end{tabular}
 \end{table}
 
 \subsection*{Discussion}
 
-RAG effects are model-dependent in this run. For \texttt{qwen3:8b}, RAG improved precision and F1, reduced FPR, and reduced median latency compared to LLM-only. \texttt{gemma3:4b} showed a small F1 gain but retained an FPR of 100\%. For \texttt{gemma3:1b}, RAG reduced recall to zero. \texttt{qwen3:4b} and \texttt{CodeLlama:latest} remained dominated by parse failures in both prompt modes.
+RAG effects are model-dependent in this run. For \texttt{qwen3:8b}, RAG improved precision and F1 over LLM-only while FPR remained unchanged at 26.67\%. \texttt{qwen3:4b} also improved with RAG (F1: 54.90\% $\rightarrow$ 58.67\%). In contrast, \texttt{gemma3:4b} and \texttt{CodeLlama:latest} degraded with RAG, while \texttt{gemma3:1b} improved recall but still retained very high alert noise (FPR 100\%).

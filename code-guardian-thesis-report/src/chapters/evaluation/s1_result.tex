@@ -5,22 +5,22 @@ This section reports results for Code Guardian when operating without retrieval 
 
 \subsection*{Detection Quality}
 
-Table~\ref{tab:eval-llm-only} summarizes precision, recall, and F1 score on the curated dataset. These values should be reported per model, as different local models can show distinct precision/recall trade-offs.
+Table~\ref{tab:eval-llm-only} summarizes precision, recall, and F1 score for the LLM-only configuration using the merged thesis result set (113 vulnerable + 15 secure/negative cases). These values are reported per model because local models show distinct precision/recall trade-offs and false-positive behavior.
 
 \begin{table}[H]
   \centering
-  \caption{LLM-only evaluation metrics on the curated dataset.}
+  \caption{LLM-only evaluation metrics on the merged thesis result set.}
   \label{tab:eval-llm-only}
   \small
   \begin{tabular}{lccccc}
     \toprule
     Model & Precision (\%) & Recall (\%) & F1 (\%) & FPR (\%) & Parse rate (\%) \\
     \midrule
-    \texttt{gemma3:1b} & 100.00 & 5.56 & 10.53 & 0.00 & 100.00 \\
-    \texttt{gemma3:4b} & 23.96 & 42.59 & 30.67 & 100.00 & 96.97 \\
-    \texttt{qwen3:4b} & 0.00 & 0.00 & 0.00 & 0.00 & 1.01 \\
-    \texttt{qwen3:8b} & 38.30 & 33.33 & 35.64 & 39.73 & 77.78 \\
-    \texttt{CodeLlama:latest} & 40.00 & 3.70 & 6.78 & 6.25 & 5.05 \\
+    \texttt{gemma3:1b} & 45.31 & 25.66 & 32.77 & 100.00 & 100.00 \\
+    \texttt{gemma3:4b} & 50.59 & 62.83 & 56.05 & 100.00 & 100.00 \\
+    \texttt{qwen3:4b} & 48.74 & 62.83 & 54.90 & 100.00 & 100.00 \\
+    \texttt{qwen3:8b} & 54.06 & 62.83 & 58.12 & 26.67 & 100.00 \\
+    \texttt{CodeLlama:latest} & 38.42 & 46.02 & 41.88 & 100.00 & 100.00 \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -38,15 +38,15 @@ For interactive usage, response time is critical. Table~\ref{tab:eval-llm-only-l
     \toprule
     Model & Median (ms) & Mean (ms) \\
     \midrule
-    \texttt{gemma3:1b} & 178 & 207 \\
-    \texttt{gemma3:4b} & 1415 & 1466 \\
-    \texttt{qwen3:4b} & 9549 & 9612 \\
-    \texttt{qwen3:8b} & 8774 & 9774 \\
-    \texttt{CodeLlama:latest} & 3987 & 4632 \\
+    \texttt{gemma3:1b} & 333 & 626 \\
+    \texttt{gemma3:4b} & 1932 & 2290 \\
+    \texttt{qwen3:4b} & 1178 & 1440 \\
+    \texttt{qwen3:8b} & 1548 & 1909 \\
+    \texttt{CodeLlama:latest} & 1314 & 1782 \\
     \bottomrule
   \end{tabular}
 \end{table}
 
 \subsection*{Discussion}
 
-The LLM-only results show heterogeneous behavior across model families. \texttt{gemma3:1b} remains very fast and conservative (high precision, low recall), while \texttt{qwen3:8b} provides the strongest LLM-only F1 but at much higher latency and lower parse reliability. \texttt{gemma3:4b} achieves higher recall than \texttt{gemma3:1b} but over-warns on secure samples (FPR 100\%). \texttt{qwen3:4b} and \texttt{CodeLlama:latest} show severe parse instability in this run, which corresponds to near-zero detection performance.
+The LLM-only results show heterogeneous behavior across model families. \texttt{qwen3:8b} provides the strongest LLM-only F1 (58.12\%) and the lowest LLM-only FPR (26.67\%), while remaining slower than smaller models. \texttt{gemma3:4b} and \texttt{qwen3:4b} reach similar recall (62.83\%) but over-warn heavily on secure samples (FPR 100\%). \texttt{gemma3:1b} is fastest but lower-recall than larger configurations.

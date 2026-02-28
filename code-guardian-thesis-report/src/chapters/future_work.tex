@@ -27,3 +27,25 @@ Complement the curated dataset with larger benchmarks (e.g., OWASP Benchmark, Ju
 
 \noindent\textbf{User studies in realistic IDE workflows.}
 Run a developer study to measure time-to-fix, perceived usefulness, trust calibration, and false-positive tolerance. Standard usability and workload instruments such as SUS and NASA-TLX can complement objective metrics \cite{brooke1996sus,hart1988nasa}. Compare LLM-only vs.\ LLM+RAG configurations under real editing sessions to validate R6 and practical adoption constraints.
+
+\section*{Phased Roadmap}
+
+To turn these directions into an executable research and engineering plan, a phased roadmap is useful.
+
+\noindent\textbf{Phase 1 (short term): reliability hardening.}
+Prioritize structured-output robustness, better abstention behavior on secure samples, and safer repair application. Concretely, this includes stricter output validation, confidence-aware suppression thresholds, and mandatory diff-first review for suggested fixes.
+
+\medskip
+
+\noindent\textbf{Phase 2 (medium term): contextual depth and hybrid evidence.}
+Add explicit cross-file context extraction and lightweight taint-style traces, then combine these signals with baseline SAST findings. The objective is to preserve LLM reasoning benefits while reducing avoidable false positives from missing program context.
+
+\medskip
+
+\noindent\textbf{Phase 3 (long term): external validity and adoption evidence.}
+Scale evaluation to larger benchmark suites and real repositories, then validate workflow impact through developer studies. This phase should report not only detection metrics, but also engineering outcomes such as review effort, time-to-fix, and acceptance rate of suggested patches.
+
+\medskip
+
+\noindent\textbf{Success criteria for future iterations.}
+Future releases should be judged by balanced progress across quality, noise control, and usability rather than single-metric gains. In particular, improvements in recall should be accompanied by measurable reductions in secure-sample over-warning and stable response latency under realistic IDE workloads.

@@ -1,15 +1,16 @@
 \section{Curated Test Suite Overview}
 \label{app:dataset-overview}
 
-The curated evaluation suite maintained in \texttt{code-guardian/evaluation/datasets/} contains representative vulnerability snippets for JavaScript/TypeScript secure coding. Expected vulnerabilities include CWE identifiers and severities so results can be aggregated by category.
+The curated evaluation suite maintained in \texttt{code-guardian-extension/evaluation/datasets/} contains representative vulnerability snippets for JavaScript/TypeScript secure coding. Expected vulnerabilities include CWE identifiers and severities so results can be aggregated by category.
 
 \subsection*{Dataset sizes}
 
 For the scored thesis run in Chapter~\ref{chap:evaluation}, the harness uses:
 \begin{itemize}
-  \item \textbf{Primary scored dataset:} \texttt{vulnerability-test-cases.json} with 33 test cases (18 vulnerable, 15 secure)
+  \item \textbf{Primary vulnerable set:} \texttt{all-test-cases.generated.json} with 113 vulnerable cases
+  \item \textbf{Secure overlay set:} \texttt{negatives-only.generated.json} with 15 secure/negative cases
 \end{itemize}
-Additional datasets can be added for broader coverage, but all quantitative results in this thesis are derived from the 33-case scored dataset above.
+Quantitative thesis tables are derived from post-hoc merging of these two run artifacts, yielding an effective 128-case result set (113 vulnerable + 15 secure).
 
 \subsection*{Representative Vulnerability Classes}
 
@@ -38,12 +39,27 @@ Each test case contains:
 
 The evaluation script is executed locally:
 \begin{lstlisting}[language=Java, caption={Running the evaluation script}, label={lst:appendix-eval-run}]
-cd code-guardian
-node evaluation/evaluate-models.js --ablation --runs=3 --rag-k=5 --temperature=0.1 \
+cd code-guardian-extension
+node evaluation/evaluate-models.js --ablation --include-baselines \
+  --dataset=datasets/all-test-cases.generated.json --runs=3 --rag-k=5 --temperature=0.1 \
+  --num-predict=1000 --timeout-ms=30000 --delay-ms=500
+node evaluation/evaluate-models.js --ablation --include-baselines \
+  --dataset=datasets/negatives-only.generated.json --runs=1 --rag-k=5 --temperature=0.1 \
   --num-predict=1000 --timeout-ms=30000 --delay-ms=500
 \end{lstlisting}
 
 The script prints per-model precision/recall/F1, false positive rate, average response time, and JSON parse success rate. Models to test are specified in the script and can be edited to match the locally installed Ollama models.
+
+\subsection*{Merged Baseline Snapshot}
+
+From the merged artifact (\texttt{113 vulnerable + 15 secure}), baseline tools measured:
+\begin{itemize}
+  \item \texttt{semgrep}: Precision 57.89\%, Recall 9.73\%, F1 16.67\%, FPR 6.67\%
+  \item \texttt{codeql}: Precision 15.71\%, Recall 9.73\%, F1 12.02\%, FPR 53.33\%
+  \item \texttt{eslint-security}: Precision 0.00\%, Recall 0.00\%, F1 0.00\%, FPR 0.00\%
+\end{itemize}
+
+Baselines are executed by the harness on a temporary workspace that contains one \texttt{.js}/\texttt{.ts} file per snippet. Semgrep is run with \texttt{p/security-audit}, \texttt{p/javascript}, \texttt{p/typescript}, and \texttt{p/owasp-top-ten}. CodeQL analyzes the workspace with the \texttt{javascript-security-and-quality} suite. ESLint uses the recommended rules from \texttt{eslint-plugin-security}. Tool findings are normalized into the harness finding schema and assigned a coarse vulnerability type via heuristic inference from tool metadata, which is approximate and can distort type-level scoring when metadata does not map cleanly.
 
 \subsection*{Recommended Artifact Checklist}
 

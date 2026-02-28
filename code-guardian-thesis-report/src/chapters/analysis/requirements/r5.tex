@@ -13,7 +13,7 @@ This requirement is particularly important for vulnerability detection, where an
 
 Retrieval-Augmented Generation supports privacy-preserving operation by decoupling security knowledge from the model parameters and enabling the use of locally maintained knowledge bases. Vulnerability descriptions, secure coding guidelines, and historical examples can be curated and updated locally without requiring cloud-based retrieval or retraining. This design enables timely incorporation of new vulnerability knowledge while preserving data sovereignty.
 
-For evaluation, privacy preservation is assessed through architectural inspection and runtime verification. We verify that no \emph{external} network communication occurs during analysis by monitoring outbound connections and ensuring that all model inference and retrieval operations are confined to local processes (localhost communication is expected when using a local inference server). In addition, we assess whether the system functions correctly in offline environments, confirming that detection and repair capabilities remain available when network access is unavailable. These checks provide objective evidence that privacy guarantees are upheld in practice.
+For evaluation, privacy preservation can be assessed through architectural inspection and runtime verification. In this thesis run, evidence is primarily architectural and configuration-based (local inference boundary, no source-code egress path in the analyzed workflows), while dedicated outbound-traffic instrumentation and formal offline verification logs are not captured as separate artifacts. A stricter operational audit would add explicit network-monitor traces and repeatable offline-mode execution logs.
 
 \begin{table}[h!]
 \centering
@@ -40,4 +40,4 @@ None &
 \label{tab:r5-privacy}
 \end{table}
 
-In summary, R5 ensures that vulnerability detection and repair can be performed without compromising source code confidentiality. By enforcing fully local execution, eliminating external dependencies, and enabling offline operation, the system addresses a key barrier to adoption of LLM-based security assistance in real-world, security-sensitive development environments.
+R5 defines the non-negotiable boundary of this thesis: source code and derived artifacts remain on-device during analysis. This local-first design is central to adoption in confidentiality-sensitive environments.
