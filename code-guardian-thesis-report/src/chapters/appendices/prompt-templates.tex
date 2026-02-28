@@ -253,7 +253,7 @@ The prompt instructs models to return an empty \texttt{issues} array if no vulne
 Requesting CWE identifiers in the output schema improves label consistency and enables type-level matching in evaluation. Models familiar with CWE taxonomy (e.g., \texttt{qwen3:8b}) produce more accurate labels than code-specialized models (\texttt{CodeLlama}).
 
 \paragraph{Retrieval context placement.}
-Retrieved knowledge is placed \emph{before} the code snippet (not after) to ensure models encounter security guidance before analyzing code. This follows the recency bias observation in long-context models \cite{liu2024lost}.
+Retrieved knowledge is placed \emph{before} the code snippet (not after) to ensure models encounter security guidance before analyzing code. This ordering leverages the observation that language models tend to prioritize information encountered early in long prompts.
 
 \section{Reproducibility Notes}
 

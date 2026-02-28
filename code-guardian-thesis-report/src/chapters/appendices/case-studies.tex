@@ -1,0 +1,387 @@
+\chapter{Detailed Case Studies}
+\label{appendix:case-studies}
+
+This appendix presents five representative cases from the evaluation to illustrate Code Guardian's detection behavior, explanation quality, and repair capabilities. Each case includes the original code, model output, and analysis of why detection succeeded or failed.
+
+\section{Case 1: True Positive with Effective Repair}
+\label{sec:case-tp-good}
+
+\subsection*{Scenario}
+SQL injection vulnerability in Express.js route handler detected by qwen3:8b + RAG.
+
+\subsection*{Original Vulnerable Code}
+\begin{lstlisting}[caption={SQL injection vulnerability (CWE-89)}]
+app.get('/user/:id', (req, res) => {
+  const userId = req.params.id;
+  const query = `SELECT * FROM users WHERE id = ${userId}`;
+  db.query(query, (err, results) => {
+    if (err) return res.status(500).send('Error');
+    res.json(results[0]);
+  });
+});
+\end{lstlisting}
+
+\subsection*{Model Output (JSON)}
+\begin{lstlisting}[caption={qwen3:8b + RAG detection output}]
+[
+  {
+    "message": "SQL Injection vulnerability: User input from req.params.id is directly concatenated into SQL query without sanitization or parameterization",
+    "severity": "error",
+    "cwe": "CWE-89",
+    "lineStart": 3,
+    "lineEnd": 3,
+    "explanation": "The route parameter 'id' is inserted directly into the SQL query string using template literals. An attacker can supply malicious SQL code (e.g., '1 OR 1=1--') to bypass authentication or extract sensitive data. This violates the principle of separating code from data.",
+    "fixedCode": "const query = 'SELECT * FROM users WHERE id = ?';\ndb.query(query, [userId], (err, results) => {"
+  }
+]
+\end{lstlisting}
+
+\subsection*{Analysis}
+
+\paragraph{Detection quality.} \textbf{True Positive.} The model correctly identifies the SQL injection vulnerability at line 3.
+
+\paragraph{Explanation quality.} \textbf{Excellent.} The explanation:
+\begin{itemize}
+  \item Identifies the root cause (direct concatenation without sanitization)
+  \item Provides concrete attack example (\texttt{1 OR 1=1--})
+  \item References security principle (separation of code and data)
+  \item Correctly cites CWE-89
+\end{itemize}
+
+\paragraph{Repair effectiveness.} \textbf{Correct and minimal.} The suggested fix:
+\begin{itemize}
+  \item Uses parameterized query (\texttt{?} placeholder)
+  \item Passes user input as separate parameter array (\texttt{[userId]})
+  \item Preserves original query logic
+  \item Requires no additional dependencies
+\end{itemize}
+
+\paragraph{RAG contribution.} Retrieved CWE-89 description likely improved explanation quality by grounding the response in OWASP/MITRE guidance on SQL injection prevention patterns.
+
+\paragraph{Developer action.} The fix can be applied directly with minimal modification. Total triage time: <1 minute.
+
+\section{Case 2: False Positive (Over-Sensitivity)}
+\label{sec:case-fp}
+
+\subsection*{Scenario}
+Secure input validation flagged as potential injection by gemma3:4b (LLM-only).
+
+\subsection*{Original Secure Code}
+\begin{lstlisting}[caption={Secure input validation (not vulnerable)}]
+function sanitizeUsername(username) {
+  // Whitelist: alphanumeric and underscore only
+  const sanitized = username.replace(/[^a-zA-Z0-9_]/g, '');
+  if (sanitized.length < 3 || sanitized.length > 20) {
+    throw new Error('Username must be 3-20 characters');
+  }
+  return sanitized;
+}
+\end{lstlisting}
+
+\subsection*{Model Output (JSON)}
+\begin{lstlisting}[caption={gemma3:4b false positive}]
+[
+  {
+    "message": "Potential code injection: replace() may not sanitize all malicious input",
+    "severity": "warning",
+    "cwe": "CWE-94",
+    "lineStart": 3,
+    "lineEnd": 3,
+    "explanation": "The replace() function might miss edge cases or be bypassed by encoded characters.",
+    "fixedCode": "// Use a validation library like validator.js"
+  }
+]
+\end{lstlisting}
+
+\subsection*{Analysis}
+
+\paragraph{Detection quality.} \textbf{False Positive.} The code is secure:
+\begin{itemize}
+  \item Regex \texttt{/[\^{}a-zA-Z0-9\_]/g} whitelists only safe characters
+  \item Length validation prevents buffer issues
+  \item No execution context where injection is possible
+  \item CWE-94 (code injection) is incorrect classification
+\end{itemize}
+
+\paragraph{Explanation quality.} \textbf{Poor and vague.} The explanation:
+\begin{itemize}
+  \item Claims ``might miss edge cases'' without specifics
+  \item Does not explain what ``encoded characters'' means in this context
+  \item Misidentifies CWE (should be CWE-20 if anything, not CWE-94)
+  \item No concrete attack vector provided
+\end{itemize}
+
+\paragraph{Repair effectiveness.} \textbf{Unhelpful.} Suggestion to use external library:
+\begin{itemize}
+  \item Does not explain why current code is insufficient
+  \item Introduces dependency without justification
+  \item Not actionable (no specific library function mentioned)
+\end{itemize}
+
+\paragraph{Root cause of false positive.} Smaller model (gemma3:4b) without RAG:
+\begin{itemize}
+  \item Lacks grounding in CWE/OWASP patterns
+  \item Over-generalizes from ``replace + user input'' pattern
+  \item Does not recognize whitelist validation as sufficient
+  \item Exhibits FPR 100\% behavior observed in evaluation
+\end{itemize}
+
+\paragraph{Developer action.} Mark as false positive, ignore. Triage time: ~30 seconds.
+
+\section{Case 3: False Negative (Missed Vulnerability)}
+\label{sec:case-fn}
+
+\subsection*{Scenario}
+Prototype pollution vulnerability missed by CodeLlama-7b (LLM-only).
+
+\subsection*{Original Vulnerable Code}
+\begin{lstlisting}[caption={Prototype pollution (CWE-1321)}]
+function mergeConfig(target, source) {
+  for (let key in source) {
+    target[key] = source[key];
+  }
+  return target;
+}
+
+// Attacker can pollute Object.prototype
+const userConfig = JSON.parse(req.body.config);
+mergeConfig(globalConfig, userConfig);
+\end{lstlisting}
+
+\subsection*{Model Output (JSON)}
+\begin{lstlisting}[caption={CodeLlama-7b missed detection}]
+[]
+\end{lstlisting}
+
+\subsection*{Analysis}
+
+\paragraph{Detection quality.} \textbf{False Negative.} Vulnerability is real:
+\begin{itemize}
+  \item \texttt{for...in} loop iterates over all enumerable properties, including inherited ones
+  \item Attacker can send \texttt{\{"\_\_proto\_\_":\{"isAdmin":true\}\}} to pollute \texttt{Object.prototype}
+  \item Affects all objects in the application (severe impact)
+  \item Well-documented vulnerability class (CWE-1321)
+\end{itemize}
+
+\paragraph{Why detection failed.} CodeLlama-7b limitations:
+\begin{itemize}
+  \item Model primarily trained on code completion, not security analysis
+  \item Without RAG, lacks access to CWE-1321 patterns and examples
+  \item Does not recognize \texttt{for...in} + object merge as dangerous pattern
+  \item Returns empty array (no findings)
+\end{itemize}
+
+\paragraph{Expected correct output.} A robust detector should flag:
+\begin{itemize}
+  \item CWE-1321: Improperly Controlled Modification of Object Prototype Attributes
+  \item Line 3: \texttt{for...in} without \texttt{hasOwnProperty} check
+  \item Suggest fix: \texttt{if (source.hasOwnProperty(key)) \{ target[key] = source[key]; \}}
+  \item Or recommend using \texttt{Object.assign()} with \texttt{Object.create(null)}
+\end{itemize}
+
+\paragraph{RAG impact hypothesis.} qwen3:8b + RAG detected this case in evaluation (recall 82.3\%) because:
+\begin{itemize}
+  \item Vector DB contains CWE-1321 description and remediation
+  \item Retrieved context includes prototype pollution keywords
+  \item Stronger base model (qwen3:8b) better at pattern recognition
+\end{itemize}
+
+\paragraph{Developer action.} Vulnerability remains undetected. Hybrid SAST strategy (Semgrep + LLM) would catch this with appropriate Semgrep rule.
+
+\section{Case 4: Repair Requiring Developer Adjustment}
+\label{sec:case-repair-partial}
+
+\subsection*{Scenario}
+Path traversal detected correctly by qwen3:8b + RAG, but suggested repair is incomplete.
+
+\subsection*{Original Vulnerable Code}
+\begin{lstlisting}[caption={Path traversal vulnerability (CWE-22)}]
+app.get('/download', (req, res) => {
+  const filename = req.query.file;
+  const filepath = path.join(__dirname, 'uploads', filename);
+  res.download(filepath);
+});
+\end{lstlisting}
+
+\subsection*{Model Output (JSON)}
+\begin{lstlisting}[caption={qwen3:8b + RAG detection with partial fix}]
+[
+  {
+    "message": "Path traversal: User-controlled filename allows directory escape via '../' sequences",
+    "severity": "error",
+    "cwe": "CWE-22",
+    "lineStart": 3,
+    "lineEnd": 3,
+    "explanation": "Attacker can supply '../../../etc/passwd' to read arbitrary files. The path.join() function does not prevent directory traversal.",
+    "fixedCode": "const filename = path.basename(req.query.file);\nconst filepath = path.join(__dirname, 'uploads', filename);"
+  }
+]
+\end{lstlisting}
+
+\subsection*{Analysis}
+
+\paragraph{Detection quality.} \textbf{True Positive.} Correctly identifies path traversal at line 3.
+
+\paragraph{Explanation quality.} \textbf{Good.} Clear attack example and root cause.
+
+\paragraph{Repair effectiveness.} \textbf{Partially correct but incomplete.} The suggested fix:
+\begin{itemize}
+  \item \texttt{path.basename()} removes directory components (good)
+  \item Still vulnerable to filename enumeration (e.g., \texttt{/download?file=other\_user\_file.pdf})
+  \item Missing: whitelist validation, access control check, or sanitization against null bytes
+\end{itemize}
+
+\paragraph{Better fix (requires developer knowledge).}
+\begin{lstlisting}[language=JavaScript]
+const ALLOWED_FILES = ['file1.pdf', 'file2.pdf']; // whitelist
+const filename = path.basename(req.query.file);
+if (!ALLOWED_FILES.includes(filename)) {
+  return res.status(403).send('Access denied');
+}
+const filepath = path.join(__dirname, 'uploads', filename);
+// Additional check: verify file is within uploads directory
+const normalizedPath = path.normalize(filepath);
+if (!normalizedPath.startsWith(path.join(__dirname, 'uploads'))) {
+  return res.status(403).send('Invalid path');
+}
+res.download(filepath);
+\end{lstlisting}
+
+\paragraph{Why repair is incomplete.} LLM limitations:
+\begin{itemize}
+  \item No context about application's access control requirements
+  \item Cannot infer which files should be downloadable
+  \item Focuses on path traversal mitigation, not authorization
+  \item Repair validation not performed (no test execution)
+\end{itemize}
+
+\paragraph{Developer action.} Apply \texttt{path.basename()}, then add whitelist and access control based on application logic. Triage time: ~5 minutes (requires thought).
+
+\paragraph{Observation.} This case illustrates why repair suggestions remain \textit{advisory}. Automated validation (I4 in improvement plan) would require test harness integration, which was deprioritized for MVP scope.
+
+\section{Case 5: Complex Multi-CWE Case}
+\label{sec:case-multi-cwe}
+
+\subsection*{Scenario}
+Authentication bypass with command injection detected by qwen3:8b + RAG (multiple CWEs in single function).
+
+\subsection*{Original Vulnerable Code}
+\begin{lstlisting}[caption={Multiple vulnerabilities in admin endpoint}]
+app.post('/admin/exec', (req, res) => {
+  const token = req.headers['x-auth-token'];
+  // CWE-798: Hard-coded credentials
+  if (token === 'admin123') {
+    const cmd = req.body.command;
+    // CWE-78: OS command injection
+    exec(cmd, (err, stdout) => {
+      if (err) return res.status(500).send(err.message);
+      res.send(stdout);
+    });
+  } else {
+    res.status(401).send('Unauthorized');
+  }
+});
+\end{lstlisting}
+
+\subsection*{Model Output (JSON)}
+\begin{lstlisting}[caption={qwen3:8b + RAG multi-CWE detection}]
+[
+  {
+    "message": "Hard-coded credentials: Authentication token 'admin123' is embedded in source code",
+    "severity": "error",
+    "cwe": "CWE-798",
+    "lineStart": 3,
+    "lineEnd": 3,
+    "explanation": "Using a hard-coded token allows anyone with access to the source code to bypass authentication. Tokens should be stored in environment variables or secure key management systems.",
+    "fixedCode": "if (token === process.env.ADMIN_TOKEN) {"
+  },
+  {
+    "message": "OS Command Injection: Unsanitized user input passed to exec() allows arbitrary command execution",
+    "severity": "error",
+    "cwe": "CWE-78",
+    "lineStart": 6,
+    "lineEnd": 6,
+    "explanation": "Attacker can inject shell metacharacters (e.g., '; rm -rf /') to execute malicious commands with application privileges. This can lead to complete system compromise.",
+    "fixedCode": "// Use execFile() with argument array instead of exec():\nconst { execFile } = require('child_process');\nexecFile('/usr/bin/safe-command', [cmd], (err, stdout) => {"
+  }
+]
+\end{lstlisting}
+
+\subsection*{Analysis}
+
+\paragraph{Detection quality.} \textbf{Two True Positives.} Both vulnerabilities correctly identified:
+\begin{itemize}
+  \item CWE-798 (Hard-coded credentials) at line 3
+  \item CWE-78 (OS command injection) at line 6
+\end{itemize}
+
+\paragraph{Explanation quality.} \textbf{Excellent for both findings.}
+\begin{itemize}
+  \item CWE-798: Explains why hard-coded tokens are dangerous, suggests env vars
+  \item CWE-78: Provides concrete attack example (\texttt{; rm -rf /}), explains impact
+  \item Both explanations are specific to the code context
+\end{itemize}
+
+\paragraph{Repair effectiveness.} \textbf{Mixed.}
+\begin{itemize}
+  \item CWE-798 fix: \textbf{Good.} \texttt{process.env.ADMIN\_TOKEN} is standard practice
+  \item CWE-78 fix: \textbf{Partially correct.} Suggests \texttt{execFile()} (safer) but:
+    \begin{itemize}
+      \item Still allows arbitrary commands if \texttt{cmd} controls file path
+      \item Better approach: whitelist allowed commands, validate inputs
+      \item Best practice: eliminate \texttt{exec()} entirely, use native Node.js APIs
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Multi-CWE detection capability.} This case demonstrates:
+\begin{itemize}
+  \item Model can detect multiple vulnerability classes in single function
+  \item Separate JSON objects for each finding (good for IDE diagnostics)
+  \item Both CWE classifications are correct
+  \item No false negatives within the analyzed function
+\end{itemize}
+
+\paragraph{RAG contribution (hypothesized).} Both CWE-798 and CWE-78 are well-documented in OWASP Top 10 and MITRE CWE:
+\begin{itemize}
+  \item Retrieved context likely included standard remediation patterns
+  \item Improved explanation specificity and mitigation suggestions
+  \item Without RAG, gemma3:4b might have missed CWE-798 (less obvious than CWE-78)
+\end{itemize}
+
+\paragraph{Developer action.} Apply both fixes:
+\begin{enumerate}
+  \item Move \texttt{ADMIN\_TOKEN} to environment variable (immediate)
+  \item Replace \texttt{exec(cmd)} with safer alternative or eliminate feature (requires architectural discussion)
+\end{enumerate}
+Triage time: ~10 minutes (CWE-78 requires design decision).
+
+\section{Summary of Case Studies}
+
+\begin{table}[htbp]
+\centering
+\caption{Case study summary and key insights.}
+\label{tab:case-studies-summary}
+\small
+\begin{tabular}{@{}llll@{}}
+\toprule
+\textbf{Case} & \textbf{Outcome} & \textbf{Model} & \textbf{Key Insight} \\
+\midrule
+1. SQL Injection & TP & qwen3:8b+RAG & Excellent explanation + correct repair \\
+2. Input Validation & FP & gemma3:4b & Small model over-sensitivity (FPR 100\%) \\
+3. Prototype Pollution & FN & CodeLlama-7b & Code completion model misses security \\
+4. Path Traversal & TP (partial repair) & qwen3:8b+RAG & Repair needs developer context \\
+5. Multi-CWE & 2 TP & qwen3:8b+RAG & Handles multiple vulnerabilities well \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Lessons learned.}
+\begin{itemize}
+  \item \textbf{Model size matters:} qwen3:8b significantly outperforms smaller models (gemma3:4b, CodeLlama-7b)
+  \item \textbf{RAG improves grounding:} CWE/OWASP retrieval enhances explanation quality and CWE classification accuracy
+  \item \textbf{Repair is advisory:} Even correct detections may produce incomplete repairs requiring developer knowledge
+  \item \textbf{FPR is deployment blocker:} 100\% FPR from small models creates unacceptable triage burden (Case 2)
+  \item \textbf{False negatives remain:} No configuration achieves 100\% recall; hybrid SAST strategy recommended
+\end{itemize}
+
+These cases support the quantitative findings in Chapter~\ref{chap:evaluation} and demonstrate why qwen3:8b + RAG is recommended for production deployment despite higher latency compared to smaller models.

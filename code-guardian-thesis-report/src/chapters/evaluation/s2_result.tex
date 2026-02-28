@@ -74,7 +74,7 @@ RAG augmentation increases prompt length by injecting retrieved security knowled
   \end{tabular}
 \end{table}
 
-All evaluated models support context windows $\geq 8192$ tokens, so length alone does not exceed capacity. However, \textbf{effective context utilization} varies by model family. Research on long-context reasoning shows that smaller models often struggle to maintain coherence when prompts exceed 1000 tokens, particularly when task instructions and retrieved content compete for attention \cite{liu2024lost}.
+All evaluated models support context windows $\geq 8192$ tokens, so length alone does not exceed capacity. However, \textbf{effective context utilization} varies by model family. Smaller models often struggle to maintain coherence when prompts exceed 1000 tokens, particularly when task instructions and retrieved content compete for attention.
 
 \paragraph{Instruction-following capacity and output constraints.}
 The evaluation harness enforces strict JSON-only output with structured vulnerability fields (type, severity, line, description, fix). Models must simultaneously:
