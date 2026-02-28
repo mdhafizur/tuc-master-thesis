@@ -1,10 +1,51 @@
 \section{Datasets}
 \label{sec:eval-dataset}
 
-The evaluation dataset is a project-authored curated set of JavaScript and TypeScript security cases maintained alongside the Code Guardian prototype in \path{code-guardian-extension/evaluation/datasets/}. Cases are aligned to CWE/OWASP concepts. Each test case consists of (i) a short code snippet, (ii) a list of expected vulnerabilities with CWE identifiers and severities, and (iii) an expected remediation description. Two datasets are provided:
+\subsection{Dataset Design Rationale}
+\label{sec:eval-dataset-rationale}
+
+This thesis employs a \textbf{curated evaluation approach} rather than relying solely on large-scale automated benchmarks. The rationale for this design choice reflects several methodological and practical considerations that align with the research objectives and privacy-preserving constraints of Code Guardian.
+
+\paragraph{Why a curated dataset.}
+Large-scale benchmark suites such as the NIST Juliet Test Suite and OWASP Benchmark provide broad coverage of vulnerability patterns and have been widely used in SAST tool evaluations \cite{nistJuliet,owaspBenchmark}. However, these benchmarks present challenges for this thesis context:
+\begin{itemize}
+  \item \textbf{Limited secure-sample control:} Many benchmarks focus on vulnerable code and provide few or poorly documented secure examples, limiting false-positive rate (FPR) estimation—a critical metric for IDE usability.
+  \item \textbf{Synthetic pattern bias:} Automatically generated test cases may not reflect realistic framework usage, developer patterns, or contextual mitigations typical in production code.
+  \item \textbf{Human auditability trade-off:} Evaluating thousands of cases improves statistical power but reduces the ability to manually inspect model outputs, explanations, and repair suggestions—essential for assessing R3 (explainability) and R4 (actionable repairs).
+  \item \textbf{Prompt iteration overhead:} Rapid experimentation with prompt structure, retrieval parameters, and output contracts is more feasible with a smaller, well-understood dataset that can be re-evaluated in hours rather than days.
+\end{itemize}
+
+\paragraph{Integration of verified real-world vulnerability data.}
+To ensure the curated dataset reflects real-world security issues, Code Guardian incorporates \textbf{verified vulnerability patterns} from authoritative sources. The project repository includes a real-world dataset (\path{code-guardian-evaluation/datasets/real-world/}) containing 11 verified cases derived from:
+\begin{itemize}
+  \item \textbf{CVE-documented vulnerabilities:} actual exploitable vulnerabilities with assigned CVE identifiers (e.g., CVE-2022-24999 in Express.js, CVE-2021-23337 in Lodash) mapped to their corresponding CWE classes.
+  \item \textbf{Vulnerability pattern extraction:} security-relevant code patterns extracted from widely deployed open-source projects (Lodash, Express, Mongoose, React-DOM, Node-Forge) through manual analysis and authoritative security advisories.
+\end{itemize}
+
+These verified cases provide \textbf{ecological validity anchors} for the synthetic test set and demonstrate that the system can reason about vulnerabilities observed in production code, not just laboratory-crafted examples.
+
+\paragraph{Balancing scale and depth.}
+The curated approach prioritizes \textbf{depth of analysis over breadth of coverage}. By maintaining a human-auditable dataset (128 cases in the primary evaluation set), this thesis can:
+\begin{itemize}
+  \item Perform qualitative inspection of true positives, false positives, and false negatives to understand \emph{why} the system succeeds or fails.
+  \item Assess explanation quality and repair suggestion coherence on a per-case basis, supporting requirements R3 and R4.
+  \item Enable reproducible local evaluation with documented model configurations and prompt templates, essential for privacy-preserving system validation (R5).
+  \item Support rapid iteration on detection strategies, retrieval parameters, and output validation without multi-day evaluation cycles.
+\end{itemize}
+
+\paragraph{Complementarity with standard benchmarks.}
+The curated dataset is not intended to replace standard benchmarks but to \textbf{complement} them with controlled, transparent, and human-reviewable evidence. Section~\ref{sec:eval-dataset} (paragraph ``Toward larger benchmarks'') explicitly identifies OWASP Benchmark and Juliet as targets for future work to validate generalization. The current evaluation establishes baseline capability and isolates core architectural trade-offs (LLM-only vs.\ LLM+RAG, model size vs.\ latency, recall vs.\ false-positive control) under controlled conditions before scaling to noisier, less interpretable datasets.
+
+\paragraph{Limitations acknowledged.}
+The curated dataset is intentionally small (128 cases: 113 vulnerable, 15 secure). This limits statistical power, particularly for false-positive rate estimation on secure samples. The secure-sample count (15) was chosen to balance FPR observability with evaluation runtime, but it results in wide confidence intervals (reported in Section~\ref{sec:eval-summary}). Results on this dataset should be interpreted as \textbf{indicative of capability under controlled conditions} rather than definitive performance guarantees for production repositories. Threats to external validity are discussed explicitly in Section~\ref{sec:eval-summary}.
+
+\medskip
+
+The evaluation dataset is a project-authored curated set of JavaScript and TypeScript security cases maintained alongside the Code Guardian prototype in \path{code-guardian-extension/evaluation/datasets/}. Cases are aligned to CWE/OWASP concepts. Each test case consists of (i) a short code snippet, (ii) a list of expected vulnerabilities with CWE identifiers and severities, and (iii) an expected remediation description. Three dataset categories are provided:
 \begin{itemize}
   \item \textbf{Core dataset:} \texttt{vulnerability-test-cases.json} contains representative examples for common vulnerability classes (e.g., SQL injection, XSS, command injection, path traversal) as well as a small number of secure examples to measure false positives.
   \item \textbf{Advanced dataset:} \texttt{advanced-test-cases.json} contains additional vulnerability types and more nuanced patterns (e.g., insecure CORS configuration, timing attacks, mass assignment).
+  \item \textbf{Real-world verified dataset:} \texttt{real-world/real-world\_dataset.json} (maintained in \path{code-guardian-evaluation/datasets/}) contains 11 verified vulnerability cases derived from actual CVEs (CVE-2022-24999, CVE-2021-23337) and security patterns extracted from production open-source projects (Lodash, Express, Mongoose, Node-Forge). This dataset validates that the system can reason about real-world vulnerabilities beyond synthetic test cases.
 \end{itemize}
 
 In the evaluated prototype version used for this thesis run, the scored thesis result set combines \textbf{128} test cases (\textbf{113} vulnerable and \textbf{15} secure). The vulnerable portion comes from \texttt{all-test-cases.generated.json} (all-sources generation), while secure cases are merged from \texttt{negatives-only.generated.json}. Expected findings are annotated with CWE identifiers to support aggregation by vulnerability class.

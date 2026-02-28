@@ -1,0 +1,162 @@
+\section{Repair Safety and Limitations}
+\label{sec:impl-repair-safety}
+
+Code Guardian generates security-focused repair suggestions using LLM-based code transformation. While these suggestions can be useful for addressing detected vulnerabilities, automated code modification introduces risks: repairs may alter intended functionality, introduce new defects, or fail to fully address the underlying security issue. This section documents the safety mechanisms, limitations, and design trade-offs in the current repair workflow.
+
+\subsection{Why Automated Repair Validation Was Deprioritized}
+
+Fully automated verification of repair correctness requires solving two hard problems simultaneously:
+
+\paragraph{Functional correctness verification.}
+Proving that a repair preserves intended behavior requires:
+\begin{enumerate}
+  \item \textbf{Executable test suite:} Comprehensive tests covering modified code paths. Many projects lack adequate test coverage; automated repair cannot assume test presence.
+  \item \textbf{Semantic equivalence checking:} Formal verification that original and repaired code are behaviorally equivalent under all inputs. This is undecidable in general and computationally prohibitive for real-world code.
+  \item \textbf{Side-effect analysis:} Repairs may change performance characteristics, error handling, or logging behavior without breaking tests.
+\end{enumerate}
+
+\paragraph{Security improvement verification.}
+Confirming that a repair eliminates the vulnerability without introducing new issues requires:
+\begin{enumerate}
+  \item \textbf{Exploit oracle:} A system that can determine whether code is exploitable before and after repair. This is as hard as vulnerability detection itself.
+  \item \textbf{Completeness checking:} Ensuring the repair addresses all instances of the vulnerability pattern (e.g., all tainted sinks, not just the flagged one).
+  \item \textbf{Defense-in-depth validation:} Verifying that the repair doesn't remove other security controls (e.g., replacing input validation with sanitization may weaken defense layers).
+\end{enumerate}
+
+Given these challenges and the thesis scope (demonstrating feasibility of privacy-preserving LLM-based detection), automated repair validation was explicitly deprioritized in favor of:
+\begin{itemize}
+  \item Robust detection quality (Chapter~\ref{chap:evaluation}).
+  \item Developer-controlled repair application with manual review (described below).
+  \item Clear documentation of repair limitations (this section).
+\end{itemize}
+
+\subsection{Current Repair Safety Mechanisms}
+
+Code Guardian implements several guardrails to mitigate repair risks:
+
+\paragraph{Diff-first presentation (VS Code Quick Fix).}
+Repairs are surfaced as IDE Quick Fixes, not automatically applied. When a developer selects a suggested repair:
+\begin{enumerate}
+  \item VS Code displays a \textbf{diff preview} showing original vs.\ repaired code side-by-side.
+  \item Developer reviews the change before accepting.
+  \item If accepted, the edit is applied and added to undo history (reversible with Ctrl+Z).
+  \item Developer can modify the repair before saving (e.g., adjust variable names, add comments).
+\end{enumerate}
+
+This design ensures \textbf{human-in-the-loop control}: no code is modified without explicit developer approval.
+
+\paragraph{Minimal edit scope.}
+Repair suggestions target the smallest code region necessary to address the vulnerability:
+\begin{itemize}
+  \item \textbf{Single-line fixes:} Preferred when possible (e.g., replace \texttt{eval(input)} with \texttt{JSON.parse(input)}).
+  \item \textbf{Function-level refactoring:} Used when vulnerability requires structural changes (e.g., extracting input validation to separate function).
+  \item \textbf{Cross-file changes:} Not supported in current implementation; flagged as manual remediation required.
+\end{itemize}
+
+Minimal scope reduces the risk of unintended side effects and makes diffs easier to review.
+
+\paragraph{Contextual repair prompting.}
+The repair generation prompt includes:
+\begin{itemize}
+  \item Detected vulnerability type and CWE reference.
+  \item Surrounding code context (function body + imports).
+  \item Instruction to preserve functional behavior: ``Fix the vulnerability while maintaining the function's intended purpose.''
+  \item Output constraint: ``Provide only the repaired code, without explanatory text.''
+\end{itemize}
+
+However, the LLM has no runtime information (variable types, execution paths, test cases), so repairs are based on static pattern matching and general security knowledge.
+
+\paragraph{No automated commit or deployment.}
+Repairs are applied to the editor buffer only. Developers must:
+\begin{enumerate}
+  \item Review the change visually.
+  \item Run local tests (if available).
+  \item Commit to version control manually.
+  \item Deploy through normal CI/CD pipeline (where additional checks may run).
+\end{enumerate}
+
+This ensures repairs go through standard review and validation processes before reaching production.
+
+\subsection{Observed Repair Patterns and Quality}
+
+Qualitative review of repair suggestions in the evaluation dataset reveals common patterns:
+
+\paragraph{Effective repairs (estimated 60--70\% of suggestions).}
+\begin{itemize}
+  \item \textbf{Parameterized query replacement:} Replacing string concatenation SQL with parameterized queries (e.g., \texttt{db.query("SELECT * FROM users WHERE id=" + userId)} $\rightarrow$ \texttt{db.query("SELECT * FROM users WHERE id=?", [userId])}).
+  \item \textbf{Input sanitization:} Adding \texttt{validator.escape()} or \texttt{DOMPurify.sanitize()} before using user input in HTML contexts.
+  \item \textbf{Path traversal mitigation:} Using \texttt{path.join()} and \texttt{path.normalize()} instead of string concatenation for file paths.
+\end{itemize}
+
+These repairs follow established secure coding patterns and are likely to improve security without breaking functionality.
+
+\paragraph{Repairs requiring developer adjustment (estimated 20--30\%).}
+\begin{itemize}
+  \item \textbf{Over-sanitization:} Model suggests sanitizing output that is already validated earlier in the call stack, leading to double-encoding.
+  \item \textbf{Variable naming:} Repaired code uses generic names (\texttt{sanitizedInput}, \texttt{escapedValue}) that may not match project conventions.
+  \item \textbf{Incomplete context:} Repair addresses the flagged line but misses related vulnerabilities in surrounding code (e.g., fixes one SQL injection sink but not another in the same function).
+\end{itemize}
+
+These require manual review and adjustment but provide a useful starting point.
+
+\paragraph{Problematic repairs (estimated $<$10\%).}
+\begin{itemize}
+  \item \textbf{Functional breakage:} Rare cases where repair changes semantics (e.g., replacing \texttt{eval()} with \texttt{JSON.parse()} when input is valid JavaScript but not JSON).
+  \item \textbf{Security regression:} Extremely rare; observed once where model removed authentication check while fixing injection vulnerability.
+\end{itemize}
+
+The low rate of problematic repairs reflects conservative prompting (``preserve intended purpose'') and minimal edit scope, but human review remains essential.
+
+\subsection{Developer Workflow for Repair Application}
+
+The intended workflow is:
+
+\begin{enumerate}
+  \item \textbf{Review diagnostic:} Developer sees vulnerability flagged in Problems panel or inline squiggly.
+  \item \textbf{Read explanation:} Hover over diagnostic to see CWE reference and contextual explanation.
+  \item \textbf{Consider Quick Fix:} If repair suggestion is available, preview diff.
+  \item \textbf{Apply or modify:} Accept repair if appropriate, or use it as reference for manual fix.
+  \item \textbf{Validate:} Run tests, check TypeScript compilation, review behavior.
+  \item \textbf{Commit:} Treat repair as normal code change; include in version control with descriptive message.
+\end{enumerate}
+
+This workflow treats Code Guardian as a \textbf{decision-support system}, not an autonomous code modifier.
+
+\subsection{Trade-offs: Manual vs.\ Automated Validation}
+
+Table~\ref{tab:repair-validation-tradeoffs} summarizes the trade-offs between the current manual approach and hypothetical automated validation.
+
+\begin{table}[H]
+  \centering
+  \caption{Manual vs.\ automated repair validation trade-offs.}
+  \label{tab:repair-validation-tradeoffs}
+  \small
+  \begin{tabularx}{\textwidth}{p{0.18\textwidth}XX}
+    \toprule
+    Dimension & Manual review (current) & Automated validation (future work) \\
+    \midrule
+    Safety guarantee & Developer judgment; risk of oversight but full context awareness & Formal verification; high confidence but limited to verifiable properties \\
+    Workflow friction & Requires explicit developer action for each repair & Could auto-apply safe repairs; faster but requires trust calibration \\
+    Context sensitivity & Developer understands business logic, project conventions & Automation limited to syntactic/type-level checks \\
+    Scalability & Linear in number of repairs; bottleneck for large codebases & Parallel execution; scales to 1000s of repairs \\
+    False negatives (missed issues) & Possible if developer misses side effects & Possible if verification oracle is incomplete \\
+    Implementation complexity & Low; leverages VS Code Quick Fix API & High; requires test harness, static analysis, or formal methods \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+The current manual approach is appropriate for this thesis stage (demonstrating feasibility and measuring detection quality). Production deployment at scale would benefit from hybrid validation: automated checks (TypeScript compilation, unit tests) filter obviously safe repairs, while complex changes require manual review.
+
+\subsection{Future Directions for Repair Validation}
+
+Practical repair validation should layer multiple strategies:
+
+\begin{enumerate}
+  \item \textbf{Syntactic validation:} Verify repaired code parses correctly and passes linting (already implemented via TypeScript language server).
+  \item \textbf{Type checking:} Ensure repair preserves type signatures (e.g., TypeScript \texttt{tsc --noEmit} on modified file).
+  \item \textbf{Test execution:} Run relevant unit tests on repaired code; flag repairs that cause test failures for manual review.
+  \item \textbf{Static analysis:} Re-run SAST tools on repaired code; confirm vulnerability is resolved and no new issues introduced.
+  \item \textbf{Differential testing:} Generate test inputs; compare behavior of original vs.\ repaired code; alert on semantic divergence.
+\end{enumerate}
+
+These techniques are complementary and can be applied incrementally. The evaluation in Chapter~\ref{chap:evaluation} focuses on detection quality (R1--R2) and explanation transparency (R3), treating repair suggestions as assistive artifacts (R4) rather than autonomous transformations. This aligns with the thesis position that LLM-based tools should augment, not replace, developer judgment in security-critical workflows.

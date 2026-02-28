@@ -1,0 +1,268 @@
+\chapter{Prompt Templates}
+\label{app:prompt-templates}
+
+This appendix documents the complete prompt templates used in Code Guardian for vulnerability detection and repair suggestion generation. These templates are critical for reproducibility: changing prompt structure, instruction wording, or output schema can significantly affect model behavior, as demonstrated in Section~\ref{sec:eval-rag-sensitivity}.
+
+\section{LLM-Only Detection Prompt Template}
+\label{sec:prompt-llm-only}
+
+The base detection prompt (without retrieval augmentation) consists of three parts: system instructions, JSON schema specification, and the code snippet to analyze.
+
+\subsection{System Prompt}
+
+\begin{lstlisting}[basicstyle=\small\ttfamily, breaklines=true, frame=single, caption={LLM-only system prompt}, label={lst:system-prompt}]
+You are a security analysis assistant. Your task is to analyze the provided code snippet for potential security vulnerabilities.
+
+Instructions:
+1. Carefully review the code for common vulnerability patterns including but not limited to:
+   - Injection vulnerabilities (SQL, Command, XSS, etc.)
+   - Insecure deserialization
+   - Path traversal
+   - Insecure cryptography
+   - Authentication/authorization issues
+   - SSRF (Server-Side Request Forgery)
+   - Prototype pollution
+   - Regex DoS
+2. For each vulnerability found, provide:
+   - Type: The vulnerability category (e.g., "SQL Injection", "XSS")
+   - CWE: The CWE identifier if applicable (e.g., "CWE-89")
+   - Severity: "high", "medium", or "low"
+   - Line: The line number where the vulnerability occurs
+   - Description: A clear explanation of the vulnerability
+   - Fix: A suggested code fix (optional)
+3. If no vulnerabilities are found, return an empty issues array.
+4. Respond ONLY with valid JSON matching the schema below. Do not include any explanatory text outside the JSON structure.
+\end{lstlisting}
+
+\subsection{JSON Schema}
+
+\begin{lstlisting}[language=json, basicstyle=\small\ttfamily, breaklines=true, frame=single, caption={Expected JSON output schema}, label={lst:json-schema}]
+{
+  "issues": [
+    {
+      "type": "string (vulnerability category)",
+      "cwe": "string (CWE identifier, e.g., 'CWE-89')",
+      "severity": "string (high|medium|low)",
+      "line": "number (line number in code)",
+      "description": "string (explanation of vulnerability)",
+      "fix": "string (suggested repair, optional)"
+    }
+  ]
+}
+\end{lstlisting}
+
+\subsection{Code Context}
+
+The code snippet is injected after the schema with a clear delimiter:
+
+\begin{lstlisting}[basicstyle=\small\ttfamily, breaklines=true, frame=single, caption={Code context injection}, label={lst:code-context}]
+Analyze the following code:
+
+```javascript
+<CODE_SNIPPET_HERE>
+```
+
+Respond with JSON only:
+\end{lstlisting}
+
+\subsection{Complete LLM-Only Prompt Example}
+
+For a concrete example, consider analyzing this vulnerable snippet:
+
+\begin{lstlisting}[language=javascript, basicstyle=\small\ttfamily, breaklines=true, frame=single, caption={Example vulnerable code}, label={lst:example-vuln}]
+function getUserData(userId) {
+  const query = "SELECT * FROM users WHERE id = " + userId;
+  return db.query(query);
+}
+\end{lstlisting}
+
+The complete prompt sent to the model is:
+
+\begin{lstlisting}[basicstyle=\footnotesize\ttfamily, breaklines=true, frame=single, caption={Complete LLM-only prompt example}, label={lst:complete-llm-prompt}]
+You are a security analysis assistant. Your task is to analyze the provided code snippet for potential security vulnerabilities.
+
+[... system instructions as in Listing 5.1 ...]
+
+Analyze the following code:
+
+```javascript
+function getUserData(userId) {
+  const query = "SELECT * FROM users WHERE id = " + userId;
+  return db.query(query);
+}
+```
+
+Respond with JSON only:
+\end{lstlisting}
+
+\textbf{Approximate token count:} 320--400 tokens (system + schema + code), varying by snippet length.
+
+\section{LLM+RAG Detection Prompt Template}
+\label{sec:prompt-rag}
+
+The RAG-enhanced prompt extends the base template by injecting retrieved security knowledge between the system instructions and code snippet.
+
+\subsection{Retrieval Injection}
+
+After the system prompt and schema, retrieved security knowledge is inserted:
+
+\begin{lstlisting}[basicstyle=\small\ttfamily, breaklines=true, frame=single, caption={RAG knowledge injection}, label={lst:rag-injection}]
+## Relevant Security Knowledge:
+
+The following vulnerability patterns and mitigation guidance have been retrieved based on the code context:
+
+### CWE-89: SQL Injection
+SQL injection occurs when untrusted data is concatenated into SQL queries without proper sanitization or parameterization. Attackers can manipulate queries to bypass authentication, extract sensitive data, or execute arbitrary SQL commands.
+
+**Mitigation:** Use parameterized queries or prepared statements. Never concatenate user input directly into SQL strings.
+
+[... additional retrieved chunks (up to k=5) ...]
+
+---
+
+Now analyze the code with this security knowledge in mind.
+
+Analyze the following code:
+```javascript
+<CODE_SNIPPET_HERE>
+```
+
+Respond with JSON only:
+\end{lstlisting}
+
+\subsection{Retrieval Parameters}
+
+The RAG configuration used in evaluation:
+\begin{itemize}
+  \item \textbf{Embedding model:} \texttt{all-MiniLM-L6-v2} (local, 384-dimensional embeddings)
+  \item \textbf{Vector store:} Chroma DB (local, persistent)
+  \item \textbf{Top-k:} 5 chunks retrieved per query
+  \item \textbf{Similarity metric:} Cosine similarity on code snippet embeddings
+  \item \textbf{Chunk size:} 200--500 tokens per security knowledge entry (CWE/CVE/OWASP guidance)
+\end{itemize}
+
+\subsection{Complete LLM+RAG Prompt Example}
+
+For the same vulnerable SQL injection example:
+
+\begin{lstlisting}[basicstyle=\footnotesize\ttfamily, breaklines=true, frame=single, caption={Complete LLM+RAG prompt example}, label={lst:complete-rag-prompt}]
+You are a security analysis assistant. [... system instructions ...]
+
+## Relevant Security Knowledge:
+
+### CWE-89: SQL Injection
+SQL injection occurs when untrusted data is concatenated into SQL queries without proper sanitization or parameterization. Attackers can manipulate queries to bypass authentication, extract sensitive data, or execute arbitrary SQL commands.
+
+**Mitigation:** Use parameterized queries or prepared statements. Never concatenate user input directly into SQL strings. Example (Node.js):
+```javascript
+// Vulnerable:
+const query = "SELECT * FROM users WHERE id = " + userId;
+
+// Secure:
+const query = "SELECT * FROM users WHERE id = ?";
+db.query(query, [userId]);
+```
+
+### OWASP Top 10 - A03:2021 Injection
+Injection flaws occur when untrusted data is sent to an interpreter as part of a command or query. SQL, NoSQL, OS, and LDAP injection vulnerabilities arise when applications fail to validate, filter, or sanitize input.
+
+[... up to 3 more chunks ...]
+
+---
+
+Now analyze the code with this security knowledge in mind.
+
+Analyze the following code:
+
+```javascript
+function getUserData(userId) {
+  const query = "SELECT * FROM users WHERE id = " + userId;
+  return db.query(query);
+}
+```
+
+Respond with JSON only:
+\end{lstlisting}
+
+\textbf{Approximate token count:} 850--1200 tokens (system + retrieval + code), representing a +2.5--3$\times$ increase over LLM-only prompts.
+
+\section{Repair Generation Prompt Template}
+\label{sec:prompt-repair}
+
+When a vulnerability is detected and the user requests a repair suggestion (via Quick Fix), a separate repair prompt is constructed:
+
+\begin{lstlisting}[basicstyle=\small\ttfamily, breaklines=true, frame=single, caption={Repair generation prompt}, label={lst:repair-prompt}]
+You are a security-focused code repair assistant.
+
+Task: Fix the following security vulnerability while preserving the function's intended behavior.
+
+Vulnerability Details:
+- Type: <VULNERABILITY_TYPE>
+- CWE: <CWE_ID>
+- Description: <EXPLANATION>
+
+Original Code:
+```javascript
+<VULNERABLE_CODE>
+```
+
+Instructions:
+1. Provide ONLY the repaired code, without explanatory text.
+2. Preserve variable names, function signatures, and intended logic.
+3. Apply the minimal change necessary to fix the vulnerability.
+4. Ensure the fix follows secure coding best practices for <VULNERABILITY_TYPE>.
+
+Repaired Code:
+\end{lstlisting}
+
+\textbf{Design rationale:} The repair prompt is intentionally simple and constrained to reduce hallucination risk. By requesting ``ONLY the repaired code,'' we minimize the chance of the model generating explanatory text that would break the Quick Fix application. The ``minimal change'' instruction reduces the risk of unintended side effects.
+
+\section{Prompt Length Statistics}
+
+Table~\ref{tab:prompt-length-stats} summarizes prompt length distributions across the evaluation dataset.
+
+\begin{table}[H]
+  \centering
+  \caption{Prompt length statistics for evaluation runs.}
+  \label{tab:prompt-length-stats}
+  \small
+  \begin{tabular}{lccc}
+    \toprule
+    Configuration & Mean tokens & Max tokens & Std dev \\
+    \midrule
+    LLM-only & 365 & 587 & 48 \\
+    LLM+RAG & 982 & 1423 & 127 \\
+    Repair generation & 412 & 651 & 62 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\textbf{Measurement method:} Token counts estimated using OpenAI's \texttt{tiktoken} library (GPT-3.5/4 tokenizer) as proxy. Actual tokenization varies by model family (Gemma, Qwen, CodeLlama use different tokenizers), but relative proportions remain consistent.
+
+\section{Prompt Engineering Insights}
+
+Several prompt design choices emerged from iterative development:
+
+\paragraph{Strict JSON-only output.}
+Early prompts allowed free-form responses, which caused frequent parse failures ($\sim$15--20\%). Adding ``Respond ONLY with valid JSON'' and ``Do not include explanatory text outside the JSON structure'' improved parse success to 99--100\% (Table~\ref{tab:eval-llm-only}).
+
+\paragraph{Explicit abstention instruction missing.}
+The prompt instructs models to return an empty \texttt{issues} array if no vulnerabilities are found, but does not strongly encourage abstention. This contributes to high FPR on secure samples (Section~\ref{sec:eval-fpr-discussion}). Future iterations should add: ``If the code appears secure and no vulnerabilities are found with confidence $>$70\%, return an empty issues array.''
+
+\paragraph{CWE-based grounding.}
+Requesting CWE identifiers in the output schema improves label consistency and enables type-level matching in evaluation. Models familiar with CWE taxonomy (e.g., \texttt{qwen3:8b}) produce more accurate labels than code-specialized models (\texttt{CodeLlama}).
+
+\paragraph{Retrieval context placement.}
+Retrieved knowledge is placed \emph{before} the code snippet (not after) to ensure models encounter security guidance before analyzing code. This follows the recency bias observation in long-context models \cite{liu2024lost}.
+
+\section{Reproducibility Notes}
+
+To reproduce evaluation results:
+\begin{enumerate}
+  \item Use prompts exactly as documented in Listings~\ref{lst:complete-llm-prompt} and~\ref{lst:complete-rag-prompt}.
+  \item Set Ollama generation parameters: \texttt{temperature=0.1}, \texttt{num\_predict=1000}.
+  \item Use identical retrieval settings: \texttt{k=5}, cosine similarity, \texttt{all-MiniLM-L6-v2} embeddings.
+  \item Ensure models are pulled with exact digest fingerprints (Table~\ref{tab:eval-artifact-manifest}).
+\end{enumerate}
+
+Minor prompt variations (e.g., changing ``potential vulnerabilities'' to ``security issues'') can affect results. The prompts in this appendix represent the final evaluated configuration.

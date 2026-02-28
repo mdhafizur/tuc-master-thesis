@@ -1,0 +1,178 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="C4 Context">
+    <mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Title -->
+        <mxCell id="title" value="System Context Diagram: Code Guardian" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=18;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="300" y="20" width="500" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Developer (Person) -->
+        <mxCell id="developer" value="" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;fillColor=#08427b;strokeColor=#0e548f;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="520" y="100" width="60" height="120" as="geometry" />
+        </mxCell>
+
+        <mxCell id="developer-label" value="Developer&#xa;&#xa;JavaScript/TypeScript&#xa;developer using VS Code&#xa;for secure coding" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=top;whiteSpace=wrap;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="470" y="230" width="160" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Code Guardian System (Main System) -->
+        <mxCell id="code-guardian" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1168bd;strokeColor=#0e548f;strokeWidth=3;" vertex="1" parent="1">
+          <mxGeometry x="390" y="360" width="320" height="140" as="geometry" />
+        </mxCell>
+
+        <mxCell id="cg-title" value="Code Guardian" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=16;fontStyle=1;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="390" y="370" width="320" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="cg-desc" value="[VS Code Extension + Local Backend]&#xa;&#xa;Privacy-preserving vulnerability detection and&#xa;repair assistant. Analyzes JavaScript/TypeScript&#xa;code locally, provides real-time diagnostics,&#xa;explanations, and fix suggestions." style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=10;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="400" y="405" width="300" height="85" as="geometry" />
+        </mxCell>
+
+        <!-- VS Code (External System) -->
+        <mxCell id="vscode" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#999999;strokeColor=#666666;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="80" y="380" width="220" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="vscode-title" value="Visual Studio Code" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=14;fontStyle=1;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="80" y="390" width="220" height="25" as="geometry" />
+        </mxCell>
+
+        <mxCell id="vscode-desc" value="[IDE Platform]&#xa;&#xa;Provides extension host, editor API,&#xa;diagnostics UI, and language services." style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=10;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="90" y="420" width="200" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- Ollama LLM (External System) -->
+        <mxCell id="ollama" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#999999;strokeColor=#666666;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="800" y="380" width="220" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="ollama-title" value="Ollama LLM Runtime" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=14;fontStyle=1;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="800" y="390" width="220" height="25" as="geometry" />
+        </mxCell>
+
+        <mxCell id="ollama-desc" value="[Local LLM Inference]&#xa;&#xa;Hosts local models (qwen3, gemma3,&#xa;CodeLlama). Runs on localhost:11434." style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=10;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="810" y="420" width="200" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- Vector Database (External System) -->
+        <mxCell id="vectordb" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#999999;strokeColor=#666666;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="440" y="580" width="220" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="vectordb-title" value="Local Vector Database" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=14;fontStyle=1;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="440" y="590" width="220" height="25" as="geometry" />
+        </mxCell>
+
+        <mxCell id="vectordb-desc" value="[ChromaDB / Qdrant]&#xa;&#xa;Stores CWE/OWASP/CVE knowledge&#xa;embeddings for RAG retrieval." style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=10;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="450" y="620" width="200" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- CVE/NVD API (External System - Optional) -->
+        <mxCell id="cve-api" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d6b656;strokeColor=#9f8c3d;strokeWidth=2;dashed=1;dashPattern=8 8;" vertex="1" parent="1">
+          <mxGeometry x="800" y="580" width="220" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="cve-api-title" value="CVE/NVD APIs" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=14;fontStyle=1;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="800" y="590" width="220" height="25" as="geometry" />
+        </mxCell>
+
+        <mxCell id="cve-api-desc" value="[External APIs - Optional]&#xa;&#xa;Public vulnerability metadata for&#xa;knowledge base refresh. Disabled in&#xa;offline mode." style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=10;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="810" y="620" width="200" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Relationships -->
+        <!-- Developer -> Code Guardian -->
+        <mxCell id="rel1" value="" style="endArrow=classic;html=1;strokeWidth=2;strokeColor=#0e548f;" edge="1" parent="1" source="developer" target="code-guardian">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel1-label" value="Writes code, triggers analysis,&#xa;reviews findings, applies fixes" style="text;html=1;strokeColor=none;fillColor=#e1f5fe;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=9;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="500" y="300" width="150" height="35" as="geometry" />
+        </mxCell>
+
+        <!-- VS Code -> Code Guardian -->
+        <mxCell id="rel2" value="" style="endArrow=classic;html=1;strokeWidth=2;strokeColor=#666666;startArrow=classic;startFill=1;" edge="1" parent="1" source="vscode" target="code-guardian">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel2-label" value="Document events,&#xa;language services,&#xa;diagnostics API" style="text;html=1;strokeColor=none;fillColor=#f5f5f5;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=9;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="260" y="395" width="110" height="45" as="geometry" />
+        </mxCell>
+
+        <!-- Code Guardian -> Ollama -->
+        <mxCell id="rel3" value="" style="endArrow=classic;html=1;strokeWidth=2;strokeColor=#0e548f;" edge="1" parent="1" source="code-guardian" target="ollama">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel3-label" value="Code snippets + prompts&#xa;(localhost:11434)&#xa;← JSON findings" style="text;html=1;strokeColor=none;fillColor=#e1f5fe;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=9;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="660" y="395" width="130" height="45" as="geometry" />
+        </mxCell>
+
+        <!-- Code Guardian -> Vector DB -->
+        <mxCell id="rel4" value="" style="endArrow=classic;html=1;strokeWidth=2;strokeColor=#0e548f;startArrow=classic;startFill=1;" edge="1" parent="1" source="code-guardian" target="vectordb">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel4-label" value="Query embeddings&#xa;← Retrieved CWE/CVE&#xa;knowledge chunks" style="text;html=1;strokeColor=none;fillColor=#e1f5fe;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=9;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="340" y="515" width="130" height="45" as="geometry" />
+        </mxCell>
+
+        <!-- Vector DB -> CVE API (optional) -->
+        <mxCell id="rel5" value="" style="endArrow=classic;html=1;strokeWidth=2;strokeColor=#9f8c3d;dashed=1;dashPattern=8 8;" edge="1" parent="1" source="vectordb" target="cve-api">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel5-label" value="[Optional] Fetch public&#xa;vulnerability metadata&#xa;(no source code sent)" style="text;html=1;strokeColor=none;fillColor=#fff9e6;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=9;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="640" y="605" width="140" height="45" as="geometry" />
+        </mxCell>
+
+        <!-- Privacy Boundary -->
+        <mxCell id="privacy-boundary" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#00994d;strokeWidth=3;dashed=1;dashPattern=12 12;" vertex="1" parent="1">
+          <mxGeometry x="60" y="340" width="980" height="180" as="geometry" />
+        </mxCell>
+
+        <mxCell id="privacy-label" value="Privacy Boundary: All source code analysis stays within localhost" style="text;html=1;strokeColor=none;fillColor=#e8f5e9;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=11;fontStyle=1;fontColor=#00994d;" vertex="1" parent="1">
+          <mxGeometry x="70" y="345" width="300" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Legend -->
+        <mxCell id="legend-box" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;" vertex="1" parent="1">
+          <mxGeometry x="80" y="720" width="500" height="80" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend-title" value="Legend:" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="90" y="725" width="60" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend-system" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1168bd;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="90" y="750" width="40" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend-system-label" value="Code Guardian (main system)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="140" y="755" width="160" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend-external" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#999999;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="310" y="750" width="40" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend-external-label" value="External system" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="360" y="755" width="100" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend-optional" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d6b656;strokeWidth=2;dashed=1;dashPattern=8 8;" vertex="1" parent="1">
+          <mxGeometry x="470" y="750" width="40" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend-optional-label" value="Optional/external" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="520" y="755" width="100" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Note -->
+        <mxCell id="note" value="Note: Code Guardian operates entirely within the developer's local machine. Source code is never transmitted to external APIs.&#xa;Optional CVE/NVD refresh fetches only public vulnerability metadata and can be disabled for fully offline operation." style="text;html=1;strokeColor=none;fillColor=#fff3cd;align=left;verticalAlign=top;whiteSpace=wrap;fontSize=10;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="620" y="720" width="420" height="80" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

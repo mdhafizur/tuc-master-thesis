@@ -30,6 +30,70 @@ RAG can be toggled at runtime through settings and is surfaced via a status-bar 
 
 To reduce repeated inference calls, Code Guardian caches analysis results keyed by (code snippet, model). Under typical editing patterns, small changes frequently return to previously seen states (undo/redo, formatting), making caching effective. Debouncing and caching together aim to keep real-time diagnostics responsive (R6) while maintaining stable behavior across repeated runs (R1).
 
+\paragraph{Cache invalidation strategy.}
+The cache uses a hybrid eviction policy combining time-to-live (TTL), least-recently-used (LRU) ordering, and content-based hashing to balance memory usage and hit rate:
+
+\begin{lstlisting}[caption={Cache invalidation and eviction strategy}, label={lst:impl-cache-invalidation}]
+class AnalysisCache:
+  maxSize: number = 500
+  ttlMs: number = 30 * 60 * 1000  // 30 minutes
+  entries: Map<string, CacheEntry> = {}
+  lruQueue: string[] = []  // ordered by access time
+
+  get(key: string):
+    entry = entries[key]
+    if entry == null:
+      return null  // cache miss
+
+    // Check TTL expiration
+    age = now() - entry.timestamp
+    if age > ttlMs:
+      remove(key)
+      return null  // expired entry
+
+    // Update LRU position (move to end)
+    lruQueue.remove(key)
+    lruQueue.push(key)
+
+    return entry.result
+
+  put(key: string, result: AnalysisResult):
+    // Evict expired entries first
+    removeExpiredEntries()
+
+    // Evict LRU entries if at capacity
+    while entries.size >= maxSize:
+      oldestKey = lruQueue.shift()  // remove first
+      delete entries[oldestKey]
+
+    // Insert new entry
+    entries[key] = {
+      result: result,
+      timestamp: now()
+    }
+    lruQueue.push(key)
+
+  computeKey(code: string, model: string, ragEnabled: bool):
+    // Content-based hash to detect unchanged code
+    codeHash = sha256(code.trim())
+    return `${codeHash}-${model}-${ragEnabled}`
+
+  removeExpiredEntries():
+    currentTime = now()
+    for key in entries.keys():
+      age = currentTime - entries[key].timestamp
+      if age > ttlMs:
+        delete entries[key]
+        lruQueue.remove(key)
+
+  clear():
+    entries = {}
+    lruQueue = []
+\end{lstlisting}
+
+\paragraph{Cache effectiveness.}
+The content-based key (\texttt{sha256(code.trim())}) ensures that only semantic code changes invalidate the cache. Formatting changes (whitespace, indentation) that do not affect code meaning will still produce cache hits. The 30-minute TTL prevents stale results from persisting indefinitely, while the 500-entry limit prevents unbounded memory growth during long editing sessions. In evaluation runs, cache hit rates exceeded 60\% during typical editing workflows (undo/redo, minor edits, navigation).
+
 \subsection{Cost-Aware Mode Selection}
 \label{subsec:impl-cost-aware-selection}
 

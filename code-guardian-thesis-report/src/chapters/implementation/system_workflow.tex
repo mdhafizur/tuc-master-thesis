@@ -14,6 +14,46 @@ Code Guardian exposes multiple analysis triggers (real-time and explicit command
 
     \item \textbf{Code context extraction}: The extension extracts the relevant code fragment and its location (start line offset). For real-time diagnostics, the default unit is the \emph{enclosing function} at the cursor position. For selection analysis, the unit is the selected region (or the current line if no selection exists). For file analysis, the entire document text is used.
 
+\begin{lstlisting}[caption={Function-level scope extraction algorithm}, label={lst:impl-function-scope}]
+extractFunctionAtCursor(document, cursorPosition):
+  // Get TypeScript AST from language service
+  ast = getTypeScriptAST(document)
+  cursorOffset = document.offsetAt(cursorPosition)
+
+  // Find deepest function node containing cursor
+  functionNode = null
+  visit(ast, node => {
+    if isFunctionNode(node):
+      nodeStart = node.getStart()
+      nodeEnd = node.getEnd()
+      if nodeStart <= cursorOffset <= nodeEnd:
+        functionNode = node  // track deepest match
+  })
+
+  if functionNode == null:
+    return null  // cursor not inside any function
+
+  // Extract text and compute line offset
+  startPos = document.positionAt(functionNode.getStart())
+  endPos = document.positionAt(functionNode.getEnd())
+  text = document.getText(Range(startPos, endPos))
+
+  // Apply size guard
+  if text.length > 2000:
+    return null  // skip oversized functions
+
+  return Scope(text, startPos.line, startPos, endPos)
+
+// Helper: check if node is a function declaration
+isFunctionNode(node):
+  return node.kind in [FunctionDeclaration,
+                       FunctionExpression,
+                       ArrowFunction,
+                       MethodDeclaration]
+\end{lstlisting}
+
+This algorithm leverages the TypeScript language service to obtain an accurate Abstract Syntax Tree (AST), then performs a depth-first traversal to find the innermost function node containing the cursor. The size guard prevents analysis of unusually large functions that would cause unacceptable latency.
+
     \item \textbf{Optional retrieval (RAG)}: If RAG is enabled and initialized, the system retrieves security knowledge snippets relevant to the analyzed code. Retrieval uses a local embedding model and a local vector index; retrieved guidance is appended to prompts to ground explanations and recommendations. In the current prototype, RAG is primarily used in the interactive WebView workflows and can be used for batch scanning; the real-time diagnostics path is kept lightweight to preserve responsiveness.
 
     \item \textbf{LLM analysis (local)}: The local model (Ollama) is invoked with different output constraints depending on the workflow.
@@ -21,6 +61,64 @@ Code Guardian exposes multiple analysis triggers (real-time and explicit command
         \item \textbf{Structured diagnostics}: the model is required to return \emph{only} a JSON array of issues (message, line range, optional fix). Light post-processing removes Markdown fences and extracts the first JSON array substring if needed.
         \item \textbf{Interactive analysis}: the model streams Markdown-formatted explanations to a WebView, enabling richer narratives and follow-up questions.
     \end{itemize}
+
+\begin{lstlisting}[caption={JSON output validation and parsing}, label={lst:impl-json-validation}]
+parseAndValidateJsonArray(rawOutput: string):
+  // Step 1: Clean Markdown code fences
+  cleaned = rawOutput.trim()
+  if cleaned.startsWith("```json"):
+    cleaned = cleaned.replace(/^```json\n/, "")
+    cleaned = cleaned.replace(/\n```$/, "")
+  else if cleaned.startsWith("```"):
+    cleaned = cleaned.replace(/^```\n/, "")
+    cleaned = cleaned.replace(/\n```$/, "")
+
+  // Step 2: Extract first JSON array
+  arrayStart = cleaned.indexOf('[')
+  arrayEnd = cleaned.lastIndexOf(']')
+  if arrayStart == -1 or arrayEnd == -1:
+    return []  // no valid array found
+
+  jsonText = cleaned.substring(arrayStart, arrayEnd + 1)
+
+  // Step 3: Parse and validate schema
+  try:
+    issues = JSON.parse(jsonText)
+    if not Array.isArray(issues):
+      return []
+
+    // Validate each issue against expected schema
+    validIssues = []
+    for issue in issues:
+      if validateIssueSchema(issue):
+        validIssues.push(issue)
+      else:
+        logWarning("Invalid issue schema", issue)
+
+    return validIssues
+  catch JSONParseError:
+    logError("Failed to parse JSON", jsonText)
+    return []
+
+validateIssueSchema(issue):
+  // Required fields
+  if not issue.message or typeof issue.message != "string":
+    return false
+  if not issue.severity or issue.severity not in ["error", "warning", "info"]:
+    return false
+
+  // Optional fields (with type checking)
+  if issue.lineStart and typeof issue.lineStart != "number":
+    return false
+  if issue.lineEnd and typeof issue.lineEnd != "number":
+    return false
+  if issue.fixedCode and typeof issue.fixedCode != "string":
+    return false
+
+  return true
+\end{lstlisting}
+
+This validation pipeline handles common LLM output issues: Markdown code fences, extraneous text before or after the JSON array, and schema violations. Only issues that conform to the expected structure are converted into diagnostics, preventing runtime errors from malformed output.
 
     \item \textbf{Diagnostics and UI rendering}: Findings are converted into VS Code diagnostics and rendered inline (squiggles), in the Problems panel, and via hover tooltips. When a suggested fix is available, a quick-fix code action is offered so the developer can apply a patch after review.
 
@@ -66,9 +164,42 @@ T_{\text{e2e}} \approx T_{\text{extract}} + T_{\text{retrieve}} + T_{\text{infer
 \]
 where \(T_{\text{retrieve}}\) is near zero in LLM-only mode and \(T_{\text{infer}}\) dominates in most non-cached calls. The implementation choices in this chapter primarily target the dominant terms (\(T_{\text{infer}}\) and, when enabled, \(T_{\text{retrieve}}\)).
 
+\subsection*{Debouncing Logic for Real-time Analysis}
+
+To prevent analysis on every keystroke, Code Guardian implements a debouncing mechanism that delays analysis until the developer pauses typing. The debouncer maintains a timer that is reset on each document change event:
+
+\begin{lstlisting}[caption={Debouncing implementation for real-time analysis}, label={lst:impl-debounce}]
+class Debouncer:
+  timer: Timer | null = null
+  delay: number = 500  // milliseconds
+
+  trigger(callback: () => void):
+    if timer != null:
+      clearTimeout(timer)  // reset existing timer
+
+    timer = setTimeout(() => {
+      timer = null
+      callback()  // execute analysis after delay
+    }, delay)
+
+  cancel():
+    if timer != null:
+      clearTimeout(timer)
+      timer = null
+
+// Usage in document change handler
+onDocumentChange(event):
+  debouncer.trigger(() => {
+    scope = extractFunctionAtCursor()
+    analyzeScope(scope)
+  })
+\end{lstlisting}
+
+This approach reduces LLM invocations by 80--90\% during typical editing sessions. When a developer types continuously, the timer is repeatedly reset, and analysis only occurs after a 500\,ms pause. This balances responsiveness (R6) with resource efficiency.
+
 \subsection*{Interactive vs.\ Batch Workflows}
 
-\textbf{Real-time workflow (function-level).} When editing, Code Guardian runs on a small scope and uses debouncing to avoid overwhelming the local model. A size threshold skips unusually large functions (2000 characters) to bound worst-case latency. This mode is optimized for R6 and is intended to surface common, localized patterns (e.g., injection sinks, insecure randomness) with minimal disruption.
+\textbf{Real-time workflow (function-level).} When editing, Code Guardian runs on a small scope and uses the debouncing mechanism described above to avoid overwhelming the local model. A size threshold skips unusually large functions (2000 characters) to bound worst-case latency. This mode is optimized for R6 and is intended to surface common, localized patterns (e.g., injection sinks, insecure randomness) with minimal disruption.
 
 \textbf{On-demand workflow (selection/file).} The developer can explicitly request analysis of selected code (interactive WebView) or the full file (structured diagnostics). Full-file analysis includes a conservative size guard (20{,}000 characters) to avoid excessively large prompts.
 

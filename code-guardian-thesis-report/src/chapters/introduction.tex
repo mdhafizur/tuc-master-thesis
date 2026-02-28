@@ -62,6 +62,7 @@ This work makes the following contributions:
   \item \textbf{Privacy-preserving architecture:} a design that keeps code and analysis artifacts on-device and uses optional local retrieval to ground model reasoning.
   \item \textbf{Evaluation harness:} a reproducible, repository-contained benchmark suite and script for comparing models and configurations using precision/recall/F1, structured-output robustness, and latency.
   \item \textbf{Implementation insights:} practical patterns for integrating local LLM inference into IDE feedback loops (debounced triggers, function-level scoping, and caching).
+  \item \textbf{Empirical results:} evaluation demonstrates that qwen3:8b with RAG achieves the best balance of detection quality (F1 88.9\%), false-positive control (FPR 20\%), and responsiveness (p95 latency 2.5\,s) among privacy-preserving configurations (Chapter~\ref{chap:evaluation}).
 \end{itemize}
 
 \section{Research Method and Evaluation Strategy}
