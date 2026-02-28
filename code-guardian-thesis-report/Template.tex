@@ -21,11 +21,27 @@
 \usepackage{microtype}   % reduces overfull boxes
 
 \usepackage{listings}
-\usepackage{xcolor} 
+\usepackage[table]{xcolor} 
+
+% --- Listings Languages (listings doesn't ship JS/JSON by default in TeX Live) ---
+\lstdefinelanguage{javascript}{
+  morekeywords={async,await,break,case,catch,class,const,continue,debugger,default,delete,do,else,export,extends,false,finally,for,function,if,import,in,instanceof,let,new,null,return,super,switch,this,throw,true,try,typeof,var,void,while,with,yield},
+  sensitive=true,
+  morecomment=[l]{//},
+  morecomment=[s]{/*}{*/},
+  morestring=[b]',
+  morestring=[b]"
+}
+\lstdefinelanguage{json}{
+  morecomment=[l]{//},
+  morecomment=[s]{/*}{*/},
+  morestring=[b]"
+}
 
 \usepackage{tikz}
 \usepackage{tabularx}
 \usepackage{array}
+\usepackage{multirow}
 \usepackage{makecell}
 
 \usepackage{pgfplots}

@@ -232,7 +232,7 @@ app.get('/download', (req, res) => {
 \end{itemize}
 
 \paragraph{Better fix (requires developer knowledge).}
-\begin{lstlisting}[language=JavaScript]
+\begin{lstlisting}[language=javascript]
 const ALLOWED_FILES = ['file1.pdf', 'file2.pdf']; // whitelist
 const filename = path.basename(req.query.file);
 if (!ALLOWED_FILES.includes(filename)) {
