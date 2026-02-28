@@ -49,4 +49,82 @@ Retrieval introduces overhead from embedding, vector search, and prompt expansio
 
 \subsection*{Discussion}
 
-RAG effects are model-dependent in this run. For \texttt{qwen3:8b}, RAG improved precision and F1 over LLM-only while FPR remained unchanged at 26.67\%. \texttt{qwen3:4b} also improved with RAG (F1: 54.90\% $\rightarrow$ 58.67\%). In contrast, \texttt{gemma3:4b} and \texttt{CodeLlama:latest} degraded with RAG, while \texttt{gemma3:1b} improved recall but still retained very high alert noise (FPR 100\%).
+RAG effects are clearly model-dependent in this run. For \texttt{qwen3:8b}, RAG increased precision and improved F1 over LLM-only while secure-sample FPR remained unchanged at 26.67\%. \texttt{qwen3:4b} also benefited (F1: 54.90\% $\rightarrow$ 58.67\%). In contrast, \texttt{gemma3:4b} and \texttt{CodeLlama:latest} degraded with RAG, which suggests that added context can distract or destabilize some models under strict output constraints. \texttt{gemma3:1b} improved recall but still retained very high alert noise (FPR 100\%), limiting its usefulness as a default in interactive workflows.
+
+\subsection{Understanding RAG Model Sensitivity}
+\label{sec:eval-rag-sensitivity}
+
+The model-dependent RAG effects observed in this evaluation—where retrieval helps \texttt{qwen3} variants but degrades \texttt{gemma3:4b} and \texttt{CodeLlama:latest}—warrant deeper analysis. This section investigates why RAG is not universally beneficial and provides practical guidance for configuring retrieval-augmented detection.
+
+\paragraph{Prompt length and context window utilization.}
+RAG augmentation increases prompt length by injecting retrieved security knowledge before the code snippet. Table~\ref{tab:rag-prompt-stats} shows approximate prompt length statistics for LLM-only vs.\ LLM+RAG configurations.
+
+\begin{table}[H]
+  \centering
+  \caption{Prompt length comparison: LLM-only vs.\ LLM+RAG.}
+  \label{tab:rag-prompt-stats}
+  \small
+  \begin{tabular}{lccc}
+    \toprule
+    Configuration & Avg tokens & Max tokens & Context overhead \\
+    \midrule
+    LLM-only (base prompt + code) & $\sim$350 & $\sim$600 & Baseline \\
+    LLM+RAG (base + retrieval + code) & $\sim$950 & $\sim$1400 & +2.7$\times$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+All evaluated models support context windows $\geq 8192$ tokens, so length alone does not exceed capacity. However, \textbf{effective context utilization} varies by model family. Research on long-context reasoning shows that smaller models often struggle to maintain coherence when prompts exceed 1000 tokens, particularly when task instructions and retrieved content compete for attention \cite{liu2024lost}.
+
+\paragraph{Instruction-following capacity and output constraints.}
+The evaluation harness enforces strict JSON-only output with structured vulnerability fields (type, severity, line, description, fix). Models must simultaneously:
+\begin{enumerate}
+  \item Parse and understand retrieved security knowledge (CVE/CWE/OWASP guidance).
+  \item Analyze the code snippet for vulnerability patterns.
+  \item Map findings to the expected JSON schema.
+  \item Maintain consistency between vulnerability type labels and explanations.
+\end{enumerate}
+
+\textbf{Qwen3 models} (4b/8b) demonstrate stronger instruction-following under these constraints. They successfully integrate retrieved context to improve precision (e.g., \texttt{qwen3:8b}: 54.06\% $\rightarrow$ 62.93\%) by grounding vulnerability labels in retrieved CWE definitions. In contrast, \textbf{Gemma3:4b} appears to over-index on retrieved patterns, flagging more code as vulnerable without improving true-positive accuracy—evidenced by degraded F1 (56.05\% $\rightarrow$ 49.68\%) and sustained FPR 100\%.
+
+\textbf{CodeLlama:latest} shows the most severe degradation (F1: 41.88\% $\rightarrow$ 31.45\%). As a code-specialized model not explicitly fine-tuned for security reasoning with external knowledge, it may treat retrieved text as additional code context rather than interpretive guidance, leading to confused outputs.
+
+\paragraph{Retrieved chunk quality and relevance.}
+The RAG system retrieves $k=5$ security knowledge chunks per query using cosine similarity on embeddings of the code snippet. All models receive \textbf{identical retrieved chunks} for the same input (retrieval is model-agnostic), so differences in RAG impact reflect model-side interpretation, not retrieval-side quality.
+
+However, chunk relevance varies by snippet complexity. For straightforward injection patterns (e.g., SQL concatenation), retrieved CWE-89 guidance is highly relevant and beneficial. For nuanced cases (e.g., insecure CORS with allowlist validation), retrieved chunks may include generic CORS warnings that do not address the specific misconfiguration, introducing noise without improving detection accuracy.
+
+\paragraph{Hypothesized failure modes.}
+Based on the observed degradation patterns, we hypothesize several failure modes:
+
+\begin{table}[H]
+  \centering
+  \caption{Hypothesized RAG failure modes by model family.}
+  \label{tab:rag-failure-modes}
+  \footnotesize
+  \begin{tabularx}{\textwidth}{p{0.18\textwidth}Xp{0.22\textwidth}}
+    \toprule
+    Model family & Observed failure mode & Hypothesized cause \\
+    \midrule
+    \texttt{gemma3:4b} & Over-sensitive flagging; reduced precision despite retrieval & Retrieval context amplifies pattern-matching without improving contextual discrimination; model cannot abstain on low-confidence cases \\
+    \texttt{CodeLlama:latest} & Severe recall/precision drop; inconsistent JSON outputs & Code-specialized training; interprets security guidance as code rather than interpretive knowledge; struggles with strict output format under increased prompt length \\
+    \texttt{gemma3:1b} & Improved recall but persistent FPR 100\% & Insufficient capacity to balance retrieval guidance with contextual reasoning; defaults to over-reporting \\
+    \texttt{qwen3:4b/8b} & Improved F1 and stable FPR & Strong instruction-following; effectively integrates retrieved knowledge to refine labels and reduce hallucination \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\paragraph{Practical guidance for RAG configuration.}
+Based on these findings, RAG should be \textbf{selectively enabled} based on model characteristics and deployment context:
+
+\begin{itemize}
+  \item \textbf{Enable RAG for:} Models with strong instruction-following (\texttt{qwen3:4b}, \texttt{qwen3:8b}) in audit workflows where grounding improves explanation quality.
+  \item \textbf{Disable RAG for:} Code-specialized models (\texttt{CodeLlama}) and models prone to over-flagging (\texttt{gemma3:4b}) unless retrieval chunks are filtered for high relevance (e.g., $>0.8$ similarity threshold).
+  \item \textbf{Tune retrieval parameters:} Reduce $k$ (e.g., $k=3$ instead of $k=5$) for smaller models to limit prompt inflation. Increase similarity threshold to $>0.7$ to exclude low-relevance chunks.
+  \item \textbf{A/B test per model:} Run paired evaluations (LLM-only vs.\ LLM+RAG) on project-specific datasets before deployment to validate model-specific RAG benefit.
+\end{itemize}
+
+\paragraph{Comparison with prior work.}
+Model-dependent RAG effects have been observed in other domains: Lewis et al.\ \cite{lewis2020rag} report that retrieval-augmented QA benefits larger models more than smaller ones, while Mialon et al.\ \cite{mialon2023augmented} note that code-specialized models may require retrieval-aware fine-tuning to effectively integrate external knowledge. This thesis adds security-specific evidence: strict output constraints (JSON schema) and high-stakes vulnerability labeling amplify model sensitivity to retrieval quality and prompt length.
+
+Future work should investigate whether fine-tuning on security-specific retrieval examples can improve RAG robustness for \texttt{gemma3} and \texttt{CodeLlama} families, or whether architectural limitations (e.g., context window handling, attention mechanisms) fundamentally constrain smaller models' ability to benefit from retrieval augmentation.

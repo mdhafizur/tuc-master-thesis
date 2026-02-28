@@ -1,4 +1,9 @@
-Building on the contributions and limitations above, several next steps stand out for improving Code Guardian’s effectiveness, robustness, and evaluation depth.
+Building on the contributions and limitations above, several next steps stand out for improving Code Guardian's effectiveness, robustness, and evaluation depth.
+
+\noindent\textbf{Confidence-based alert suppression and threshold calibration.}
+The evaluation revealed that most LLM configurations suffer from severe secure-sample over-warning (FPR 100\%), creating substantial triage burden. Future work should extend the JSON output schema to include per-finding confidence scores and implement threshold-based suppression (e.g., hide findings with confidence $<0.7$ by default). Abstention prompting can instruct models to explicitly output ``no issues found'' for secure code, reducing noise. Empirical threshold tuning on balanced vulnerable/secure datasets can identify optimal operating points that balance recall and FPR for each model family. Additionally, hybrid two-stage filtering—using deterministic SAST tools like Semgrep as first-pass filters and applying LLMs only to flagged locations—can leverage the low-noise behavior of rule-based tools while preserving contextual reasoning benefits.
+
+\medskip
 
 \noindent\textbf{Deeper program analysis and cross-file context.}
 Add lightweight static analysis to extract taint-style source-to-sink traces across functions and files, and feed these traces into the LLM prompt. This can reduce false positives from missing context and improve recall for vulnerabilities that span modules (e.g., validation in one file and sink usage in another).

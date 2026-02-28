@@ -101,6 +101,51 @@ To document run provenance, Table~\ref{tab:eval-artifact-manifest} records the m
 
 For archival reproducibility, the recommended artifact bundle includes: (i) raw JSON output from the harness, (ii) the exact run configuration object, (iii) model digests, and (iv) generated summary tables. These artifacts should be stored as supplementary material together with the thesis PDF.
 
+\subsection{Run Configuration and Data Merging}
+\label{sec:eval-run-merging}
+
+This thesis evaluation uses a \textbf{two-run merged configuration} to balance statistical robustness on vulnerable samples with practical runtime constraints. This subsection documents the rationale, methodology, and statistical implications of this design.
+
+\paragraph{Why two separate runs were necessary.}
+The evaluation initially prioritized vulnerable-case coverage with repeated measurements (\texttt{runsPerSample=3}) to assess detection stability and reduce influence of transient model behavior. However, the original run configuration did not include sufficient secure-sample coverage for reliable false-positive rate (FPR) estimation—a critical usability metric for IDE-integrated tools.
+
+Re-running the full ablation with both vulnerable and secure samples at \texttt{runsPerSample=3} would have required an additional 7+ hours of compute time. Instead, a pragmatic approach was adopted: execute a \textbf{negatives-only overlay run} (\texttt{runsPerSample=1}) to add 15 secure samples, then merge results for FPR computation while preserving the repeated vulnerable measurements for recall/precision.
+
+\paragraph{How results were merged.}
+The final thesis evaluation set combines:
+\begin{itemize}
+  \item \textbf{Vulnerable samples:} 113 samples $\times$ 3 runs = 339 evaluations (from \texttt{all-test-cases.generated.json})
+  \item \textbf{Secure samples:} 15 samples $\times$ 1 run = 15 evaluations (from \texttt{negatives-only.generated.json})
+\end{itemize}
+
+Per-model metrics are computed as follows:
+\begin{itemize}
+  \item \textbf{Precision \& Recall:} Calculated over 339 vulnerable evaluations using type-level matching (expected vs predicted vulnerability labels).
+  \item \textbf{False-Positive Rate (FPR):} Calculated over 15 secure evaluations using sample-level counting (a secure sample is FP if \emph{any} issue is emitted).
+  \item \textbf{Latency:} Pooled across all 354 evaluations (339 vulnerable + 15 secure).
+  \item \textbf{Parse Success Rate:} Pooled across all 354 evaluations.
+\end{itemize}
+
+\paragraph{Statistical implications.}
+The merged design creates an \textbf{asymmetry in measurement robustness}: vulnerable-case metrics benefit from triple-sampling stability, while secure-case FPR is based on single-pass observations. This has several consequences:
+
+\begin{enumerate}
+  \item \textbf{Recall and precision estimates are more stable} due to repeated measurements reducing transient inference variance.
+  \item \textbf{FPR estimates have wider confidence intervals} because the secure-sample count ($n=15$) is small and each sample is evaluated once. Wilson intervals (Table~\ref{tab:eval-ci-key}) reflect this uncertainty.
+  \item \textbf{Mode-to-mode comparisons are descriptive only}: paired per-sample outputs were not exported by the harness, so differences between LLM-only and LLM+RAG are reported as run-level deltas, not inferential effects.
+\end{enumerate}
+
+\paragraph{Why pooled counts are still valid for descriptive reporting.}
+Despite the asymmetry, the merged approach provides operationally useful evidence:
+\begin{itemize}
+  \item FPR observability is substantially improved (15 secure samples vs.\ 0--2 in early iterations).
+  \item The primary evaluation goal is to \emph{compare model/mode profiles under controlled conditions}, not to establish statistically generalized population claims.
+  \item Metrics are interpreted as \textbf{indicative measurements for this specific run configuration}, with explicit documentation of limitations (Section~\ref{sec:eval-summary}).
+\end{itemize}
+
+\paragraph{Future work: Unified repeated-run design.}
+For production-scale evaluation, a unified design with matched \texttt{runsPerSample} for both vulnerable and secure sets would enable paired per-sample mode comparison and stronger statistical inference. The current harness can be extended to export per-sample mode-contingency outputs and support formal paired tests (e.g., McNemar's test for mode-to-mode detection differences).
+
 \subsection*{Run-to-Run Variability (Descriptive)}
 
 The main ablation run evaluates each vulnerable sample three times in each configuration; secure-sample evidence is merged from a negatives-only run with one pass per sample. Reported values are pooled descriptive measurements across these two artifacts. Because repeated runs reuse the same snippets and the final tables merge outputs from two runs, mode-to-mode differences are interpreted descriptively for this specific run.

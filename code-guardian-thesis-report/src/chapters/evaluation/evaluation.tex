@@ -2,6 +2,58 @@ This chapter evaluates Code Guardian with respect to the requirements defined in
 
 The evaluation is designed as a pragmatic engineering assessment rather than a pure benchmark competition. Accordingly, the chapter combines quantitative metrics, baseline comparison, and qualitative case analysis to answer three practical questions: (i) when the assistant is useful, (ii) where it fails, and (iii) which deployment profiles are defensible under local privacy constraints. Throughout this chapter, results are interpreted descriptively for the documented run environment and configuration.
 
+\section{Results at a Glance}
+\label{sec:eval-results-overview}
+
+Before presenting detailed methodology and analysis, this section provides a high-level summary of key findings to orient the reader. Table~\ref{tab:eval-results-summary} compares detection quality and responsiveness across evaluated configurations, and Table~\ref{tab:eval-tradeoffs} illustrates design trade-offs.
+
+\begin{table}[htbp]
+\centering
+\caption{Detection quality and performance. \colorbox{green!20}{Green} = best, \colorbox{yellow!20}{yellow} = moderate, \colorbox{red!20}{red} = poor.}
+\label{tab:eval-results-summary}
+\footnotesize
+\begin{tabular}{@{}l|rrrr|r@{}}
+\toprule
+\textbf{Configuration} & \textbf{P} & \textbf{R} & \textbf{F1} & \textbf{FPR} & \textbf{Lat} \\
+\midrule
+\textbf{qwen3:8b+RAG} & \cellcolor{green!20}96.5 & \cellcolor{green!20}82.3 & \cellcolor{green!20}88.9 & \cellcolor{green!20}20.0 & \cellcolor{yellow!20}2.5s \\
+qwen3:8b & \cellcolor{green!20}95.2 & 79.6 & \cellcolor{green!20}86.7 & \cellcolor{yellow!20}26.7 & \cellcolor{yellow!20}2.5s \\
+gemma3:1b & \cellcolor{red!20}29.0 & \cellcolor{green!20}92.9 & \cellcolor{red!20}44.3 & \cellcolor{red!20}100 & \cellcolor{green!20}0.9s \\
+Semgrep & \cellcolor{yellow!20}58.3 & \cellcolor{red!20}31.0 & \cellcolor{red!20}40.4 & \cellcolor{green!20}0 & \cellcolor{green!20}<50ms \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\caption{Design trade-offs within privacy constraint.}
+\label{tab:eval-tradeoffs}
+\footnotesize
+\begin{tabularx}{\textwidth}{@{}l|ccc|X@{}}
+\toprule
+\textbf{Config} & \textbf{Qual} & \textbf{Spd} & \textbf{Priv} & \textbf{Key Characteristics} \\
+\midrule
+\textbf{qwen3+RAG} & \cellcolor{green!20}Hi & \cellcolor{yellow!20}Md & \cellcolor{green!20}Loc & F1 88.9\%, FPR 20\%, 2.5s \\
+\midrule
+Cloud GPT-4 & \cellcolor{green!20}Hi & \cellcolor{green!20}Hi & \cellcolor{red!20}Cld & \textit{Violates privacy} \\
+\midrule
+Semgrep & \cellcolor{yellow!20}Md & \cellcolor{green!20}Hi & \cellcolor{green!20}Loc & 0\% FPR, <50ms, 31\% R \\
+\midrule
+gemma3:1b & \cellcolor{red!20}Lo & \cellcolor{green!20}Hi & \cellcolor{green!20}Loc & 100\% FPR (0.9s) \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\paragraph{Summary of key findings.}
+\begin{itemize}
+  \item \textbf{Best overall:} qwen3:8b + RAG achieves F1 88.9\%, FPR 20\%, p95 latency 2.52\,s
+  \item \textbf{RAG impact:} Improves precision (+1.3pp), recall (+2.7pp), reduces FPR (-6.7pp) for qwen3:8b
+  \item \textbf{FPR challenge:} Small models (gemma3:1b, gemma3:4b, CodeLlama-7b) exhibit 100\% FPR—all secure samples flagged
+  \item \textbf{SAST complement:} Semgrep offers zero FPR and sub-50ms latency but only 31\% recall—hybrid strategy recommended
+\end{itemize}
+
+The remainder of this chapter details the evaluation methodology, experimental setup, and comprehensive analysis supporting these findings.
+
 \input{src/chapters/evaluation/dataset_details}
 \input{src/chapters/evaluation/evaluation_metrics}
 \input{src/chapters/evaluation/experimental_setup}

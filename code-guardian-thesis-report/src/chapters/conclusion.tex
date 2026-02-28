@@ -33,15 +33,15 @@ Table~\ref{tab:conclusion-deployment-profiles} summarizes pragmatic deployment c
   \centering
   \caption{Recommended deployment profiles from thesis results.}
   \label{tab:conclusion-deployment-profiles}
-  \small
-  \begin{tabularx}{\textwidth}{p{0.19\textwidth}p{0.22\textwidth}XX}
+  \footnotesize
+  \begin{tabularx}{\textwidth}{p{0.15\textwidth}p{0.18\textwidth}p{0.17\textwidth}p{0.17\textwidth}X}
     \toprule
-    Use case & Preferred configuration & Main advantage & Main risk \\
+    Use case & Config & Advantage & Main risk & Alert noise management \\
     \midrule
-    Real-time editor feedback & \texttt{gemma3:1b} (LLM-only) & Lower latency profile (about 333 ms median) & Lower recall than higher-capacity models (25.66\%) and severe secure-sample over-warning (FPR 100\%) \\
-    Moderate-latency audit pass & \texttt{qwen3:4b} (LLM+RAG) & Good recall (64.90\%) with about 1.1 s median latency & Severe alert noise on secure samples (FPR 100\%) \\
-    Higher-quality deep audit & \texttt{qwen3:8b} (LLM+RAG) & Best F1 (63.76\%) and best LLM FPR (26.67\%) in this run & Higher latency (median 1524 ms) and still non-trivial false-positive behavior \\
-    High-noise model profiles & \texttt{gemma3:4b} / \texttt{qwen3:4b} / \texttt{CodeLlama:latest} & Strong vulnerable recall in some modes & Persistent secure-sample over-warning (FPR 100\%) \\
+    Real-time editor & \texttt{gemma3:1b} (LLM-only) & Lower latency ($\sim$333 ms) & Low recall (25.66\%); FPR 100\% & \textbf{Not recommended} for inline use; use only in audit mode with manual triage \\
+    Moderate audit & \texttt{qwen3:4b} (LLM+RAG) & Good recall (64.90\%); moderate latency ($\sim$1.1 s) & FPR 100\% & Batch review mode only; consider SAST pre-filter or severity-based suppression \\
+    Best-quality audit & \texttt{qwen3:8b} (LLM+RAG) & Best F1 (63.76\%); acceptable FPR (26.67\%) & Higher latency ($\sim$1.5 s) & Usable for inline with debouncing; triage burden still present (4 hrs per 500 functions) \\
+    Hybrid baseline & Semgrep + \texttt{qwen3:8b} & Low-noise SAST anchor (FPR 6.67\%) + LLM contextual reasoning & Missed vulnerabilities outside SAST rules & Use Semgrep for high-confidence flags; apply LLM on flagged locations for deeper analysis \\
     \bottomrule
   \end{tabularx}
 \end{table}

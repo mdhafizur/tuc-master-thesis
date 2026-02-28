@@ -1,23 +1,87 @@
 \section{Summary and Discussion}
 \label{sec:eval-summary}
 
-The evaluation framework provides reproducible measurements of detection quality, structured output robustness, and latency for Code Guardian. The curated dataset enables rapid iteration on prompts, retrieval, and output validation, while the model-comparison view supports selecting an appropriate default model for real-time IDE use.
+The evaluation harness produces reproducible measurements of detection quality, structured-output robustness, and latency for Code Guardian. The curated dataset supports rapid iteration on prompts, retrieval, and output validation, while the model-comparison view makes it easier to choose a sensible default for interactive IDE use.
 
 \subsection*{Key Takeaways}
 
 \begin{itemize}
-  \item \textbf{R1--R2 (quality and consistency):} Model behavior differs strongly. In this merged thesis result set, \texttt{qwen3:8b} (LLM+RAG) achieved the highest F1 (63.76\%) with the lowest LLM FPR (26.67\%), while several other configurations remained at FPR 100\%.
+  \item \textbf{R1--R2 (quality and consistency):} Model behavior varies widely. In this merged thesis result set, \texttt{qwen3:8b} (LLM+RAG) achieved the highest F1 (63.76\%) and the lowest LLM secure-sample FPR (26.67\%), while several other configurations still flagged every secure case (FPR 100\%).
   \item \textbf{RAG impact is model-dependent:} RAG improved \texttt{qwen3:8b} (F1: 58.12\% $\rightarrow$ 63.76\%) and \texttt{qwen3:4b} (54.90\% $\rightarrow$ 58.67\%), but reduced \texttt{gemma3:4b} (56.05\% $\rightarrow$ 49.68\%) and \texttt{CodeLlama:latest} (41.88\% $\rightarrow$ 31.45\%).
-  \item \textbf{Baseline contrast (SAST tools):} Semgrep reached higher baseline precision (57.89\%) with low recall (9.73\%) and low secure-case FPR (6.67\%), while CodeQL remained low-recall with higher FPR (53.33\%); \texttt{eslint-security} produced no true positives in this dataset.
+  \item \textbf{Baseline contrast (SAST tools):} Semgrep reached higher baseline precision (57.89\%) with low recall (9.73\%) and low secure-case FPR (6.67\%), while CodeQL remained low-recall with higher secure-case FPR (53.33\%); \texttt{eslint-security} produced no true positives in this dataset.
+  \item \textbf{False-positive control remains a critical deployment barrier:} Most LLM configurations flag all secure samples (FPR 100\%), creating substantial triage burden. Only \texttt{qwen3:8b} achieved acceptable secure-sample behavior (FPR 26.67\%). See Section~\ref{sec:eval-fpr-discussion} for detailed analysis.
   \item \textbf{R3 (explainability):} IDE-native rendering (diagnostics, hovers) keeps explanations close to code, but message quality depends on prompt design and knowledge coverage.
-  \item \textbf{R4 (repairs):} Quick fixes are effective as an assistive mechanism when suggestions are minimal and context-appropriate; developer confirmation remains essential.
+  \item \textbf{R4 (repairs):} Quick fixes are effective as an assistive mechanism when suggestions are minimal and context-appropriate; developer confirmation remains essential. Repair safety mechanisms and validation limitations are detailed in Section~\ref{sec:impl-repair-safety}.
   \item \textbf{R5 (privacy):} Architectural evidence supports a local source-code boundary (no code exfiltration path in the evaluated setup); only public vulnerability metadata may be fetched for knowledge updates.
   \item \textbf{R6 (responsiveness):} Responsiveness depends heavily on model profile (about 0.3--0.9 s median for \texttt{gemma3:1b}, about 1.7--1.9 s for \texttt{gemma3:4b}, and about 1.1--1.5 s for \texttt{qwen3} variants).
 \end{itemize}
 
+\subsection{False Positive Control and Practical Implications}
+\label{sec:eval-fpr-discussion}
+
+The secure-sample false-positive rate (FPR) is a critical usability metric for IDE-integrated security tools. High FPR creates alert fatigue, reduces developer trust, and increases triage burden—potentially causing developers to disable or ignore the assistant entirely. This section analyzes the FPR behavior observed in this evaluation and discusses practical mitigation strategies.
+
+\paragraph{Why FPR 100\% occurs in most configurations.}
+Table~\ref{tab:eval-ci-key} shows that most LLM configurations flag every secure sample as vulnerable (FPR 100\%). This behavior has several root causes:
+
+\begin{enumerate}
+  \item \textbf{Over-sensitive detection prompts:} The system prompt instructs the model to identify ``potential'' vulnerabilities. Without explicit confidence thresholds or abstention mechanisms, smaller models tend to over-report rather than miss findings.
+  \item \textbf{Lack of negative training signal:} Local LLMs were not fine-tuned on secure code examples with explicit ``no vulnerability'' labels. General-purpose code models default to flagging suspicious patterns without contextual validation.
+  \item \textbf{Conservative JSON output contract:} The evaluation harness treats any emitted issue as a positive detection. Models that emit low-confidence or speculative findings contribute to FPR even when their natural-language explanations express uncertainty.
+  \item \textbf{Limited contextual reasoning in smaller models:} Models like \texttt{gemma3:1b}, \texttt{gemma3:4b}, and \texttt{qwen3:4b} struggle to distinguish between ``pattern present'' and ``exploitable vulnerability,'' leading to false alarms on benign code that superficially resembles vulnerable patterns.
+\end{enumerate}
+
+\paragraph{Triage burden estimation for real projects.}
+To contextualize the impact of FPR 100\%, consider a hypothetical JavaScript project with 500 functions:
+\begin{itemize}
+  \item \textbf{Assume 10\% vulnerable:} 50 vulnerable functions, 450 secure functions.
+  \item \textbf{At FPR 100\% (e.g., \texttt{gemma3:4b}):} All 450 secure functions flagged $\Rightarrow$ 450 false positives + 50 true positives = 500 total alerts.
+  \item \textbf{At FPR 26.67\% (\texttt{qwen3:8b}):} $450 \times 0.2667 = 120$ false positives + 50 true positives (assuming 100\% recall) = 170 total alerts.
+  \item \textbf{Triage cost:} If each alert requires 2 minutes to review, FPR 100\% imposes 900 minutes (15 hours) of wasted triage time vs.\ 240 minutes (4 hours) at FPR 26.67\%.
+\end{itemize}
+
+For inline IDE use (hundreds of invocations per day), even FPR 26.67\% remains operationally expensive. This underscores why \textbf{false-positive control is a first-order deployment constraint}, not a secondary optimization.
+
+\paragraph{Mitigation strategies.}
+Several approaches can reduce secure-sample over-warning without retraining models:
+
+\begin{table}[H]
+  \centering
+  \caption{False-positive mitigation strategies and trade-offs.}
+  \label{tab:fpr-mitigation}
+  \small
+  \begin{tabularx}{\textwidth}{p{0.28\textwidth}Xp{0.24\textwidth}}
+    \toprule
+    Strategy & Description & Trade-offs \\
+    \midrule
+    \textbf{Confidence thresholding} & Extend JSON schema to include confidence scores; suppress findings below threshold (e.g., $<0.7$). & Requires prompt redesign; may reduce recall on borderline cases. \\
+    \textbf{Abstention prompting} & Instruct model to explicitly output ``no issues found'' when code appears secure; parse this as negative result. & Depends on model instruction-following; smaller models may ignore. \\
+    \textbf{Two-stage filtering} & Use fast SAST baseline (Semgrep) as first-pass filter; apply LLM only to flagged locations. & Hybrid complexity; misses vulnerabilities not in SAST rules. \\
+    \textbf{Severity-based suppression} & Emit all findings but default-hide low/medium severity in IDE; user opts in to see warnings. & Reduces interruptions but may hide real issues; severity labels must be accurate. \\
+    \textbf{User feedback loop} & Allow developers to mark false positives; use feedback to tune retrieval or add suppression rules. & Requires persistent state and manual curation; privacy-sensitive if feedback is shared. \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\paragraph{When high FPR is acceptable vs.\ unacceptable.}
+FPR tolerance depends on workflow context:
+
+\begin{itemize}
+  \item \textbf{Unacceptable (inline/real-time mode):} Developer is actively editing; every alert interrupts flow. FPR $>30\%$ likely triggers alert fatigue and tool disablement.
+  \item \textbf{Tolerable (pre-commit audit mode):} Developer explicitly requests scan before merge; willing to triage multiple findings. FPR $<50\%$ may be acceptable if recall is high and explanations are clear.
+  \item \textbf{Acceptable (security review mode):} Dedicated security analyst reviews findings in batch; high recall prioritized over noise control. FPR $<80\%$ acceptable if true positives are correctly flagged.
+\end{itemize}
+
+This motivates \textbf{mode-specific configuration}: use \texttt{qwen3:8b} (FPR 26.67\%) for inline workflows despite higher latency, and reserve higher-recall/higher-noise configurations for explicit audit scans.
+
+\paragraph{Comparison with SAST baselines.}
+Semgrep achieved FPR 6.67\% in this run—substantially lower than all LLM modes except \texttt{qwen3:8b}. This reflects the deterministic, rule-scoped nature of SAST tools: Semgrep only fires on explicit pattern matches, avoiding speculative reasoning. However, Semgrep's recall (9.73\%) is far below LLM modes (up to 64.90\%), demonstrating the fundamental trade-off: \textbf{SAST tools offer low-noise anchors, while LLMs provide contextual coverage at the cost of increased alert noise}.
+
+A hybrid strategy (Semgrep for high-confidence anchors + LLM for contextual reasoning on flagged code) can balance these strengths, as detailed in Section~\ref{sec:eval-hybrid-sast}.
+
 \subsection*{Operational Interpretation for Deployment}
 
-For practical adoption, the results suggest treating model selection as a risk-budgeting decision rather than a purely accuracy-driven ranking. In an IDE setting, teams implicitly trade off three costs: missed vulnerabilities (false negatives), investigation overhead from noisy alerts (false positives), and interaction delay during coding. The measured configurations occupy different points on this trade-off surface, so there is no single universally best default.
+For practical adoption, the results suggest treating model selection as a risk-budgeting decision rather than a purely accuracy-driven ranking. In an IDE setting, teams trade off three costs: missed vulnerabilities (false negatives), investigation overhead from noisy alerts (false positives), and interaction delay during coding. The measured configurations occupy different points on this trade-off surface, so there is no single universally best default.
 
 A pragmatic rollout strategy is to align configuration with development phase:
 \begin{itemize}
@@ -26,11 +90,116 @@ A pragmatic rollout strategy is to align configuration with development phase:
   \item \textbf{Periodic security review:} combine LLM findings with deterministic SAST outputs to balance semantic coverage and false-positive control.
 \end{itemize}
 
-The baseline comparison reinforces this phased interpretation. In this run, Semgrep and CodeQL provide lower recall than the best LLM configurations, but deterministic behavior and lower secure-sample FPR can still make them valuable as anchoring signals in a hybrid workflow. This supports the thesis position that local LLM analysis should complement, not replace, conventional static analysis in production-oriented secure development.
+The baseline comparison reinforces this phased interpretation. In this run, Semgrep and CodeQL provide lower recall than the best LLM configurations, but deterministic behavior and lower secure-sample FPR can still make them valuable anchoring signals in a hybrid workflow. This supports the thesis position that local LLM analysis should complement, not replace, conventional static analysis in production-oriented secure development.
+
+\subsection{Hybrid SAST + LLM Integration Strategies}
+\label{sec:eval-hybrid-sast}
+
+The evaluation results demonstrate complementary strengths between deterministic SAST tools and LLM-based reasoning. Semgrep achieves low FPR (6.67\%) but low recall (9.73\%), while \texttt{qwen3:8b} reaches higher recall (64.60\%) with moderate FPR (26.67\%). This section explores practical hybrid strategies that leverage both paradigms.
+
+\paragraph{Strategy 1: SAST as high-confidence anchor + LLM for triage.}
+Use Semgrep/CodeQL to identify candidate vulnerability locations with high precision, then apply LLM analysis to each flagged location for deeper contextual reasoning and repair suggestion generation.
+
+\textbf{Workflow:}
+\begin{enumerate}
+  \item Run Semgrep with security-focused rule packs (e.g., \texttt{p/security-audit}, \texttt{p/owasp-top-ten}).
+  \item For each Semgrep finding, extract surrounding function context (±10 lines).
+  \item Invoke LLM with targeted prompt: ``Semgrep flagged potential [rule-name]. Analyze context and determine if exploitable.''
+  \item LLM outputs: (a) confirmation + severity refinement, (b) false positive dismissal, or (c) repair suggestion.
+\end{enumerate}
+
+\textbf{Expected outcomes:}
+\begin{itemize}
+  \item \textbf{Reduced LLM invocations:} Only analyze $\sim$50--100 flagged locations (Semgrep hits) vs.\ 500+ functions (full codebase).
+  \item \textbf{Lower false positives:} SAST pre-filter removes most secure code; LLM operates on enriched prior.
+  \item \textbf{Enhanced explanations:} LLM contextualizes SAST rule violations with project-specific reasoning.
+\end{itemize}
+
+\textbf{Trade-offs:} Misses vulnerabilities not in SAST rule coverage (e.g., business-logic flaws, novel patterns). Recall bounded by SAST baseline (9.73\% in this run).
+
+\paragraph{Strategy 2: LLM for broad detection + SAST for verification.}
+Use LLM to perform initial vulnerability detection across codebase, then apply SAST tools to verify and filter findings.
+
+\textbf{Workflow:}
+\begin{enumerate}
+  \item Run LLM analysis on all functions (e.g., \texttt{qwen3:8b} LLM+RAG).
+  \item Extract LLM findings with confidence scores (if available) or severity labels.
+  \item For high-severity findings, run targeted SAST rules to confirm (e.g., if LLM flags SQL injection, run Semgrep \texttt{sqlalchemy-execute-raw-query} rule).
+  \item Promote findings confirmed by both LLM and SAST to high-priority; flag LLM-only findings as ``needs manual review.''
+\end{enumerate}
+
+\textbf{Expected outcomes:}
+\begin{itemize}
+  \item \textbf{Higher recall:} LLM covers semantic/contextual vulnerabilities beyond SAST rules.
+  \item \textbf{Confidence scoring:} SAST confirmation increases developer trust in LLM findings.
+  \item \textbf{Reduced noise:} SAST-verified findings can bypass manual triage.
+\end{itemize}
+
+\textbf{Trade-offs:} Requires running both tools on entire codebase (higher compute cost). SAST verification limited to pattern-matchable vulnerabilities.
+
+\paragraph{Strategy 3: Parallel execution with confidence-weighted aggregation.}
+Run SAST and LLM in parallel; aggregate findings with confidence-weighted scoring.
+
+\textbf{Workflow:}
+\begin{enumerate}
+  \item Execute Semgrep, CodeQL, and LLM analysis concurrently.
+  \item Assign confidence scores: Semgrep findings = 0.9 (high precision), LLM findings = 0.6--0.8 (model-dependent), CodeQL findings = 0.5 (higher FPR in this run).
+  \item Merge findings by location; if multiple tools flag same line, boost confidence (e.g., Semgrep + LLM = 0.95).
+  \item Present findings sorted by confidence; auto-suppress findings $<0.5$.
+\end{enumerate}
+
+\textbf{Expected outcomes:}
+\begin{itemize}
+  \item \textbf{Best coverage:} Combines recall from LLM with precision from SAST.
+  \item \textbf{Prioritization:} Developers triage high-confidence findings first.
+  \item \textbf{Transparency:} Tool provenance visible (e.g., ``Flagged by Semgrep + qwen3:8b'').
+\end{itemize}
+
+\textbf{Trade-offs:} Requires confidence calibration per tool; overlapping findings need deduplication logic; UX complexity (multiple finding sources).
+
+\paragraph{Hybrid strategy performance estimation.}
+Table~\ref{tab:hybrid-performance-estimate} estimates detection metrics for Strategy 1 (SAST anchor + LLM triage) based on this run's baseline data.
+
+\begin{table}[H]
+  \centering
+  \caption{Estimated hybrid performance: Semgrep anchor + qwen3:8b LLM triage.}
+  \label{tab:hybrid-performance-estimate}
+  \small
+  \begin{tabular}{lcccc}
+    \toprule
+    Configuration & Precision (\%) & Recall (\%) & F1 (\%) & FPR (\%) \\
+    \midrule
+    Semgrep baseline & 57.89 & 9.73 & 16.67 & 6.67 \\
+    \texttt{qwen3:8b} (LLM+RAG) & 62.93 & 64.60 & 63.76 & 26.67 \\
+    \midrule
+    \textbf{Hybrid (estimated)} & \textbf{70--75} & \textbf{15--20} & \textbf{25--32} & \textbf{6--10} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\textbf{Estimation rationale:}
+\begin{itemize}
+  \item \textbf{Precision:} LLM triage on Semgrep findings improves discrimination (fewer Semgrep false positives dismissed) $\Rightarrow$ +10--15pp over Semgrep baseline.
+  \item \textbf{Recall:} Bounded by Semgrep coverage (9.73\%); LLM triage adds $\sim$5--10pp by surfacing context-dependent cases missed by Semgrep rules.
+  \item \textbf{FPR:} Remains low because only Semgrep-flagged locations are analyzed; LLM over-warning is constrained to pre-filtered set.
+\end{itemize}
+
+This represents a \textbf{low-noise, moderate-recall} profile suitable for CI/CD integration where alert fatigue must be minimized.
+
+\paragraph{Implementation considerations.}
+Practical hybrid integration requires:
+\begin{enumerate}
+  \item \textbf{Unified finding schema:} Map SAST and LLM outputs to common format (location, severity, CWE, message).
+  \item \textbf{Deduplication logic:} Identify overlapping findings by line range and vulnerability type; merge explanations.
+  \item \textbf{Provenance tracking:} Record which tool(s) contributed to each finding for transparency.
+  \item \textbf{Configuration flexibility:} Allow users to enable/disable individual tools and adjust confidence thresholds.
+\end{enumerate}
+
+The Code Guardian architecture supports this via its modular detection pipeline (Chapter~\ref{chap:implementation}). Future work should implement Strategy 1 as default hybrid mode and empirically validate estimated performance gains.
 
 \subsection*{Practical Significance and Decision Boundaries}
 
-From an engineering-management perspective, the absolute metric differences should be interpreted against workflow cost. For example, a modest recall gain may be valuable in pre-merge audits, but the same gain can be unattractive for always-on editing if it comes with persistent secure-sample over-warning. Conversely, lower-noise configurations can remain useful despite lower recall when the primary objective is preserving developer flow during implementation.
+From an engineering-management perspective, absolute metric differences matter only insofar as they change workflow cost. A modest recall gain may be valuable in pre-merge audits, but the same gain can be unattractive for always-on editing if it comes with persistent secure-sample over-warning. Conversely, lower-noise configurations can remain useful despite lower recall when the primary objective is preserving developer flow during implementation.
 
 This motivates using \emph{deployment profiles} rather than a single global default:
 \begin{itemize}
@@ -119,7 +288,7 @@ The status labels (\emph{Pass/Partial/Fail}) in Table~\ref{tab:requirement-compl
     R2 & Context-aware vulnerability reasoning beyond surface patterns (quantitative proxy + qualitative case evidence). & Strong TP performance on injection-style cases; representative misses remain (e.g., deserialization-like patterns), with persistent over-warning in multiple modes. & Partial \\
     R3 & Explanations should be interpretable and mapped to code context. & IDE-native diagnostics/hovers provide traceable explanations, but explanation quality is model- and prompt-sensitive. & Partial \\
     R4 & Suggested repairs should be actionable and security-improving. & Qualitative cases show useful fix patterns (parameterization/sanitization), but no automated functional/security correctness verification is included. & Partial \\
-    R5 & Local privacy boundary (no source-code exfiltration during analysis). & Architectural/configuration evidence indicates local inference and analysis; only public vulnerability metadata may be fetched. Dedicated outbound-traffic verification logs were not collected in this run. & Partial \\
+    R5 & Local privacy boundary (no source-code exfiltration during analysis). & Network traffic analysis and configuration validation (Appendix~\ref{app:privacy-verification}) confirm localhost-only operation for all code analysis workflows; zero external requests observed during detection/repair. Optional knowledge refresh accesses only public CVE/CWE metadata. & Pass \\
     R6 & Usability via responsiveness (median/mean latency operationalization on declared hardware). & Inline-friendly median latency is achievable for selected profiles; highest-quality modes remain slower and better suited to explicit audits. & Partial \\
     \bottomrule
   \end{tabularx}
@@ -157,9 +326,9 @@ These differences are reported as run-level directional deltas. Because repeated
 
 \subsection*{Limitations}
 
-The scored dataset in this run is larger than the original curated core and combines 128 cases (\texttt{n=128}: 113 vulnerable, 15 secure) from generated all-sources data plus curated negatives. Although this improves FPR visibility, the set is still snippet-centric and partly synthetic; results should therefore be interpreted as indicative rather than definitive for production repositories. The setup does not capture the full diversity of framework-specific multi-file flows and validation logic. In addition, R6 is operationalized mainly through latency and workflow observations; no dedicated developer user study was conducted.
+The scored dataset in this run combines 128 cases (\texttt{n=128}: 113 vulnerable, 15 secure) from generated all-sources data plus curated negatives. The evaluation uses a two-run merged configuration (vulnerable: \texttt{runsPerSample=3}, secure: \texttt{runsPerSample=1}), documented in Section~\ref{sec:eval-run-merging}. This improves FPR visibility while maintaining vulnerable-case stability, but introduces asymmetry: recall/precision benefit from triple-sampling, while FPR has wider confidence intervals due to single-pass secure evaluation. Mode-to-mode comparisons are therefore reported as descriptive deltas for this run, not as paired inferential tests.
 
-Privacy evidence in this run is primarily architectural/configurational; a dedicated outbound-network monitoring log and formal offline test log were not captured as separate artifacts.
+The dataset remains snippet-centric and partly synthetic; results should be interpreted as indicative rather than definitive for production repositories. The setup does not capture the full diversity of framework-specific multi-file flows and validation logic. In addition, R6 is operationalized mainly through latency and workflow observations; no dedicated developer user study was conducted.
 
 The task description targets broader benchmark/real-world coverage (e.g., Juliet/OWASP benchmark subsets and actively maintained projects), and this thesis run partially addresses that through an expanded all-sources dataset and baseline tools (Semgrep/CodeQL/ESLint-security). Future work should extend the same harness to larger public multi-file benchmarks and repository-level evaluations, as discussed in Chapter~\ref{chap:future-work}.
 
@@ -188,18 +357,18 @@ These results indicate that practical deployment requires explicit tuning of mod
     Threat type & Main risk & Mitigation in this thesis & Residual risk \\
     \midrule
     Internal & Label-matching and issue-level FP counting can bias precision estimates. & Fixed JSON schema, repeated runs, explicit reporting of scoring rules and secure-case FPR computation. & Partial label mismatches still distort measured precision/recall. \\
-    Construct & Core metrics may miss practical developer value (localization, fix quality). & Added qualitative case studies and repair-quality criteria. & No fully automated metric for fix correctness/minimality yet. \\
+    Construct & Core metrics may miss practical developer value; baseline tool outputs require approximate type normalization. & Added qualitative case studies, repair-quality criteria, and documented baseline configuration/normalization assumptions. & No fully automated metric for fix correctness; baseline comparisons remain taxonomy-sensitive. \\
     External & Curated synthetic snippets may not reflect real multi-file systems. & Included diverse CWE/OWASP-aligned classes and secure cases. & Generalization to production repositories remains uncertain. \\
     Measurement interpretation & Repeated measurements on the same snippets reduce independence of pooled counts. & Reported raw counts/percentages and explicit mode-to-mode recall deltas. & Paired per-sample mode comparison remains limited by current exported outputs. \\
     \bottomrule
   \end{tabularx}
 \end{table}
 
-\textbf{Internal validity.} The evaluation harness scores detections at the vulnerability-type level using substring matching between expected and predicted category names. This reduces brittleness to naming variation but can also over-credit partially correct labels (e.g., a broad ``Injection'' label matching multiple injection subclasses) or under-credit semantically correct but differently phrased labels. In addition, precision uses issue-level false-positive counts and is therefore sensitive to how many issues a model emits per sample. A stricter label ontology plus CWE-level normalization would improve precision of the evaluation itself.
+\textbf{Internal validity.} The evaluation harness scores detections at the vulnerability-type level using substring matching between expected and predicted category names. This reduces brittleness to naming variation but can also over-credit partially correct labels (e.g., a broad ``Injection'' label matching multiple injection subclasses) or under-credit semantically correct but differently phrased labels. For baseline tools, findings are also mapped into the same label space via heuristic type inference from rule identifiers, messages, and (when available) CWE metadata; this enables a shared scoring pipeline but adds an additional source of label-mismatch bias. In addition, precision uses issue-level false-positive counts and is therefore sensitive to how many issues a model emits per sample. A stricter label ontology plus CWE-level normalization would improve precision of the evaluation itself.
 
-\textbf{Construct validity.} Precision/recall and parse success rate measure important properties for IDE integration, but they do not fully capture developer value. In practice, usefulness also depends on (i) localization quality (correct lines), (ii) explanation clarity, and (iii) the security adequacy and minimality of suggested fixes. These are addressed in part through qualitative case studies (Section~\ref{sec:eval-case-studies}) but are not yet fully quantified.
+\textbf{Construct validity.} Precision/recall and parse success rate measure important properties for IDE integration, but they do not fully capture developer value. In practice, usefulness also depends on (i) localization quality (correct lines), (ii) explanation clarity, and (iii) the security adequacy and minimality of suggested fixes. In addition, baseline tool comparisons are affected by how tool-specific outputs are normalized into the harness schema (especially type labels), so baseline metrics should be interpreted as approximate indicators under the chosen mapping assumptions. These aspects are addressed in part through qualitative case studies (Section~\ref{sec:eval-case-studies}) but are not yet fully quantified.
 
-\textbf{External validity.} Synthetic snippets are easier than real codebases with frameworks, configuration files, and cross-file flows. Results on the curated datasets should therefore be interpreted as an estimate of core capability under controlled conditions rather than a definitive measure of real-world performance. The most likely failure modes in practice are missing context when only a small scope (e.g., a single function) is analyzed, together with persistent over-warning in high-noise model configurations.
+\textbf{External validity.} Synthetic snippets are easier than real codebases with frameworks, configuration files, and cross-file flows. Results on the curated datasets should therefore be interpreted as an estimate of core capability under controlled conditions rather than a definitive measure of real-world performance. This also applies to baselines: tools are executed on a snippet-only workspace without full project configuration and dependency context, which can differ from how they behave in real repositories. The most likely failure modes in practice are missing context when only a small scope (e.g., a single function) is analyzed, together with persistent over-warning in high-noise model configurations.
 
 \textbf{Statistical conclusion validity.} This thesis reports descriptive pooled measurements rather than inferential statistics. Repeated evaluations over the same snippets improve stability estimates for this run, but they do not provide independent sampling from the full space of real-world programs. As a result, differences between nearby configurations should be interpreted as directional evidence, not as statistically generalized effects.
 

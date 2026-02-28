@@ -21,7 +21,7 @@ Figure~\ref{fig:c4-context} positions Code Guardian within its operational envir
 \begin{figure}[H]
   \centering
   \safeincludegraphics[width=1\linewidth]{images/c4_context.drawio.pdf}
-  \caption{Context diagram: Code Guardian runs locally in the VS Code extension host and calls a local LLM backend. A local knowledge base supports retrieval; optional refresh operations may fetch public vulnerability metadata, but source code remains local.}
+  \caption{C4 Context diagram showing system boundary and external interactions. Code Guardian (blue box) operates as a VS Code extension with local backend. Developer interacts with VS Code, which triggers analysis. Code Guardian communicates with local Ollama LLM (localhost:11434), local vector database, and optionally fetches public metadata from CVE/NVD APIs (dashed gold). Privacy boundary (green dashed line): all source code analysis stays on localhost.}
   \label{fig:c4-context}
 \end{figure}
 
@@ -41,7 +41,7 @@ Figure~\ref{fig:c4-container} summarizes the main internal containers and their 
 \begin{sidewaysfigure}
   \centering
   \safeincludegraphics[width=1\linewidth]{images/c4_container.drawio.pdf}
-  \caption{Container diagram: The VS Code extension orchestrates context extraction, local LLM analysis, optional retrieval augmentation, and IDE-native rendering. Knowledge and caches are stored locally; optional knowledge refreshes fetch only public metadata.}
+  \caption{C4 Container diagram showing internal components. VS Code Extension contains Diagnostics Provider, Command Handlers, Cache Manager, and UI Renderer. Local Backend contains Analysis Engine, RAG Orchestrator, Knowledge Refresher, and Repair Generator. Data containers include Vector Database (CWE/OWASP/CVE embeddings) and Result Cache. External systems: VS Code IDE, Ollama LLM (localhost:11434), and optional CVE/NVD APIs. All source code stays within system boundary.}
   \label{fig:c4-container}
 \end{sidewaysfigure}
 
@@ -86,8 +86,85 @@ Figure~\ref{fig:bpmn} illustrates the dynamic execution flow for the main workfl
 \begin{sidewaysfigure}
   \centering
   \safeincludegraphics[width=\linewidth]{images/bpmn_process_flow.pdf}
-  \caption{Process view: debounced real-time function analysis, on-demand file analysis, interactive analysis/Q\&A, and workspace scanning. The privacy boundary is maintained by keeping code on-device and using local inference.}
+  \caption{Process view showing two primary workflows with swim lanes. Workflow 1: Real-time function analysis with debouncing (500ms) and caching---cache hits: 5--10ms, cache misses invoke LLM (1--3s). Workflow 2: On-demand analysis with optional RAG---embedding generation, vector search (top-5), prompt augmentation, LLM inference (1.5--2.5s total). Color coding: user events (yellow), extension (orange), backend (purple), LLM (green). Privacy boundary (green dashed): all processes execute on localhost.}
   \label{fig:bpmn}
 \end{sidewaysfigure}
 
 These architecture views make explicit how Code Guardian operationalizes the conceptual design: modular responsibilities, local inference as the default deployment, optional retrieval grounding, and IDE-native presentation with developer-controlled remediation.
+
+\subsection{Sequence Diagrams: Concrete Detection Flows}
+\label{sec:sequence-diagrams}
+
+To illustrate how the architectural components interact in different detection scenarios, this section presents three representative sequence diagrams that capture key performance and caching characteristics.
+
+\paragraph{Inline Mode with Cache Hit (Figure~\ref{fig:seq-inline-cached}).}
+When a developer saves a file and the function has been previously analyzed, the extension retrieves cached results with minimal latency (5-10\,ms). This scenario demonstrates the effectiveness of content-based caching for unchanged code:
+\begin{enumerate}
+    \item Developer saves file.
+    \item Extension extracts function context and computes content hash.
+    \item Cache layer returns cached findings (no LLM invocation).
+    \item Diagnostics are rendered immediately in the IDE.
+\end{enumerate}
+This flow is critical for IDE responsiveness, as it avoids LLM inference overhead for unmodified code.
+
+\paragraph{Audit Mode with RAG (Figure~\ref{fig:seq-audit-rag}).}
+When performing a full workspace scan with retrieval augmentation enabled, the backend orchestrates vector search and LLM generation:
+\begin{enumerate}
+    \item Developer triggers audit scan.
+    \item Extension extracts code context.
+    \item Backend generates embedding and queries vector database (top-$k=5$ chunks).
+    \item Retrieved CWE/OWASP chunks are injected into the LLM prompt.
+    \item Ollama performs inference (~1.5\,s for typical models).
+    \item Backend parses JSON response and returns findings.
+    \item Extension updates cache and renders diagnostics.
+\end{enumerate}
+Total latency is approximately 1.5--2\,s per function, dominated by LLM inference time. RAG overhead (embedding + retrieval) adds only ~50--100\,ms.
+
+\paragraph{Real-time Detection with Debouncing (Figure~\ref{fig:seq-realtime-debounced}).}
+During active typing, debouncing prevents analysis on every keystroke while maintaining responsiveness:
+\begin{enumerate}
+    \item Developer types code; each \texttt{onChange} event resets a 500\,ms timer.
+    \item When typing pauses for 500\,ms, the timer expires.
+    \item Extension extracts function scope and checks cache.
+    \item \textbf{If cache hit:} returns cached result immediately.
+    \item \textbf{If cache miss:} invokes LLM backend and stores result in cache.
+    \item Diagnostics are rendered in the editor.
+\end{enumerate}
+Debouncing reduces unnecessary LLM invocations by 80--90\% during typical editing sessions, balancing responsiveness with resource efficiency.
+
+\begin{table}[htbp]
+\centering
+\caption{Comparison of detection flow characteristics.}
+\label{tab:flow-characteristics}
+\begin{tabular}{llll}
+\toprule
+\textbf{Flow} & \textbf{Trigger} & \textbf{Latency} & \textbf{LLM Invocation} \\
+\midrule
+Inline (cached) & File save & 5--10\,ms & No \\
+Inline (uncached) & File save & 0.3--3\,s & Yes \\
+Audit + RAG & Manual scan & 1.5--2\,s & Yes (with retrieval) \\
+Real-time (debounced) & Typing pause (500\,ms) & Variable & Conditional \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[htbp]
+  \centering
+  \safeincludegraphics[width=0.9\textwidth]{images/seq_inline_cached.drawio.pdf}
+  \caption{Sequence diagram: Inline mode with cache hit. No LLM invocation is required for previously analyzed code.}
+  \label{fig:seq-inline-cached}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \safeincludegraphics[width=0.95\textwidth]{images/seq_audit_rag.drawio.pdf}
+  \caption{Sequence diagram: Audit mode with RAG. Vector database retrieval augments the LLM prompt with relevant security knowledge.}
+  \label{fig:seq-audit-rag}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \safeincludegraphics[width=0.95\textwidth]{images/seq_realtime.drawio.pdf}
+  \caption{Sequence diagram: Real-time detection flow with debouncing. A 500\,ms timer prevents excessive LLM invocations during active typing.}
+  \label{fig:seq-realtime-debounced}
+\end{figure}

@@ -1,0 +1,158 @@
+\chapter{Privacy Verification Evidence}
+\label{app:privacy-verification}
+
+This appendix provides empirical evidence supporting the privacy-preserving operation claim (Requirement R5) by documenting network behavior, system architecture boundaries, and configuration validation for Code Guardian.
+
+\section{Network Traffic Analysis}
+\label{sec:privacy-network-analysis}
+
+To verify that source code analysis does not transmit code or derived artifacts to external services, network traffic was monitored during representative vulnerability detection workflows.
+
+\subsection{Test Configuration}
+
+Network monitoring was performed using macOS built-in network utilities and \texttt{tcpdump} during evaluation runs. The test environment corresponds to the configuration documented in Section~\ref{sec:eval-setup}:
+
+\begin{itemize}
+  \item \textbf{System:} macOS Darwin 25.3.0 (arm64), Apple M4 Max
+  \item \textbf{Extension:} Code Guardian VS Code extension (development build)
+  \item \textbf{Backend:} Local Node.js server (localhost:3000)
+  \item \textbf{LLM Runtime:} Ollama 0.17.1 (localhost:11434)
+  \item \textbf{Test Cases:} Representative vulnerable and secure samples from curated dataset
+\end{itemize}
+
+\subsection{Monitoring Methodology}
+
+Network traffic was captured during three representative workflows:
+\begin{enumerate}
+  \item \textbf{Inline analysis mode:} Real-time vulnerability detection triggered by file save in VS Code
+  \item \textbf{Audit mode with RAG:} Explicit vulnerability scan with retrieval-augmented prompting
+  \item \textbf{Knowledge base refresh:} Optional update of local security knowledge from public CVE/CWE sources
+\end{enumerate}
+
+Traffic capture command:
+\begin{lstlisting}[language=bash]
+sudo tcpdump -i any -n 'not (host 127.0.0.1 or host ::1)' \
+  -w /tmp/code-guardian-traffic.pcap
+\end{lstlisting}
+
+This filter excludes localhost traffic to isolate only external network communication.
+
+\subsection{Analysis Results}
+
+\paragraph{Code analysis workflows (inline and audit modes).}
+During vulnerability detection and repair suggestion workflows, \textbf{zero external network requests} were observed. All HTTP traffic remained between:
+\begin{itemize}
+  \item VS Code Extension Host $\leftrightarrow$ Local Backend Server (localhost:3000)
+  \item Local Backend Server $\leftrightarrow$ Ollama API (localhost:11434)
+\end{itemize}
+
+\paragraph{Knowledge base refresh workflow.}
+When explicitly triggered via extension settings, the knowledge base refresh makes HTTPS requests to public vulnerability databases:
+\begin{itemize}
+  \item \texttt{GET https://services.nvd.nist.gov/rest/json/cves/2.0} (CVE metadata)
+  \item \texttt{GET https://cwe.mitre.org/data/xml/cwec\_latest.xml.zip} (CWE definitions)
+  \item \texttt{GET https://raw.githubusercontent.com/OWASP/...} (OWASP guidance)
+\end{itemize}
+
+\textbf{Critical verification:} These requests transmit only query parameters (e.g., CVE ID, date ranges, CWE category filters). \textbf{No source code, file paths, project names, or analysis results are included in outbound requests}. The knowledge refresh can be disabled entirely for fully offline operation.
+
+\subsection{Configuration Validation}
+
+The following configuration parameters enforce local-only operation:
+
+\begin{table}[H]
+  \centering
+  \caption{Privacy-preserving configuration parameters.}
+  \label{tab:privacy-config}
+  \small
+  \begin{tabularx}{\textwidth}{lXl}
+    \toprule
+    Parameter & Purpose & Value (evaluated config) \\
+    \midrule
+    \texttt{ollama.baseUrl} & LLM inference endpoint & \texttt{http://localhost:11434} \\
+    \texttt{backend.serverUrl} & Analysis backend endpoint & \texttt{http://localhost:3000} \\
+    \texttt{vectorStore.provider} & Embedding/retrieval backend & \texttt{local} (Chroma on localhost) \\
+    \texttt{knowledgeBase.autoRefresh} & Automatic CVE/CWE updates & \texttt{false} (manual only) \\
+    \texttt{telemetry.enabled} & Usage telemetry collection & \texttt{false} (disabled) \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+All endpoints resolve to localhost (127.0.0.1 or ::1). No cloud API keys, authentication tokens, or external service URLs are configured in the evaluated deployment.
+
+\section{Privacy Boundary Architecture}
+
+Figure~\ref{fig:privacy-boundary} illustrates the data flow boundaries for Code Guardian. The privacy boundary ensures that source code and analysis artifacts remain on the developer's machine.
+
+\begin{figure}[H]
+  \centering
+  \safeincludegraphics[width=0.95\textwidth]{images/privacy_boundary.drawio.pdf}
+  \caption{Privacy boundary architecture showing local-only data flow for code analysis.}
+  \label{fig:privacy-boundary}
+\end{figure}
+
+\subsection{Trust Boundary Definitions}
+
+\begin{table}[H]
+  \centering
+  \caption{Trust boundaries and data residency guarantees.}
+  \label{tab:privacy-boundaries}
+  \small
+  \begin{tabularx}{\textwidth}{p{0.22\textwidth}Xp{0.25\textwidth}}
+    \toprule
+    Boundary & Data in scope & Residency guarantee \\
+    \midrule
+    \textbf{IDE workspace} & Source code files, project structure, file system paths & Remains on local disk; read-only by extension \\
+    \textbf{Extension process} & Code snippets extracted for analysis, function-level context & In-memory only; transmitted to local backend via localhost \\
+    \textbf{Local backend} & Analysis prompts, LLM responses, parsed findings & In-memory and localhost HTTP; no external transmission \\
+    \textbf{Ollama runtime} & Model weights, prompt context, generated text & Local model inference; no external API calls \\
+    \textbf{Vector store} & Security knowledge embeddings, vulnerability descriptions & Local Chroma DB; pre-populated from public sources \\
+    \midrule
+    \textbf{External boundary} & Public CVE/CWE metadata (knowledge refresh only) & Outbound HTTPS to public databases; no code transmitted \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\subsection{Out-of-Scope Threat Mitigations}
+
+The privacy boundary does not protect against:
+\begin{itemize}
+  \item \textbf{Local machine compromise:} Malware with access to the developer's user account can read source files, memory, or localhost traffic.
+  \item \textbf{Physical access attacks:} An attacker with physical access to the machine can extract code from disk or memory.
+  \item \textbf{Supply chain attacks:} Malicious dependencies or extensions installed by the developer could exfiltrate code.
+\end{itemize}
+
+These threats require OS-level hardening, disk encryption, endpoint security controls, and dependency verification—all outside the scope of this thesis.
+
+\section{Offline Operation Mode}
+
+Code Guardian supports fully offline operation when configured as follows:
+
+\begin{enumerate}
+  \item \textbf{Disable knowledge base refresh:} Set \texttt{knowledgeBase.autoRefresh=false} in extension settings.
+  \item \textbf{Pre-populate vector store:} Run knowledge base seeding script once while online, then operate offline using cached embeddings.
+  \item \textbf{Verify model availability:} Ensure Ollama models are pulled locally (\texttt{ollama pull qwen3:8b}).
+\end{enumerate}
+
+In offline mode, the extension performs all detection, explanation, and repair workflows without any network I/O beyond localhost.
+
+\section{Privacy Compliance Summary}
+
+\begin{table}[H]
+  \centering
+  \caption{Privacy requirement compliance evidence summary.}
+  \label{tab:privacy-compliance-summary}
+  \small
+  \begin{tabularx}{\textwidth}{p{0.28\textwidth}Xp{0.22\textwidth}}
+    \toprule
+    Requirement & Evidence provided in this appendix & Compliance status \\
+    \midrule
+    No source code exfiltration & Network traffic analysis (Section~\ref{sec:privacy-network-analysis}); localhost-only config (Table~\ref{tab:privacy-config}) & Pass \\
+    Local analysis only & Architecture diagram (Figure~\ref{fig:privacy-boundary}); trust boundary definitions (Table~\ref{tab:privacy-boundaries}) & Pass \\
+    Optional offline operation & Offline mode documentation (Section A.3); knowledge refresh is manual-only & Pass \\
+    No telemetry/tracking & Configuration validation showing \texttt{telemetry.enabled=false} & Pass \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+The evidence presented in this appendix supports the conclusion that Code Guardian operates within a strict local privacy boundary for all code analysis workflows, satisfying Requirement R5 (Privacy-Preserving Operation).
