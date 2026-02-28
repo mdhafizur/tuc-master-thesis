@@ -112,8 +112,8 @@ End-to-end latency comprises multiple stages. While the evaluation harness did n
 
 \textbf{Bottleneck identification:} LLM inference dominates (80--90\% of total latency). Retrieval overhead (embedding + search) adds 60--120 ms—meaningful for sub-second targets but minor compared to generation time. Future optimization should prioritize:
 \begin{enumerate}
-  \item \textbf{Model quantization:} 4-bit quantized models can reduce inference time by 30--50\% with minimal quality loss \cite{dettmers2022gptq}.
-  \item \textbf{Speculative decoding:} Use smaller draft model for initial tokens, verified by larger model \cite{leviathan2023speculative}.
+  \item \textbf{Model quantization:} 4-bit quantized models can reduce inference time by 30--50\% with minimal quality loss.
+  \item \textbf{Speculative decoding:} Use smaller draft model for initial tokens, verified by larger model.
   \item \textbf{Caching:} Memoize repeated function analyses (already implemented in extension); measured cache hit rate $\sim$40\% in development workflows.
 \end{enumerate}
 

@@ -16,6 +16,18 @@ The evaluation harness produces reproducible measurements of detection quality, 
   \item \textbf{R6 (responsiveness):} Responsiveness depends heavily on model profile (about 0.3--0.9 s median for \texttt{gemma3:1b}, about 1.7--1.9 s for \texttt{gemma3:4b}, and about 1.1--1.5 s for \texttt{qwen3} variants).
 \end{itemize}
 
+\paragraph{Detailed case studies.}
+Appendix~\ref{appendix:case-studies} presents five representative cases that illustrate detection behavior, explanation quality, and repair effectiveness in concrete scenarios:
+\begin{enumerate}
+  \item \textbf{True positive with effective repair} (SQL injection): qwen3:8b + RAG provides excellent explanation and correct parameterized query fix
+  \item \textbf{False positive} (over-sensitivity): gemma3:4b flags secure input validation, demonstrates FPR 100\% behavior
+  \item \textbf{False negative} (missed vulnerability): CodeLlama-7b misses prototype pollution, highlighting recall limitations
+  \item \textbf{Partial repair} (path traversal): Correct detection but incomplete fix requiring developer knowledge
+  \item \textbf{Multi-CWE case} (authentication + command injection): Demonstrates ability to detect multiple vulnerabilities in single function
+\end{enumerate}
+
+These cases provide qualitative evidence supporting the quantitative metrics reported in this chapter and demonstrate why model selection and RAG configuration significantly impact practical usability.
+
 \subsection{False Positive Control and Practical Implications}
 \label{sec:eval-fpr-discussion}
 
