@@ -1,10 +1,89 @@
-Building on the conceptual architecture introduced in the previous chapter, this chapter describes the implementation of \textit{Code Guardian}: a privacy-preserving vulnerability detection and repair assistant integrated into Visual Studio Code. It details the technology stack, end-to-end workflow, core component implementation, orchestration modes (LLM-only vs.\ LLM+RAG), and the user interface exposed inside the IDE.
+This chapter summarizes how Code Guardian was implemented as a local-first security assistant for Visual Studio Code. The focus is on deployable engineering decisions: local inference boundaries, deterministic output handling, latency guardrails, and developer-controlled remediation.
 
-The implementation focus is intentionally engineering-oriented: how design requirements are translated into runtime behavior, guardrails, and failure handling on real developer hardware. Where relevant, this chapter emphasizes reproducibility-relevant details (execution order, schema contracts, caching behavior, and local privacy boundaries) so that evaluation outcomes in Chapter~\ref{chap:evaluation} can be interpreted against concrete implementation mechanisms rather than high-level architecture alone.
+\section{Technology Stack and Runtime Boundary}
 
-\input{src/chapters/implementation/tech_stack}
-\input{src/chapters/implementation/system_workflow}
-\input{src/chapters/implementation/agent}
-\input{src/chapters/implementation/strategy}
-\input{src/chapters/implementation/user_interface}
-\input{src/chapters/implementation/repair_safety}
+Code Guardian is implemented as a VS Code extension with a local Node.js backend and local Ollama inference. Retrieval augmentation, when enabled, uses a local embedding model and local vector store.
+
+\begin{itemize}
+  \item \textbf{IDE integration:} VS Code extension APIs for diagnostics, code actions, commands, and WebViews.
+  \item \textbf{Analysis backend:} Node.js service that builds prompts, calls models, validates output, and returns normalized findings.
+  \item \textbf{Inference runtime:} Ollama on localhost; no cloud model endpoint is required.
+  \item \textbf{RAG layer:} local embedding + local vector index over curated CWE/OWASP/CVE guidance.
+\end{itemize}
+
+The evaluated deployment keeps source code, prompts, and findings on-device during analysis. Optional knowledge refresh accesses only public vulnerability metadata and can be disabled for offline use.
+
+\section{End-to-End Detection Pipeline}
+
+The implementation follows a fixed pipeline to improve reproducibility and reduce integration risk:
+\begin{enumerate}
+  \item Extract analysis scope (selection, function, file, or workspace unit).
+  \item Build model prompt (LLM-only or LLM+RAG).
+  \item Enforce JSON-structured response contract.
+  \item Parse and normalize findings.
+  \item Map findings to IDE diagnostics and optional quick fixes.
+\end{enumerate}
+
+\subsection*{Scope extraction}
+Function-level extraction is the default for interactive usage because it limits latency and token usage. Broader scopes (file/workspace) are available for explicit audits.
+
+\subsection*{Prompt construction}
+LLM-only mode prioritizes lower latency. RAG mode injects retrieved security context to improve grounding when model behavior supports it.
+
+\subsection*{Structured output handling}
+The analyzer enforces a strict JSON contract and applies defensive parsing to tolerate minor output noise. Parse failures degrade safely to empty findings or warning paths instead of crashing the extension workflow.
+
+\section{Core Components}
+
+\subsection*{Analyzer}
+The analyzer orchestrates prompt assembly, model invocation, timeout handling, and response validation. It converts model output into a stable schema used by downstream diagnostics and evaluation scripts.
+
+\subsection*{Diagnostics mapper}
+Findings are mapped to VS Code diagnostics with severity and location metadata. The mapper tolerates imperfect line localization by clamping ranges to valid document boundaries.
+
+\subsection*{RAG manager}
+The retrieval manager handles local index queries and retrieval filtering. It supports updating the local knowledge base from public sources while preserving the local source-code boundary.
+
+\subsection*{Workspace scanner}
+Batch scanning processes files under configurable size/scope limits and aggregates results for dashboard-style review.
+
+\section{Orchestration and Responsiveness}
+
+Interactive IDE usage requires explicit guardrails:
+\begin{itemize}
+  \item \textbf{Debouncing:} analysis is delayed after edits to avoid redundant invocations.
+  \item \textbf{Scope limits:} large functions/files are skipped or deferred to audit mode.
+  \item \textbf{Caching:} repeated analyses use TTL-based cache entries to reduce local inference overhead.
+  \item \textbf{Mode selection:} faster modes are favored during active editing; stronger modes are used for explicit scans.
+\end{itemize}
+
+These mechanisms reduce interruption cost and make local inference practical on developer hardware, while preserving deterministic failure handling.
+
+\section{User-Facing Integration}
+
+Security feedback is surfaced in native IDE flows:
+\begin{itemize}
+  \item inline diagnostics and hover explanations,
+  \item optional quick-fix actions for model-proposed repairs,
+  \item command-driven scans and model/mode controls,
+  \item dashboard-oriented workspace summaries.
+\end{itemize}
+
+The design principle is assistive, not autonomous: findings and fixes are review artifacts under developer control.
+
+\section{Repair Safety}
+\label{sec:impl-repair-safety}
+
+Repair generation is intentionally conservative:
+\begin{itemize}
+  \item fixes are suggested as diffs, not silently applied;
+  \item users decide whether to apply or reject each change;
+  \item no automatic commit/deploy path is implemented;
+  \item functional/security re-validation remains a developer responsibility.
+\end{itemize}
+
+In practice, repairs are useful when changes are local and pattern-based (for example parameterization or sanitizer insertion). Complex cases still require domain context and manual adjustment.
+
+\section{Implementation Summary}
+
+The implementation realizes the thesis architecture as a local, reproducible IDE assistant with two operational modes (LLM-only and LLM+RAG), explicit latency guardrails, and privacy-preserving boundaries. These concrete mechanisms provide the basis for interpreting the evaluation results in Chapter~\ref{chap:evaluation}.

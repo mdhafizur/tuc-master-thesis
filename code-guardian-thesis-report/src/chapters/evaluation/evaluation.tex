@@ -1,58 +1,37 @@
-This chapter evaluates Code Guardian with respect to the requirements defined in Chapter~\ref{chap:analysis}. The evaluation focuses on three aspects: (i) detection quality (precision/recall trade-offs and false positives), (ii) robustness of structured output (JSON parse success), and (iii) responsiveness (latency under IDE usage patterns). In addition, we report qualitative observations on repair suggestions and developer-facing usability.
-
-The evaluation is designed as a pragmatic engineering assessment rather than a pure benchmark competition. Accordingly, the chapter combines quantitative metrics, baseline comparison, and qualitative case analysis to answer three practical questions: (i) when the assistant is useful, (ii) where it fails, and (iii) which deployment profiles are defensible under local privacy constraints. Throughout this chapter, results are interpreted descriptively for the documented run environment and configuration.
+This chapter evaluates Code Guardian against the requirements from Chapter~\ref{chap:analysis}. The focus is on three dimensions: detection quality (precision/recall/F1 and secure-sample FPR), structured-output robustness (JSON parse success), and responsiveness (latency in IDE-like workflows). Results are interpreted as descriptive measurements for the documented local run configuration.
 
 \section{Results at a Glance}
 \label{sec:eval-results-overview}
 
-Before presenting detailed methodology and analysis, this section provides a high-level summary of key findings to orient the reader. Table~\ref{tab:eval-results-summary} compares detection quality and responsiveness across evaluated configurations, and Table~\ref{tab:eval-tradeoffs} illustrates design trade-offs.
+Table~\ref{tab:eval-results-summary} summarizes representative configurations from the merged thesis run.
 
 \begin{table}[htbp]
 \centering
-\caption{Detection quality and performance. \colorbox{green!20}{Green} = best, \colorbox{yellow!20}{yellow} = moderate, \colorbox{red!20}{red} = poor.}
+\caption{Representative configurations (merged thesis result set).}
 \label{tab:eval-results-summary}
 \footnotesize
-\begin{tabular}{@{}l|rrrr|r@{}}
+\begin{tabular}{@{}lrrrrr@{}}
 \toprule
-\textbf{Configuration} & \textbf{P} & \textbf{R} & \textbf{F1} & \textbf{FPR} & \textbf{Lat} \\
+\textbf{Configuration} & \textbf{Precision} & \textbf{Recall} & \textbf{F1} & \textbf{FPR} & \textbf{Median latency} \\
 \midrule
-\textbf{qwen3:8b+RAG} & \cellcolor{green!20}96.5 & \cellcolor{green!20}82.3 & \cellcolor{green!20}88.9 & \cellcolor{green!20}20.0 & \cellcolor{yellow!20}2.5s \\
-qwen3:8b & \cellcolor{green!20}95.2 & 79.6 & \cellcolor{green!20}86.7 & \cellcolor{yellow!20}26.7 & \cellcolor{yellow!20}2.5s \\
-gemma3:1b & \cellcolor{red!20}29.0 & \cellcolor{green!20}92.9 & \cellcolor{red!20}44.3 & \cellcolor{red!20}100 & \cellcolor{green!20}0.9s \\
-Semgrep & \cellcolor{yellow!20}58.3 & \cellcolor{red!20}31.0 & \cellcolor{red!20}40.4 & \cellcolor{green!20}0 & \cellcolor{green!20}<50ms \\
+\texttt{qwen3:8b} (LLM+RAG) & 62.93 & 64.60 & 63.76 & 26.67 & 1524\,ms \\
+\texttt{qwen3:8b} (LLM-only) & 54.06 & 62.83 & 58.12 & 26.67 & 1548\,ms \\
+\texttt{qwen3:4b} (LLM+RAG) & 53.53 & 64.90 & 58.67 & 100.00 & 1087\,ms \\
+\texttt{gemma3:1b} (LLM-only) & 45.31 & 25.66 & 32.77 & 100.00 & 333\,ms \\
+\texttt{semgrep} baseline & 57.89 & 9.73 & 16.67 & 6.67 & 52\,ms \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\begin{table}[htbp]
-\centering
-\caption{Design trade-offs within privacy constraint.}
-\label{tab:eval-tradeoffs}
-\footnotesize
-\begin{tabularx}{\textwidth}{@{}l|ccc|X@{}}
-\toprule
-\textbf{Config} & \textbf{Qual} & \textbf{Spd} & \textbf{Priv} & \textbf{Key Characteristics} \\
-\midrule
-\textbf{qwen3+RAG} & \cellcolor{green!20}Hi & \cellcolor{yellow!20}Md & \cellcolor{green!20}Loc & F1 88.9\%, FPR 20\%, 2.5s \\
-\midrule
-Cloud GPT-4 & \cellcolor{green!20}Hi & \cellcolor{green!20}Hi & \cellcolor{red!20}Cld & \textit{Violates privacy} \\
-\midrule
-Semgrep & \cellcolor{yellow!20}Md & \cellcolor{green!20}Hi & \cellcolor{green!20}Loc & 0\% FPR, <50ms, 31\% R \\
-\midrule
-gemma3:1b & \cellcolor{red!20}Lo & \cellcolor{green!20}Hi & \cellcolor{green!20}Loc & 100\% FPR (0.9s) \\
-\bottomrule
-\end{tabularx}
-\end{table}
-
-\paragraph{Summary of key findings.}
+\paragraph{Key observations.}
 \begin{itemize}
-  \item \textbf{Best overall:} qwen3:8b + RAG achieves F1 88.9\%, FPR 20\%, p95 latency 2.52\,s
-  \item \textbf{RAG impact:} Improves precision (+1.3pp), recall (+2.7pp), reduces FPR (-6.7pp) for qwen3:8b
-  \item \textbf{FPR challenge:} Small models (gemma3:1b, gemma3:4b, CodeLlama-7b) exhibit 100\% FPR—all secure samples flagged
-  \item \textbf{SAST complement:} Semgrep offers zero FPR and sub-50ms latency but only 31\% recall—hybrid strategy recommended
+  \item \textbf{Best overall quality in this run:} \texttt{qwen3:8b} with RAG (highest F1, moderate secure-sample FPR).
+  \item \textbf{RAG is model-dependent:} helpful for \texttt{qwen3} variants, not universally beneficial across all models.
+  \item \textbf{False-positive control is the main bottleneck:} most LLM configurations still over-warn on secure samples.
+  \item \textbf{SAST remains a useful complement:} lower recall but much lower alert noise and latency.
 \end{itemize}
 
-The remainder of this chapter details the evaluation methodology, experimental setup, and comprehensive analysis supporting these findings.
+The following sections present dataset construction, metrics, setup, ablation results, baseline comparison, and final synthesis in detail.
 
 \input{src/chapters/evaluation/dataset_details}
 \input{src/chapters/evaluation/evaluation_metrics}

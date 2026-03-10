@@ -1,4 +1,4 @@
-\documentclass[a4paper, 12pt, oneside, BCOR=1cm, toc=chapterentrywithdots]{scrbook}
+\documentclass[a4paper, 10pt, oneside, BCOR=1cm, toc=chapterentrywithdots]{scrbook}
 
 % --- Encoding and Fonts ---
 \usepackage[utf8]{inputenc}
@@ -16,7 +16,7 @@
 \usepackage{amssymb}
 \usepackage[nohyperlinks]{acronym}
 \usepackage{multicol}
-\KOMAoptions{parskip=half,listof=totoc,bibliography=totoc,index=totoc}
+\KOMAoptions{parskip=never,listof=totoc,bibliography=totoc,index=totoc}
 \usepackage[T1]{fontenc}
 \usepackage{microtype}   % reduces overfull boxes
 
@@ -119,24 +119,16 @@
 \input{src/abstract}
 
 % -------- Acknowledgment --------
-\chapter*{Acknowledgment}
-\addcontentsline{toc}{chapter}{Acknowledgment}
-\input{src/acknowledgment}
+% Omitted in compact build
 
 % -------- Task Description --------
-\chapter*{Task Description}
-\addcontentsline{toc}{chapter}{Task Description}
-\input{src/task_description}
+% Omitted in compact build
 
-% -------- TOC, List of Figures, Tables --------
+% -------- TOC --------
 \tableofcontents
-\listoffigures
-\listoftables
 
 % -------- List of Abbreviations --------
-\chapter*{List of Abbreviations}
-\addcontentsline{toc}{chapter}{List of Abbreviations}
-\input{src/abbreviations}
+% Omitted in compact build
 
 % =====================================================
 % MAINMATTER: Arabic numerals, numbered chapters
@@ -172,11 +164,9 @@
 \input{src/chapters/future_work}
 
 % =======================
-% APPENDICES GO HERE
+% APPENDICES
 % =======================
-\appendix
-
-\input{src/appendices}
+% Omitted in compact build (kept as supplementary material)
 
 % =====================================================
 % BACKMATTER: Bibliography, Index, etc.
@@ -186,6 +176,6 @@
 \bibliographystyle{splncs04}
 \bibliography{bibliography}
 
-\printindex
+% \printindex
 
 \end{document}
