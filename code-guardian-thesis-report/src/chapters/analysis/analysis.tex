@@ -1,36 +1,22 @@
-This chapter analyzes the problem space of automated vulnerability detection and repair within modern software development workflows. The objective is to identify the fundamental technical and practical requirements for integrating Large Language Models (LLMs) into secure coding assistance, to critically examine existing approaches, and to derive design implications for a privacy-preserving, retrieval-augmented framework integrated into an Integrated Development Environment (IDE).
+This chapter defines the requirements for automated vulnerability detection and repair assistance in an IDE and positions the thesis approach against related work. The focus is privacy-preserving local LLM support with retrieval grounding and practical developer usability.
 
 
 \section{Requirements}
 \label{sec:requirements}
 
-This section outlines the core requirements that a system must fulfill to support effective, privacy-preserving vulnerability detection and repair within modern software development workflows. The focus of this thesis is on assisting developers during implementation by identifying security-relevant weaknesses in source code and providing actionable repair suggestions directly within the Integrated Development Environment (IDE).
+The thesis targets local IDE assistance for JavaScript/TypeScript development: detect vulnerabilities, explain them, and propose repairs without code exfiltration. Compared with rule-based SAST, the approach adds LLM reasoning and optional retrieval grounding, but must still satisfy strict operational constraints.
 
-The primary goal of the system proposed in this thesis is to enable developers to detect and remediate vulnerabilities in JavaScript and TypeScript code using a locally deployed Large Language Model (LLM) augmented with retrieval-based security knowledge. Rather than relying on cloud-hosted services or post hoc pipeline analysis, the system operates entirely on the developer’s machine and integrates seamlessly into Visual Studio Code. Source code, analysis results, and vulnerability knowledge remain local at all times, ensuring privacy, reproducibility, and suitability for regulated or security-sensitive environments.
+Based on the problem statement and related work, six requirements define the evaluation baseline:
+\begin{itemize}
+  \item \textbf{R1 -- Detection accuracy and consistency:} reliable findings with stable behavior and controlled false positives.
+  \item \textbf{R2 -- Context-aware reasoning:} distinguish exploitable patterns from benign code using surrounding program context.
+  \item \textbf{R3 -- Explainability and transparency:} provide clear, technically precise, and traceable explanations.
+  \item \textbf{R4 -- Actionable repairs:} suggest minimal, security-improving fixes while preserving developer control.
+  \item \textbf{R5 -- Privacy-preserving operation:} keep analysis and retrieval local, with no source-code transmission.
+  \item \textbf{R6 -- Usability and responsiveness:} deliver feedback at latencies compatible with IDE workflows.
+\end{itemize}
 
-In contrast to traditional Static Application Security Testing (SAST) tools, which rely on predefined rules and often provide limited remediation guidance, the proposed system leverages LLM-based semantic reasoning combined with Retrieval-Augmented Generation (RAG). This enables the system to reason about code context, explain detected issues, and suggest concrete repairs grounded in curated vulnerability knowledge. To ensure practical usefulness, the system must satisfy both functional and non-functional requirements related to accuracy, transparency, performance, and usability.
-
-Based on the challenges identified in Chapter~\ref{chap:introduction} and the analysis of existing approaches, six core requirements (R1–R6) are defined. These requirements establish a systematic basis for evaluating the proposed architecture and guide the design decisions discussed in subsequent chapters.
-
-\textbf{R1 – Detection Accuracy and Consistency:}  
-The system must reliably identify security-relevant vulnerabilities in source code with stable behavior across repeated analyses. Detection results should be consistent for identical inputs, independent of invocation timing or interaction mode. The system should minimize false positives while maintaining adequate recall, ensuring that developers can trust reported findings and are not overwhelmed by spurious warnings.
-
-\textbf{R2 – Context-Aware Vulnerability Reasoning:}  
-The system must analyze vulnerabilities in their surrounding code context rather than relying solely on syntactic patterns. This includes reasoning about data flow, API usage, and control structures at the function and file level. The system should correctly distinguish between vulnerable and benign code patterns that appear syntactically similar and must avoid flagging issues that are mitigated by contextual safeguards.
-
-\textbf{R3 – Explainability and Transparency:}  
-To foster developer trust and facilitate efficient remediation, the system must provide transparent explanations for detected vulnerabilities. Each finding should be accompanied by a clear description of the underlying weakness, references to relevant vulnerability classes (e.g., CWE), and an indication of which code fragments contributed to the detection. Explanations should be concise, technically precise, and suitable for developers without specialized security expertise.
-
-\textbf{R4 – Actionable Repair Suggestions:}  
-The system must generate concrete, security-aware repair suggestions that address the root cause of detected vulnerabilities while preserving functional correctness. Suggested fixes should be directly applicable to the affected code region and must avoid introducing new security issues or breaking existing behavior. Developers must retain full control over whether and how suggested changes are applied.
-
-\textbf{R5 – Privacy-Preserving Operation:}  
-All analysis, retrieval, and generation steps must be performed locally without transmitting source code or derived artifacts to external services. The system must operate with locally deployed models and locally stored vulnerability knowledge, ensuring that proprietary code remains confidential and that results are reproducible across environments.
-
-\textbf{R6 – Usability and Responsiveness:}  
-The system must integrate smoothly into the IDE and provide feedback within acceptable latency bounds. Inline detection should support near-real-time interaction to avoid disrupting the development flow, while more comprehensive audit operations may tolerate higher latency. Usability is evaluated with respect to end-to-end response time, clarity of presented information, and compatibility with typical developer hardware configurations.
-
-These six requirements define the evaluation baseline for the proposed system. The following chapters map them to concrete architectural and implementation choices, and Chapter~\ref{chap:evaluation} tests them using reproducible quantitative evidence.
+The following subsections define these requirements in detail and map them to measurable criteria.
 
 \subsection{R1: Detection Accuracy and Consistency}\vspace{-2mm}
 \input{src/chapters/analysis/requirements/r1} 
@@ -54,7 +40,7 @@ These six requirements define the evaluation baseline for the proposed system. T
 \section{Related Work}
 \label{sec:related-work}
 
-This section reviews prior research relevant to LLM-based vulnerability detection and repair, with a focus on static analysis approaches, large language models for software security, retrieval-augmented generation, and privacy-preserving deployment. The discussion highlights both the strengths and limitations of existing work and positions the present thesis within the current research landscape.
+This section reviews prior work on SAST, LLM-based security assistance, retrieval-augmented prompting, and privacy-preserving IDE integration, then positions the thesis approach against these paradigms.
 
 \subsection{Traditional Static Application Security Testing}\vspace{-2mm}
 \input{src/chapters/analysis/related_works/traditional_sast}
@@ -74,7 +60,7 @@ This section reviews prior research relevant to LLM-based vulnerability detectio
 \subsection{Critical Comparison Across Paradigms}
 \label{sec:related-work-critical-comparison}
 
-The reviewed literature suggests that security-assistance approaches should be compared as \emph{design paradigms}, not as isolated tools. Table~\ref{tab:related-work-paradigm-compare} summarizes the dominant trade-offs that motivate the architecture of this thesis.
+The reviewed literature indicates that security assistants should be compared as \emph{design paradigms}, not as isolated tools. Table~\ref{tab:related-work-paradigm-compare} summarizes the trade-offs that motivate this thesis architecture.
 
 \begin{table}[H]
   \centering
@@ -86,12 +72,12 @@ The reviewed literature suggests that security-assistance approaches should be c
     \toprule
     Paradigm & Primary strengths & Primary limitations & Implication for this thesis \\
     \midrule
-    Rule-based SAST & Deterministic behavior, reproducible CI/CD integration, explicit audit trails. & Limited semantic adaptation; triage burden under noisy rule sets; weak fix guidance. & Keep deterministic diagnostics integration and baseline comparison, but augment reasoning and remediation support. \\
-    LLM-only IDE assistant & Flexible reasoning, natural-language explanation, candidate repair generation in context. & Probabilistic behavior, hallucination risk, format instability, variable false-positive control. & Enforce strict output contracts, conservative failure handling, and developer-controlled patch application. \\
-    RAG-assisted LLM & Better grounding to external security knowledge; improved explanation alignment in favorable configurations. & Retrieval sensitivity (quality, chunking, top-$k$), model-dependent gains, additional latency/cost. & Treat RAG as a tunable strategy per model/workflow, not a universal default. \\
-    Local-first deployment & Strong source-code privacy boundary, reproducibility across runs, suitability for restricted environments. & Higher dependence on local hardware and operational hardening; local compromise remains in scope. & Prioritize no-code-exfiltration architecture while making assumptions and residual risks explicit. \\
+    Rule-based SAST & Deterministic behavior, reproducible CI/CD integration, explicit audit trails. & Limited semantic adaptation and weak repair guidance. & Keep deterministic baseline signals and add contextual reasoning. \\
+    LLM-only IDE assistant & Flexible reasoning, explanation, and repair suggestion in context. & Probabilistic behavior, hallucination risk, and variable false-positive control. & Enforce strict output contracts and developer-controlled patching. \\
+    RAG-assisted LLM & Better grounding and explanation alignment in favorable setups. & Model-dependent gains and additional latency/complexity. & Treat RAG as tunable per model/workflow, not universal. \\
+    Local-first deployment & Strong source-code privacy boundary and reproducibility. & Dependence on local hardware/host security assumptions. & Prioritize no-exfiltration while documenting residual risks. \\
     \bottomrule
   \end{tabularx}
 \end{table}
 
-Two conclusions follow from this comparison. First, no single paradigm dominates all requirements R1--R6 simultaneously; practical systems must combine complementary mechanisms. Second, evaluation must include both quality and operational metrics, because deployment-relevant value depends on the joint behavior of recall, false-positive control, output robustness, latency, and privacy guarantees.
+Two conclusions follow. First, no single paradigm satisfies R1--R6 alone; practical systems combine complementary mechanisms. Second, evaluation must jointly report quality and operational metrics because deployment value depends on recall, false-positive control, robustness, latency, and privacy guarantees together.

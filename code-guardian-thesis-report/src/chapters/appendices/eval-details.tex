@@ -1,7 +1,7 @@
 \section{Curated Test Suite Overview}
 \label{app:dataset-overview}
 
-The curated evaluation suite maintained in \texttt{code-guardian-extension/evaluation/datasets/} contains representative vulnerability snippets for JavaScript/TypeScript secure coding. Expected vulnerabilities include CWE identifiers and severities so results can be aggregated by category.
+The curated evaluation suite in \texttt{code-guardian-extension/evaluation/datasets/} contains JavaScript/TypeScript vulnerability snippets with expected CWE/severity metadata.
 
 \subsection*{Dataset sizes}
 
@@ -10,11 +10,11 @@ For the scored thesis run in Chapter~\ref{chap:evaluation}, the harness uses:
   \item \textbf{Primary vulnerable set:} \texttt{all-test-cases.generated.json} with 113 vulnerable cases
   \item \textbf{Secure overlay set:} \texttt{negatives-only.generated.json} with 15 secure/negative cases
 \end{itemize}
-Quantitative thesis tables are derived from post-hoc merging of these two run artifacts, yielding an effective 128-case result set (113 vulnerable + 15 secure).
+Thesis tables are derived from merged run artifacts (effective 128-case set: 113 vulnerable + 15 secure).
 
 \subsection*{Representative Vulnerability Classes}
 
-The dataset includes (non-exhaustive) examples for:
+Included classes (non-exhaustive):
 \begin{itemize}
   \item SQL injection (CWE-89)
   \item Cross-site scripting (CWE-79)
@@ -28,11 +28,11 @@ The dataset includes (non-exhaustive) examples for:
 
 \subsection*{Test Case Record Format}
 
-Each test case contains:
+Each test case includes:
 \begin{itemize}
   \item a code snippet (\texttt{code}),
   \item a list of expected findings (\texttt{expectedVulnerabilities}),
-  \item and optional remediation guidance (\texttt{expectedFix}).
+  \item optional remediation guidance (\texttt{expectedFix}).
 \end{itemize}
 
 \subsection*{Reproducing the harness run}
@@ -48,7 +48,7 @@ node evaluation/evaluate-models.js --ablation --include-baselines \
   --num-predict=1000 --timeout-ms=30000 --delay-ms=500
 \end{lstlisting}
 
-The script prints per-model precision/recall/F1, false positive rate, average response time, and JSON parse success rate. Models to test are specified in the script and can be edited to match the locally installed Ollama models.
+The script reports per-model precision/recall/F1, FPR, latency, and parse success.
 
 \subsection*{Merged Baseline Snapshot}
 
@@ -59,17 +59,17 @@ From the merged artifact (\texttt{113 vulnerable + 15 secure}), baseline tools m
   \item \texttt{eslint-security}: Precision 0.00\%, Recall 0.00\%, F1 0.00\%, FPR 0.00\%
 \end{itemize}
 
-Baselines are executed by the harness on a temporary workspace that contains one \texttt{.js}/\texttt{.ts} file per snippet. Semgrep is run with \texttt{p/security-audit}, \texttt{p/javascript}, \texttt{p/typescript}, and \texttt{p/owasp-top-ten}. CodeQL analyzes the workspace with the \texttt{javascript-security-and-quality} suite. ESLint uses the recommended rules from \texttt{eslint-plugin-security}. Tool findings are normalized into the harness finding schema and assigned a coarse vulnerability type via heuristic inference from tool metadata, which is approximate and can distort type-level scoring when metadata does not map cleanly.
+Baselines run on a temporary snippet workspace. Semgrep uses \texttt{p/security-audit}, \texttt{p/javascript}, \texttt{p/typescript}, and \texttt{p/owasp-top-ten}; CodeQL uses \texttt{javascript-security-and-quality}; ESLint uses \texttt{eslint-plugin-security}. Findings are normalized into the harness schema via heuristic type inference, so category-level comparisons should be interpreted as approximate.
 
-\subsection*{Recommended Artifact Checklist}
+\subsection*{Artifact Checklist}
 
-For full reproducibility and auditability, the following files should be archived with the thesis:
+For reproducibility, archive:
 \begin{itemize}
   \item Raw run output JSON from the harness (all configurations and per-case results)
   \item Exact run configuration object (models, prompt modes, runtime parameters)
   \item Model digests / quantization metadata used for inference
   \item Environment metadata (OS, Node.js, Ollama versions, hardware)
-  \item Generated tables or scripts used to derive reported descriptive metrics and mode-to-mode recall deltas
+  \item scripts/tables used to derive reported descriptive metrics
 \end{itemize}
 
-This appendix is intentionally concise: the full dataset is machine-readable and can be inspected directly in the repository.
+The full dataset is machine-readable in the repository.

@@ -1,56 +1,44 @@
-Building on the contributions and limitations above, several next steps stand out for improving Code Guardian's effectiveness, robustness, and evaluation depth.
+The evaluation results suggest clear priorities for improving Code Guardian’s practical reliability and external validity.
 
-\noindent\textbf{Confidence-based alert suppression and threshold calibration.}
-The evaluation revealed that most LLM configurations suffer from severe secure-sample over-warning (FPR 100\%), creating substantial triage burden. Future work should extend the JSON output schema to include per-finding confidence scores and implement threshold-based suppression (e.g., hide findings with confidence $<0.7$ by default). Abstention prompting can instruct models to explicitly output ``no issues found'' for secure code, reducing noise. Empirical threshold tuning on balanced vulnerable/secure datasets can identify optimal operating points that balance recall and FPR for each model family. Additionally, hybrid two-stage filtering—using deterministic SAST tools like Semgrep as first-pass filters and applying LLMs only to flagged locations—can leverage the low-noise behavior of rule-based tools while preserving contextual reasoning benefits.
-
-\medskip
-
-\noindent\textbf{Deeper program analysis and cross-file context.}
-Add lightweight static analysis to extract taint-style source-to-sink traces across functions and files, and feed these traces into the LLM prompt. This can reduce false positives from missing context and improve recall for vulnerabilities that span modules (e.g., validation in one file and sink usage in another).
+\noindent\textbf{1) False-positive control as the first priority.}
+Most configurations still over-warn on secure code. Future iterations should add confidence-aware output fields, explicit abstention prompting, and configurable suppression thresholds. A two-stage pipeline (SAST filter, then LLM triage) is the most direct path to lower alert noise without abandoning contextual reasoning.
 
 \medskip
 
-\noindent\textbf{Hybrid integration with traditional SAST.}
-Integrate rule-based baselines (e.g., Semgrep) as an additional signal. A hybrid approach can use SAST findings as candidate locations and let the LLM focus on contextual reasoning and repair generation, improving both precision and developer trust.
+\noindent\textbf{2) Stronger context modeling across files.}
+Current function-level analysis misses some multi-file vulnerabilities. Lightweight static analysis (for example taint-style source-to-sink traces) can provide richer context to the prompt and improve both recall and precision on real projects.
 
 \medskip
 
-\noindent\textbf{Repair validation and safer patching.}
-Extend repair suggestions with syntactic checks and minimal local validation (e.g., TypeScript typechecking on modified regions). Provide diff previews by default and track when suggested fixes introduce new warnings.
+\noindent\textbf{3) Safer repair generation.}
+Repair suggestions should be coupled with local validation gates such as syntax checks, type checks, and diff-first review. Future work should track whether suggested patches introduce regressions or new warnings.
 
 \medskip
 
-\noindent\textbf{Adversarial robustness.}
-Study prompt-injection and retrieval-poisoning risks within the IDE context (e.g., attacker-controlled comments or dependency code). Add provenance and filtering for retrieved knowledge, and implement safe prompt templates that explicitly treat code as data.
+\noindent\textbf{4) Robustness against adversarial inputs.}
+Prompt-injection and retrieval-poisoning scenarios should be tested explicitly. Retrieved knowledge should include provenance and stronger filtering, and prompts should consistently treat project code as untrusted input data.
 
 \medskip
 
-\noindent\textbf{Broader evaluation on standard benchmarks and real repositories.}
-Complement the curated dataset with larger benchmarks (e.g., OWASP Benchmark, Juliet-style suites) and selected real-world CVE cases. Export paired per-sample outputs for both modes and report mode-to-mode deltas and per-category breakdowns under matched conditions.
-
-\medskip
-
-\noindent\textbf{User studies in realistic IDE workflows.}
-Run a developer study to measure time-to-fix, perceived usefulness, trust calibration, and false-positive tolerance. Standard usability and workload instruments such as SUS and NASA-TLX can complement objective metrics \cite{brooke1996sus,hart1988nasa}. Compare LLM-only vs.\ LLM+RAG configurations under real editing sessions to validate R6 and practical adoption constraints.
+\noindent\textbf{5) Broader evaluation and user-facing evidence.}
+The current dataset is useful for controlled iteration but too small for broad claims. Future evaluation should include larger benchmark suites and selected real repositories, then validate workflow impact with developer studies (for example SUS and NASA-TLX) \cite{brooke1996sus,hart1988nasa}.
 
 \section*{Phased Roadmap}
 
-To turn these directions into an executable research and engineering plan, a phased roadmap is useful.
-
 \noindent\textbf{Phase 1 (short term): reliability hardening.}
-Prioritize structured-output robustness, better abstention behavior on secure samples, and safer repair application. Concretely, this includes stricter output validation, confidence-aware suppression thresholds, and mandatory diff-first review for suggested fixes.
+Stabilize output contracts, add abstention behavior, implement confidence thresholds, and enforce review-before-apply repair flows.
 
 \medskip
 
-\noindent\textbf{Phase 2 (medium term): contextual depth and hybrid evidence.}
-Add explicit cross-file context extraction and lightweight taint-style traces, then combine these signals with baseline SAST findings. The objective is to preserve LLM reasoning benefits while reducing avoidable false positives from missing program context.
+\noindent\textbf{Phase 2 (medium term): contextual and hybrid improvements.}
+Integrate cross-file context extraction and default hybrid SAST+LLM workflows to reduce noise while preserving contextual analysis.
 
 \medskip
 
-\noindent\textbf{Phase 3 (long term): external validity and adoption evidence.}
-Scale evaluation to larger benchmark suites and real repositories, then validate workflow impact through developer studies. This phase should report not only detection metrics, but also engineering outcomes such as review effort, time-to-fix, and acceptance rate of suggested patches.
+\noindent\textbf{Phase 3 (long term): external validity and adoption.}
+Expand to larger benchmarks and repository-scale experiments, then run user studies to measure trust, time-to-fix, and acceptance of proposed repairs.
 
 \medskip
 
-\noindent\textbf{Success criteria for future iterations.}
-Future releases should be judged by balanced progress across quality, noise control, and usability rather than single-metric gains. In particular, improvements in recall should be accompanied by measurable reductions in secure-sample over-warning and stable response latency under realistic IDE workloads.
+\noindent\textbf{Success criterion.}
+Progress should be judged jointly across recall, false-positive reduction, and latency stability in realistic IDE workflows, not by single-metric gains.

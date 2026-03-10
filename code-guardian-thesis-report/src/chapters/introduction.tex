@@ -1,23 +1,15 @@
-Modern software systems form the foundation of critical infrastructure, enterprise platforms, and consumer-facing applications. As software continues to increase in size, complexity, and development velocity, vulnerabilities introduced during implementation remain one of the dominant attack vectors. Industry and standards-oriented guidance repeatedly highlights recurring weakness classes—such as injection, broken access control, and insecure design—as persistent sources of exploitable flaws \cite{owaspTop10_2021,mitreCWEtop25,mitreCWE}. These weaknesses persist despite widespread adoption of secure development practices and automated analysis tools \cite{howard2006sdl,mcgraw2006softwaresecurity,nist800218}.
+Modern software systems underpin critical infrastructure, enterprise platforms, and consumer services. Vulnerabilities introduced during implementation remain a major attack vector, with recurring weakness classes such as injection and insecure design consistently reported by OWASP and CWE sources \cite{owaspTop10_2021,mitreCWEtop25,mitreCWE}. This persists despite secure development practices and automated checks \cite{howard2006sdl,mcgraw2006softwaresecurity,nist800218}.
 
-Static Application Security Testing (SAST) tools are commonly employed to detect vulnerabilities early in the Software Development Life Cycle (SDLC). Rule-based analyzers and taint-analysis-driven systems provide deterministic results and can scale to very large codebases \cite{bessey2010billion,chess2004staticanalysis,livshits2005java}. However, both empirical studies and practitioner experience highlight limitations, including false positives, difficulty capturing framework-specific semantics, and limited fix guidance \cite{johnson2013don,christakis2016developers}. As a result, developers frequently face large volumes of security findings that are costly to triage and may not reflect exploitable vulnerabilities.
+Static Application Security Testing (SAST) tools are widely used because they are deterministic and scalable \cite{bessey2010billion,chess2004staticanalysis,livshits2005java}. In practice, however, developers still face noisy findings, weak framework-level context handling, and limited repair guidance \cite{johnson2013don,christakis2016developers}. Under delivery pressure, these limitations increase triage cost and reduce trust in security warnings.
 
-In contemporary development workflows, security findings are often surfaced under significant time pressure. When a vulnerability is flagged, developers must interpret diagnostic output, locate the root cause, and apply an appropriate fix while preserving functional correctness. This process is cognitively demanding and error-prone, particularly for developers without specialized security expertise. Empirical studies show that warnings can be ignored, misinterpreted, or deprioritized when they are noisy or poorly explained \cite{johnson2013don,christakis2016developers}.
+Large Language Models (LLMs) add strong code understanding and explanation capabilities \cite{brown2020gpt3,chen2021codex,openai2023gpt4}, but they are probabilistic and can hallucinate or miss security constraints \cite{pearce2022copilot,ji2023hallucination}. Retrieval-Augmented Generation (RAG) can improve grounding by injecting relevant security knowledge at inference time \cite{lewis2020rag,karpukhin2020dpr,guu2020realm,mialon2023augmented}. Many existing assistants, however, rely on cloud inference, which raises confidentiality concerns for proprietary code \cite{carlini2021extracting,gdpr2016}.
 
-Recent advances in Large Language Models (LLMs) have demonstrated strong capabilities in source code understanding, generation, and transformation \cite{brown2020gpt3,chen2021codex,openai2023gpt4}. LLMs can produce plausible code completions and refactorings, enabling new forms of developer assistance directly in the IDE. However, empirical evaluations show that LLM-generated code can be \emph{functionally correct yet insecure}, and that models may hallucinate or omit security-critical constraints without explicit grounding \cite{pearce2022copilot,ji2023hallucination}.
-
-Traditional SAST tools and LLM-based approaches exhibit complementary strengths and weaknesses. Static analyzers offer deterministic behavior and clear specifications but can struggle with noisy rule sets and missing semantic context. In contrast, LLMs provide flexible reasoning and explanation generation but are probabilistic and can hallucinate \cite{chess2004staticanalysis,ji2023hallucination}. This tension suggests that neither approach is sufficient in isolation for reliable vulnerability detection and repair.
-
-Retrieval-Augmented Generation (RAG) has emerged as a promising paradigm to ground LLM outputs in external knowledge without retraining \cite{lewis2020rag,karpukhin2020dpr,guu2020realm,mialon2023augmented}. By augmenting prompts with retrieved vulnerability descriptions and secure coding guidance, RAG can reduce hallucinations and improve explanation consistency. Nevertheless, many existing assistants rely on cloud-hosted models or external services, raising privacy and confidentiality concerns when proprietary code is transmitted off-device. Privacy risks are amplified by known model leakage and memorization phenomena \cite{carlini2021extracting,gdpr2016}.
-
-These concerns motivate the development of privacy-preserving, locally deployed LLM systems integrated directly into the Integrated Development Environment (IDE). Local deployment enables developers to benefit from advanced reasoning capabilities while preserving code confidentiality, reducing data leakage risks, and improving reproducibility. Despite increasing interest, the design and systematic evaluation of such systems—particularly those combining retrieval, static analysis, and LLM-based reasoning within the IDE—remain underexplored.
-
-This thesis addresses this gap by investigating a privacy-preserving vulnerability detection and repair system based on retrieval-augmented local LLMs integrated into Visual Studio Code. The proposed approach combines (i) a locally hosted LLM, (ii) a curated vulnerability knowledge base, and (iii) IDE-level context extraction to support real-time detection and repair suggestions for JavaScript and TypeScript codebases. The system is evaluated using reproducible local ablation experiments and quantitative metrics, including precision, recall, F1-score, false-positive rate, JSON parse success, and latency.
+This thesis investigates a local, privacy-preserving alternative: Code Guardian, a Visual Studio Code assistant that combines a locally hosted LLM, local retrieval over curated security knowledge, and IDE context extraction for JavaScript/TypeScript vulnerability detection and repair suggestions. The evaluation uses reproducible local experiments and reports precision, recall, F1, false-positive rate (FPR), JSON parse success, and latency.
 
 \section{Objectives and Research Questions}
 \label{sec:intro-objectives}
 
-The overarching objective of this thesis is to design and evaluate an IDE-integrated secure coding assistant that improves developer feedback loops while preserving code confidentiality. Concretely, the thesis investigates the following research questions:
+The objective is to design and evaluate an IDE-integrated assistant that improves secure-coding feedback while preserving source-code confidentiality. The thesis addresses:
 \begin{itemize}
   \item \textbf{RQ1 (Feasibility):} To what extent can a locally deployed LLM integrated into VS Code provide useful vulnerability detection and repair suggestions without transmitting source code to external services?
   \item \textbf{RQ2 (Grounding):} How does retrieval-augmented prompting influence detection quality, explanation consistency, and hallucination behavior compared to an LLM-only configuration?
@@ -27,11 +19,11 @@ The overarching objective of this thesis is to design and evaluate an IDE-integr
 \section{Scope and Assumptions}
 \label{sec:intro-scope}
 
-This thesis focuses on IDE-integrated security assistance for \textbf{JavaScript and TypeScript} codebases inside \textbf{Visual Studio Code}. The central privacy objective is \textbf{no source-code exfiltration}: analyzed code and IDE-derived context are sent only to a local LLM runtime. The system may optionally refresh its local security knowledge base from \emph{public} vulnerability metadata sources (e.g., CVE/NVD descriptions); this does not transmit user code and can be disabled for fully offline operation.
+This thesis focuses on \textbf{JavaScript/TypeScript} projects in \textbf{Visual Studio Code}. The primary privacy goal is \textbf{no source-code exfiltration}: code and IDE context are processed only by local services. Optional knowledge-base refresh may fetch \emph{public} vulnerability metadata (for example CVE/CWE descriptions) and can be disabled for fully offline operation.
 
 \subsection*{Threat Model and Trust Assumptions}
 
-The primary threat addressed by this thesis is unintended disclosure of proprietary code through cloud-hosted analysis services. Local inference reduces this exposure surface, but does not remove all security risks.
+The main threat addressed is unintended disclosure of proprietary code through external analysis services. Local inference reduces this risk surface but does not remove all security risks.
 
 \begin{table}[H]
   \centering
@@ -43,38 +35,36 @@ The primary threat addressed by this thesis is unintended disclosure of propriet
     \toprule
     Threat class & Assumption / attack path & Design response in this thesis \\
     \midrule
-    Source-code exfiltration & External API calls could expose proprietary code or derived context. & Local inference only; code and prompts sent to localhost backend; no code upload in evaluated workflows. \\
-    Prompt injection & Attacker-controlled comments/strings try to override analysis instructions \cite{owaspLLMTop10_2023}. & Strict JSON-output contract in diagnostic mode; defensive parsing; human review before any repair is applied. \\
-    Retrieval poisoning & Low-quality or malicious knowledge entries degrade grounding quality. & Use curated local knowledge sources and explicit retrieval scope; future work adds provenance scoring and stricter source controls. \\
-    Local host compromise & Malware or untrusted local users can access code, prompts, or caches. & Out of scope for this thesis; assumes trusted developer machine and OS-level hardening. \\
+    Source-code exfiltration & External API calls could expose proprietary code or derived context. & Local inference only; prompts and code remain on localhost in evaluated workflows. \\
+    Prompt injection & Attacker-controlled code/comments attempt to override analysis instructions \cite{owaspLLMTop10_2023}. & Strict JSON contract, defensive parsing, and user approval before applying any repair. \\
+    Retrieval poisoning & Low-quality or malicious knowledge entries reduce grounding quality. & Curated local knowledge sources and explicit retrieval scope; stronger provenance controls left for future work. \\
+    Local host compromise & Malware or untrusted local users access local code, prompts, or caches. & Out of scope; assumes trusted host and OS-level hardening. \\
     \bottomrule
   \end{tabularx}
 \end{table}
 
-In scope are privacy-preserving inference boundaries and robustness of developer-facing outputs. Out of scope are full endpoint hardening, hardware-level attacks, and enterprise identity/network controls.
+In scope are local privacy boundaries and robustness of developer-facing output. Out of scope are endpoint hardening, hardware attacks, and enterprise identity/network controls.
 
 \section{Contributions}
 \label{sec:intro-contributions}
 
-This work makes the following contributions:
+The thesis contributes:
 \begin{itemize}
-  \item \textbf{Code Guardian prototype:} a VS Code extension for local vulnerability analysis and developer-controlled repair suggestions for JavaScript/TypeScript.
-  \item \textbf{Privacy-preserving architecture:} a design that keeps code and analysis artifacts on-device and uses optional local retrieval to ground model reasoning.
-  \item \textbf{Evaluation harness:} a reproducible, repository-contained benchmark suite and script for comparing models and configurations using precision/recall/F1, structured-output robustness, and latency.
-  \item \textbf{Implementation insights:} practical patterns for integrating local LLM inference into IDE feedback loops (debounced triggers, function-level scoping, and caching).
-  \item \textbf{Empirical results:} evaluation demonstrates that qwen3:8b with RAG achieves the best balance of detection quality (F1 88.9\%), false-positive control (FPR 20\%), and responsiveness (p95 latency 2.5\,s) among privacy-preserving configurations (Chapter~\ref{chap:evaluation}).
+  \item \textbf{Code Guardian prototype:} a VS Code extension for local vulnerability analysis and developer-controlled repair suggestions.
+  \item \textbf{Privacy-preserving architecture:} local inference and local retrieval that keep source code and analysis artifacts on-device.
+  \item \textbf{Reproducible evaluation harness:} repository-contained scripts and datasets for model/mode comparison over precision, recall, F1, FPR, parse success, and latency.
+  \item \textbf{IDE integration mechanisms:} debounced triggering, function-level scoping, and caching for practical interaction latency.
+  \item \textbf{Empirical findings:} in this thesis run, \texttt{qwen3:8b} with RAG provides the strongest overall trade-off among tested local configurations (F1 63.76\%, FPR 26.67\%, median latency \textasciitilde1.5\,s; Chapter~\ref{chap:evaluation}).
 \end{itemize}
 
 \section{Research Method and Evaluation Strategy}
 \label{sec:intro-method}
 
-The thesis follows a design-and-evaluate methodology. First, requirements are derived from the problem analysis and related work, with explicit attention to privacy constraints, explainability needs, and IDE usability. Second, these requirements are translated into a concrete architecture and implemented as a working VS Code extension. Third, the implemented system is assessed through reproducible local experiments that compare models and prompt modes under matched runtime settings.
+The thesis follows a design-and-evaluate method: derive requirements from analysis and related work, map them to architecture and implementation, then evaluate the system under reproducible local settings. Evidence combines quantitative metrics (precision, recall, F1, FPR, parse success, latency) and qualitative case analysis (representative true positives, false positives, and false negatives).
 
-Methodologically, this work combines quantitative and qualitative evidence. Quantitative scoring focuses on detection behavior (precision, recall, F1, false-positive behavior on secure samples), structured-output reliability (JSON parse success), and responsiveness (latency). Qualitative analysis complements these metrics by examining representative true-positive, false-positive, and false-negative cases, with emphasis on explanation quality and practical repair usefulness in editor workflows.
-
-This mixed evidence strategy is intentional: security tooling quality cannot be inferred from one metric alone. High recall with persistent secure-sample over-warning can still be operationally expensive, and low latency without sufficient recall provides limited security value. By reporting both measurable outcomes and workflow-level observations, the thesis aims to provide a decision-relevant assessment of when local LLM assistance is useful and where stronger safeguards are still required.
+This mixed strategy is necessary because no single metric captures deployment value. High recall with persistent false positives increases triage cost, while low latency with poor recall limits security utility.
 
 \section{Thesis Structure}
 \label{sec:intro-structure}
 
-Chapter~\ref{chap:analysis} derives requirements for privacy-preserving vulnerability detection and repair assistance. Chapter~\ref{chap:concept} presents the conceptual system design and its mapping to the requirements. Chapter~\ref{chap:implementation} details the implementation of Code Guardian as a VS Code extension with local inference and optional retrieval grounding. Chapter~\ref{chap:evaluation} evaluates detection quality, structured output robustness, and responsiveness. Chapter~\ref{chap:conclusion} concludes the thesis and Chapter~\ref{chap:future-work} outlines opportunities for further improvement.
+Chapter~\ref{chap:analysis} derives requirements and reviews related work. Chapter~\ref{chap:concept} presents the architecture and design rationale. Chapter~\ref{chap:implementation} details the VS Code extension and runtime mechanisms. Chapter~\ref{chap:evaluation} reports quantitative and qualitative results. Chapter~\ref{chap:conclusion} summarizes findings, and Chapter~\ref{chap:future-work} outlines next steps.
