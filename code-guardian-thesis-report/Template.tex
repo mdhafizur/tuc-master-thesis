@@ -16,7 +16,7 @@
 \usepackage{amssymb}
 \usepackage[nohyperlinks]{acronym}
 \usepackage{multicol}
-\KOMAoptions{parskip=never,listof=totoc,bibliography=totoc,index=totoc}
+\KOMAoptions{parskip=half,listof=totoc,bibliography=totoc,index=totoc}
 \usepackage[T1]{fontenc}
 \usepackage{microtype}   % reduces overfull boxes
 
@@ -86,29 +86,30 @@
 
 % -------- Title Page --------
 \begin{titlepage}
+  \setlength{\parskip}{0pt}
   {
     \begin{center}
         \raisebox{-1ex}{\safeincludegraphics[scale=1.4]{images/TU_Chemnitz_positiv_gruen.pdf}}\\
     \end{center}
-    \vspace{0.5cm}
+    \vspace{0.3cm}
   }
   \begin{center}
     \LARGE{\textbf{Privacy-Preserving Source Code Vulnerability Detection and Repair using Retrieval-Augmented LLMs for Visual Studio Code}}\\
-    \vspace{1cm}
+    \vspace{0.8cm}
     \Large{\textbf{Master Thesis}}\\ 
-    \vspace{0.5cm}
+    \vspace{0.3cm}
     Submitted in Fulfilment of the\\
     Requirements for the Academic Degree\\
     M.Sc. Web Engineering\\
-    \vspace{0.5cm}
+    \vspace{0.3cm}
     Dept. of Computer Science\\
     Chair of Computer Engineering
   \end{center}
-  \vspace{1cm}
+  \vspace{0.7cm}
   Submitted by: Md Hafizur Rahman\\
   Student ID: 806286\\
   Date: 15.12.2025\\
-  \vspace{0.3cm}\\
+  \smallskip
   Internal Supervisor: Abubaker Gaber M.Sc. \\
   Internal Examiner: Dr.-Ing. Sebastian Heil \\
 \end{titlepage}
@@ -126,7 +127,7 @@
 % -------- Task Description --------
 \addchap*{Task Description}
 \addcontentsline{toc}{chapter}{Task Description}
-\input{src/task_description}
+{\setlength{\parskip}{0.35em}\input{src/task_description}}
 
 % -------- TOC --------
 \tableofcontents
