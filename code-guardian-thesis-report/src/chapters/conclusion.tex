@@ -14,6 +14,17 @@ Debounced triggers, function-level scoping, and caching reduce unnecessary infer
 \textbf{Reproducible evaluation harness.}
 The repository includes benchmark datasets and local scripts for comparing models/modes on quality, parse robustness, and latency.
 
+\section{Key Findings}
+
+\textbf{Local deployment is feasible.}
+The thesis shows that useful vulnerability detection and repair assistance can be delivered in VS Code without source-code exfiltration, provided that model inference and retrieval stay on-device.
+
+\textbf{Quality depends more on configuration than on the idea alone.}
+The measured results vary substantially across model size, prompting mode, and retrieval configuration. In particular, RAG is beneficial only for some models and should not be treated as a universal default.
+
+\textbf{False-positive control remains the main practical barrier.}
+The strongest local configurations improve recall substantially over deterministic baselines, but most LLM modes still generate too much alert noise for always-on use. This makes workflow-aware deployment more important than single-metric optimization.
+
 \section{Answers to Research Questions}
 
 \textbf{RQ1 (Feasibility).}
@@ -25,7 +36,7 @@ Partially supported. RAG improved both \texttt{qwen3} variants in this run, but 
 \textbf{RQ3 (Practicality).}
 Supported for constrained workflows. Function-level scoping, debouncing, and caching make local analysis usable, but higher-quality modes remain better suited to explicit scan/audit interactions than always-on inline use.
 
-\section{Deployment Implications}
+\section{Implications for Practice}
 
 Table~\ref{tab:conclusion-deployment-profiles} summarizes practical deployment profiles from the measured trade-offs.
 
@@ -60,6 +71,10 @@ Repairs are model-generated and may change behavior. Developer review is require
 \section{Responsible Use}
 
 Code Guardian is a decision-support tool, not an autonomous security verifier. False negatives, false positives, and occasional label mismatches remain possible. Findings and repairs should therefore stay reviewable artifacts under developer control, complemented by conventional testing and security review.
+
+\section{Future Work}
+
+\input{src/chapters/future_work}
 
 \section{Conclusion}
 

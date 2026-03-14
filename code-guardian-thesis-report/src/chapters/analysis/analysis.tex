@@ -1,20 +1,32 @@
-This chapter defines the requirements for automated vulnerability detection and repair assistance in an IDE and positions the thesis approach against related work. The focus is privacy-preserving local LLM support with retrieval grounding and practical developer usability.
+This chapter defines the requirements for automated vulnerability detection and repair assistance in an IDE and positions the thesis approach against related work. Following the style of the reference theses, the chapter first derives the requirements baseline, then reviews existing approaches, and finally summarizes the implications for the proposed concept.
 
 
-\section{Requirements}
+\section{Requirements Analysis}
 \label{sec:requirements}
 
 The thesis targets local IDE assistance for JavaScript/TypeScript development: detect vulnerabilities, explain them, and propose repairs without code exfiltration. Compared with rule-based SAST, the approach adds LLM reasoning and optional retrieval grounding, but must still satisfy strict operational constraints.
 
-Based on the problem statement and related work, six requirements define the evaluation baseline:
-\begin{itemize}
-  \item \textbf{R1 -- Detection accuracy and consistency:} reliable findings with stable behavior and controlled false positives.
-  \item \textbf{R2 -- Context-aware reasoning:} distinguish exploitable patterns from benign code using surrounding program context.
-  \item \textbf{R3 -- Explainability and transparency:} provide clear, technically precise, and traceable explanations.
-  \item \textbf{R4 -- Actionable repairs:} suggest minimal, security-improving fixes while preserving developer control.
-  \item \textbf{R5 -- Privacy-preserving operation:} keep analysis and retrieval local, with no source-code transmission.
-  \item \textbf{R6 -- Usability and responsiveness:} deliver feedback at latencies compatible with IDE workflows.
-\end{itemize}
+Based on the problem statement and related work, six requirements define the evaluation baseline. Table~\ref{tab:requirements-overview} summarizes them before they are discussed in detail.
+
+\begin{table}[H]
+  \centering
+  \caption{Requirements overview for Code Guardian.}
+  \label{tab:requirements-overview}
+  \footnotesize
+  \renewcommand{\arraystretch}{1.15}
+  \begin{tabularx}{\textwidth}{p{0.10\textwidth}p{0.32\textwidth}X}
+    \toprule
+    ID & Requirement & Operational intent \\
+    \midrule
+    R1 & Detection accuracy and consistency & Reliable findings with stable behavior and controlled false positives. \\
+    R2 & Context-aware reasoning & Distinguish exploitable patterns from benign code using surrounding program context. \\
+    R3 & Explainability and transparency & Provide clear, technically precise, and traceable explanations. \\
+    R4 & Actionable repairs & Suggest minimal, security-improving fixes while preserving developer control. \\
+    R5 & Privacy-preserving operation & Keep analysis and retrieval local, with no source-code transmission. \\
+    R6 & Usability and responsiveness & Deliver feedback at latencies compatible with IDE workflows. \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
 
 The following subsections define these requirements in detail and map them to measurable criteria.
 
@@ -37,7 +49,7 @@ The following subsections define these requirements in detail and map them to me
 \input{src/chapters/analysis/requirements/r6}
 
 
-\section{Related Work}
+\section{Related Work and Positioning}
 \label{sec:related-work}
 
 This section reviews prior work on SAST, LLM-based security assistance, retrieval-augmented prompting, and privacy-preserving IDE integration, then positions the thesis approach against these paradigms.
@@ -81,3 +93,7 @@ The reviewed literature indicates that security assistants should be compared as
 \end{table}
 
 Two conclusions follow. First, no single paradigm satisfies R1--R6 alone; practical systems combine complementary mechanisms. Second, evaluation must jointly report quality and operational metrics because deployment value depends on recall, false-positive control, robustness, latency, and privacy guarantees together.
+
+\section{Summary}
+
+This chapter established the requirements baseline for the thesis and compared the main design paradigms available in the literature. The analysis shows that a practical solution must combine deterministic baselines, contextual reasoning, explicit privacy boundaries, and workflow-aware responsiveness. These conclusions motivate the concept presented in the next chapter.

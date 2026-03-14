@@ -144,3 +144,6 @@ Three scenarios stress latency tolerance:
 \end{table}
 
 For truly real-time feedback ($<$500 ms), current local LLM inference on consumer hardware is insufficient. Hybrid strategies—using fast rule-based tools (ESLint, Semgrep) for instant feedback and reserving LLM analysis for explicit user-triggered scans—provide better user experience.
+
+\paragraph{Section implication.}
+Taken together, the LLM-only results establish a useful baseline for the thesis. They show that local models can already provide meaningful vulnerability signals without retrieval, but they also confirm that LLM-only deployment is constrained by alert noise and latency trade-offs. This makes the LLM-only mode a reference point rather than a universal default for IDE integration.

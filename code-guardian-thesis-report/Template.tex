@@ -119,16 +119,28 @@
 \input{src/abstract}
 
 % -------- Acknowledgment --------
-% Omitted in compact build
+\addchap*{Acknowledgment}
+\addcontentsline{toc}{chapter}{Acknowledgment}
+\input{src/acknowledgment}
 
 % -------- Task Description --------
-% Omitted in compact build
+\addchap*{Task Description}
+\addcontentsline{toc}{chapter}{Task Description}
+\input{src/task_description}
 
 % -------- TOC --------
 \tableofcontents
 
+% -------- List of Figures --------
+\listoffigures
+
+% -------- List of Tables --------
+\listoftables
+
 % -------- List of Abbreviations --------
-% Omitted in compact build
+\addchap*{List of Abbreviations}
+\addcontentsline{toc}{chapter}{List of Abbreviations}
+\input{src/abbreviations}
 
 % =====================================================
 % MAINMATTER: Arabic numerals, numbered chapters
@@ -139,7 +151,7 @@
 \label{chap:introduction}
 \input{src/chapters/introduction}
 
-\chapter{Analysis}
+\chapter{State of the Art and Requirements}
 \label{chap:analysis}
 \input{src/chapters/analysis/analysis}
 
@@ -159,14 +171,11 @@
 \label{chap:conclusion}
 \input{src/chapters/conclusion}
 
-\chapter{Future Work}
-\label{chap:future-work}
-\input{src/chapters/future_work}
-
 % =======================
 % APPENDICES
 % =======================
-% Omitted in compact build (kept as supplementary material)
+\appendix
+\input{src/chapters/appendices/privacy-verification}
 
 % =====================================================
 % BACKMATTER: Bibliography, Index, etc.

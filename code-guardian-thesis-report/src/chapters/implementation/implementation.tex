@@ -1,4 +1,8 @@
+\section{Overview}
+
 This chapter summarizes how Code Guardian was implemented as a local-first security assistant for Visual Studio Code. The focus is on deployable engineering decisions: local inference boundaries, deterministic output handling, latency guardrails, and developer-controlled remediation.
+
+The implementation follows the concept from Chapter~\ref{chap:concept} while emphasizing practical concerns that affect reproducibility and day-to-day usability. The chapter first introduces the technical stack and runtime boundary, then explains the detection pipeline, the main components, responsiveness mechanisms, user-facing integration, and repair safety.
 
 \section{Technology Stack and Runtime Boundary}
 
