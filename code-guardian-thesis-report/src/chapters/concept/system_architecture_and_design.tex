@@ -86,7 +86,7 @@ Figure~\ref{fig:bpmn} illustrates the dynamic execution flow for the main workfl
 \begin{sidewaysfigure}
   \centering
   \safeincludegraphics[width=\linewidth]{images/bpmn_process_flow.pdf}
-  \caption{Process view showing two primary workflows with swim lanes. Workflow 1: Real-time function analysis with debouncing (800\,ms) and caching, where cache hits bypass LLM inference and cache misses invoke local analysis. Workflow 2: On-demand analysis with optional RAG, including embedding generation, vector search (top-5), prompt augmentation, and local LLM inference. Color coding: user events (yellow), extension (orange), backend (purple), LLM (green). Privacy boundary (green dashed): all processes execute on localhost.}
+  \caption{Process view showing two primary workflows with swim lanes. Workflow 1: Real-time function analysis with debouncing (800\,ms) and caching, where cache hits bypass LLM inference and cache misses invoke local analysis. Workflow 2: On-demand analysis with optional RAG, including embedding generation, configurable vector search, prompt augmentation, and local LLM inference. The runtime default uses $k=3$ retrieved chunks; Chapter~\ref{chap:evaluation} benchmarks a $k=5$ setting. Color coding: user events (yellow), extension (orange), backend (purple), LLM (green). Privacy boundary (green dashed): all processes execute on localhost.}
   \label{fig:bpmn}
 \end{sidewaysfigure}
 
@@ -112,7 +112,7 @@ When performing a full workspace scan with retrieval augmentation enabled, the b
 \begin{enumerate}
     \item Developer triggers audit scan.
     \item Extension extracts code context.
-    \item Backend generates embedding and queries vector database (top-$k=5$ chunks).
+    \item Backend generates embedding and queries the vector database (runtime default: top-$k=3$ chunks; the evaluated benchmark setting uses $k=5$).
     \item Retrieved CWE/OWASP chunks are injected into the LLM prompt.
     \item Ollama performs inference (model-dependent latency in the evaluated setup).
     \item Backend parses JSON response and returns findings.

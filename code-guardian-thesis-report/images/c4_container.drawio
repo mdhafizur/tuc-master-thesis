@@ -71,7 +71,7 @@
           <mxGeometry x="560" y="210" width="160" height="80" as="geometry" />
         </mxCell>
 
-        <mxCell id="backend-comp2" value="RAG Orchestrator&#xa;• Embedding generation&#xa;• Vector search (top-k=5)&#xa;• Context augmentation" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0d47a1;strokeColor=#001970;align=left;spacingLeft=10;fontColor=#FFFFFF;fontSize=10;" vertex="1" parent="1">
+        <mxCell id="backend-comp2" value="RAG Orchestrator&#xa;• Embedding generation&#xa;• Vector search (top-k configurable)&#xa;• Context augmentation" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0d47a1;strokeColor=#001970;align=left;spacingLeft=10;fontColor=#FFFFFF;fontSize=10;" vertex="1" parent="1">
           <mxGeometry x="740" y="210" width="160" height="80" as="geometry" />
         </mxCell>
 

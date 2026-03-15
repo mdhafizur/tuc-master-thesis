@@ -91,7 +91,7 @@
           <mxGeometry x="1000" y="460" width="80" height="50" as="geometry" />
         </mxCell>
 
-        <mxCell id="w2-retrieve" value="Vector&#xa;search&#xa;(top-5)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#9c27b0;strokeColor=#6a1b9a;fontSize=10;fontColor=#FFFFFF;" vertex="1" parent="1">
+        <mxCell id="w2-retrieve" value="Vector&#xa;search&#xa;(top-k)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#9c27b0;strokeColor=#6a1b9a;fontSize=10;fontColor=#FFFFFF;" vertex="1" parent="1">
           <mxGeometry x="1120" y="460" width="80" height="50" as="geometry" />
         </mxCell>
 
@@ -270,7 +270,7 @@
           <mxGeometry x="680" y="830" width="200" height="70" as="geometry" />
         </mxCell>
 
-        <mxCell id="perf-note2" value="Key optimizations:&#xa;• Debouncing reduces repeated calls during typing&#xa;• Function-level scoping limits prompt size&#xa;• Cache helps on repeated snippets&#xa;• RAG retrieval uses top-5 chunks" style="text;html=1;strokeColor=none;fillColor=#f3e5f5;align=left;verticalAlign=top;whiteSpace=wrap;fontSize=10;fontStyle=2;" vertex="1" parent="1">
+        <mxCell id="perf-note2" value="Key optimizations:&#xa;• Debouncing reduces repeated calls during typing&#xa;• Function-level scoping limits prompt size&#xa;• Cache helps on repeated snippets&#xa;• RAG retrieval depth is configurable" style="text;html=1;strokeColor=none;fillColor=#f3e5f5;align=left;verticalAlign=top;whiteSpace=wrap;fontSize=10;fontStyle=2;" vertex="1" parent="1">
           <mxGeometry x="900" y="820" width="240" height="80" as="geometry" />
         </mxCell>
 
