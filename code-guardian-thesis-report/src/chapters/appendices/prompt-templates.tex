@@ -81,8 +81,8 @@ Respond with JSON only.
 
 \subsection{Retrieval Parameters}
 \begin{itemize}
-  \item \textbf{Embedding model:} \texttt{all-MiniLM-L6-v2}
-  \item \textbf{Vector store:} local Chroma DB
+  \item \textbf{Embedding model:} \texttt{nomic-embed-text}
+  \item \textbf{Vector store:} local HNSW index
   \item \textbf{Top-k:} 5 retrieved chunks
   \item \textbf{Similarity metric:} cosine similarity
   \item \textbf{Chunk length:} roughly 200--500 tokens
@@ -155,7 +155,7 @@ To reproduce the reported behavior:
 \begin{enumerate}
   \item Use the same prompt structure as Listings~\ref{lst:complete-llm-prompt} and~\ref{lst:complete-rag-prompt}.
   \item Keep generation settings fixed (\texttt{temperature=0.1}, \texttt{num\_predict=1000}).
-  \item Use the same retrieval setup (\texttt{k=5}, cosine similarity, \texttt{all-MiniLM-L6-v2}).
+  \item Use the same retrieval setup (\texttt{k=5}, cosine similarity, \texttt{nomic-embed-text}, local HNSW index).
   \item Use the same model artifacts and digests reported in the evaluation chapter.
 \end{enumerate}
 

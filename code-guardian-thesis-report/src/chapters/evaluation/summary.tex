@@ -1,7 +1,7 @@
 \section{Summary and Discussion}
 \label{sec:eval-summary}
 
-This chapter provides run-level evidence on three dimensions: detection quality, structured-output robustness, and latency. The results are reproducible for the documented setup and sufficient to guide practical deployment decisions, but they should be interpreted as descriptive evidence for this run rather than universal performance guarantees.
+This chapter provides run-level evidence on three dimensions: detection quality, structured-output robustness, and latency. The evaluation procedure is documented in enough detail for reruns under comparable local conditions, but the reported values should be interpreted as descriptive evidence for this run rather than universal performance guarantees.
 
 \subsection*{Key Findings}
 
@@ -28,8 +28,8 @@ Secure-sample FPR is the strongest practical predictor of developer acceptance f
   \item \textbf{Capacity/context limitations:} smaller or less stable models struggle to distinguish suspicious patterns from exploitable weaknesses.
 \end{enumerate}
 
-\paragraph{Triage burden illustration.}
-For a project with 500 functions and 10\% vulnerable code, FPR 100\% implies roughly 450 false positives; at 2 minutes per alert, this is about 15 hours of review overhead. At FPR 26.67\%, expected false positives drop to about 120 (about 4 hours under the same assumption). Even this lower noise level remains expensive for always-on workflows.
+\paragraph{Hypothetical triage burden illustration.}
+The following example is a sensitivity illustration, not a deployment forecast. For a project with 500 functions and an assumed 10\% vulnerable-code share, FPR 100\% implies roughly 450 false positives; at 2 minutes per alert, this is about 15 hours of review overhead. At FPR 26.67\%, expected false positives drop to about 120 (about 4 hours under the same assumption). Even this lower noise level remains expensive for always-on workflows.
 
 \paragraph{Mitigation strategies.}
 \begin{table}[H]
@@ -55,31 +55,14 @@ Inline mode should prioritize low interruption cost; higher-noise configurations
 \subsection{Hybrid SAST + LLM Integration Strategies}
 \label{sec:eval-hybrid-sast}
 
-The results support a hybrid model in which SAST provides low-noise anchors and LLMs add contextual reasoning and repair suggestions. The most pragmatic default is:
+The measured results motivate, but do not directly benchmark, a hybrid model in which SAST provides low-noise anchors and LLMs add contextual reasoning and repair suggestions. A pragmatic workflow pattern is:
 \begin{enumerate}
   \item Run Semgrep/CodeQL to identify candidate locations.
   \item Apply LLM analysis only to those locations with focused context.
   \item Rank findings by combined provenance (SAST only, LLM only, both).
 \end{enumerate}
 
-This reduces LLM invocation volume and helps control alert noise while preserving some contextual depth.
-
-\begin{table}[H]
-  \centering
-  \caption{Estimated hybrid performance: Semgrep anchor + qwen3:8b triage.}
-  \label{tab:hybrid-performance-estimate}
-  \small
-  \begin{tabular}{lcccc}
-    \toprule
-    Configuration & Precision (\%) & Recall (\%) & F1 (\%) & FPR (\%) \\
-    \midrule
-    Semgrep baseline & 57.89 & 9.73 & 16.67 & 6.67 \\
-    \texttt{qwen3:8b} (LLM+RAG) & 62.93 & 64.60 & 63.76 & 26.67 \\
-    \midrule
-    \textbf{Hybrid (estimated)} & \textbf{70--75} & \textbf{15--20} & \textbf{25--32} & \textbf{6--10} \\
-    \bottomrule
-  \end{tabular}
-\end{table}
+This pattern is an engineering recommendation derived from the measured trade-offs of the individual tools: Semgrep contributes low secure-sample FPR and very low latency, while \texttt{qwen3:8b} contributes stronger contextual recall and repair-oriented output. Quantifying the combined profile requires a dedicated hybrid benchmark and is therefore left as future work rather than presented as a measured result here.
 
 \subsection*{Operational Interpretation for Deployment}
 
@@ -127,8 +110,8 @@ Intervals confirm major directionality (for example, low baseline recall and hig
     RQ & Claim tested & Evidence used & Outcome in this thesis run \\
     \midrule
     RQ1 (Feasibility) & Local IDE assistant can provide useful findings without code exfiltration. & Architecture and privacy boundary plus quality/latency metrics. & Supported with caveats; model choice strongly affects deployment value. \\
-    RQ2 (Grounding) & Retrieval augmentation improves quality versus LLM-only. & Model ablations across LLM-only and LLM+RAG modes. & Partially supported; effects are clearly model-dependent. \\
-    RQ3 (Practicality) & Real-time IDE use is achievable with scoping/caching/debouncing. & Runtime design plus measured latency distributions. & Supported for constrained workflows; strongest-quality modes fit audit-triggered usage better. \\
+    RQ2 (Grounding) & Retrieval augmentation improves detection quality and the qualitative grounding of explanations versus LLM-only. & Model ablations across LLM-only and LLM+RAG modes plus qualitative case analysis. & Partially supported; quality effects are model-dependent, and explanation grounding improved mainly in selected configurations. \\
+    RQ3 (Practicality) & Real-time IDE triggering is implementable, while practical responsiveness depends on scope, model choice, and workflow constraints. & Runtime design plus measured latency distributions. & Supported for constrained interactive workflows; strict real-time responsiveness was not consistently achieved in this run. \\
     \bottomrule
   \end{tabularx}
 \end{table}
