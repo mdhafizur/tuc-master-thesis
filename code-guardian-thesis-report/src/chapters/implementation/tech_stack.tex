@@ -13,7 +13,7 @@ All model inference is performed through \textbf{Ollama} running on \texttt{loca
 
 \subsection*{Retrieval-Augmented Generation (RAG)}
 
-Optional RAG is implemented with \textbf{LangChain} and a local vector index \cite{langchainDocs}. Security knowledge entries (CWE patterns, OWASP Top 10 guidance, selected CVE summaries, and JavaScript/TypeScript secure coding notes) are embedded using a lightweight local embedding model (\texttt{nomic-embed-text} via Ollama) and stored in an \textbf{HNSW} vector store. At analysis time, relevant knowledge snippets are retrieved and injected into the prompt to ground the model’s reasoning and reduce hallucinations (R1--R3).
+Optional RAG is implemented with \textbf{LangChain} and a local vector index \cite{langchainDocs}. Security knowledge entries (CWE patterns, OWASP Top 10 guidance, selected CVE summaries, and JavaScript/TypeScript secure coding notes) are embedded using a lightweight local embedding model (\texttt{nomic-embed-text} via Ollama) and stored in an \textbf{HNSW} vector store. At analysis time, relevant knowledge snippets are retrieved and injected into the prompt to improve grounding of the model's reasoning and support R1--R3.
 
 \subsection*{Dynamic Vulnerability Knowledge Updates}
 

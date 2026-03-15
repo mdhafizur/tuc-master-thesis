@@ -11,7 +11,7 @@ Code analysis is executed locally (Ollama). Retrieval uses a local vector index 
 \textbf{Practical IDE integration mechanisms.}
 Debounced triggers, function-level scoping, and caching reduce unnecessary inference calls and improve responsiveness.
 
-\textbf{Reproducible evaluation harness.}
+\textbf{Documented evaluation harness.}
 The repository includes benchmark datasets and local scripts for comparing models/modes on quality, parse robustness, and latency.
 
 \section{Key Findings}
@@ -31,14 +31,14 @@ The strongest local configurations improve recall substantially over determinist
 Supported with caveats. Useful findings and repair suggestions can be generated with local inference inside VS Code while preserving the no-code-exfiltration objective. Practical value depends on configuration choice.
 
 \textbf{RQ2 (Grounding).}
-Partially supported. RAG improved both \texttt{qwen3} variants in this run, but degraded \texttt{gemma3:4b} and \texttt{CodeLlama:latest}. RAG should be treated as a model-specific configuration choice, not a universal default.
+Partially supported. RAG improved both \texttt{qwen3} variants in this run, but degraded \texttt{gemma3:4b} and \texttt{CodeLlama:latest}. Qualitative case analysis also suggests better explanation grounding in the stronger \texttt{qwen3} configurations. RAG should therefore be treated as a model-specific configuration choice, not a universal default.
 
 \textbf{RQ3 (Practicality).}
-Supported for constrained workflows. Function-level scoping, debouncing, and caching make local analysis usable, but higher-quality modes remain better suited to explicit scan/audit interactions than always-on inline use.
+Supported for constrained interactive workflows. Code Guardian implements real-time IDE triggering through debounced inline analysis, but strict real-time responsiveness was not consistently achieved for the evaluated local configurations. Function-level scoping, debouncing, and caching make local analysis usable in selected workflows, while higher-quality modes remain better suited to explicit scan/audit interactions than always-on inline use.
 
 \section{Implications for Practice}
 
-Table~\ref{tab:conclusion-deployment-profiles} summarizes practical deployment profiles from the measured trade-offs.
+Table~\ref{tab:conclusion-deployment-profiles} summarizes practical deployment profiles derived from the measured single-tool results and, where noted, from reasoned engineering recommendations.
 
 \begin{table}[H]
   \centering
@@ -52,7 +52,7 @@ Table~\ref{tab:conclusion-deployment-profiles} summarizes practical deployment p
     Fast inline & \texttt{gemma3:1b} (LLM-only) & Very low median latency (\textasciitilde333 ms) & Low recall and FPR 100\% & Suitable only for optional lightweight hints \\
     Audit-focused & \texttt{qwen3:4b} (LLM+RAG) & Higher recall (64.90\%); moderate latency (\textasciitilde1.1 s) & FPR 100\% & Use in explicit scan mode with manual triage \\
     Best overall local run & \texttt{qwen3:8b} (LLM+RAG) & Best F1 (63.76\%); lower LLM FPR (26.67\%) & Higher latency (\textasciitilde1.5 s) & Recommended default for quality-oriented local analysis \\
-    Hybrid low-noise & Semgrep + \texttt{qwen3:8b} & Deterministic low-noise anchors plus contextual reasoning & Recall bounded by SAST coverage & Use SAST as filter, LLM as triage/repair layer \\
+    Proposed hybrid low-noise & Semgrep + \texttt{qwen3:8b} (not directly benchmarked) & Deterministic low-noise anchors plus contextual reasoning & Combined performance not measured in this thesis; recall remains bounded by SAST coverage unless LLM-only findings are also surfaced & Use SAST as filter and LLM as targeted triage/repair layer \\
     \bottomrule
   \end{tabularx}
 \end{table}
@@ -82,4 +82,4 @@ Privacy-preserving secure-coding assistance in the IDE is feasible with local LL
 
 Compared with SAST baselines, local LLM modes achieved much higher vulnerable-case recall, while deterministic tools retained better false-positive control and lower latency. Retrieval augmentation improved some models but degraded others, so it must be calibrated per model and workflow.
 
-Overall, Code Guardian demonstrates practical local vulnerability assistance without code exfiltration, but production use requires explicit policy choices for model profile, acceptable FPR, and workflow-specific triggering.
+Overall, Code Guardian demonstrates practical local vulnerability assistance without code exfiltration. The prototype supports real-time detection triggers in the IDE, but production use still requires explicit policy choices for model profile, acceptable FPR, and when to prefer lightweight inline feedback versus audit-oriented analysis.

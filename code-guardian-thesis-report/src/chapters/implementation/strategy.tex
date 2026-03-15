@@ -19,7 +19,7 @@ Code Guardian supports multiple analysis modes that trade off latency, context b
 
 The system offers two operational configurations:
 \begin{itemize}
-  \item \textbf{LLM-only:} prompt contains the analyzed code plus strict JSON-output constraints. This configuration minimizes overhead and is suitable for real-time use.
+  \item \textbf{LLM-only:} prompt contains the analyzed code plus strict JSON-output constraints. This configuration minimizes overhead and is the lower-latency option for interactive inline triggering.
   \item \textbf{LLM+RAG:} the prompt is augmented with retrieved CWE/OWASP/CVE knowledge snippets and secure coding guidance. This improves grounding and can reduce false positives or unsupported suggestions, at the cost of additional embedding and retrieval time.
 \end{itemize}
 
@@ -92,7 +92,7 @@ class AnalysisCache:
 \end{lstlisting}
 
 \paragraph{Cache effectiveness.}
-The content-based key (\texttt{sha256(code.trim())}) ensures that only semantic code changes invalidate the cache. Formatting changes (whitespace, indentation) that do not affect code meaning will still produce cache hits. The 30-minute TTL prevents stale results from persisting indefinitely, while the 500-entry limit prevents unbounded memory growth during long editing sessions. In evaluation runs, cache hit rates exceeded 60\% during typical editing workflows (undo/redo, minor edits, navigation).
+The content-based key (\texttt{sha256(code.trim())}) ensures that only semantic code changes invalidate the cache. Formatting changes (whitespace, indentation) that do not affect code meaning will still produce cache hits. The 30-minute TTL prevents stale results from persisting indefinitely, while the 500-entry limit prevents unbounded memory growth during long editing sessions. In repetitive editing patterns such as undo/redo, small local edits, and navigation across unchanged snippets, the cache can remove a substantial share of otherwise repeated analyses. Cache hit rate, however, was not treated as a primary benchmark metric in this thesis and therefore is discussed qualitatively rather than as a headline result.
 
 \subsection{Cost-Aware Mode Selection}
 \label{subsec:impl-cost-aware-selection}

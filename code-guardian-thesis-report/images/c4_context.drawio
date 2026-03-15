@@ -67,7 +67,7 @@
           <mxGeometry x="440" y="590" width="220" height="25" as="geometry" />
         </mxCell>
 
-        <mxCell id="vectordb-desc" value="[ChromaDB / Qdrant]&#xa;&#xa;Stores CWE/OWASP/CVE knowledge&#xa;embeddings for RAG retrieval." style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=10;fontColor=#FFFFFF;" vertex="1" parent="1">
+        <mxCell id="vectordb-desc" value="[Local HNSW index]&#xa;&#xa;Stores CWE/OWASP/CVE knowledge&#xa;embeddings for RAG retrieval." style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=10;fontColor=#FFFFFF;" vertex="1" parent="1">
           <mxGeometry x="450" y="620" width="200" height="50" as="geometry" />
         </mxCell>
 

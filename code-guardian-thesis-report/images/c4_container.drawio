@@ -96,7 +96,7 @@
           <mxGeometry x="980" y="150" width="320" height="25" as="geometry" />
         </mxCell>
 
-        <mxCell id="vectordb-tech" value="[ChromaDB / Qdrant]" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=10;fontStyle=2;fontColor=#E3F2FD;" vertex="1" parent="1">
+        <mxCell id="vectordb-tech" value="[Local HNSW index]" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=10;fontStyle=2;fontColor=#E3F2FD;" vertex="1" parent="1">
           <mxGeometry x="980" y="175" width="320" height="20" as="geometry" />
         </mxCell>
 

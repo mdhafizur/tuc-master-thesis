@@ -76,7 +76,7 @@
           </mxGeometry>
         </mxCell>
 
-        <mxCell id="step3" value="3. Reset timer (500ms)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;" vertex="1" parent="1">
+        <mxCell id="step3" value="3. Reset timer (800ms)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;" vertex="1" parent="1">
           <mxGeometry x="330" y="220" width="120" height="40" as="geometry" />
         </mxCell>
 
@@ -94,7 +94,7 @@
           </mxGeometry>
         </mxCell>
 
-        <mxCell id="step6" value="6. Wait 500ms..." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;" vertex="1" parent="1">
+        <mxCell id="step6" value="6. Wait 800ms..." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;" vertex="1" parent="1">
           <mxGeometry x="330" y="340" width="120" height="40" as="geometry" />
         </mxCell>
 

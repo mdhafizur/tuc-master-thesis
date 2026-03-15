@@ -87,7 +87,7 @@
           <mxGeometry x="200" y="340" width="120" height="40" as="geometry" />
         </mxCell>
 
-        <mxCell id="note1" value="Note: No LLM invocation&#xa;Latency: ~5-10ms" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;fillColor=#f5f5f5;size=15;align=left;" vertex="1" parent="1">
+        <mxCell id="note1" value="Note: No LLM invocation&#xa;Cached result returned immediately" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;fillColor=#f5f5f5;size=15;align=left;" vertex="1" parent="1">
           <mxGeometry x="500" y="320" width="160" height="60" as="geometry" />
         </mxCell>
 

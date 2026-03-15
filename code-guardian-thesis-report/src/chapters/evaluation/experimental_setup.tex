@@ -99,7 +99,7 @@ To document run provenance, Table~\ref{tab:eval-artifact-manifest} records the m
   \end{tabularx}
 \end{table}
 
-For archival reproducibility, the recommended artifact bundle includes: (i) raw JSON output from the harness, (ii) the exact run configuration object, (iii) model digests, and (iv) generated summary tables. These artifacts should be stored as supplementary material together with the thesis PDF.
+For archival reproducibility, the recommended artifact bundle includes: (i) raw JSON output from the harness, (ii) the exact run configuration object, (iii) model digests, (iv) generated summary tables, and (v) the exact repository commit(s) for both the extension/evaluation code and the report source. These artifacts should be stored as supplementary material together with the thesis PDF.
 
 \subsection{Run Configuration and Data Merging}
 \label{sec:eval-run-merging}
@@ -144,7 +144,7 @@ Despite the asymmetry, the merged approach provides operationally useful evidenc
 \end{itemize}
 
 \paragraph{Future work: Unified repeated-run design.}
-For production-scale evaluation, a unified design with matched \texttt{runsPerSample} for both vulnerable and secure sets would enable paired per-sample mode comparison and stronger statistical inference. The current harness can be extended to export per-sample mode-contingency outputs and support formal paired tests (e.g., McNemar's test for mode-to-mode detection differences).
+For production-scale evaluation, a unified design with matched \texttt{runsPerSample} for both vulnerable and secure sets would enable paired per-sample mode comparison and stronger statistical inference. The current harness should also capture the exact repository commit automatically and export per-sample mode-contingency outputs to support formal paired tests (e.g., McNemar's test for mode-to-mode detection differences).
 
 \subsection*{Run-to-Run Variability (Descriptive)}
 

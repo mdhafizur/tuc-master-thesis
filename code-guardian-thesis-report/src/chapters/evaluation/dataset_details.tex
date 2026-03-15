@@ -29,7 +29,7 @@ The curated approach prioritizes \textbf{depth of analysis over breadth of cover
 \begin{itemize}
   \item Perform qualitative inspection of true positives, false positives, and false negatives to understand \emph{why} the system succeeds or fails.
   \item Assess explanation quality and repair suggestion coherence on a per-case basis, supporting requirements R3 and R4.
-  \item Enable reproducible local evaluation with documented model configurations and prompt templates, essential for privacy-preserving system validation (R5).
+  \item Enable documented local evaluation with documented model configurations and prompt templates, essential for privacy-preserving system validation (R5).
   \item Support rapid iteration on detection strategies, retrieval parameters, and output validation without multi-day evaluation cycles.
 \end{itemize}
 
@@ -55,7 +55,7 @@ The repository-contained evaluation harness used in this thesis (\path{code-guar
 
 Vulnerability classes are aligned with the Common Weakness Enumeration taxonomy \cite{mitreCWE}, and severities are recorded as coarse labels to support prioritization and reporting. Where applicable, severity can be related back to standardized scoring systems such as CVSS and public vulnerability databases such as CVE/NVD \cite{firstCvss31,mitreCVE,nistNVD}.
 
-This dataset targets requirement R2 (context-aware vulnerability reasoning) by including vulnerability instances that cannot be resolved purely by superficial keyword matching (e.g., sink usage that requires reasoning about tainted input). It also supports R1 by enabling reproducible comparisons across repeated runs and across different local models.
+This dataset targets requirement R2 (context-aware vulnerability reasoning) by including vulnerability instances that cannot be resolved purely by superficial keyword matching (e.g., sink usage that requires reasoning about tainted input). It also supports R1 by enabling controlled comparisons across repeated runs and across different local models.
 
 \subsection*{Dataset Schema}
 

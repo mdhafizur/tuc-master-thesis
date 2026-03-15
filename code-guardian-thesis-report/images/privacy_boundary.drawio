@@ -26,7 +26,7 @@
         </mxCell>
 
         <!-- Vector Store -->
-        <mxCell id="vectorstore" value="Vector Store&#xa;(Local Chroma)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1">
+        <mxCell id="vectorstore" value="Vector Store&#xa;(Local HNSW)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1">
           <mxGeometry x="320" y="320" width="140" height="60" as="geometry" />
         </mxCell>
 

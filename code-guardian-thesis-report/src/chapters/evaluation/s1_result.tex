@@ -82,7 +82,7 @@ While median latency indicates typical behavior, tail latencies (\textbf{p95, p9
 \textbf{Key observations:}
 \begin{itemize}
   \item \textbf{Tail latency amplification:} p95 latency is 2--3$\times$ higher than median for most models, indicating right-skewed distributions. Worst-case invocations (p99) can exceed 3 seconds.
-  \item \textbf{RAG overhead varies by model:} \texttt{gemma3:1b} shows the highest p95 overhead (+89\%), while \texttt{qwen3:4b} actually \emph{reduces} p95 latency with RAG (-3.6\%), likely due to prompt structure stabilizing inference.
+  \item \textbf{RAG overhead varies by model:} \texttt{gemma3:1b} shows the highest p95 overhead (+89\%), while \texttt{qwen3:4b} shows a small p95 reduction with RAG (-3.6\%). The harness did not instrument a causal explanation for this effect, so it should be treated as a run-specific observation rather than a general prompt-stability result.
   \item \textbf{IDE impact:} At p95, even \texttt{gemma3:1b} exceeds 1.6 seconds with RAG—noticeable lag for real-time inline feedback. Models $>$4B parameters consistently exceed 2.5 seconds at p95, unsuitable for always-on inline mode.
 \end{itemize}
 
@@ -99,8 +99,8 @@ End-to-end latency comprises multiple stages. While the evaluation harness did n
     Component & Est.\ time (ms) & Notes \\
     \midrule
     Code extraction \& preprocessing & 5--10 & VS Code extension extracts function-level context; negligible \\
-    Embedding generation (RAG only) & 50--100 & Local embedding model (e.g., \texttt{all-MiniLM-L6-v2}); single forward pass \\
-    Vector search (RAG only) & 10--20 & Chroma DB query over $\sim$5000 cached embeddings; $k=5$ retrieval \\
+    Embedding generation (RAG only) & 50--100 & Local embedding model (\texttt{nomic-embed-text} via Ollama); single forward pass \\
+    Vector search (RAG only) & 10--20 & Local HNSW query over $\sim$5000 cached embeddings; $k=5$ retrieval \\
     Prompt construction & 5--10 & String concatenation (system + retrieval + code + schema) \\
     LLM inference & 1200--1400 & Dominant bottleneck; Ollama generation with \texttt{num\_predict=1000} \\
     JSON parsing \& validation & 5--10 & Parse response, validate schema, extract findings \\
@@ -114,29 +114,29 @@ End-to-end latency comprises multiple stages. While the evaluation harness did n
 \begin{enumerate}
   \item \textbf{Model quantization:} 4-bit quantized models can reduce inference time by 30--50\% with minimal quality loss.
   \item \textbf{Speculative decoding:} Use smaller draft model for initial tokens, verified by larger model.
-  \item \textbf{Caching:} Memoize repeated function analyses (already implemented in extension); measured cache hit rate $\sim$40\% in development workflows.
+  \item \textbf{Caching:} Memoize repeated function analyses (already implemented in the extension); benefit depends strongly on edit pattern and repeated-scope frequency.
 \end{enumerate}
 
 \paragraph{Worst-case IDE scenarios.}
 Three scenarios stress latency tolerance:
 \begin{itemize}
-  \item \textbf{File save with inline mode:} Developer saves file; extension triggers analysis. At p95 latency ($>$2.5s for most models), diagnostics appear noticeably delayed, disrupting flow.
+  \item \textbf{Debounced inline mode after editing pauses:} After a document-change pause, diagnostics may still arrive noticeably late at p95 latency ($>$2.5s for most larger models), which disrupts flow.
   \item \textbf{Batch file analysis (workspace scan):} Analyzing 100 functions sequentially at median 1.5s/function $\Rightarrow$ 150 seconds (2.5 minutes). Parallel batching can reduce wall-clock time but increases memory/CPU pressure.
-  \item \textbf{Cold-start latency:} First invocation after Ollama model load adds 1--2 seconds. Mitigated by keeping Ollama warm via periodic health checks.
+  \item \textbf{Cold-start latency:} First invocation after Ollama model load can add noticeable startup delay. The reported run used no warm-up, so mitigation strategies such as pre-warming models remain future optimization work rather than part of the measured configuration.
 \end{itemize}
 
-\paragraph{Deployment recommendations by latency profile.}
+\paragraph{Latency feasibility by profile.}
 \begin{table}[H]
   \centering
-  \caption{Latency-driven deployment recommendations.}
+  \caption{Latency-driven configuration feasibility.}
   \label{tab:latency-deployment}
   \small
   \begin{tabularx}{\textwidth}{p{0.22\textwidth}Xp{0.28\textwidth}}
     \toprule
-    Latency requirement & Recommended configuration & Mitigation strategies \\
+    Latency requirement & Latency-compatible configuration & Mitigation strategies \\
     \midrule
     Real-time inline ($<$500 ms) & \textbf{None viable} in this run; \texttt{gemma3:1b} closest at p50 333 ms but p95 exceeds threshold & Aggressive caching; function-level scoping; disable RAG \\
-    Interactive inline ($<$1.5 s) & \texttt{gemma3:1b} (LLM-only); \texttt{qwen3:4b} (LLM+RAG) & Debounced triggers (500 ms delay); cache hit optimization \\
+    Interactive inline ($<$1.5 s) & \texttt{gemma3:1b} (LLM-only); \texttt{qwen3:4b} (LLM+RAG, latency-compatible but still high-noise) & Debounced triggers (800 ms delay); cache hit optimization \\
     Tolerable inline ($<$3 s) & \texttt{qwen3:8b} (LLM+RAG) for best quality & Accept occasional lag; pair with manual scan option \\
     Batch/audit (no hard limit) & Any configuration; prioritize F1 over latency & Parallel execution; progress indicators \\
     \bottomrule

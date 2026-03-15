@@ -79,9 +79,9 @@ This ensures repairs go through standard review and validation processes before 
 
 \subsection{Observed Repair Patterns and Quality}
 
-Qualitative review of repair suggestions in the evaluation dataset reveals common patterns:
+Qualitative review of representative repair suggestions in the evaluation dataset reveals common patterns. These categories come from informal manual inspection and are not presented as a separately scored benchmark.
 
-\paragraph{Effective repairs (estimated 60--70\% of suggestions).}
+\paragraph{Common effective repair patterns.}
 \begin{itemize}
   \item \textbf{Parameterized query replacement:} Replacing string concatenation SQL with parameterized queries (e.g., \texttt{db.query("SELECT * FROM users WHERE id=" + userId)} $\rightarrow$ \texttt{db.query("SELECT * FROM users WHERE id=?", [userId])}).
   \item \textbf{Input sanitization:} Adding \texttt{validator.escape()} or \texttt{DOMPurify.sanitize()} before using user input in HTML contexts.
@@ -90,7 +90,7 @@ Qualitative review of repair suggestions in the evaluation dataset reveals commo
 
 These repairs follow established secure coding patterns and are likely to improve security without breaking functionality.
 
-\paragraph{Repairs requiring developer adjustment (estimated 20--30\%).}
+\paragraph{Repairs that often require developer adjustment.}
 \begin{itemize}
   \item \textbf{Over-sanitization:} Model suggests sanitizing output that is already validated earlier in the call stack, leading to double-encoding.
   \item \textbf{Variable naming:} Repaired code uses generic names (\texttt{sanitizedInput}, \texttt{escapedValue}) that may not match project conventions.
@@ -99,13 +99,13 @@ These repairs follow established secure coding patterns and are likely to improv
 
 These require manual review and adjustment but provide a useful starting point.
 
-\paragraph{Problematic repairs (estimated $<$10\%).}
+\paragraph{Occasional problematic repairs.}
 \begin{itemize}
   \item \textbf{Functional breakage:} Rare cases where repair changes semantics (e.g., replacing \texttt{eval()} with \texttt{JSON.parse()} when input is valid JavaScript but not JSON).
   \item \textbf{Security regression:} Extremely rare; observed once where model removed authentication check while fixing injection vulnerability.
 \end{itemize}
 
-The low rate of problematic repairs reflects conservative prompting (``preserve intended purpose'') and minimal edit scope, but human review remains essential.
+These problematic cases appeared less often than routine pattern-based fixes in the informal review, but human review remains essential.
 
 \subsection{Developer Workflow for Repair Application}
 

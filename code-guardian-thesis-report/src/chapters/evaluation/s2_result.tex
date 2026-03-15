@@ -109,7 +109,7 @@ Based on the observed degradation patterns, we hypothesize several failure modes
     \texttt{gemma3:4b} & Over-sensitive flagging; reduced precision despite retrieval & Retrieval context amplifies pattern-matching without improving contextual discrimination; model cannot abstain on low-confidence cases \\
     \texttt{CodeLlama:latest} & Severe recall/precision drop; inconsistent JSON outputs & Code-specialized training; interprets security guidance as code rather than interpretive knowledge; struggles with strict output format under increased prompt length \\
     \texttt{gemma3:1b} & Improved recall but persistent FPR 100\% & Insufficient capacity to balance retrieval guidance with contextual reasoning; defaults to over-reporting \\
-    \texttt{qwen3:4b/8b} & Improved F1 and stable FPR & Strong instruction-following; effectively integrates retrieved knowledge to refine labels and reduce hallucination \\
+    \texttt{qwen3:4b/8b} & Improved F1 and stable FPR & Strong instruction-following; effectively integrates retrieved knowledge to refine labels and improve explanation grounding \\
     \bottomrule
   \end{tabularx}
 \end{table}

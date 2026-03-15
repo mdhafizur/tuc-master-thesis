@@ -171,7 +171,7 @@ To prevent analysis on every keystroke, Code Guardian implements a debouncing me
 \begin{lstlisting}[caption={Debouncing implementation for real-time analysis}, label={lst:impl-debounce}]
 class Debouncer:
   timer: Timer | null = null
-  delay: number = 500  // milliseconds
+  delay: number = 800  // milliseconds
 
   trigger(callback: () => void):
     if timer != null:
@@ -195,7 +195,7 @@ onDocumentChange(event):
   })
 \end{lstlisting}
 
-This approach reduces LLM invocations by 80--90\% during typical editing sessions. When a developer types continuously, the timer is repeatedly reset, and analysis only occurs after a 500\,ms pause. This balances responsiveness (R6) with resource efficiency.
+This approach reduces unnecessary LLM invocations during continuous typing. When a developer types continuously, the timer is repeatedly reset, and analysis only occurs after an 800\,ms pause. This balances responsiveness (R6) with resource efficiency.
 
 \subsection*{Interactive vs.\ Batch Workflows}
 

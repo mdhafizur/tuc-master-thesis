@@ -40,7 +40,7 @@ External requests were observed only when explicit knowledge refresh was trigger
     \midrule
     \texttt{ollama.baseUrl} & LLM inference endpoint & \texttt{http://localhost:11434} \\
     \texttt{backend.serverUrl} & Analysis backend endpoint & \texttt{http://localhost:3000} \\
-    \texttt{vectorStore.provider} & Retrieval backend & \texttt{local} (Chroma) \\
+    \texttt{vectorStore.provider} & Retrieval backend & \texttt{local} (HNSW index) \\
     \texttt{knowledgeBase.autoRefresh} & Auto-update behavior & \texttt{false} (manual) \\
     \texttt{telemetry.enabled} & Telemetry collection & \texttt{false} \\
     \bottomrule

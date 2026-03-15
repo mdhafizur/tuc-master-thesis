@@ -8,7 +8,7 @@ Static Application Security Testing (SAST) tools are widely used because they ar
 
 Large Language Models (LLMs) add strong code understanding and explanation capabilities \cite{brown2020gpt3,chen2021codex,openai2023gpt4}, but they are probabilistic and can hallucinate or miss security constraints \cite{pearce2022copilot,ji2023hallucination}. Retrieval-Augmented Generation (RAG) can improve grounding by injecting relevant security knowledge at inference time \cite{lewis2020rag,karpukhin2020dpr,guu2020realm,mialon2023augmented}. Many existing assistants, however, rely on cloud inference, which raises confidentiality concerns for proprietary code \cite{carlini2021extracting,gdpr2016}.
 
-This thesis investigates a local, privacy-preserving alternative: Code Guardian, a Visual Studio Code assistant that combines a locally hosted LLM, local retrieval over curated security knowledge, and IDE context extraction for JavaScript/TypeScript vulnerability detection and repair suggestions. The evaluation uses reproducible local experiments and reports precision, recall, F1, false-positive rate (FPR), JSON parse success, and latency.
+This thesis investigates a local, privacy-preserving alternative: Code Guardian, a Visual Studio Code assistant that combines a locally hosted LLM, local retrieval over curated security knowledge, and IDE context extraction for JavaScript/TypeScript vulnerability detection and repair suggestions. The evaluation uses documented local experiments and reports precision, recall, F1, false-positive rate (FPR), JSON parse success, and latency.
 
 \subsection*{Motivating Scenario}
 
@@ -26,7 +26,7 @@ In scope are local privacy boundaries and robustness of developer-facing output.
 The thesis addresses:
 \begin{itemize}
   \item \textbf{RQ1 (Feasibility):} To what extent can a locally deployed LLM integrated into VS Code provide useful vulnerability detection and repair suggestions without transmitting source code to external services?
-  \item \textbf{RQ2 (Grounding):} How does retrieval-augmented prompting influence detection quality, explanation consistency, and hallucination behavior compared to an LLM-only configuration?
+  \item \textbf{RQ2 (Grounding):} How does retrieval-augmented prompting influence detection quality and the qualitative grounding of explanations compared to an LLM-only configuration?
   \item \textbf{RQ3 (Practicality):} What performance mechanisms (scoping, caching, debouncing) are necessary to make LLM-based security feedback usable within interactive IDE workflows?
 \end{itemize}
 
@@ -59,7 +59,7 @@ The thesis contributes:
 \begin{itemize}
   \item \textbf{Code Guardian prototype:} a VS Code extension for local vulnerability analysis and developer-controlled repair suggestions.
   \item \textbf{Privacy-preserving architecture:} local inference and local retrieval that keep source code and analysis artifacts on-device.
-  \item \textbf{Reproducible evaluation harness:} repository-contained scripts and datasets for model/mode comparison over precision, recall, F1, FPR, parse success, and latency.
+  \item \textbf{Documented evaluation harness:} repository-contained scripts and datasets for model/mode comparison over precision, recall, F1, FPR, parse success, and latency.
   \item \textbf{IDE integration mechanisms:} debounced triggering, function-level scoping, and caching for practical interaction latency.
   \item \textbf{Empirical findings:} in this thesis run, \texttt{qwen3:8b} with RAG provides the strongest overall trade-off among tested local configurations (F1 63.76\%, FPR 26.67\%, median latency \textasciitilde1.5\,s; Chapter~\ref{chap:evaluation}).
 \end{itemize}
@@ -67,7 +67,7 @@ The thesis contributes:
 \section{Research Method}
 \label{sec:intro-method}
 
-The thesis follows a design-and-evaluate method: derive requirements from analysis and related work, map them to architecture and implementation, then evaluate the system under reproducible local settings. Evidence combines quantitative metrics (precision, recall, F1, FPR, parse success, latency) and qualitative case analysis (representative true positives, false positives, and false negatives).
+The thesis follows a design-and-evaluate method: derive requirements from analysis and related work, map them to architecture and implementation, then evaluate the system under documented local settings. Evidence combines quantitative metrics (precision, recall, F1, FPR, parse success, latency) and qualitative case analysis (representative true positives, false positives, and false negatives).
 
 This mixed strategy is necessary because no single metric captures deployment value. High recall with persistent false positives increases triage cost, while low latency with poor recall limits security utility.
 
