@@ -92,7 +92,7 @@ class AnalysisCache:
 \end{lstlisting}
 
 \paragraph{Cache effectiveness.}
-The content-based key (\texttt{sha256(code.trim())}) ensures that only semantic code changes invalidate the cache. Formatting changes (whitespace, indentation) that do not affect code meaning will still produce cache hits. The 30-minute TTL prevents stale results from persisting indefinitely, while the 500-entry limit prevents unbounded memory growth during long editing sessions. In repetitive editing patterns such as undo/redo, small local edits, and navigation across unchanged snippets, the cache can remove a substantial share of otherwise repeated analyses. Cache hit rate, however, was not treated as a primary benchmark metric in this thesis and therefore is discussed qualitatively rather than as a headline result.
+The content-based key hashes the exact code snippet together with the active model and prompt mode (\texttt{rag-on}/\texttt{rag-off}). This keeps LLM-only and RAG results separated in the cache, but it also means whitespace-only edits can invalidate entries in the current implementation. The 30-minute TTL prevents stale results from persisting indefinitely, while the 100-entry limit bounds memory growth during long editing sessions. In repetitive editing patterns such as undo/redo, small local edits, and navigation across unchanged snippets, the cache can still remove a substantial share of otherwise repeated analyses. Cache hit rate, however, was not treated as a primary benchmark metric in this thesis and therefore is discussed qualitatively rather than as a headline result.
 
 \subsection{Cost-Aware Mode Selection}
 \label{subsec:impl-cost-aware-selection}

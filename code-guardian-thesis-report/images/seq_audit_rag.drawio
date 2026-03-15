@@ -84,7 +84,7 @@
           <mxGeometry x="310" y="260" width="120" height="40" as="geometry" />
         </mxCell>
 
-        <mxCell id="step5" value="5. Search(embedding, k=5)" style="edgeStyle=orthogonalEdgeStyle;html=1;align=left;spacingLeft=2;endArrow=block;rounded=0;" edge="1" parent="1">
+        <mxCell id="step5" value="5. Search(embedding, k configurable)" style="edgeStyle=orthogonalEdgeStyle;html=1;align=left;spacingLeft=2;endArrow=block;rounded=0;" edge="1" parent="1">
           <mxGeometry relative="1" as="geometry">
             <mxPoint x="370" y="320" as="sourcePoint" />
             <mxPoint x="530" y="320" as="targetPoint" />

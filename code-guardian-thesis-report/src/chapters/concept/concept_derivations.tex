@@ -37,7 +37,7 @@ Traditional SAST tools operate as separate processes in CI/CD pipelines, providi
 
 The proposed system integrates directly into Visual Studio Code as an extension, providing security analysis during active development. This design supports two interaction modes:
 \begin{itemize}
-\item \textbf{Inline detection}: Real-time vulnerability annotations triggered by debounced document changes, providing immediate feedback similar to type errors or linting warnings
+\item \textbf{Inline detection}: Debounced vulnerability annotations triggered by document changes, providing IDE-native feedback during active development
 \item \textbf{On-demand analysis}: Explicit analysis commands for comprehensive security audits of selected code regions or entire files
 \end{itemize}
 

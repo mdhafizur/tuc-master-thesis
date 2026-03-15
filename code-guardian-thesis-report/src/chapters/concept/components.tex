@@ -34,7 +34,7 @@ The retrieval component implements Retrieval-Augmented Generation (RAG) to groun
 \end{itemize}
 Knowledge artifacts are cached on disk and reused across sessions. When network access is unavailable, the system falls back to a small baseline knowledge bundle so retrieval remains functional (with reduced coverage).
 
-\textbf{Indexing and retrieval.} Knowledge entries are chunked using a recursive splitter (chunk size 1000, overlap 200) and embedded locally through an Ollama-served embedding model. Embeddings are stored in a local HNSW vector index \cite{malkov2018hnsw} via LangChain tooling \cite{langchainDocs}. At query time, the top-$k$ most similar chunks are retrieved (default $k=3$) and injected into the prompt as an explicit ``relevant security knowledge'' section.
+\textbf{Indexing and retrieval.} Knowledge entries are chunked using a recursive splitter (chunk size 1000, overlap 200) and embedded locally through an Ollama-served embedding model. Embeddings are stored in a local HNSW vector index \cite{malkov2018hnsw} via LangChain tooling \cite{langchainDocs}. At query time, the top-$k$ most similar chunks are retrieved (runtime default $k=3$; the evaluation harness in Chapter~\ref{chap:evaluation} uses $k=5$) and injected into the prompt as an explicit ``relevant security knowledge'' section.
 
 \textbf{Privacy boundary.} Retrieval and embeddings are executed locally. Optional knowledge refresh operations fetch only public vulnerability metadata; user source code is not transmitted to those endpoints (R5).
 
@@ -51,7 +51,7 @@ The vulnerability detection component performs local LLM inference and returns f
 \end{itemize}
 If no issues are found, the model must return an empty array \texttt{[]}. The analyzer performs defensive parsing by stripping code fences and extracting the first JSON array substring if the model emits additional text.
 
-\textbf{Failure handling and caching.} Transient inference failures (timeouts, local server warm-up) are handled through retry with exponential backoff. To reduce repeated inference on unchanged code, results are cached with an LRU-style strategy keyed by a hash of (code, model), improving responsiveness during iterative edits.
+\textbf{Failure handling and caching.} Transient inference failures (timeouts, local server warm-up) are handled through retry with exponential backoff. To reduce repeated inference on unchanged code, results are cached with an LRU-style strategy keyed by a hash of (code, model, prompt mode), improving responsiveness during iterative edits.
 
 \textbf{Interactive analysis mode.} In addition to the structured diagnostics flow, Code Guardian includes a webview-based analysis view for selected code. This mode uses Markdown-formatted responses and supports follow-up Q\&A. When enabled, the RAG manager can be used to enrich the system prompt and user prompt for this interactive workflow.
 
