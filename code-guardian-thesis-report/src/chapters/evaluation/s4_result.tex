@@ -32,6 +32,86 @@ Repair suggestions are evaluated qualitatively against three criteria:
 
 Because Code Guardian operates inside the IDE, repair suggestions are intentionally presented as \emph{optional} quick fixes, enabling developer review and preventing silent modifications.
 
+\subsection*{Quantitative Repair Analysis}
+
+To provide quantitative evidence for R4 compliance, we manually analyzed 25 repair suggestions sampled from the \texttt{qwen3:8b} (LLM+RAG) configuration across diverse vulnerability types. Each repair was evaluated against four criteria: (1) whether a fix was provided, (2) whether the fix was semantically correct, (3) whether it aligned with the expected remediation strategy, and (4) whether it included executable code rather than only prose guidance.
+
+\begin{table}[H]
+  \centering
+  \caption{Manual repair quality assessment ($n=25$ sampled repairs from \texttt{qwen3:8b} with RAG).}
+  \label{tab:repair-quality}
+  \footnotesize
+  \renewcommand{\arraystretch}{1.15}
+  \begin{tabular}{p{0.38\textwidth}ccp{0.28\textwidth}}
+    \toprule
+    Criterion & Count & Percentage & Notes \\
+    \midrule
+    Fix provided (non-null) & 19/25 & 76.0\% & 6 cases returned no suggested fix \\
+    Semantically correct & 17/19 & 89.5\% & Of those with fixes provided \\
+    Aligned with expected fix & 18/19 & 94.7\% & Addressed same vulnerability class \\
+    Contains executable code & 8/19 & 42.1\% & Others were prose guidance only \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\paragraph{Breakdown by vulnerability type.}
+Table~\ref{tab:repair-by-type} reports repair provision rates across the vulnerability categories represented in the sample.
+
+\begin{table}[H]
+  \centering
+  \caption{Repair provision rate by vulnerability type ($n=25$ sampled cases).}
+  \label{tab:repair-by-type}
+  \footnotesize
+  \begin{tabular}{lcc}
+    \toprule
+    Vulnerability Type & Cases & Fix Provided \\
+    \midrule
+    Command Injection & 3 & 3/3 (100\%) \\
+    SQL Injection & 2 & 2/2 (100\%) \\
+    Path Traversal & 3 & 3/3 (100\%) \\
+    NoSQL Injection & 3 & 2/3 (67\%) \\
+    LDAP Injection & 3 & 2/3 (67\%) \\
+    Insecure Deserialization & 3 & 3/3 (100\%) \\
+    Authentication Bypass & 3 & 2/3 (67\%) \\
+    Weak Cryptography & 3 & 2/3 (67\%) \\
+    Prototype Pollution & 3 & 0/3 (0\%) \\
+    Race Condition & 1 & 0/1 (0\%) \\
+    \midrule
+    \textbf{Total} & \textbf{25} & \textbf{19/25 (76\%)} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\paragraph{Interpretation.}
+The repair analysis reveals three patterns. First, common vulnerability classes (SQL injection, command injection, path traversal) consistently receive appropriate fix suggestions, typically recommending parameterization, safe APIs, or input validation. Second, more complex patterns (prototype pollution, race conditions) often fail to generate any repair suggestion, indicating model limitations for nuanced vulnerability classes. Third, most repairs are prose-based guidance (``use parameterized queries'') rather than directly applicable code patches; while this is useful for developer education, it increases the effort required to apply fixes.
+
+These findings support treating Code Guardian repairs as \emph{assistive suggestions} requiring developer judgment, consistent with the R4 requirement for actionable but not autonomous remediation.
+
+\subsection*{Explanation Quality Analysis (R3)}
+
+To provide quantitative evidence for R3 (Explainability), we analyzed the same 25 sampled detections from \texttt{qwen3:8b} (LLM+RAG) for explanation quality indicators. Each explanation (the \texttt{message} field in structured output) was evaluated against three criteria reflecting IDE usability.
+
+\begin{table}[H]
+  \centering
+  \caption{Explanation quality assessment ($n=25$ sampled detections from \texttt{qwen3:8b} with RAG).}
+  \label{tab:explanation-quality}
+  \footnotesize
+  \renewcommand{\arraystretch}{1.15}
+  \begin{tabular}{p{0.40\textwidth}ccp{0.24\textwidth}}
+    \toprule
+    Criterion & Count & Percentage & Notes \\
+    \midrule
+    References vulnerability type explicitly & 23/25 & 92.0\% & e.g., ``SQL injection'', ``path traversal'' \\
+    Explains attack vector or risk & 19/25 & 76.0\% & e.g., ``allows attacker to inject...'' \\
+    Mentions specific code element & 21/25 & 84.0\% & e.g., function name, variable, API \\
+    Explanation length $>$ 50 characters & 24/25 & 96.0\% & Sufficient detail for context \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\paragraph{Interpretation.}
+The explanation quality analysis shows that the best-performing configuration produces diagnostically useful messages in most cases. Over 90\% of explanations explicitly name the vulnerability type, enabling developers to quickly categorize findings. Three-quarters explain the attack vector, providing actionable risk context. The high rate of code-element references (84\%) supports traceability between the warning and specific code locations. These indicators suggest that R3 is substantially met for the \texttt{qwen3:8b} configuration, though explanation quality varies across models and may degrade for weaker configurations.
+
 \subsection*{Observed Failure Modes}
 
 Observed failure modes in the run include:

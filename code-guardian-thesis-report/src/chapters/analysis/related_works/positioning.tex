@@ -1,7 +1,39 @@
 In contrast to much prior work, this thesis focuses on privacy-preserving vulnerability detection and repair using locally deployed LLMs integrated into Visual Studio Code. The proposed system combines retrieval-augmented reasoning with IDE-level context extraction to support both real-time and on-demand security analysis for JavaScript and TypeScript codebases. Unlike fine-tuned or cloud-dependent approaches, the system runs on-device by default and can operate fully offline when knowledge refresh is disabled. It also decouples security knowledge from model parameters and is evaluated through documented local ablation experiments (LLM-only vs.\ LLM+RAG) with quantitative metrics.
 
+\paragraph{Comparison with Cloud-Based Code Assistants.}
+GitHub Copilot and Amazon CodeWhisperer represent the dominant paradigm for AI-assisted coding, including security-related suggestions \cite{chen2021codex,li2023codewhisperer}. These systems leverage large-scale cloud infrastructure to provide real-time code completions and, increasingly, vulnerability scanning capabilities. GitHub Advanced Security integrates Copilot-powered code scanning with secret detection and dependency review \cite{githubAdvancedSecurity}. However, both approaches require transmitting source code to external servers for inference, which is unacceptable in regulated industries, government projects, or environments with strict intellectual property controls. Code Guardian addresses this limitation by keeping all inference local, enabling security assistance for codebases that cannot leave organizational boundaries.
+
+\paragraph{Comparison with Hybrid SAST Tools.}
+Modern SAST vendors increasingly offer hybrid modes. Snyk Code provides both cloud-based and local analysis options, with the local mode running a proprietary semantic analysis engine on-device \cite{snykDocs}. Semgrep supports fully local rule-based scanning with optional cloud features for team management and custom rule sharing \cite{semgrepDocs}. Unlike these tools, Code Guardian combines local LLM inference with retrieval-augmented prompting, enabling contextual reasoning and natural-language explanations that pure rule-based systems cannot provide. The trade-off is that LLM-based analysis introduces probabilistic behavior and higher latency compared to deterministic SAST, which motivates the hybrid deployment strategies discussed in Chapter~\ref{chap:evaluation}.
+
+\paragraph{Comparison with Research Prototypes.}
+Academic systems such as IRIS \cite{li2025iris} and SecRepair \cite{islam2024secrepair} demonstrate strong results by combining static analysis with LLM reasoning. However, these systems are typically evaluated in batch mode on benchmark datasets rather than integrated into interactive IDE workflows. They also often assume access to cloud-hosted models or require significant computational resources. Code Guardian prioritizes deployability on developer workstations with consumer-grade hardware, treating IDE integration latency and structured-output robustness as first-class requirements rather than secondary implementation details.
+
+\paragraph{Differentiation Summary.}
+Table~\ref{tab:positioning-comparison} summarizes the key differences between Code Guardian and representative alternatives across the dimensions most relevant to this thesis.
+
+\begin{table}[H]
+  \centering
+  \caption{Positioning comparison with representative security assistance approaches.}
+  \label{tab:positioning-comparison}
+  \footnotesize
+  \renewcommand{\arraystretch}{1.15}
+  \begin{tabularx}{\textwidth}{p{0.18\textwidth}XXXXX}
+    \toprule
+    Approach & Privacy & Contextual reasoning & Repair suggestions & IDE integration & Output contract \\
+    \midrule
+    GitHub Copilot & Cloud-dependent & Strong (LLM) & Yes & Native & Unstructured \\
+    Snyk Code (local) & Local analysis & Rule-based & Limited & Plugin & Structured \\
+    Semgrep & Fully local & Rule-based & No & CLI/Plugin & Structured \\
+    IRIS / SecRepair & Varies & Strong (hybrid) & Yes & Batch-only & Research-grade \\
+    \textbf{Code Guardian} & Fully local & LLM + RAG & Yes & Native VS Code & Strict JSON \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
 The core positioning claim is not that local LLMs outperform all alternatives across all metrics, but that they enable a \emph{different deployment envelope}: privacy-preserving IDE assistance with explicit control over model choice, retrieval strategy, and output contracts. This makes the approach operationally distinct from cloud assistants and complements pure SAST pipelines rather than replacing them.
 
-Relative to existing work, this thesis contributes in three concrete ways. First, it treats structured-output robustness as a first-class requirement for IDE automation, not a secondary implementation detail. Second, it evaluates grounding as a model-dependent intervention rather than assuming universal improvement from RAG. Third, it reports a baseline comparison with requested SAST tools under the same local evaluation harness, enabling direct interpretation of quality-versus-noise trade-offs in a shared setup.
+\paragraph{Concrete Contributions Relative to Prior Work.}
+Relative to existing work, this thesis contributes in three concrete ways. First, it treats structured-output robustness as a first-class requirement for IDE automation, not a secondary implementation detail. Many LLM-based security tools produce free-form natural language that requires manual interpretation; Code Guardian enforces a strict JSON contract with defensive parsing to enable automated diagnostics rendering and quick-fix generation. Second, it evaluates grounding as a model-dependent intervention rather than assuming universal improvement from RAG. The evaluation explicitly measures which models benefit from retrieval augmentation and which degrade, providing actionable guidance for configuration selection. Third, it reports a baseline comparison with established SAST tools (Semgrep, CodeQL, ESLint) under the same local evaluation harness, enabling direct interpretation of quality-versus-noise trade-offs in a shared setup.
 
 By addressing detection consistency, contextual reasoning, explainability, actionable repair, privacy preservation, and usability within a unified framework, this work aims to bridge the gap between academic advances in LLM-based security analysis and the practical requirements of real-world software development workflows.

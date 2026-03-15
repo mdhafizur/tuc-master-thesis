@@ -6,7 +6,7 @@ Most configurations still over-warn on secure code. Future iterations should add
 \medskip
 
 \noindent\textbf{2) Stronger context modeling across files.}
-Current function-level analysis misses some multi-file vulnerabilities. Lightweight static analysis (for example taint-style source-to-sink traces) can provide richer context to the prompt and improve both recall and precision on real projects.
+Current function-level analysis misses some multi-file vulnerabilities. Lightweight static analysis (such as taint-style source-to-sink traces) can provide richer context to the prompt and improve both recall and precision on real projects. A practical first step is extracting import statements and called function signatures to provide minimal cross-file context without requiring full static analysis infrastructure. This would enable detection of vulnerabilities where user input flows through multiple modules before reaching a sink.
 
 \medskip
 
@@ -21,7 +21,7 @@ Prompt-injection and retrieval-poisoning scenarios should be tested explicitly. 
 \medskip
 
 \noindent\textbf{5) Broader evaluation and user-facing evidence.}
-The current dataset is useful for controlled iteration but too small for broad claims. Future evaluation should include larger benchmark suites and selected real repositories, then validate workflow impact with developer studies (for example SUS and NASA-TLX) \cite{brooke1996sus,hart1988nasa}.
+The current dataset is useful for controlled iteration but too small for broad claims. Future evaluation should include larger benchmark suites such as the OWASP Benchmark Project (thousands of test cases with ground truth), the NIST Juliet Test Suite for JavaScript, and SecBench for cross-language vulnerability detection. Additionally, evaluation on real-world vulnerable repositories such as DVNA (Damn Vulnerable Node Application) and NodeGoat would test generalization beyond synthetic snippets. Workflow impact should be validated with developer studies measuring usability (SUS), cognitive load (NASA-TLX), and time-to-fix metrics \cite{brooke1996sus,hart1988nasa}.
 
 \subsection*{Phased Roadmap}
 
