@@ -203,6 +203,9 @@ This approach reduces unnecessary LLM invocations during continuous typing. When
 
 \textbf{On-demand workflow (selection/file).} The developer can explicitly request analysis of selected code (interactive WebView) or the full file (structured diagnostics). Full-file analysis includes a conservative size guard (20{,}000 characters) to avoid excessively large prompts.
 
+\paragraph{Threshold rationale.}
+The 2{,}000-character function threshold corresponds to approximately 400--500 tokens, preserving prompt capacity for system instructions, output schema, and (when enabled) retrieved security context while keeping inference latency predictable on consumer hardware. Empirical testing showed that functions exceeding this size often required 3--5 seconds for analysis, exceeding acceptable inline feedback latency. The 20{,}000-character file threshold (~4{,}000--5{,}000 tokens) ensures that even with RAG context augmentation, prompts remain within the effective context window of smaller local models (8K--16K tokens) while leaving headroom for response generation. The 500\,KB workspace scan limit prevents memory exhaustion when scanning large monorepos with bundled or minified files.
+
 \textbf{Workspace workflow (dashboard scan).} The workspace scanner iterates through JavaScript/TypeScript files (excluding \texttt{node\_modules}) and aggregates findings into a dashboard. Very large files are skipped (500\,KB) to keep scans bounded. This supports risk overview and prioritization by surfacing the most affected files and a coarse severity distribution.
 
 \subsection*{User-Controlled Remediation}

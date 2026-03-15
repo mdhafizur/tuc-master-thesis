@@ -169,6 +169,9 @@ The final thesis summary merges vulnerable-sample repeated runs (\texttt{runsPer
   \item Baseline normalization into a shared label schema can introduce taxonomy-mapping bias.
 \end{itemize}
 
+\paragraph{Statistical power considerations.}
+The small secure-sample size ($n=15$) limits the precision of FPR estimates. With 15 samples, the 95\% Wilson confidence interval for an observed FPR of 26.67\% (4/15) spans [10.90\%, 51.95\%]—too wide for confident deployment decisions. To achieve a 95\% CI width of $\pm$10 percentage points around a true FPR of 25\%, approximately 75 secure samples would be required; for $\pm$5pp precision, approximately 300 samples. Future evaluation iterations should prioritize expanding the secure-sample set to enable statistically meaningful FPR comparisons across configurations.
+
 \subsection*{Negative Results and Boundary Conditions}
 
 \begin{itemize}

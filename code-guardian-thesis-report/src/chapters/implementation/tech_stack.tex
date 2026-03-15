@@ -15,6 +15,8 @@ All model inference is performed through \textbf{Ollama} running on \texttt{loca
 
 Optional RAG is implemented with \textbf{LangChain} and a local vector index \cite{langchainDocs}. Security knowledge entries (CWE patterns, OWASP Top 10 guidance, selected CVE summaries, and JavaScript/TypeScript secure coding notes) are embedded using a lightweight local embedding model (\texttt{nomic-embed-text} via Ollama) and stored in an \textbf{HNSW} vector store. At analysis time, relevant knowledge snippets are retrieved and injected into the prompt to improve grounding of the model's reasoning and support R1--R3.
 
+The \texttt{nomic-embed-text} model was selected for three reasons: (1) native availability via Ollama, ensuring the same local deployment model as the LLM runtime; (2) strong performance on code and technical text retrieval tasks relative to its size (768-dimensional embeddings at 137M parameters); and (3) permissive licensing for local deployment. Alternative embedding models such as \texttt{all-MiniLM-L6-v2} or \texttt{bge-small-en} were considered but required separate runtime infrastructure or offered inferior code-domain performance in preliminary testing.
+
 \subsection*{Dynamic Vulnerability Knowledge Updates}
 
 The knowledge base is designed to be refreshable. Code Guardian supports updating OWASP and CVE information and persists cached data on disk. Importantly, only public vulnerability metadata is fetched; source code and extracted context remain local.

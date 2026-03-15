@@ -1,7 +1,7 @@
 \section{Experimental Setup}
 \label{sec:eval-setup}
 
-All experiments are executed locally using the Code Guardian evaluation harness in \path{code-guardian-extension/evaluation/evaluate-models.js}. The harness iterates over the curated dataset described in Section~\ref{sec:eval-dataset} and invokes Ollama with a strict JSON-only system prompt. Model decoding is configured for low randomness (\texttt{temperature=0.1}) to reduce output variance and improve parsing stability.
+All experiments are executed locally using the Code Guardian evaluation harness in \path{code-guardian-extension/evaluation/evaluate-models.js}. The harness iterates over the curated dataset described in Section~\ref{sec:eval-dataset} and invokes Ollama with a strict JSON-only system prompt. Model decoding is configured for low randomness (\texttt{temperature=0.1}) to reduce output variance and improve parsing stability. Temperature 0.1 was chosen over temperature 0.0 (greedy decoding) because preliminary runs showed that strictly greedy decoding occasionally produced repetitive output artifacts and reduced schema adherence in smaller models; the minimal randomness at 0.1 mitigated these artifacts while maintaining near-deterministic behavior.
 
 \subsection*{Response Schema for Scoring}
 
