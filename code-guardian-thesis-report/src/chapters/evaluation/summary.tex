@@ -8,6 +8,7 @@ This chapter provides run-level evidence on three dimensions: detection quality,
 \begin{itemize}
   \item \textbf{Best overall local configuration in this run:} \texttt{qwen3:8b} with RAG reached the highest F1 (63.76\%) with moderate secure-sample FPR (26.67\%).
   \item \textbf{RAG is model-dependent:} it improved \texttt{qwen3:8b} (58.12\% $\rightarrow$ 63.76\%) and \texttt{qwen3:4b} (54.90\% $\rightarrow$ 58.67\%), but degraded \texttt{gemma3:4b} and \texttt{CodeLlama:latest}.
+  \item \textbf{Exploratory paired tests remain cautious:} exact McNemar tests on matched sample-level outcomes did not show a statistically significant \texttt{qwen3} mode effect in this dataset, so the observed RAG gains are best interpreted as issue-level quality changes in this run.
   \item \textbf{False-positive control is the primary bottleneck:} most LLM configurations flagged all secure samples (FPR 100\%), which is costly for day-to-day IDE use.
   \item \textbf{SAST remains operationally valuable:} Semgrep had much lower recall (9.73\%) but low secure-sample FPR (6.67\%) and very low latency, making it a useful low-noise anchor.
   \item \textbf{Privacy objective is satisfied in the evaluated architecture:} code analysis stayed local; optional network activity is limited to public vulnerability metadata refresh.
@@ -116,7 +117,7 @@ Intervals confirm major directionality (for example, low baseline recall and hig
   \end{tabularx}
 \end{table}
 
-\subsection*{Requirement Compliance (R1--R6)}
+\subsection*{Requirement Compliance (R1--R7)}
 
 \begin{table}[H]
   \centering
@@ -128,12 +129,13 @@ Intervals confirm major directionality (for example, low baseline recall and hig
     \toprule
     Req. & Operational criterion in this thesis & Run outcome evidence & Status \\
     \midrule
-    R1 & Stable repeated detection under fixed settings. & Best mode reached F1 63.76\% with stable parse behavior; still model-sensitive. & Partial \\
-    R2 & Context-aware reasoning beyond surface patterns. & Strong on common injection cases; misses and over-warning remain. & Partial \\
-    R3 & Interpretable explanations linked to code context. & IDE-native diagnostics/hovers are useful but model-dependent in quality. & Partial \\
-    R4 & Actionable, security-improving repairs. & Useful fix patterns observed; no automated functional verification. & Partial \\
-    R5 & Local privacy boundary (no source-code exfiltration). & Network-capture checks and localhost-only configuration validation in this thesis run confirm local analysis boundaries. & Pass \\
-    R6 & Usability via responsive interaction. & Usable latency for selected profiles; best-quality modes are slower. & Partial \\
+    R1 & Accurate vulnerability detection with controlled false positives. & Best mode reached F1 63.76\%; false-positive control remains configuration-sensitive. & Partial \\
+    R2 & Stable repeated detection under fixed settings. & Parse behavior is stable, but findings remain model- and mode-sensitive across repeated runs. & Partial \\
+    R3 & Context-aware reasoning beyond surface patterns. & Strong on common injection cases; misses and over-warning remain. & Partial \\
+    R4 & Interpretable explanations linked to code context. & IDE-native diagnostics/hovers are useful but model-dependent in quality. & Partial \\
+    R5 & Actionable, security-improving repairs. & Useful fix patterns observed; no automated functional verification. & Partial \\
+    R6 & Local privacy boundary (no source-code exfiltration). & Network-capture checks and localhost-only configuration validation in this thesis run confirm local analysis boundaries. & Pass \\
+    R7 & Usability via responsive interaction. & Usable latency for selected profiles; best-quality modes are slower. & Partial \\
     \bottomrule
   \end{tabularx}
 \end{table}
@@ -165,7 +167,7 @@ The final thesis summary merges vulnerable-sample repeated runs (\texttt{runsPer
 \begin{itemize}
   \item The scored dataset is small (\texttt{n=128}; 113 vulnerable, 15 secure), so secure-sample FPR has wide uncertainty intervals.
   \item The benchmark is mostly snippet-centric; generalization to large multi-file repositories remains limited.
-  \item R6 is evaluated primarily via latency and workflow observation; no controlled user study was run.
+  \item R7 is evaluated primarily via latency and workflow observation; no controlled user study was run.
   \item Baseline normalization into a shared label schema can introduce taxonomy-mapping bias.
 \end{itemize}
 
@@ -195,7 +197,7 @@ The small secure-sample size ($n=15$) limits the precision of FPR estimates. Wit
     Internal & Label-matching and issue-level scoring can bias precision/recall. & Fixed schema, repeated runs, explicit scoring documentation. & Label mismatch effects remain possible. \\
     Construct & Core metrics do not fully capture developer value or repair correctness. & Added case studies and qualitative repair analysis. & No automatic end-to-end fix-correctness metric. \\
     External & Snippet-centric data may not reflect real multi-file repositories. & Diverse CWE/OWASP-aligned samples and baseline comparisons. & Repository-level generalization remains uncertain. \\
-    Measurement interpretation & Repeated measurements on same snippets reduce independence. & Reported raw counts and descriptive deltas. & No paired inferential analysis for mode effects. \\
+    Measurement interpretation & Repeated measurements on same snippets reduce independence. & Reported raw counts, Wilson intervals, and exploratory exact McNemar tests on matched sample outcomes. & Issue-level mode effects remain descriptive; secure-sample inference is low-power. \\
     \bottomrule
   \end{tabularx}
 \end{table}

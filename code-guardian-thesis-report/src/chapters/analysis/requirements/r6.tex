@@ -1,9 +1,9 @@
-\label{sec:r6-usability}
+\label{sec:r6-privacy}
 
-R6 concerns usability in the specific sense relevant to this thesis: responsiveness in the IDE. Security feedback is only useful during active development if it arrives within a time frame that fits normal editing and review workflows.
+R6 defines the central boundary of this thesis: vulnerability detection and repair assistance must operate without transmitting source code or code-derived analysis artifacts to external services. In practical terms, the assistant should keep prompts, findings, retrieved context, and generated fixes on the developer machine during normal analysis workflows.
 
-This requirement is especially important for local LLM-based systems because inference cost, retrieval overhead, and prompt size can make security assistance noticeably slower than conventional diagnostics. Human-computer interaction research consistently shows that growing delay disrupts flow and lowers willingness to use a tool repeatedly \cite{card1991model,nielsen1994usability}.
+This requirement follows directly from the intended deployment setting. Source code may contain proprietary logic, intellectual property, or regulated information, making cloud-based analysis unacceptable in many organizations. Partial redaction is not a sufficient solution because security-relevant context is often distributed across the code and may be lost when stripped down.
 
-For Code Guardian, R6 means that inline and on-demand analysis must be scoped and orchestrated in a way that keeps interaction practical on real hardware. The design response is function-level scoping, debouncing, caching, and differentiated modes for lighter inline use versus heavier explicit scans.
+For Code Guardian, R6 implies local model inference, local retrieval, and explicit separation between code-bearing workflows and optional public-metadata refresh paths. The design response is therefore a local-first architecture based on Ollama, local vector storage, and disabled-by-default background data egress for analysis.
 
-In the evaluation, R6 is operationalized through end-to-end latency measurements reported together with the hardware profile. Median latency captures the typical interaction cost, while mean latency provides a simple indicator of slower tails under the measured local setup.
+In the evaluation, R6 is assessed primarily through architectural and configuration evidence: the analyzed workflows keep source code on localhost, while optional knowledge refresh accesses only public vulnerability metadata and can be disabled for offline operation.

@@ -1,7 +1,7 @@
 \section{System Workflow}
 \label{sec:system-workflow}
 
-This section explains how Code Guardian turns JavaScript/TypeScript code in Visual Studio Code into vulnerability findings and repair suggestions. The workflow implements the design from Chapter~\ref{chap:concept} and ties it to the requirements in Chapter~\ref{chap:analysis}, especially privacy-preserving operation (R5), responsiveness (R6), and explainability (R3).
+This section explains how Code Guardian turns JavaScript/TypeScript code in Visual Studio Code into vulnerability findings and repair suggestions. The workflow implements the design from Chapter~\ref{chap:concept} and ties it to the requirements in Chapter~\ref{chap:analysis}, especially privacy-preserving operation (R6), responsiveness (R7), and explainability (R4).
 
 \subsection*{End-to-End Processing Flow}
 
@@ -195,7 +195,7 @@ onDocumentChange(event):
   })
 \end{lstlisting}
 
-This approach reduces unnecessary LLM invocations during continuous typing. When a developer types continuously, the timer is repeatedly reset, and analysis only occurs after an 800\,ms pause. This balances responsiveness (R6) with resource efficiency.
+This approach reduces unnecessary LLM invocations during continuous typing. When a developer types continuously, the timer is repeatedly reset, and analysis only occurs after an 800\,ms pause. This balances responsiveness (R7) with resource efficiency.
 
 \subsection*{Interactive vs.\ Batch Workflows}
 
@@ -210,4 +210,4 @@ The 2{,}000-character function threshold corresponds to approximately 400--500 t
 
 \subsection*{User-Controlled Remediation}
 
-Repair suggestions are never applied automatically. Instead, the system presents a quick-fix option that inserts the suggested patch only after explicit user confirmation. This design preserves developer control (R4), prevents silent behavior changes, and keeps responsibility for functional correctness with the human developer.
+Repair suggestions are never applied automatically. Instead, the system presents a quick-fix option that inserts the suggested patch only after explicit user confirmation. This design preserves developer control (R5), prevents silent behavior changes, and keeps responsibility for functional correctness with the human developer.

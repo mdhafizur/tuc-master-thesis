@@ -21,7 +21,7 @@ In \texttt{qwen3:8b} (LLM+RAG), this vulnerable sample was missed in a represent
 Sample ID: XSS representative case.
 In \texttt{qwen3:8b} (LLM+RAG), the model correctly flagged unsafe HTML sink usage and proposed replacing \texttt{innerHTML} with safer rendering behavior.
 
-\subsection*{Repair Suggestion Quality (R4)}
+\subsection*{Repair Suggestion Quality (R5)}
 
 Repair suggestions are evaluated qualitatively against three criteria:
 \begin{itemize}
@@ -34,7 +34,7 @@ Because Code Guardian operates inside the IDE, repair suggestions are intentiona
 
 \subsection*{Quantitative Repair Analysis}
 
-To provide quantitative evidence for R4 compliance, we manually analyzed 25 repair suggestions sampled from the \texttt{qwen3:8b} (LLM+RAG) configuration across diverse vulnerability types. Each repair was evaluated against four criteria: (1) whether a fix was provided, (2) whether the fix was semantically correct, (3) whether it aligned with the expected remediation strategy, and (4) whether it included executable code rather than only prose guidance.
+To provide quantitative evidence for R5 compliance, we manually analyzed 25 repair suggestions sampled from the \texttt{qwen3:8b} (LLM+RAG) configuration across diverse vulnerability types. Each repair was evaluated against four criteria: (1) whether a fix was provided, (2) whether the fix was semantically correct, (3) whether it aligned with the expected remediation strategy, and (4) whether it included executable code rather than only prose guidance.
 
 \begin{table}[H]
   \centering
@@ -85,11 +85,11 @@ Table~\ref{tab:repair-by-type} reports repair provision rates across the vulnera
 \paragraph{Interpretation.}
 The repair analysis reveals three patterns. First, common vulnerability classes (SQL injection, command injection, path traversal) consistently receive appropriate fix suggestions, typically recommending parameterization, safe APIs, or input validation. Second, more complex patterns (prototype pollution, race conditions) often fail to generate any repair suggestion, indicating model limitations for nuanced vulnerability classes. Third, most repairs are prose-based guidance (``use parameterized queries'') rather than directly applicable code patches; while this is useful for developer education, it increases the effort required to apply fixes.
 
-These findings support treating Code Guardian repairs as \emph{assistive suggestions} requiring developer judgment, consistent with the R4 requirement for actionable but not autonomous remediation.
+These findings support treating Code Guardian repairs as \emph{assistive suggestions} requiring developer judgment, consistent with the R5 requirement for actionable but not autonomous remediation.
 
-\subsection*{Explanation Quality Analysis (R3)}
+\subsection*{Explanation Quality Analysis (R4)}
 
-To provide quantitative evidence for R3 (Explainability), we analyzed the same 25 sampled detections from \texttt{qwen3:8b} (LLM+RAG) for explanation quality indicators. Each explanation (the \texttt{message} field in structured output) was evaluated against three criteria reflecting IDE usability.
+To provide quantitative evidence for R4 (Explainability), we analyzed the same 25 sampled detections from \texttt{qwen3:8b} (LLM+RAG) for explanation quality indicators. Each explanation (the \texttt{message} field in structured output) was evaluated against three criteria reflecting IDE usability.
 
 \begin{table}[H]
   \centering
@@ -110,7 +110,7 @@ To provide quantitative evidence for R3 (Explainability), we analyzed the same 2
 \end{table}
 
 \paragraph{Interpretation.}
-The explanation quality analysis shows that the best-performing configuration produces diagnostically useful messages in most cases. Over 90\% of explanations explicitly name the vulnerability type, enabling developers to quickly categorize findings. Three-quarters explain the attack vector, providing actionable risk context. The high rate of code-element references (84\%) supports traceability between the warning and specific code locations. These indicators suggest that R3 is substantially met for the \texttt{qwen3:8b} configuration, though explanation quality varies across models and may degrade for weaker configurations.
+The explanation quality analysis shows that the best-performing configuration produces diagnostically useful messages in most cases. Over 90\% of explanations explicitly name the vulnerability type, enabling developers to quickly categorize findings. Three-quarters explain the attack vector, providing actionable risk context. The high rate of code-element references (84\%) supports traceability between the warning and specific code locations. These indicators suggest that R4 is substantially met for the \texttt{qwen3:8b} configuration, though explanation quality varies across models and may degrade for weaker configurations.
 
 \subsection*{Observed Failure Modes}
 

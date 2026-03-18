@@ -1,9 +1,9 @@
-\label{sec:r2-context-awareness}
+\label{sec:r2-consistency}
 
-R2 captures the ability to reason about vulnerabilities in context rather than by surface pattern alone. In this thesis, context-aware reasoning means that the assistant should distinguish genuinely exploitable code from code that only appears suspicious, while accounting for surrounding logic such as validation, sanitization, and API usage.
+R2 addresses detection consistency. For Code Guardian, consistency means that the same code under fixed settings should lead to structurally stable output, comparable findings, and sufficiently repeatable classifications and localizations for developer action. This is especially important in security analysis, where unstable results quickly reduce trust and make remediation decisions harder to justify.
 
-This requirement is necessary because many security flaws depend on how data moves through the program, not only on the presence of specific keywords or sink calls \cite{livshits2005java,chess2004staticanalysis}. LLM-based systems face the complementary problem that incomplete context can lead to over-warning, missed vulnerabilities, or confidently stated but weakly grounded conclusions \cite{pearce2022copilot,ji2023hallucination}.
+This requirement matters because LLM-based systems introduce nondeterminism through probabilistic generation, schema deviations, and prompt sensitivity \cite{openai2023gpt4,ji2023hallucination}. Even when raw detection quality is acceptable, inconsistent output can still make an assistant unsuitable for IDE integration if developers cannot predict whether a warning, label, or line range will change between runs.
 
-For Code Guardian, R2 therefore implies three capabilities: combining dispersed evidence within the selected scope, recognizing mitigation logic when it is present, and avoiding unsupported conclusions when relevant context is missing. The design response is scoped code extraction, structured prompting, and optional retrieval grounding with curated security knowledge.
+For this thesis, R2 implies stable structured output, stable issue presence under repeated runs, and sufficiently repeatable labeling/localization for review workflows. The design response is a strict JSON contract, defensive parsing, scoped prompting, caching of unchanged analyses, and optional retrieval grounding to reduce unsupported variation.
 
-In the evaluation, R2 is assessed through issue-level detection quality on context-dependent cases, supported by qualitative review of representative true positives, false positives, false negatives, and mitigation-sensitive examples.
+In the evaluation, R2 is operationalized through JSON parse stability, exploratory repeated-run agreement checks, and qualitative review of label and localization stability across fixed configurations.

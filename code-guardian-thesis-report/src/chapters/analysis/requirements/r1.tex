@@ -1,9 +1,9 @@
-\label{sec:r1-consistency}
+\label{sec:r1-accuracy}
 
-R1 addresses the reliability of the assistant's detection behavior. For Code Guardian, detection accuracy and consistency mean that the same code should lead to comparable findings, classifications, and localizations under fixed settings. This is especially important in security analysis, where unstable results quickly reduce developer trust and make remediation decisions harder to justify.
+R1 addresses detection accuracy. For Code Guardian, this means that the assistant should identify real vulnerabilities with useful precision and recall while keeping false positives at a practically manageable level. In a developer-facing IDE workflow, accuracy is not only about finding many issues, but about producing findings that are correct often enough to remain worth reviewing.
 
-This requirement is motivated by two risks. First, traditional security tools already suffer from noisy warnings, and inconsistent output further lowers acceptance in practice \cite{johnson2013don}. Second, LLM-based systems introduce additional nondeterminism through probabilistic generation and schema deviations \cite{openai2023gpt4,ji2023hallucination,pearce2022copilot}. A practical IDE assistant must therefore control variation rather than merely maximize raw recall.
+This requirement is motivated by the central trade-off in security assistance. Traditional security tools are often criticized for noisy warnings, while LLM-based systems can introduce both over-warning and missed detections depending on model choice and prompting \cite{johnson2013don,pearce2022copilot,ji2023hallucination}. A practical assistant must therefore be judged by the quality of its findings, not only by whether it can produce plausible explanations.
 
-For this thesis, R1 implies stable issue detection, stable CWE-style classification, and sufficiently repeatable localization for developer action. The design response is a strict JSON contract, defensive parsing, scoped prompting, and optional retrieval grounding to reduce unsupported variation.
+For this thesis, R1 implies vulnerability-type detection quality that is strong enough to justify developer attention under local deployment constraints. The design response is scoped prompting, optional retrieval grounding, baseline comparison against deterministic tools, and explicit reporting of precision, recall, F1, and secure-sample false-positive rate.
 
-In the evaluation, R1 is operationalized primarily through pooled issue-level precision, recall, and F1 under fixed configurations, complemented by parse stability and qualitative checks of label and localization stability across repeated runs.
+In the evaluation, R1 is operationalized primarily through pooled issue-level precision, recall, F1, and secure-sample false-positive behavior across fixed model and prompting configurations.

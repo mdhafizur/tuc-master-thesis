@@ -28,7 +28,7 @@ RAG can be toggled at runtime through settings and is surfaced via a status-bar 
 \subsection{Caching and Responsiveness}
 \label{subsec:impl-caching}
 
-To reduce repeated inference calls, Code Guardian caches analysis results keyed by (code snippet, model). Under typical editing patterns, small changes frequently return to previously seen states (undo/redo, formatting), making caching effective. Debouncing and caching together aim to keep real-time diagnostics responsive (R6) while maintaining stable behavior across repeated runs (R1).
+To reduce repeated inference calls, Code Guardian caches analysis results keyed by (code snippet, model). Under typical editing patterns, small changes frequently return to previously seen states (undo/redo, formatting), making caching effective. Debouncing and caching together aim to keep real-time diagnostics responsive (R7) while maintaining stable behavior across repeated runs (R2).
 
 \paragraph{Cache invalidation strategy.}
 The cache uses a hybrid eviction policy combining time-to-live (TTL), least-recently-used (LRU) ordering, and content-based hashing to balance memory usage and hit rate:
@@ -125,4 +125,4 @@ Ordering matters operationally. Early rejection of oversized scopes avoids unnec
 \subsection{Repair Suggestion Handling}
 \label{subsec:impl-repair}
 
-When the model returns a suggested fix, Code Guardian exposes it as a quick fix action. The extension does not auto-apply modifications; instead it requires explicit user confirmation and integrates with the editor undo stack. This design ensures that repair suggestions remain \emph{advisory} and that final responsibility for functional correctness stays with the developer (R4).
+When the model returns a suggested fix, Code Guardian exposes it as a quick fix action. The extension does not auto-apply modifications; instead it requires explicit user confirmation and integrates with the editor undo stack. This design ensures that repair suggestions remain \emph{advisory} and that final responsibility for functional correctness stays with the developer (R5).

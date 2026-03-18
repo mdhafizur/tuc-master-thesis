@@ -1,9 +1,9 @@
-\label{sec:r5-privacy}
+\label{sec:r5-repair-quality}
 
-R5 defines the central boundary of this thesis: vulnerability detection and repair assistance must operate without transmitting source code or code-derived analysis artifacts to external services. In practical terms, the assistant should keep prompts, findings, retrieved context, and generated fixes on the developer machine during normal analysis workflows.
+R5 extends the thesis beyond detection to remediation. Actionable repair suggestions should translate a reported vulnerability into a concrete, reviewable code change that improves security without taking control away from the developer.
 
-This requirement follows directly from the intended deployment setting. Source code may contain proprietary logic, intellectual property, or regulated information, making cloud-based analysis unacceptable in many organizations. Partial redaction is not a sufficient solution because security-relevant context is often distributed across the code and may be lost when stripped down.
+This requirement is motivated by the gap between warning generation and practical remediation. Developers often receive findings without usable guidance, which increases triage effort and reduces follow-through \cite{johnson2013don,christakis2016developers}. At the same time, automated program repair research shows that patch generation is only useful when suggested fixes address the root cause without introducing regressions or new defects \cite{weimer2009genprog,kim2013par,monperrus2014critique}.
 
-For Code Guardian, R5 implies local model inference, local retrieval, and explicit separation between code-bearing workflows and optional public-metadata refresh paths. The design response is therefore a local-first architecture based on Ollama, local vector storage, and disabled-by-default background data egress for analysis.
+For Code Guardian, R5 means that repairs should be specific to the affected code region, grounded in recognized secure-coding practice, and delivered as optional diffs rather than autonomous edits. This includes common mitigations such as parameterization, validation, safer API selection, and framework-appropriate hardening \cite{mitreCWE,owaspCheatSheets,owaspSqlCheatSheet,owaspXssCheatSheet,owaspCsrfCheatSheet,owaspInputValidationCheatSheet,owaspDeserializationCheatSheet,owaspFileUploadCheatSheet,owaspPasswordStorageCheatSheet,owaspLoggingCheatSheet}.
 
-In the evaluation, R5 is assessed primarily through architectural and configuration evidence: the analyzed workflows keep source code on localhost, while optional knowledge refresh accesses only public vulnerability metadata and can be disabled for offline operation.
+In the evaluation, R5 is judged by whether suggested repairs are understandable, locally applicable, and plausibly security-improving, while final acceptance and full functional verification remain a developer responsibility.

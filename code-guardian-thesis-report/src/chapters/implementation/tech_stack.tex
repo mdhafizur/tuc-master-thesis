@@ -1,7 +1,7 @@
 \section{Technology Stack and Rationale}
 \label{sec:tech-stack}
 
-Code Guardian is implemented as a Visual Studio Code extension that performs security analysis and repair suggestion \emph{locally} on the developer machine. The design goal is to integrate vulnerability detection into the IDE workflow while maintaining a strict \textit{no source-code exfiltration} property (R5) and practical responsiveness for interactive use (R6).
+Code Guardian is implemented as a Visual Studio Code extension that performs security analysis and repair suggestion \emph{locally} on the developer machine. The design goal is to integrate vulnerability detection into the IDE workflow while maintaining a strict \textit{no source-code exfiltration} property (R6) and practical responsiveness for interactive use (R7).
 
 \subsection*{VS Code Extension (TypeScript)}
 
@@ -13,7 +13,7 @@ All model inference is performed through \textbf{Ollama} running on \texttt{loca
 
 \subsection*{Retrieval-Augmented Generation (RAG)}
 
-Optional RAG is implemented with \textbf{LangChain} and a local vector index \cite{langchainDocs}. Security knowledge entries (CWE patterns, OWASP Top 10 guidance, selected CVE summaries, and JavaScript/TypeScript secure coding notes) are embedded using a lightweight local embedding model (\texttt{nomic-embed-text} via Ollama) and stored in an \textbf{HNSW} vector store. At analysis time, relevant knowledge snippets are retrieved and injected into the prompt to improve grounding of the model's reasoning and support R1--R3.
+Optional RAG is implemented with \textbf{LangChain} and a local vector index \cite{langchainDocs}. Security knowledge entries (CWE patterns, OWASP Top 10 guidance, selected CVE summaries, and JavaScript/TypeScript secure coding notes) are embedded using a lightweight local embedding model (\texttt{nomic-embed-text} via Ollama) and stored in an \textbf{HNSW} vector store. At analysis time, relevant knowledge snippets are retrieved and injected into the prompt to improve grounding of the model's reasoning and support R1--R4.
 
 The \texttt{nomic-embed-text} model was selected for three reasons: (1) native availability via Ollama, ensuring the same local deployment model as the LLM runtime; (2) strong performance on code and technical text retrieval tasks relative to its size (768-dimensional embeddings at 137M parameters); and (3) permissive licensing for local deployment. Alternative embedding models such as \texttt{all-MiniLM-L6-v2} or \texttt{bge-small-en} were considered but required separate runtime infrastructure or offered inferior code-domain performance in preliminary testing.
 
