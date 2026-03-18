@@ -1,7 +1,7 @@
 \section{Evaluation Metrics}
 \label{sec:eval-metrics}
 
-We evaluate Code Guardian along complementary axes aligned with Chapter~\ref{chap:analysis}: detection quality (R1--R2), explainability/structure (R3), and responsiveness (R6). Unless explicitly stated otherwise, quantitative values are reported as descriptive point estimates for this run configuration, with uncertainty intervals added for key decision metrics in Section~\ref{sec:eval-summary}.
+We evaluate Code Guardian along complementary axes aligned with Chapter~\ref{chap:analysis}: detection quality (R1 and R3), detection consistency and structured-output robustness (R2), explainability (R4), and responsiveness (R7). Unless explicitly stated otherwise, quantitative values are reported as descriptive point estimates for this run configuration, with uncertainty intervals added for key decision metrics in Section~\ref{sec:eval-summary}.
 
 \subsection*{Detection Quality}
 
@@ -19,8 +19,8 @@ Matching is performed at the vulnerability-type level. To account for naming var
 \paragraph{Interpretation of precision and recall in this setup.}
 In this thesis, precision primarily reflects \emph{alert quality} under the chosen ontology and matching rule, while recall reflects \emph{coverage} of expected vulnerability classes. Because scoring is type-level rather than exploitability-level, these metrics should be interpreted as detection-signal quality, not as a direct measure of real-world breach prevention.
 
-\paragraph{Operational metric alignment for R1--R2.}
-The current harness exports pooled issue-level confusion counts, so R1 and R2 are operationalized with pooled issue-level precision/recall/F1 plus qualitative evidence (localization behavior, representative TP/FN/FP cases). Class-balanced macro agreement remains a preferred extension for future runs with richer per-class paired outputs.
+\paragraph{Operational metric alignment for R1--R3.}
+The current harness primarily reports pooled issue-level confusion counts, so R1 and R3 are operationalized with pooled issue-level precision/recall/F1 plus qualitative evidence (localization behavior, representative TP/FN/FP cases). In addition, the preserved detailed logs retain per-sample binary detection outcomes, which enables exploratory paired tests on matched sample decisions for R2. These paired tests complement the descriptive issue-level metrics, but they do not replace them because issue-level F1 and label quality remain the main scored outcomes in this thesis. Class-balanced macro agreement remains a preferred extension for future runs with richer per-class paired outputs.
 
 \paragraph{Secure examples.}
 The scored dataset used in this chapter includes \textbf{15} intentionally secure snippets. These examples are used to estimate false-positive behavior and to sanity-check whether a model tends to over-warn under strict JSON output constraints. Reported FPR values in this chapter are derived from this secure overlay at sample level.
@@ -48,7 +48,7 @@ We measure:
   \item \textbf{Response time:} wall-clock time per analysis call (milliseconds), summarized by mean and median.
 \end{itemize}
 
-Latency is interpreted in the context of IDE workflows: function-level analysis has tighter budgets than file-level or workspace scans. In this thesis revision, R6 is evaluated with median latency as the primary usability indicator and mean latency as a tail-sensitivity proxy, matching the exported harness statistics.
+Latency is interpreted in the context of IDE workflows: function-level analysis has tighter budgets than file-level or workspace scans. In this thesis revision, R7 is evaluated with median latency as the primary usability indicator and mean latency as a tail-sensitivity proxy, matching the exported harness statistics.
 
 \paragraph{Latency distribution matters more than mean latency alone.}
 Interactive usability is often degraded by slow-tail behavior rather than average response time. Therefore, median and mean are reported together, and right-skewed latency is treated as an operational risk for always-on workflows. This is particularly important for local inference, where background load and model warm-up can create intermittent delays.

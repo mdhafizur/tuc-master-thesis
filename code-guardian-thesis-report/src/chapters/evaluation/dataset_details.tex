@@ -11,7 +11,7 @@ Large-scale benchmark suites such as the NIST Juliet Test Suite and OWASP Benchm
 \begin{itemize}
   \item \textbf{Limited secure-sample control:} Many benchmarks focus on vulnerable code and provide few or poorly documented secure examples, limiting false-positive rate (FPR) estimation—a critical metric for IDE usability.
   \item \textbf{Synthetic pattern bias:} Automatically generated test cases may not reflect realistic framework usage, developer patterns, or contextual mitigations typical in production code.
-  \item \textbf{Human auditability trade-off:} Evaluating thousands of cases improves statistical power but reduces the ability to manually inspect model outputs, explanations, and repair suggestions—essential for assessing R3 (explainability) and R4 (actionable repairs).
+  \item \textbf{Human auditability trade-off:} Evaluating thousands of cases improves statistical power but reduces the ability to manually inspect model outputs, explanations, and repair suggestions---essential for assessing R4 (explainability) and R5 (actionable repairs).
   \item \textbf{Prompt iteration overhead:} Rapid experimentation with prompt structure, retrieval parameters, and output contracts is more feasible with a smaller, well-understood dataset that can be re-evaluated in hours rather than days.
 \end{itemize}
 
@@ -28,8 +28,8 @@ These verified cases provide \textbf{ecological validity anchors} for the synthe
 The curated approach prioritizes \textbf{depth of analysis over breadth of coverage}. By maintaining a human-auditable dataset (128 cases in the primary evaluation set), this thesis can:
 \begin{itemize}
   \item Perform qualitative inspection of true positives, false positives, and false negatives to understand \emph{why} the system succeeds or fails.
-  \item Assess explanation quality and repair suggestion coherence on a per-case basis, supporting requirements R3 and R4.
-  \item Enable documented local evaluation with documented model configurations and prompt templates, essential for privacy-preserving system validation (R5).
+  \item Assess explanation quality and repair suggestion coherence on a per-case basis, supporting requirements R4 and R5.
+  \item Enable documented local evaluation with documented model configurations and prompt templates, essential for privacy-preserving system validation (R6).
   \item Support rapid iteration on detection strategies, retrieval parameters, and output validation without multi-day evaluation cycles.
 \end{itemize}
 
@@ -55,7 +55,7 @@ The repository-contained evaluation harness used in this thesis (\path{code-guar
 
 Vulnerability classes are aligned with the Common Weakness Enumeration taxonomy \cite{mitreCWE}, and severities are recorded as coarse labels to support prioritization and reporting. Where applicable, severity can be related back to standardized scoring systems such as CVSS and public vulnerability databases such as CVE/NVD \cite{firstCvss31,mitreCVE,nistNVD}.
 
-This dataset targets requirement R2 (context-aware vulnerability reasoning) by including vulnerability instances that cannot be resolved purely by superficial keyword matching (e.g., sink usage that requires reasoning about tainted input). It also supports R1 by enabling controlled comparisons across repeated runs and across different local models.
+This dataset targets requirement R3 (context-aware vulnerability reasoning) by including vulnerability instances that cannot be resolved purely by superficial keyword matching (e.g., sink usage that requires reasoning about tainted input). It also supports R1 and R2 by enabling controlled comparisons across repeated runs and across different local models.
 
 \subsection*{Dataset Schema}
 

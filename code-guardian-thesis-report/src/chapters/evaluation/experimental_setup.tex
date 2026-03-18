@@ -132,7 +132,7 @@ The merged design creates an \textbf{asymmetry in measurement robustness}: vulne
 \begin{enumerate}
   \item \textbf{Recall and precision estimates are more stable} due to repeated measurements reducing transient inference variance.
   \item \textbf{FPR estimates have wider confidence intervals} because the secure-sample count ($n=15$) is small and each sample is evaluated once. Wilson intervals (Table~\ref{tab:eval-ci-key}) reflect this uncertainty.
-  \item \textbf{Mode-to-mode comparisons are descriptive only}: paired per-sample outputs were not exported by the harness, so differences between LLM-only and LLM+RAG are reported as run-level deltas, not inferential effects.
+  \item \textbf{Inferential scope remains narrow}: preserved detailed logs permit exploratory paired tests on binary sample-level outcomes, but pooled issue-level precision/recall/F1 differences between LLM-only and LLM+RAG remain descriptive rather than fully inferential.
 \end{enumerate}
 
 \paragraph{Why pooled counts are still valid for descriptive reporting.}
@@ -144,11 +144,11 @@ Despite the asymmetry, the merged approach provides operationally useful evidenc
 \end{itemize}
 
 \paragraph{Future work: Unified repeated-run design.}
-For production-scale evaluation, a unified design with matched \texttt{runsPerSample} for both vulnerable and secure sets would enable paired per-sample mode comparison and stronger statistical inference. The current harness should also capture the exact repository commit automatically and export per-sample mode-contingency outputs to support formal paired tests (e.g., McNemar's test for mode-to-mode detection differences).
+For production-scale evaluation, a unified design with matched \texttt{runsPerSample} for both vulnerable and secure sets would enable stronger statistical inference without post-hoc majority aggregation on the repeated vulnerable samples. The current harness should also capture the exact repository commit automatically and emit a dedicated paired-analysis artifact so that inferential tests can be reproduced directly from the report inputs.
 
 \subsection*{Run-to-Run Variability (Descriptive)}
 
-The main ablation run evaluates each vulnerable sample three times in each configuration; secure-sample evidence is merged from a negatives-only run with one pass per sample. Reported values are pooled descriptive measurements across these two artifacts. Because repeated runs reuse the same snippets and the final tables merge outputs from two runs, mode-to-mode differences are interpreted descriptively for this specific run.
+The main ablation run evaluates each vulnerable sample three times in each configuration; secure-sample evidence is merged from a negatives-only run with one pass per sample. Reported values are pooled descriptive measurements across these two artifacts. Because repeated runs reuse the same snippets and the final tables merge outputs from two runs, issue-level mode-to-mode differences are still interpreted descriptively for this specific run. Where paired inferential analysis is reported later in this chapter, it is limited to binary sample-level outcomes and treated as exploratory.
 
 \paragraph{Implications of merged-run reporting.}
 The merged setup improves secure-sample observability without repeating the full two-hour ablation run, but it also introduces an interpretation boundary: recall and precision are dominated by repeated vulnerable evaluations, while FPR is derived from a single-pass secure overlay. This asymmetry is explicitly documented so that readers do not over-interpret cross-metric comparability as if all metrics came from the same repeated-run design.

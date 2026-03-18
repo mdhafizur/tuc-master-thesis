@@ -64,7 +64,7 @@ The diagnostic adapter converts the model’s 1-based line numbering into VS Cod
 \subsection{RAG Manager (Local Retrieval)}
 \label{subsec:impl-rag}
 
-When enabled, the RAG manager maintains a local security knowledge base and a persistent vector index. Knowledge items are embedded using a local embedding model accessed through Ollama (\texttt{nomic-embed-text}) and stored in an HNSW vector store. For each analysis request, the manager retrieves the top-$k$ relevant snippets and augments the prompt with (i) short vulnerability definitions and (ii) mitigation guidance. This grounding supports consistency and explainability (R1--R3).
+When enabled, the RAG manager maintains a local security knowledge base and a persistent vector index. Knowledge items are embedded using a local embedding model accessed through Ollama (\texttt{nomic-embed-text}) and stored in an HNSW vector store. For each analysis request, the manager retrieves the top-$k$ relevant snippets and augments the prompt with (i) short vulnerability definitions and (ii) mitigation guidance. This grounding supports accuracy, consistency, contextual reasoning, and explainability (R1--R4).
 
 \paragraph{Indexing and chunking.}
 Knowledge entries are chunked using a recursive text splitter to balance semantic coherence and retrieval recall. The index is persisted in an extension-managed local directory so it can be reused across sessions without rebuilding. RAG initialization is performed lazily at runtime to avoid slowing down extension activation when retrieval is not used.
@@ -72,7 +72,7 @@ Knowledge entries are chunked using a recursive text splitter to balance semanti
 \subsection{Vulnerability Knowledge Updates}
 \label{subsec:impl-knowledge}
 
-To keep retrieved content current, the vulnerability data manager can refresh public security sources on demand (e.g., OWASP Top~10 entries, a curated set of CWE patterns, and a bounded number of recent CVEs). Retrieved metadata is cached on disk and only public vulnerability information is fetched. No user source code or extracted code context is transmitted off-device, preserving the privacy goal (R5).
+To keep retrieved content current, the vulnerability data manager can refresh public security sources on demand (e.g., OWASP Top~10 entries, a curated set of CWE patterns, and a bounded number of recent CVEs). Retrieved metadata is cached on disk and only public vulnerability information is fetched. No user source code or extracted code context is transmitted off-device, preserving the privacy goal (R6).
 
 \paragraph{Offline fallback.}
 Because network access may be restricted in sensitive environments, the system includes a minimal baseline knowledge bundle that is used when updates fail. This ensures that RAG-enabled prompting remains functional offline, even though coverage is reduced relative to a refreshed knowledge base.
@@ -80,12 +80,12 @@ Because network access may be restricted in sensitive environments, the system i
 \subsection{Diagnostics and Quick Fixes}
 \label{subsec:impl-diagnostics}
 
-Findings are mapped to VS Code diagnostics with appropriate text ranges. If the model provides a \texttt{suggestedFix}, a quick-fix code action is offered. Fixes are never applied automatically: the developer must confirm application, which maintains human control and reduces the risk of unintended behavioral changes (R4).
+Findings are mapped to VS Code diagnostics with appropriate text ranges. If the model provides a \texttt{suggestedFix}, a quick-fix code action is offered. Fixes are never applied automatically: the developer must confirm application, which maintains human control and reduces the risk of unintended behavioral changes (R5).
 
 \subsection{Caching and Responsiveness Mechanisms}
 \label{subsec:impl-cache}
 
-To avoid repeated inference on unchanged snippets, Code Guardian caches analysis results keyed by the code snippet, active model, and prompt mode (RAG enabled/disabled) (\texttt{code-guardian-extension/src/analysisCache.ts}). In addition to caching, real-time analysis is debounced to reduce request volume during rapid edits. Together, these mechanisms reduce redundant local LLM calls and make continuous feedback feasible on developer hardware (R6), while also improving run-to-run consistency by limiting stochastic re-analysis.
+To avoid repeated inference on unchanged snippets, Code Guardian caches analysis results keyed by the code snippet, active model, and prompt mode (RAG enabled/disabled) (\texttt{code-guardian-extension/src/analysisCache.ts}). In addition to caching, real-time analysis is debounced to reduce request volume during rapid edits. Together, these mechanisms reduce redundant local LLM calls and make continuous feedback feasible on developer hardware (R7), while also improving run-to-run consistency by limiting stochastic re-analysis (R2).
 
 \paragraph{Cache-key design and invalidation.}
 The cache key intentionally includes both content and execution context (model identity and prompt mode) to avoid cross-mode contamination. Entries are evicted through a bounded-size LRU policy and expire via TTL to prevent stale reuse during longer sessions. This combination balances memory usage with practical hit-rate gains during iterative editing patterns (undo/redo, small refactors, formatting cycles).

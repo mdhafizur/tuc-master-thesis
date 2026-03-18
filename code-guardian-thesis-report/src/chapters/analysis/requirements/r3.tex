@@ -1,9 +1,9 @@
-\label{sec:r3-transparency}
+\label{sec:r3-context-awareness}
 
-R3 concerns the transparency of the assistant's output. A useful security finding should not only state that a vulnerability exists, but also explain why it was reported, which code regions are relevant, and how the issue relates to a recognized weakness class or security principle.
+R3 captures the ability to reason about vulnerabilities in context rather than by surface pattern alone. In this thesis, context-aware reasoning means that the assistant should distinguish genuinely exploitable code from code that only appears suspicious, while accounting for surrounding logic such as validation, sanitization, and API usage.
 
-This requirement matters because opaque security feedback is difficult to verify and easy to ignore. Prior work on developer-facing security tools shows that warnings are more likely to be disregarded when their rationale is unclear or disconnected from the code under review \cite{johnson2013don,christakis2016developers}. For LLM-based systems, the problem is stronger because explanations can sound persuasive even when the underlying judgment is weak.
+This requirement is necessary because many security flaws depend on how data moves through the program, not only on the presence of specific keywords or sink calls \cite{livshits2005java,chess2004staticanalysis}. LLM-based systems face the complementary problem that incomplete context can lead to over-warning, missed vulnerabilities, or confidently stated but weakly grounded conclusions \cite{pearce2022copilot,ji2023hallucination}.
 
-For Code Guardian, R3 implies precise localization, concise reasoning, and traceable mapping to vulnerability categories such as CWE. The design response is a structured response schema that keeps findings, explanations, and repair suggestions aligned instead of relying on free-form text alone. Retrieval grounding further helps anchor explanations in established security knowledge.
+For Code Guardian, R3 therefore implies three capabilities: combining dispersed evidence within the selected scope, recognizing mitigation logic when it is present, and avoiding unsupported conclusions when relevant context is missing. The design response is scoped code extraction, structured prompting, and optional retrieval grounding with curated security knowledge.
 
-In the evaluation, R3 is assessed qualitatively by checking whether findings identify the relevant code evidence, match the reported vulnerability type, and remain internally coherent with the suggested remediation.
+In the evaluation, R3 is assessed through issue-level detection quality on context-dependent cases, supported by qualitative review of representative true positives, false positives, false negatives, and mitigation-sensitive examples.

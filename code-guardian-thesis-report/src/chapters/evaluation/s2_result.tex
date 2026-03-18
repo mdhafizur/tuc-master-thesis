@@ -114,6 +114,28 @@ Based on the observed degradation patterns, we hypothesize several failure modes
   \end{tabularx}
 \end{table}
 
+\paragraph{Exploratory paired significance tests.}
+Because the detailed evaluation logs preserve matched per-sample outcomes, an exact McNemar test was applied post hoc to binary sample-level detections for the two \texttt{qwen3} families. For the vulnerable set, the three repeated runs per sample were first collapsed to a majority decision per sample to avoid treating repeated evaluations of the same snippet as independent. For the secure overlay, the single observed decision per sample was used directly.
+
+\begin{table}[H]
+  \centering
+  \caption{Exploratory exact McNemar tests for paired LLM-only vs.\ LLM+RAG sample outcomes. Discordant pairs are reported as ``LLM-only only / RAG only''.}
+  \label{tab:rag-significance}
+  \footnotesize
+  \begin{tabularx}{\textwidth}{p{0.18\textwidth}p{0.22\textwidth}p{0.16\textwidth}p{0.10\textwidth}X}
+    \toprule
+    Model & Outcome unit & Discordant pairs & $p$-value & Interpretation \\
+    \midrule
+    \texttt{qwen3:8b} & Vulnerable majority ($n=113$) & 3 / 0 & 0.25 & No statistically significant change in binary sample detection. \\
+    \texttt{qwen3:8b} & Secure overlay ($n=15$) & 1 / 1 & 1.00 & No statistically significant change in secure-sample false-positive behavior. \\
+    \texttt{qwen3:4b} & Vulnerable majority ($n=113$) & 0 / 0 & 1.00 & Both modes marked the same samples as detected. \\
+    \texttt{qwen3:4b} & Secure overlay ($n=15$) & 0 / 0 & 1.00 & Both modes flagged all secure samples. \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+These tests sharpen the interpretation of the earlier F1 results. The \texttt{qwen3} models still show issue-level improvements under RAG in Tables~\ref{tab:eval-rag} and \ref{tab:eval-llm-only}, but the paired sample-level tests do not show a statistically significant change in whether a sample was detected at all. In other words, the measured gains in this run are better understood as improvements in issue labeling and per-sample output quality within already-detected cases than as clear evidence that RAG changed binary sample-level detection behavior. Given the small secure set and the post-hoc majority aggregation on repeated vulnerable runs, these inferential results should be treated as exploratory rather than definitive.
+
 \paragraph{Practical guidance for RAG configuration.}
 Based on these findings, RAG should be \textbf{selectively enabled} based on model characteristics and deployment context:
 

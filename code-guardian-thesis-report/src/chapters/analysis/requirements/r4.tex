@@ -1,9 +1,9 @@
-\label{sec:r4-repair-quality}
+\label{sec:r4-transparency}
 
-R4 extends the thesis beyond detection to remediation. Actionable repair suggestions should translate a reported vulnerability into a concrete, reviewable code change that improves security without taking control away from the developer.
+R4 concerns the transparency of the assistant's output. A useful security finding should not only state that a vulnerability exists, but also explain why it was reported, which code regions are relevant, and how the issue relates to a recognized weakness class or security principle.
 
-This requirement is motivated by the gap between warning generation and practical remediation. Developers often receive findings without usable guidance, which increases triage effort and reduces follow-through \cite{johnson2013don,christakis2016developers}. At the same time, automated program repair research shows that patch generation is only useful when suggested fixes address the root cause without introducing regressions or new defects \cite{weimer2009genprog,kim2013par,monperrus2014critique}.
+This requirement matters because opaque security feedback is difficult to verify and easy to ignore. Prior work on developer-facing security tools shows that warnings are more likely to be disregarded when their rationale is unclear or disconnected from the code under review \cite{johnson2013don,christakis2016developers}. For LLM-based systems, the problem is stronger because explanations can sound persuasive even when the underlying judgment is weak.
 
-For Code Guardian, R4 means that repairs should be specific to the affected code region, grounded in recognized secure-coding practice, and delivered as optional diffs rather than autonomous edits. This includes common mitigations such as parameterization, validation, safer API selection, and framework-appropriate hardening \cite{mitreCWE,owaspCheatSheets,owaspSqlCheatSheet,owaspXssCheatSheet,owaspCsrfCheatSheet,owaspInputValidationCheatSheet,owaspDeserializationCheatSheet,owaspFileUploadCheatSheet,owaspPasswordStorageCheatSheet,owaspLoggingCheatSheet}.
+For Code Guardian, R4 implies precise localization, concise reasoning, and traceable mapping to vulnerability categories such as CWE. The design response is a structured response schema that keeps findings, explanations, and repair suggestions aligned instead of relying on free-form text alone. Retrieval grounding further helps anchor explanations in established security knowledge.
 
-In the evaluation, R4 is judged by whether suggested repairs are understandable, locally applicable, and plausibly security-improving, while final acceptance and full functional verification remain a developer responsibility.
+In the evaluation, R4 is assessed qualitatively by checking whether findings identify the relevant code evidence, match the reported vulnerability type, and remain internally coherent with the suggested remediation.
