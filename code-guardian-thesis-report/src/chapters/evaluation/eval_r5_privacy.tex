@@ -1,0 +1,61 @@
+\section{R5: Privacy}
+\label{sec:eval-r5}
+
+This section verifies the privacy requirement using the checklist defined in Section~\ref{sec:r5-privacy}. Unlike R1--R4, privacy is a design constraint verified through architectural and configuration evidence rather than a quantified metric.
+
+\subsection{Verification Results}
+
+Table~\ref{tab:r5-verification} shows the verification outcome for each privacy criterion.
+
+\begin{table}[H]
+  \centering
+  \caption{Privacy verification results for R5.}
+  \label{tab:r5-verification}
+  \small
+  \renewcommand{\arraystretch}{1.4}
+  \begin{tabularx}{\textwidth}{p{0.5cm}Xc}
+    \toprule
+    & \textbf{Privacy Criterion} & \textbf{Status} \\
+    \midrule
+    1 & LLM inference runs locally via Ollama. No source code is sent to cloud APIs. & \cmark \\
+    \midrule
+    2 & RAG vector store and embeddings are stored locally. No code-derived data leaves the machine. & \cmark \\
+    \midrule
+    3 & Analysis prompts and results stay on localhost. No telemetry or external transmission. & \cmark \\
+    \midrule
+    4 & Optional vulnerability data refresh uses only public metadata (NVD, OWASP, CWE) and can be disabled for fully offline operation. & \cmark \\
+    \midrule
+    5 & No source code or code fragments are included in any outbound network request. & \cmark \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\subsection{Evidence}
+
+\paragraph{Local inference.}
+All LLM calls use the Ollama HTTP API on \texttt{localhost:11434}. The extension configuration enforces this default, and the evaluation was run entirely without external network access for model inference.
+
+\paragraph{Local storage.}
+The RAG vector store (HNSWlib) and all embeddings are persisted in the VS Code workspace or global storage directory. No code-derived vectors are transmitted externally.
+
+\paragraph{No telemetry.}
+The extension does not include any analytics, telemetry, or crash-reporting libraries. No outbound connections are made during analysis workflows.
+
+\paragraph{Metadata refresh boundary.}
+The optional vulnerability data refresh (\texttt{vulnerabilityDataManager.ts}) fetches only public CVE/CWE/OWASP metadata from official APIs. Source code is never included in these requests. The refresh can be fully disabled for air-gapped environments.
+
+\paragraph{Network verification.}
+During the evaluation run, network capture confirmed that analysis workflows produced zero outbound connections containing source code or code-derived content. The only outbound traffic was Ollama on localhost and optional metadata refresh to public vulnerability databases.
+
+\subsection{Level Mapping}
+
+All five privacy criteria are met.
+
+\begin{center}
+\begin{tabular}{cc}
+\cmark &
+\textbf{R5 Level: Pass.} All privacy criteria verified. \\
+\end{tabular}
+\end{center}
+
+Code Guardian keeps all analysis local. Source code never leaves the developer's machine during normal operation.

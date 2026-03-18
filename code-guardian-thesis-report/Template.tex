@@ -1,4 +1,4 @@
-\documentclass[a4paper, 10pt, oneside, BCOR=1cm, toc=chapterentrywithdots]{scrbook}
+\documentclass[a4paper, 12pt, oneside, BCOR1cm, toc=chapterentrywithdots]{scrbook}
 
 % --- Encoding and Fonts ---
 \usepackage[utf8]{inputenc}
@@ -10,18 +10,20 @@
 \usepackage{booktabs}
 \usepackage{makeidx}
 \usepackage[colorlinks=false]{hyperref}
+\usepackage{tocbibind}
 \usepackage{blindtext}
 \usepackage{rotating}
 \usepackage{amsmath}
 \usepackage{amssymb}
-\usepackage[nohyperlinks]{acronym}
+\usepackage{subfigure}
+\usepackage{acronym}
 \usepackage{multicol}
-\KOMAoptions{parskip=half,listof=totoc,bibliography=totoc,index=totoc}
+\KOMAoptions{parskip=half}
 \usepackage[T1]{fontenc}
 \usepackage{microtype}   % reduces overfull boxes
 
 \usepackage{listings}
-\usepackage[table]{xcolor} 
+\usepackage{xcolor}
 
 % --- Listings Languages (listings doesn't ship JS/JSON by default in TeX Live) ---
 \lstdefinelanguage{javascript}{
@@ -62,6 +64,7 @@
 % --- Hyperref Setup ---
 \hypersetup{
   bookmarksnumbered=true,
+  hyperindex=true,
   bookmarksopen=true,
   bookmarksopenlevel=1,
   pdfborder=0 0 0
@@ -73,6 +76,26 @@
 \newcommand{\starzero}{\ding{78}}   % Empty star
 \newcommand{\safeincludegraphics}[2][]{%
   \IfFileExists{#2}{\includegraphics[#1]{#2}}{\fbox{Missing image}}%
+}
+
+% --- TOC Appearance Fixes ---
+\renewcommand*{\tableofcontents}{%
+  \begingroup
+  \tocsection
+  \tocfile{\contentsname}{toc}
+  \endgroup
+}
+\renewcommand*{\listoffigures}{%
+  \begingroup
+  \tocsection
+  \tocfile{\listfigurename}{lof}
+  \endgroup
+}
+\renewcommand{\listoftables}{
+  \begingroup
+  \tocsection
+  \tocfile{\listtablename}{lot}
+  \endgroup
 }
 
 \makeindex
@@ -96,7 +119,7 @@
   \begin{center}
     \LARGE{\textbf{Privacy-Preserving Source Code Vulnerability Detection and Repair using Retrieval-Augmented LLMs for Visual Studio Code}}\\
     \vspace{0.8cm}
-    \Large{\textbf{Master Thesis}}\\ 
+    \Large{\textbf{Master Thesis}}\\
     \vspace{0.3cm}
     Submitted in Fulfilment of the\\
     Requirements for the Academic Degree\\
@@ -189,6 +212,6 @@
 % -------- Declaration of Originality --------
 \input{src/declaration}
 
-% \printindex
+\printindex
 
 \end{document}

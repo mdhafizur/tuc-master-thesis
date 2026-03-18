@@ -1,0 +1,74 @@
+\section{Summary}
+\label{sec:eval-summary}
+
+This section brings together the per-requirement results into a single compliance overview.
+
+\subsection{Requirement Compliance}
+
+Table~\ref{tab:eval-compliance} maps the best configuration (\texttt{qwen3:8b+RAG}) to the evaluation levels defined in Chapter~\ref{chap:analysis}.
+
+\begin{table}[H]
+  \centering
+  \caption{Requirement compliance summary for Code Guardian (\texttt{qwen3:8b+RAG}).}
+  \label{tab:eval-compliance}
+  \small
+  \renewcommand{\arraystretch}{1.5}
+  \begin{tabularx}{\textwidth}{ccp{2.5cm}X}
+    \toprule
+    \textbf{Req} & \textbf{Level} & \textbf{Rating} & \textbf{Key Evidence} \\
+    \midrule
+    R1 &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-150:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
+    Medium &
+    F1 = 63.76\%, FPR = 26.67\%. Outperforms SAST on recall; FPR remains the main bottleneck. \\
+    \midrule
+    R2 &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-150:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
+    Medium &
+    JSON parse 99.4\%, detection agreement 87.6\%. Mostly stable with occasional variation. \\
+    \midrule
+    R3 &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-90:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
+    Medium &
+    68\% of samples receive a correct repair. Injection fixes are strong; niche categories lack coverage. \\
+    \midrule
+    R4 &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} &
+    High (inline) &
+    Median 1.5\,s per function. Responsive for inline use; full-file scans are medium. \\
+    \midrule
+    R5 &
+    \cmark &
+    Pass &
+    All 5 privacy criteria verified. Code never leaves the machine. \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\subsection{Key Findings}
+
+\begin{enumerate}
+  \item \textbf{Best configuration:} \texttt{qwen3:8b+RAG} achieves the highest F1 (63.76\%) with moderate FPR (26.67\%) and responsive latency (1.5\,s median).
+  \item \textbf{RAG is model-dependent:} Retrieval augmentation improves \texttt{qwen3} models (+3.8 to +5.6 F1 points) but degrades \texttt{gemma3} and \texttt{codellama} ($-2.9$ to $-3.3$ points).
+  \item \textbf{False-positive control is the main bottleneck:} Most LLM configurations show FPR of 100\% on secure samples. Only \texttt{qwen3:8b} achieves a practical FPR (26.67\%).
+  \item \textbf{SAST complements LLM analysis:} Semgrep provides very low FPR (6.67\%) with fast execution (52\,ms) but poor recall (9.73\%). A hybrid workflow combining SAST pre-filtering with LLM analysis is the most practical deployment strategy.
+  \item \textbf{Privacy is fully preserved:} All analysis runs locally with no source code transmission.
+\end{enumerate}
+
+\subsection{Limitations}
+
+\begin{itemize}
+  \item \textbf{Small dataset:} 128 test cases (113 vulnerable, 15 secure) limit statistical power. Secure-sample FPR has wide Wilson confidence intervals due to $n=15$.
+  \item \textbf{Snippet-centric evaluation:} Test cases are isolated code snippets, not full repository files. Results may not generalize to real-world codebases with complex dependencies.
+  \item \textbf{No user study:} Usability is measured by latency only. Developer satisfaction, trust, and adoption were not evaluated.
+  \item \textbf{Single hardware profile:} All results are from Apple M4 Max with 64\,GB RAM. Performance on lower-end hardware may differ.
+  \item \textbf{Repair evaluation is manual:} Only 25 samples were reviewed for repair quality. Automated functional verification of repairs was not performed.
+\end{itemize}
+
+\subsection{Threats to Validity}
+
+\paragraph{Internal validity.} Temperature is set to 0.1, not 0.0, which introduces minor nondeterminism. The 3-run design for vulnerable samples partially mitigates this but does not eliminate it.
+
+\paragraph{External validity.} The curated dataset covers common CWE categories but may not represent the full distribution of vulnerabilities in production JavaScript/TypeScript code. Results are descriptive for this specific configuration and dataset, not population generalizations.
+
+\paragraph{Construct validity.} Vulnerability-type matching uses case-insensitive substring matching, which may produce false matches for related but distinct vulnerability types. The secure-sample set ($n=15$) is small, making FPR estimates noisy.

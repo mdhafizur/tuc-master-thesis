@@ -1,9 +1,37 @@
-\label{sec:r5-repair-quality}
+\label{sec:r5-privacy}
 
-R5 extends the thesis beyond detection to remediation. Actionable repair suggestions should translate a reported vulnerability into a concrete, reviewable code change that improves security without taking control away from the developer.
+R5 addresses privacy. Code Guardian must detect and repair vulnerabilities without sending source code to external services. All prompts, findings, retrieved context, and generated fixes should stay on the developer's machine.
 
-This requirement is motivated by the gap between warning generation and practical remediation. Developers often receive findings without usable guidance, which increases triage effort and reduces follow-through \cite{johnson2013don,christakis2016developers}. At the same time, automated program repair research shows that patch generation is only useful when suggested fixes address the root cause without introducing regressions or new defects \cite{weimer2009genprog,kim2013par,monperrus2014critique}.
+This matters because source code often contains proprietary logic or regulated information. Many organizations cannot use cloud-based analysis tools for this reason. Partial redaction does not solve the problem, since security-relevant context is spread across the code and may be lost when stripped.
 
-For Code Guardian, R5 means that repairs should be specific to the affected code region, grounded in recognized secure-coding practice, and delivered as optional diffs rather than autonomous edits. This includes common mitigations such as parameterization, validation, safer API selection, and framework-appropriate hardening \cite{mitreCWE,owaspCheatSheets,owaspSqlCheatSheet,owaspXssCheatSheet,owaspCsrfCheatSheet,owaspInputValidationCheatSheet,owaspDeserializationCheatSheet,owaspFileUploadCheatSheet,owaspPasswordStorageCheatSheet,owaspLoggingCheatSheet}.
+For Code Guardian, R5 means local model inference, local retrieval, and clear separation between code-bearing workflows and optional public-metadata refresh paths. The design uses Ollama for local inference, local vector storage for RAG, and disabled-by-default background data updates.
 
-In the evaluation, R5 is judged by whether suggested repairs are understandable, locally applicable, and plausibly security-improving, while final acceptance and full functional verification remain a developer responsibility.
+Unlike the other requirements, privacy is a design constraint rather than a spectrum. Table~\ref{tab:r5-privacy-checklist} defines the verification checklist.
+
+\begin{table}[H]
+  \centering
+  \caption{Verification checklist for R5: Privacy.}
+  \label{tab:r5-privacy-checklist}
+  \small
+  \renewcommand{\arraystretch}{1.4}
+  \begin{tabularx}{\textwidth}{p{0.5cm}X}
+    \toprule
+    & \textbf{Privacy criterion} \\
+    \midrule
+    \raisebox{0.1cm}{\tikz{\draw (0,0) rectangle (0.35cm,0.35cm);}}
+    & LLM inference runs locally via Ollama. No source code is sent to cloud APIs. \\
+    \midrule
+    \raisebox{0.1cm}{\tikz{\draw (0,0) rectangle (0.35cm,0.35cm);}}
+    & RAG vector store and embeddings are stored locally. No code-derived data leaves the machine. \\
+    \midrule
+    \raisebox{0.1cm}{\tikz{\draw (0,0) rectangle (0.35cm,0.35cm);}}
+    & Analysis prompts and results stay on localhost. No telemetry or external transmission. \\
+    \midrule
+    \raisebox{0.1cm}{\tikz{\draw (0,0) rectangle (0.35cm,0.35cm);}}
+    & Optional vulnerability data refresh uses only public metadata (NVD, OWASP, CWE) and can be disabled for fully offline operation. \\
+    \midrule
+    \raisebox{0.1cm}{\tikz{\draw (0,0) rectangle (0.35cm,0.35cm);}}
+    & No source code or code fragments are included in any outbound network request. \\
+    \bottomrule
+  \end{tabularx}
+\end{table}

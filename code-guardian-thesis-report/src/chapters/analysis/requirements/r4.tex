@@ -1,9 +1,31 @@
-\label{sec:r4-transparency}
+\label{sec:r4-usability}
 
-R4 concerns the transparency of the assistant's output. A useful security finding should not only state that a vulnerability exists, but also explain why it was reported, which code regions are relevant, and how the issue relates to a recognized weakness class or security principle.
+R4 addresses usability. Security feedback is only useful if it arrives fast enough to fit normal editing workflows. A tool that takes too long will be ignored, no matter how accurate it is.
 
-This requirement matters because opaque security feedback is difficult to verify and easy to ignore. Prior work on developer-facing security tools shows that warnings are more likely to be disregarded when their rationale is unclear or disconnected from the code under review \cite{johnson2013don,christakis2016developers}. For LLM-based systems, the problem is stronger because explanations can sound persuasive even when the underlying judgment is weak.
+This is especially important for local LLM-based systems because model inference, retrieval, and prompt processing can make analysis noticeably slower than traditional diagnostics \cite{card1991model,nielsen1994usability}. Growing delay breaks the developer's flow and reduces willingness to use the tool.
 
-For Code Guardian, R4 implies precise localization, concise reasoning, and traceable mapping to vulnerability categories such as CWE. The design response is a structured response schema that keeps findings, explanations, and repair suggestions aligned instead of relying on free-form text alone. Retrieval grounding further helps anchor explanations in established security knowledge.
+For Code Guardian, R4 means that both inline and on-demand analysis must stay practical on real hardware. The design uses function-level scoping, debouncing, caching, and separate modes for lightweight inline checks versus heavier full-file scans.
 
-In the evaluation, R4 is assessed qualitatively by checking whether findings identify the relevant code evidence, match the reported vulnerability type, and remain internally coherent with the suggested remediation.
+To measure usability, we define a three-level scale based on end-to-end latency. The thresholds reflect established response-time guidelines from HCI research \cite{card1991model,nielsen1994usability}. Table~\ref{tab:r4-usability-thresholds} shows this scale.
+
+\begin{table}[H]
+  \centering
+  \caption{Evaluation scale for R4: Usability (example thresholds).}
+  \label{tab:r4-usability-thresholds}
+  \small
+  \renewcommand{\arraystretch}{1.4}
+  \begin{tabularx}{\textwidth}{>{\centering\arraybackslash}m{2.2cm}X}
+    \toprule
+    \textbf{Visual Score} & \textbf{Interpretation (with thresholds)} \\
+    \midrule
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}}
+    & \textbf{High.} Median latency $\leq 5$s for inline analysis, $\leq 15$s for full-file scans. Feedback feels responsive and fits normal editing flow. \\
+    \midrule
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-90:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}}
+    & \textbf{Medium.} Median latency in $(5\text{s}, 15\text{s}]$ for inline, $(15\text{s}, 30\text{s}]$ for full-file. Noticeable delay but still practical for on-demand use. \\
+    \midrule
+    \raisebox{-0.3cm}{\tikz{\draw (0,0) circle (0.35cm);}}
+    & \textbf{Low.} Median latency $> 15$s for inline or $> 30$s for full-file. Too slow for regular IDE use. Only practical for planned audit scans. \\
+    \bottomrule
+  \end{tabularx}
+\end{table}

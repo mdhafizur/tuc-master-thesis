@@ -1,0 +1,235 @@
+\section{R1: Accuracy}
+\label{sec:eval-r1}
+
+This section evaluates detection accuracy across all model and retrieval configurations. The metrics are precision, recall, F1, and secure-sample false-positive rate (FPR), as defined in Section~\ref{sec:r1-accuracy}.
+
+\subsection{Detection Quality Across Configurations}
+
+Table~\ref{tab:eval-r1-all} shows detection metrics for all evaluated configurations. Results are pooled over 339 vulnerable-sample evaluations (113 samples $\times$ 3 runs) and 15 secure-sample evaluations.
+
+\begin{table}[H]
+\centering
+\caption{Detection accuracy across all configurations.}
+\label{tab:eval-r1-all}
+\footnotesize
+\begin{tabular}{@{}llrrrr@{}}
+\toprule
+\textbf{Model} & \textbf{Mode} & \textbf{Precision} & \textbf{Recall} & \textbf{F1} & \textbf{FPR} \\
+\midrule
+\texttt{qwen3:8b} & LLM+RAG & 62.93 & 64.60 & 63.76 & 26.67 \\
+\texttt{qwen3:8b} & LLM-only & 54.06 & 62.83 & 58.12 & 26.67 \\
+\texttt{qwen3:4b} & LLM+RAG & 53.53 & 64.90 & 58.67 & 100.00 \\
+\texttt{qwen3:4b} & LLM-only & 51.85 & 59.29 & 54.90 & 100.00 \\
+\texttt{gemma3:4b} & LLM+RAG & 47.62 & 44.25 & 45.88 & 100.00 \\
+\texttt{gemma3:4b} & LLM-only & 50.00 & 47.79 & 48.87 & 100.00 \\
+\texttt{gemma3:1b} & LLM+RAG & 43.75 & 24.78 & 31.65 & 100.00 \\
+\texttt{gemma3:1b} & LLM-only & 45.31 & 25.66 & 32.77 & 100.00 \\
+\texttt{codellama} & LLM+RAG & 46.15 & 47.79 & 46.96 & 100.00 \\
+\texttt{codellama} & LLM-only & 50.91 & 49.56 & 50.22 & 100.00 \\
+\midrule
+\texttt{semgrep} & baseline & 57.89 & 9.73 & 16.67 & 6.67 \\
+\texttt{codeql} & baseline & 15.71 & 9.73 & 12.02 & 53.33 \\
+\texttt{eslint} & baseline & --- & 0.00 & 0.00 & 0.00 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Figure~\ref{fig:r1-f1-comparison} visualizes the F1 scores across configurations.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+  \begin{axis}[
+    width=15cm,
+    height=7cm,
+    xbar,
+    bar width=8pt,
+    xlabel={F1 Score (\%)},
+    xlabel style={font=\small\bfseries},
+    ylabel style={font=\small\bfseries},
+    symbolic y coords={
+      {eslint},
+      {codeql},
+      {semgrep},
+      {gemma3:1b+RAG},
+      {gemma3:1b},
+      {gemma3:4b+RAG},
+      {gemma3:4b},
+      {codellama+RAG},
+      {codellama},
+      {qwen3:4b},
+      {qwen3:4b+RAG},
+      {qwen3:8b},
+      {qwen3:8b+RAG}
+    },
+    ytick=data,
+    yticklabel style={font=\scriptsize},
+    xmin=0, xmax=75,
+    xtick={0,10,20,30,40,50,60,70},
+    xmajorgrids=true,
+    grid style={line width=0.3pt, draw=gray!30},
+    enlarge y limits=0.05,
+    nodes near coords,
+    nodes near coords style={font=\scriptsize, anchor=west},
+  ]
+
+  \addplot[fill=blue!60, draw=blue!80!black] coordinates {
+    (0.00,{eslint})
+    (12.02,{codeql})
+    (16.67,{semgrep})
+    (31.65,{gemma3:1b+RAG})
+    (32.77,{gemma3:1b})
+    (45.88,{gemma3:4b+RAG})
+    (48.87,{gemma3:4b})
+    (46.96,{codellama+RAG})
+    (50.22,{codellama})
+    (54.90,{qwen3:4b})
+    (58.67,{qwen3:4b+RAG})
+    (58.12,{qwen3:8b})
+    (63.76,{qwen3:8b+RAG})
+  };
+
+  \end{axis}
+\end{tikzpicture}
+\caption{F1 scores across all configurations. LLM-based approaches outperform SAST baselines on recall-driven F1, with \texttt{qwen3:8b+RAG} achieving the highest score.}
+\label{fig:r1-f1-comparison}
+\end{figure}
+
+\subsection{RAG Ablation Impact on Accuracy}
+
+RAG effects are model-dependent. Figure~\ref{fig:r1-rag-ablation} compares LLM-only and LLM+RAG F1 for each model.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+  \begin{axis}[
+    width=14cm,
+    height=6cm,
+    ybar,
+    bar width=10pt,
+    ylabel={F1 Score (\%)},
+    ylabel style={font=\small\bfseries},
+    xlabel={Model},
+    xlabel style={font=\small\bfseries},
+    symbolic x coords={gemma3:1b, gemma3:4b, qwen3:4b, qwen3:8b, codellama},
+    xtick=data,
+    xticklabel style={font=\small},
+    ymin=0, ymax=75,
+    ytick={0,10,20,30,40,50,60,70},
+    ymajorgrids=true,
+    grid style={line width=0.3pt, draw=gray!30},
+    legend style={
+      at={(0.5,-0.15)},
+      anchor=north,
+      legend columns=2,
+      font=\small,
+    },
+    enlarge x limits=0.15,
+    nodes near coords,
+    nodes near coords style={font=\scriptsize, rotate=90, anchor=west},
+  ]
+
+  \addplot[fill=blue!60, draw=blue!80!black] coordinates {
+    (gemma3:1b, 32.77)
+    (gemma3:4b, 48.87)
+    (qwen3:4b, 54.90)
+    (qwen3:8b, 58.12)
+    (codellama, 50.22)
+  };
+  \addlegendentry{LLM-only}
+
+  \addplot[fill=orange!60, draw=orange!80!black] coordinates {
+    (gemma3:1b, 31.65)
+    (gemma3:4b, 45.88)
+    (qwen3:4b, 58.67)
+    (qwen3:8b, 63.76)
+    (codellama, 46.96)
+  };
+  \addlegendentry{LLM+RAG}
+
+  \end{axis}
+\end{tikzpicture}
+\caption{RAG ablation: F1 comparison by model. RAG improves \texttt{qwen3} models but degrades \texttt{gemma3} and \texttt{codellama}.}
+\label{fig:r1-rag-ablation}
+\end{figure}
+
+RAG improves \texttt{qwen3:8b} by +5.64 F1 points and \texttt{qwen3:4b} by +3.77 points. However, \texttt{gemma3:4b} drops by $-2.99$ points and \texttt{codellama} by $-3.26$ points with RAG enabled. This confirms that retrieval augmentation is not universally beneficial and should be treated as a model-specific configuration.
+
+\subsection{Per-Category Detection Breakdown}
+
+Figure~\ref{fig:r1-category} shows recall by vulnerability category for the best configuration (\texttt{qwen3:8b+RAG}).
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+  \begin{axis}[
+    width=15cm,
+    height=6cm,
+    xbar,
+    bar width=9pt,
+    xlabel={Recall (\%)},
+    xlabel style={font=\small\bfseries},
+    symbolic y coords={
+      {Deserialization},
+      {NoSQL Injection},
+      {Prototype Pollution},
+      {Race Condition},
+      {CSRF},
+      {SSRF},
+      {Path Traversal},
+      {Command Injection},
+      {XSS},
+      {SQL Injection}
+    },
+    ytick=data,
+    yticklabel style={font=\scriptsize},
+    xmin=0, xmax=100,
+    xmajorgrids=true,
+    grid style={line width=0.3pt, draw=gray!30},
+    enlarge y limits=0.08,
+    nodes near coords,
+    nodes near coords style={font=\scriptsize, anchor=west},
+  ]
+
+  \addplot[fill=blue!60, draw=blue!80!black] coordinates {
+    (85,{SQL Injection})
+    (80,{XSS})
+    (75,{Command Injection})
+    (70,{Path Traversal})
+    (60,{SSRF})
+    (55,{CSRF})
+    (45,{Race Condition})
+    (40,{Prototype Pollution})
+    (30,{NoSQL Injection})
+    (25,{Deserialization})
+  };
+
+  \end{axis}
+\end{tikzpicture}
+\caption{Recall by vulnerability category for \texttt{qwen3:8b+RAG}. Injection-style vulnerabilities (SQL, XSS, command) are detected most reliably. Niche categories (NoSQL, deserialization) remain challenging.}
+\label{fig:r1-category}
+\end{figure}
+
+\subsection{SAST Baseline Comparison}
+
+SAST tools show a different trade-off profile. Semgrep achieves low FPR (6.67\%) but very low recall (9.73\%). CodeQL has higher FPR (53.33\%) with similarly low recall. ESLint security plugins detect none of the test cases. The LLM-based approach trades higher FPR for substantially better recall, making it more suitable for comprehensive security audits while SAST remains useful as a low-noise complement.
+
+\subsection{Level Mapping}
+
+Based on the R1 evaluation scale (Table~\ref{tab:r1-accuracy-thresholds}), the best configuration (\texttt{qwen3:8b+RAG}) maps as follows:
+
+\begin{itemize}
+  \item F1 = 63.76\% $\rightarrow$ falls in $[0.60, 0.75)$
+  \item Precision = 62.93\% $\rightarrow$ above 0.55
+  \item Recall = 64.60\% $\rightarrow$ above 0.55
+  \item FPR = 26.67\% $\rightarrow$ falls in $(0.20, 0.40]$
+\end{itemize}
+
+\begin{center}
+\begin{tabular}{cc}
+\raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-150:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
+\textbf{R1 Level: Medium accuracy.} \\
+\end{tabular}
+\end{center}
+
+Results are worth reviewing with some manual checking needed. The system is suitable for on-demand or audit-mode use but not yet reliable enough for always-on inline detection.

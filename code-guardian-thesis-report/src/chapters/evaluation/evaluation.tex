@@ -1,47 +1,15 @@
 \section{Overview}
 
-This chapter evaluates Code Guardian against the requirements from Chapter~\ref{chap:analysis}. The focus is on three dimensions: detection quality (precision/recall/F1 and secure-sample FPR), structured-output robustness (JSON parse success), and responsiveness (latency in IDE-like workflows). Results are interpreted as descriptive measurements for the documented local run configuration.
+This chapter evaluates Code Guardian against the five requirements defined in Chapter~\ref{chap:analysis}. Each requirement is assessed using the metrics and level scales introduced in the requirements analysis. The evaluation uses a curated dataset of 128 test cases (113 vulnerable, 15 secure) covering major CWE categories, executed on local hardware with multiple model and retrieval configurations.
 
-The evaluation is structured in four parts. First, the chapter introduces the datasets, metrics, and experimental setup. Second, it reports the LLM-only and LLM+RAG results. Third, it compares model families and deterministic baselines. Fourth, it synthesizes the findings, limitations, threats to validity, and practical deployment implications.
-
-\section{Results at a Glance}
-\label{sec:eval-results-overview}
-
-Table~\ref{tab:eval-results-summary} summarizes representative configurations from the merged thesis run.
-
-\begin{table}[htbp]
-\centering
-\caption{Representative configurations (merged thesis result set).}
-\label{tab:eval-results-summary}
-\footnotesize
-\begin{tabular}{@{}lrrrrr@{}}
-\toprule
-\textbf{Configuration} & \textbf{Precision} & \textbf{Recall} & \textbf{F1} & \textbf{FPR} & \textbf{Median latency} \\
-\midrule
-\texttt{qwen3:8b} (LLM+RAG) & 62.93 & 64.60 & 63.76 & 26.67 & 1524\,ms \\
-\texttt{qwen3:8b} (LLM-only) & 54.06 & 62.83 & 58.12 & 26.67 & 1548\,ms \\
-\texttt{qwen3:4b} (LLM+RAG) & 53.53 & 64.90 & 58.67 & 100.00 & 1087\,ms \\
-\texttt{gemma3:1b} (LLM-only) & 45.31 & 25.66 & 32.77 & 100.00 & 333\,ms \\
-\texttt{semgrep} baseline & 57.89 & 9.73 & 16.67 & 6.67 & 52\,ms \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\paragraph{Key observations.}
-\begin{itemize}
-  \item \textbf{Best overall quality in this run:} \texttt{qwen3:8b} with RAG (highest F1, moderate secure-sample FPR).
-  \item \textbf{RAG is model-dependent:} helpful for \texttt{qwen3} variants, not universally beneficial across all models.
-  \item \textbf{False-positive control is the main bottleneck:} most LLM configurations still over-warn on secure samples.
-  \item \textbf{SAST remains a useful complement:} lower recall but much lower alert noise and latency.
-\end{itemize}
-
-The following sections present dataset construction, metrics, setup, ablation results, baseline comparison, and final synthesis in detail.
+The chapter proceeds as follows. Sections~\ref{sec:eval-dataset}--\ref{sec:eval-setup} introduce the dataset, metrics, and experimental setup. Sections~\ref{sec:eval-r1}--\ref{sec:eval-r5} present results organized by requirement, each ending with a level mapping. Section~\ref{sec:eval-summary} synthesizes the findings into a requirement compliance overview.
 
 \input{src/chapters/evaluation/dataset_details}
 \input{src/chapters/evaluation/evaluation_metrics}
 \input{src/chapters/evaluation/experimental_setup}
-\input{src/chapters/evaluation/s1_result}
-\input{src/chapters/evaluation/s2_result}
-\input{src/chapters/evaluation/s3_result}
-\input{src/chapters/evaluation/s4_result}
-\input{src/chapters/evaluation/summary}
+\input{src/chapters/evaluation/eval_r1_accuracy}
+\input{src/chapters/evaluation/eval_r2_consistency}
+\input{src/chapters/evaluation/eval_r3_repair}
+\input{src/chapters/evaluation/eval_r4_usability}
+\input{src/chapters/evaluation/eval_r5_privacy}
+\input{src/chapters/evaluation/eval_summary}

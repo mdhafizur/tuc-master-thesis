@@ -183,6 +183,11 @@ make release-patch        # Bumps version, tags, pushes
 - Error handling with try-catch and retry logic
 - Logging via custom logger (`src/logger.ts`)
 
+## Thesis Writing Rules
+
+- **Citation limit:** Use no more than two citations per statement. Prefer the most frequently cited references in the thesis (`bibliography.bib`) over less-used ones.
+- **Simple English:** Use plain, straightforward language. Prefer short sentences and common words. Avoid ornate phrasing, jargon-heavy constructions, and unnecessarily complex sentence structures.
+
 ## Security Considerations
 
 **Privacy-First Design:**

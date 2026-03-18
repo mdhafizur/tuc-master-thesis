@@ -19,3 +19,52 @@ Recent empirical studies sharpen these concerns. Li et al.\ show that context-po
 In response, contemporary approaches increasingly combine learned models with auxiliary signals such as retrieval, tools, or deterministic checks. Retrieval-augmented generation provides a mechanism to ground model reasoning in external security knowledge without retraining \cite{lewis2020rag,karpukhin2020dpr,guu2020realm}. Tool-oriented prompting (e.g., using dedicated retrieval or analysis tools) further motivates modular designs where different components provide complementary evidence \cite{schick2023toolformer}. In Code Guardian, these ideas are reflected in the optional RAG module and the strict JSON-output contract used for IDE diagnostics and evaluation.
 
 Repair suggestion quality is also connected to the broader literature on automated program repair. Classic systems such as GenProg and subsequent patch-learning approaches show both the promise of automation and the difficulty of evaluating patch correctness beyond passing tests \cite{weimer2009genprog,legoues2012genprog,kim2013par,monperrus2014critique}. For IDE-integrated security assistance, these findings motivate presenting repairs as \emph{optional} quick fixes, requiring explicit developer review and preserving responsibility for functional correctness.
+
+Table~\ref{tab:eval-llm} evaluates representative LLM-based approaches against the requirements defined in Section~\ref{sec:requirements}.
+
+\begin{table}[H]
+  \centering
+  \caption{Evaluation of LLM-based vulnerability detection approaches against requirements R1--R5.}
+  \label{tab:eval-llm}
+  \small
+  \renewcommand{\arraystretch}{1.5}
+  \begin{tabular}{|m{3.2cm}|c|c|c|c|c|}
+    \hline
+    \textbf{Approach} & \textbf{R1} & \textbf{R2} & \textbf{R3} & \textbf{R4} & \textbf{R5} \\
+    \hline
+
+    GitHub Copilot \cite{chen2021codex} &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-150:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-30:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-90:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\draw (0,0) circle (0.35cm);}} \\
+    \hline
+
+    IRIS \cite{li2025iris} &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-150:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-90:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-90:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\draw (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\draw (0,0) circle (0.35cm);}} \\
+    \hline
+
+    SecRepair \cite{islam2024secrepair} &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-90:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-90:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-90:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\draw (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\draw (0,0) circle (0.35cm);}} \\
+    \hline
+
+    CWEVAL \cite{peng2025cweval} &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-150:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-90:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\draw (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\draw (0,0) circle (0.35cm);}} &
+    --- \\
+    \hline
+  \end{tabular}
+\end{table}
+
+LLM-based approaches show stronger accuracy (R1) than SAST tools due to contextual reasoning, but consistency (R2) is weaker because of nondeterministic generation. GitHub Copilot offers the best usability (R4) through native IDE integration, but fails on privacy (R5) since it requires cloud inference. IRIS and SecRepair provide medium repair quality (R3) by combining static analysis with LLM-generated patches, but neither is integrated into IDE workflows (low R4). CWEVAL is an evaluation framework, not a repair tool, so R3 does not apply. The main gap across all approaches is the lack of local, privacy-preserving deployment.

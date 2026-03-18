@@ -1,9 +1,37 @@
 \label{sec:r2-consistency}
 
-R2 addresses detection consistency. For Code Guardian, consistency means that the same code under fixed settings should lead to structurally stable output, comparable findings, and sufficiently repeatable classifications and localizations for developer action. This is especially important in security analysis, where unstable results quickly reduce trust and make remediation decisions harder to justify.
+R2 addresses detection consistency. Code Guardian should produce stable results when the same code is analyzed multiple times with the same settings. In security analysis, unstable output quickly reduces trust and makes it harder for developers to act on findings.
 
-This requirement matters because LLM-based systems introduce nondeterminism through probabilistic generation, schema deviations, and prompt sensitivity \cite{openai2023gpt4,ji2023hallucination}. Even when raw detection quality is acceptable, inconsistent output can still make an assistant unsuitable for IDE integration if developers cannot predict whether a warning, label, or line range will change between runs.
+This requirement matters because LLMs are nondeterministic. They can produce different outputs, schema errors, or changed labels across runs \cite{ji2023hallucination,openai2023gpt4}. Even if detection quality is good, inconsistent output makes a tool unsuitable for IDE use. Developers need to trust that warnings will not change randomly between runs \cite{johnson2013don}.
 
-For this thesis, R2 implies stable structured output, stable issue presence under repeated runs, and sufficiently repeatable labeling/localization for review workflows. The design response is a strict JSON contract, defensive parsing, scoped prompting, caching of unchanged analyses, and optional retrieval grounding to reduce unsupported variation.
+Consistency has four key parts. First, structured output: the system must return valid JSON that follows the expected schema, since broken output is useless for IDE automation. Second, detection agreement: running the same code twice should produce the same findings. Third, labeling: vulnerability types and severity ratings should stay the same across runs. Fourth, localization: reported line ranges should not shift between runs.
 
-In the evaluation, R2 is operationalized through JSON parse stability, exploratory repeated-run agreement checks, and qualitative review of label and localization stability across fixed configurations.
+For this thesis, R2 means stable JSON output, stable findings across repeated runs, and repeatable labels and locations. The design uses a strict JSON contract, defensive parsing, scoped prompts, caching, and optional retrieval grounding to reduce random variation.
+
+We define a four-level scale for R2. Output stability is measured by JSON parse success rate. Detection agreement is measured by inter-run agreement rate or Cohen's kappa. Table~\ref{tab:r2-consistency-thresholds} shows this scale.
+
+\begin{table}[H]
+  \centering
+  \caption{Evaluation scale for R2: Detection Consistency (example thresholds).}
+  \label{tab:r2-consistency-thresholds}
+  \small
+  \renewcommand{\arraystretch}{1.4}
+  \begin{tabularx}{\textwidth}{>{\centering\arraybackslash}m{2.2cm}X}
+    \toprule
+    \textbf{Visual Score} & \textbf{Interpretation (with thresholds)} \\
+    \midrule
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}}
+    & \textbf{High consistency.} JSON parse rate $\geq 99\%$, detection agreement $\geq 0.90$, and label/severity $\kappa \geq 0.80$. Output is stable and reliable. Suitable for always-on IDE use. \\
+    \midrule
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-150:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}}
+    & \textbf{Medium consistency.} JSON parse rate in $[95\%, 99\%)$, detection agreement in $[0.75, 0.90)$, or $\kappa$ in $[0.60, 0.80)$. Mostly stable with occasional changes. Suitable for on-demand or audit-mode use. \\
+    \midrule
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-30:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}}
+    & \textbf{Low consistency.} JSON parse rate in $[85\%, 95\%)$, detection agreement in $[0.60, 0.75)$, or $\kappa$ in $[0.40, 0.60)$. Frequent variation. Findings need repeated confirmation before acting. \\
+    \midrule
+    \raisebox{-0.3cm}{\tikz{\draw (0,0) circle (0.35cm);}}
+    & \textbf{No consistency.} JSON parse rate $< 85\%$, detection agreement $< 0.60$, or $\kappa < 0.40$. Output is unreliable. The system cannot produce repeatable findings. \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+

@@ -7,3 +7,44 @@ IDE-integrated security tools can improve developer engagement and remediation r
 Local deployment, however, is not a complete security solution. Moving inference on-device shifts the trust boundary from cloud providers to local runtime integrity, workstation hardening, and extension-level data handling. Attackers who gain local access can still exfiltrate prompts, caches, or generated repairs unless operational controls (OS hardening, access control, and secure storage defaults) are in place.
 
 A second practical boundary concerns \emph{mixed connectivity}. Many systems operate with local inference but optional online knowledge refresh. This hybrid pattern can preserve source-code privacy while still introducing supply-chain and provenance risks if external knowledge sources are not validated. Privacy-preserving design should therefore separate code-bearing data paths from public-metadata update paths and make this separation visible to users.
+
+Table~\ref{tab:eval-privacy-ide} evaluates representative privacy-aware and IDE-integrated approaches against the requirements defined in Section~\ref{sec:requirements}.
+
+\begin{table}[H]
+  \centering
+  \caption{Evaluation of privacy-preserving and IDE-integrated approaches against requirements R1--R5.}
+  \label{tab:eval-privacy-ide}
+  \small
+  \renewcommand{\arraystretch}{1.5}
+  \begin{tabular}{|m{3.2cm}|c|c|c|c|c|}
+    \hline
+    \textbf{Approach} & \textbf{R1} & \textbf{R2} & \textbf{R3} & \textbf{R4} & \textbf{R5} \\
+    \hline
+
+    GitHub Copilot \cite{chen2021codex} &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-150:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-30:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-90:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\draw (0,0) circle (0.35cm);}} \\
+    \hline
+
+    Snyk Code (local) \cite{snykDocs} &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-150:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\draw (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-150:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} \\
+    \hline
+
+    Semgrep (local) \cite{semgrepDocs} &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-90:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\draw (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} \\
+    \hline
+  \end{tabular}
+\end{table}
+
+GitHub Copilot offers the best IDE experience (R4) and medium repair quality (R3), but fails on privacy (R5) because all inference happens in the cloud. Snyk Code's local mode provides high consistency (R2) and good usability (R4), but its proprietary engine limits transparency and it offers no repair suggestions (low R3). Its privacy score is medium-high because some features still require cloud connectivity. Semgrep runs fully locally (high R5) with deterministic results (high R2), but lacks contextual reasoning and repair generation. The gap across all approaches is the combination of local privacy, contextual LLM reasoning, and repair suggestions in a single IDE-integrated tool.

@@ -16,3 +16,36 @@ From an engineering perspective, RAG design involves a three-way trade-off among
 \end{itemize}
 
 These trade-offs motivate model-specific calibration rather than one global RAG configuration. The same retrieval setup can improve one model while degrading another, depending on how each model integrates external context under strict output constraints. This observation is central to the ablation design in this thesis.
+
+Table~\ref{tab:eval-rag} evaluates representative RAG-based approaches against the requirements defined in Section~\ref{sec:requirements}.
+
+\begin{table}[H]
+  \centering
+  \caption{Evaluation of RAG-based secure coding approaches against requirements R1--R5.}
+  \label{tab:eval-rag}
+  \small
+  \renewcommand{\arraystretch}{1.5}
+  \begin{tabular}{|m{3.2cm}|c|c|c|c|c|}
+    \hline
+    \textbf{Approach} & \textbf{R1} & \textbf{R2} & \textbf{R3} & \textbf{R4} & \textbf{R5} \\
+    \hline
+
+    Generic RAG \cite{lewis2020rag} &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-150:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-90:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-90:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-90:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
+    --- \\
+    \hline
+
+    RESCUE \cite{shi2025rescue} &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-150:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-150:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\draw (0,0) circle (0.35cm);}} &
+    --- \\
+    \hline
+  \end{tabular}
+\end{table}
+
+RAG improves accuracy (R1) by grounding LLM reasoning in security knowledge, though the degree of improvement is model-dependent. RESCUE achieves higher repair quality (R3) than generic RAG because it retrieves structured vulnerability-fix pairs rather than raw security text. Consistency (R2) benefits from retrieval grounding but remains medium since the underlying LLM is still nondeterministic. Neither approach reports usability metrics for IDE integration (R4), and privacy (R5) depends on deployment --- generic RAG can run locally but is often evaluated with cloud models. The key insight is that RAG is a useful augmentation, not a standalone solution.
