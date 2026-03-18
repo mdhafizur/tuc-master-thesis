@@ -1,9 +1,1 @@
-\label{sec:r7-usability}
-
-R7 concerns usability in the specific sense relevant to this thesis: responsiveness in the IDE. Security feedback is only useful during active development if it arrives within a time frame that fits normal editing and review workflows.
-
-This requirement is especially important for local LLM-based systems because inference cost, retrieval overhead, and prompt size can make security assistance noticeably slower than conventional diagnostics. Human-computer interaction research consistently shows that growing delay disrupts flow and lowers willingness to use a tool repeatedly \cite{card1991model,nielsen1994usability}.
-
-For Code Guardian, R7 means that inline and on-demand analysis must be scoped and orchestrated in a way that keeps interaction practical on real hardware. The design response is function-level scoping, debouncing, caching, and differentiated modes for lighter inline use versus heavier explicit scans.
-
-In the evaluation, R7 is operationalized through end-to-end latency measurements reported together with the hardware profile. Median latency captures the typical interaction cost, while mean latency provides a simple indicator of slower tails under the measured local setup.
+% This file is no longer used. Usability is now R4. See r4.tex.

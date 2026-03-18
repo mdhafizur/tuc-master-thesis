@@ -1,9 +1,36 @@
 \label{sec:r1-accuracy}
 
-R1 addresses detection accuracy. For Code Guardian, this means that the assistant should identify real vulnerabilities with useful precision and recall while keeping false positives at a practically manageable level. In a developer-facing IDE workflow, accuracy is not only about finding many issues, but about producing findings that are correct often enough to remain worth reviewing.
+R1 addresses accuracy. Code Guardian should find real vulnerabilities while keeping false alarms low. In an IDE workflow, accuracy means not just finding issues, but producing results that developers can trust and act on. This includes context-aware reasoning: the system should tell apart code that is actually vulnerable from code that only looks suspicious, by considering surrounding logic like input validation and sanitization.
 
-This requirement is motivated by the central trade-off in security assistance. Traditional security tools are often criticized for noisy warnings, while LLM-based systems can introduce both over-warning and missed detections depending on model choice and prompting \cite{johnson2013don,pearce2022copilot,ji2023hallucination}. A practical assistant must therefore be judged by the quality of its findings, not only by whether it can produce plausible explanations.
+This requirement comes from a key trade-off in security tools. Traditional tools often produce too many false warnings because they match surface patterns without understanding context \cite{johnson2013don,chess2004staticanalysis}. LLM-based systems can both over-warn and miss real issues, depending on the model and prompt \cite{ji2023hallucination,pearce2022copilot}. Without enough context, they may give confident but wrong explanations. A useful tool must be judged by how correct its findings are, not just by whether it can explain them.
 
-For this thesis, R1 implies vulnerability-type detection quality that is strong enough to justify developer attention under local deployment constraints. The design response is scoped prompting, optional retrieval grounding, baseline comparison against deterministic tools, and explicit reporting of precision, recall, F1, and secure-sample false-positive rate.
+For this thesis, R1 means detection quality must be good enough to deserve developer attention under local deployment. This includes recognizing when mitigation is already present and avoiding false conclusions when context is missing. The design uses scoped code extraction, structured prompts, optional retrieval grounding, comparison with rule-based tools, and clear reporting of precision, recall, F1, and false-positive rate (FPR).
 
-In the evaluation, R1 is operationalized primarily through pooled issue-level precision, recall, F1, and secure-sample false-positive behavior across fixed model and prompting configurations.
+Accuracy has four key parts. Precision measures how many reported issues are real, since too many false alarms cause developers to ignore the tool. Recall measures how many real vulnerabilities the system finds, including those that depend on data flow and surrounding context. F1 balances both into a single score. The secure-sample FPR tracks how often the system flags safe code as vulnerable, which is the best predictor of whether developers will accept the tool \cite{johnson2013don}.
+
+To allow comparison with other tools and across Code Guardian's own settings, we define a four-level scoring scale. The thresholds follow standard conventions from information retrieval and software engineering \cite{johnson2013don,ji2023hallucination}. Table~\ref{tab:r1-accuracy-thresholds} shows this scale.
+
+\begin{table}[H]
+  \centering
+  \caption{Evaluation scale for R1: Detection Accuracy (example thresholds).}
+  \label{tab:r1-accuracy-thresholds}
+  \small
+  \renewcommand{\arraystretch}{1.4}
+  \begin{tabularx}{\textwidth}{>{\centering\arraybackslash}m{2.2cm}X}
+    \toprule
+    \textbf{Visual Score} & \textbf{Interpretation (with thresholds)} \\
+    \midrule
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}}
+    & \textbf{High accuracy.} F1 $\geq 0.75$, precision $\geq 0.70$, recall $\geq 0.70$, and FPR $\leq 0.20$. The system finds vulnerabilities well with few false alarms. Suitable for always-on IDE use. \\
+    \midrule
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-150:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}}
+    & \textbf{Medium accuracy.} F1 in $[0.60, 0.75)$, precision $\geq 0.55$, recall $\geq 0.55$, and FPR in $(0.20, 0.40]$. Results are worth reviewing with some manual checking needed. Suitable for on-demand or audit-mode use. \\
+    \midrule
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-30:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}}
+    & \textbf{Low accuracy.} F1 in $[0.45, 0.60)$, or precision/recall below $0.55$, or FPR in $(0.40, 0.70]$. Findings need heavy manual checking. Only useful alongside rule-based tools. \\
+    \midrule
+    \raisebox{-0.3cm}{\tikz{\draw (0,0) circle (0.35cm);}}
+    & \textbf{Insufficient accuracy.} F1 $< 0.45$ or FPR $> 0.70$. Detection is too weak or false alarms too frequent. The system is not useful in practice. \\
+    \bottomrule
+  \end{tabularx}
+\end{table}

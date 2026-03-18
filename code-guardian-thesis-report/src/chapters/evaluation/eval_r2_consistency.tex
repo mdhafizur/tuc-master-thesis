@@ -1,0 +1,120 @@
+\section{R2: Consistency}
+\label{sec:eval-r2}
+
+This section evaluates detection consistency: whether the system produces stable, well-formed output across repeated analyses of the same code. The metrics are JSON parse success rate, inter-run detection agreement, and label stability, as defined in Section~\ref{sec:r2-consistency}.
+
+\subsection{Structured Output Stability}
+
+JSON parse success rate measures how often the system returns valid, schema-compliant output that the IDE can process. A parse failure means the analysis result is unusable regardless of its semantic quality.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+  \begin{axis}[
+    width=14cm,
+    height=6cm,
+    ybar,
+    bar width=10pt,
+    ylabel={JSON Parse Success Rate (\%)},
+    ylabel style={font=\small\bfseries},
+    xlabel={Model},
+    xlabel style={font=\small\bfseries},
+    symbolic x coords={gemma3:1b, gemma3:4b, qwen3:4b, qwen3:8b, codellama},
+    xtick=data,
+    xticklabel style={font=\small},
+    ymin=80, ymax=102,
+    ytick={80,85,90,95,100},
+    ymajorgrids=true,
+    grid style={line width=0.3pt, draw=gray!30},
+    legend style={
+      at={(0.5,-0.15)},
+      anchor=north,
+      legend columns=2,
+      font=\small,
+    },
+    enlarge x limits=0.15,
+    nodes near coords,
+    nodes near coords style={font=\scriptsize, rotate=90, anchor=west},
+  ]
+
+  \addplot[fill=blue!60, draw=blue!80!black] coordinates {
+    (gemma3:1b, 95.6)
+    (gemma3:4b, 97.3)
+    (qwen3:4b, 99.1)
+    (qwen3:8b, 99.7)
+    (codellama, 96.5)
+  };
+  \addlegendentry{LLM-only}
+
+  \addplot[fill=orange!60, draw=orange!80!black] coordinates {
+    (gemma3:1b, 94.7)
+    (gemma3:4b, 96.8)
+    (qwen3:4b, 98.8)
+    (qwen3:8b, 99.4)
+    (codellama, 95.3)
+  };
+  \addlegendentry{LLM+RAG}
+
+  \end{axis}
+\end{tikzpicture}
+\caption{JSON parse success rate by model and mode. Larger models produce more reliably structured output. RAG adds slight overhead that marginally reduces parse success in smaller models.}
+\label{fig:r2-json-parse}
+\end{figure}
+
+All \texttt{qwen3} models achieve $\geq 98.8\%$ parse success, with \texttt{qwen3:8b} reaching 99.7\% in LLM-only mode. Smaller models (\texttt{gemma3:1b}) drop below 96\%, and RAG slightly reduces parse rates across all models due to increased prompt complexity.
+
+\subsection{Inter-Run Detection Agreement}
+
+Because each vulnerable sample was evaluated 3 times, we can measure how often the same sample produces the same binary detection outcome across runs. Agreement rate is the percentage of samples where all 3 runs agree on the detection result.
+
+\begin{table}[H]
+\centering
+\caption{Inter-run detection agreement (3 runs per sample, 113 vulnerable samples).}
+\label{tab:r2-agreement}
+\footnotesize
+\begin{tabular}{@{}llr@{}}
+\toprule
+\textbf{Model} & \textbf{Mode} & \textbf{Agreement Rate (\%)} \\
+\midrule
+\texttt{qwen3:8b} & LLM+RAG & 87.6 \\
+\texttt{qwen3:8b} & LLM-only & 84.1 \\
+\texttt{qwen3:4b} & LLM+RAG & 82.3 \\
+\texttt{qwen3:4b} & LLM-only & 79.6 \\
+\texttt{gemma3:4b} & LLM+RAG & 76.1 \\
+\texttt{gemma3:4b} & LLM-only & 78.8 \\
+\texttt{gemma3:1b} & LLM+RAG & 71.7 \\
+\texttt{gemma3:1b} & LLM-only & 73.5 \\
+\texttt{codellama} & LLM+RAG & 74.3 \\
+\texttt{codellama} & LLM-only & 77.0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\texttt{qwen3:8b+RAG} shows the highest agreement (87.6\%), meaning that for roughly 88 out of 113 samples, all three runs produce the same detection decision. Smaller and code-specialized models show more variation, with \texttt{gemma3:1b} at 71.7--73.5\%. RAG slightly improves agreement for \texttt{qwen3} models but slightly reduces it for others, consistent with the accuracy findings.
+
+\subsection{Label and Severity Stability}
+
+Beyond binary detection, we examine whether the reported vulnerability type and severity remain stable across runs. For samples detected in all 3 runs, we check whether the same CWE label and severity level appear consistently.
+
+Among \texttt{qwen3:8b+RAG} detections with full 3-run agreement, 91\% produce the same primary CWE label across all runs, and 85\% assign the same severity level. For \texttt{gemma3:4b}, these figures drop to 72\% and 64\% respectively, confirming that larger, instruction-tuned models produce more stable classifications.
+
+\subsection{Level Mapping}
+
+Based on the R2 evaluation scale (Table~\ref{tab:r2-consistency-thresholds}), the best configuration (\texttt{qwen3:8b+RAG}) maps as follows:
+
+\begin{itemize}
+  \item JSON parse success rate = 99.4\% $\rightarrow$ $\geq 99\%$
+  \item Inter-run detection agreement = 87.6\% $\rightarrow$ falls in $[0.75, 0.90)$
+  \item Label agreement = 91\% $\rightarrow$ falls in $[0.80, 1.00)$ range
+\end{itemize}
+
+The JSON parse rate meets the High threshold, but detection agreement falls in the Medium range. The binding constraint is detection agreement.
+
+\begin{center}
+\begin{tabular}{cc}
+\raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-150:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
+\textbf{R2 Level: Medium consistency.} \\
+\end{tabular}
+\end{center}
+
+Output is mostly stable with occasional deviations. Suitable for on-demand or audit-mode workflows where sporadic variation is tolerable.

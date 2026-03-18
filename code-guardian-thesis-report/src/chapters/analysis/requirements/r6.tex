@@ -1,9 +1,1 @@
-\label{sec:r6-privacy}
-
-R6 defines the central boundary of this thesis: vulnerability detection and repair assistance must operate without transmitting source code or code-derived analysis artifacts to external services. In practical terms, the assistant should keep prompts, findings, retrieved context, and generated fixes on the developer machine during normal analysis workflows.
-
-This requirement follows directly from the intended deployment setting. Source code may contain proprietary logic, intellectual property, or regulated information, making cloud-based analysis unacceptable in many organizations. Partial redaction is not a sufficient solution because security-relevant context is often distributed across the code and may be lost when stripped down.
-
-For Code Guardian, R6 implies local model inference, local retrieval, and explicit separation between code-bearing workflows and optional public-metadata refresh paths. The design response is therefore a local-first architecture based on Ollama, local vector storage, and disabled-by-default background data egress for analysis.
-
-In the evaluation, R6 is assessed primarily through architectural and configuration evidence: the analyzed workflows keep source code on localhost, while optional knowledge refresh accesses only public vulnerability metadata and can be disabled for offline operation.
+% This file is no longer used. Privacy is now R5. See r5.tex.

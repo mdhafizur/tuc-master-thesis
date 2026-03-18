@@ -1,9 +1,31 @@
-\label{sec:r3-context-awareness}
+\label{sec:r3-repair-quality}
 
-R3 captures the ability to reason about vulnerabilities in context rather than by surface pattern alone. In this thesis, context-aware reasoning means that the assistant should distinguish genuinely exploitable code from code that only appears suspicious, while accounting for surrounding logic such as validation, sanitization, and API usage.
+R3 addresses repair quality. Code Guardian should not only detect vulnerabilities but also suggest concrete fixes. A good repair is specific to the affected code, follows recognized secure-coding practices, and is presented as a suggestion that the developer can review and accept or reject.
 
-This requirement is necessary because many security flaws depend on how data moves through the program, not only on the presence of specific keywords or sink calls \cite{livshits2005java,chess2004staticanalysis}. LLM-based systems face the complementary problem that incomplete context can lead to over-warning, missed vulnerabilities, or confidently stated but weakly grounded conclusions \cite{pearce2022copilot,ji2023hallucination}.
+This matters because developers often receive warnings without usable guidance on how to fix them, which increases effort and reduces follow-through \cite{johnson2013don,christakis2016developers}. At the same time, research on automated program repair shows that generated patches are only useful when they fix the root cause without introducing new problems \cite{monperrus2014critique}.
 
-For Code Guardian, R3 therefore implies three capabilities: combining dispersed evidence within the selected scope, recognizing mitigation logic when it is present, and avoiding unsupported conclusions when relevant context is missing. The design response is scoped code extraction, structured prompting, and optional retrieval grounding with curated security knowledge.
+For Code Guardian, R3 means repairs should target the affected code region, use established mitigations like parameterization, input validation, and safer API choices, and be delivered as optional diffs rather than automatic edits. The developer always keeps control over whether to apply a fix.
 
-In the evaluation, R3 is assessed through issue-level detection quality on context-dependent cases, supported by qualitative review of representative true positives, false positives, false negatives, and mitigation-sensitive examples.
+To measure repair quality, we define a three-level scale. The metrics focus on whether repairs are syntactically valid, address the reported vulnerability type, and follow recognized secure-coding patterns. Table~\ref{tab:r3-repair-thresholds} shows this scale.
+
+\begin{table}[H]
+  \centering
+  \caption{Evaluation scale for R3: Repair Quality (example thresholds).}
+  \label{tab:r3-repair-thresholds}
+  \small
+  \renewcommand{\arraystretch}{1.4}
+  \begin{tabularx}{\textwidth}{>{\centering\arraybackslash}m{2.2cm}X}
+    \toprule
+    \textbf{Visual Score} & \textbf{Interpretation (with thresholds)} \\
+    \midrule
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}}
+    & \textbf{High.} $\geq 75\%$ of repairs are syntactically valid, address the correct vulnerability type, and follow established secure-coding patterns. Fixes are specific and ready for developer review. \\
+    \midrule
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-90:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}}
+    & \textbf{Medium.} $[50\%, 75\%)$ of repairs are valid and relevant. Most fixes target the right issue but may use generic patterns or need minor edits before applying. \\
+    \midrule
+    \raisebox{-0.3cm}{\tikz{\draw (0,0) circle (0.35cm);}}
+    & \textbf{Low.} $< 50\%$ of repairs are valid and relevant. Fixes are mostly unusable, too generic, or miss the root cause. \\
+    \bottomrule
+  \end{tabularx}
+\end{table}

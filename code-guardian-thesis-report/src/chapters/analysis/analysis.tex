@@ -6,7 +6,7 @@ This chapter defines the requirements for automated vulnerability detection and 
 
 The thesis targets local IDE assistance for JavaScript/TypeScript development: detect vulnerabilities, explain them, and propose repairs without code exfiltration. Compared with rule-based SAST, the approach adds LLM reasoning and optional retrieval grounding, but must still satisfy strict operational constraints.
 
-Based on the problem statement and related work, seven requirements define the evaluation baseline. Table~\ref{tab:requirements-overview} summarizes them before they are discussed in detail.
+Based on the problem statement and related work, five requirements define the evaluation baseline. Table~\ref{tab:requirements-overview} summarizes them before they are discussed in detail.
 
 \begin{table}[H]
   \centering
@@ -18,39 +18,31 @@ Based on the problem statement and related work, seven requirements define the e
     \toprule
     ID & Requirement & Operational intent \\
     \midrule
-    R1 & Detection accuracy & Identify real vulnerabilities with useful precision, recall, and controlled false positives. \\
-    R2 & Detection consistency & Produce stable findings and structured output under fixed settings. \\
-    R3 & Context-aware reasoning & Distinguish exploitable patterns from benign code using surrounding program context. \\
-    R4 & Explainability and transparency & Provide clear, technically precise, and traceable explanations. \\
-    R5 & Actionable repairs & Suggest minimal, security-improving fixes while preserving developer control. \\
-    R6 & Privacy-preserving operation & Keep analysis and retrieval local, with no source-code transmission. \\
-    R7 & Usability and responsiveness & Deliver feedback at latencies compatible with IDE workflows. \\
+    R1 & Accuracy & Find real vulnerabilities with useful precision, recall, and controlled false positives, using context-aware reasoning. \\
+    R2 & Consistency & Produce stable findings and structured output under fixed settings. \\
+    R3 & Repair quality & Suggest concrete, security-improving fixes while keeping the developer in control. \\
+    R4 & Usability & Deliver feedback at latencies that fit normal IDE workflows. \\
+    R5 & Privacy & Keep all analysis local with no source-code transmission. \\
     \bottomrule
   \end{tabularx}
 \end{table}
 
 The following subsections define these requirements in detail and map them to measurable criteria.
 
-\subsection{R1: Detection Accuracy}\vspace{-2mm}
+\subsection{R1: Accuracy}\vspace{-2mm}
 \input{src/chapters/analysis/requirements/r1}
 
-\subsection{R2: Detection Consistency}\vspace{-2mm}
+\subsection{R2: Consistency}\vspace{-2mm}
 \input{src/chapters/analysis/requirements/r2}
 
-\subsection{R3: Context-Aware Vulnerability Reasoning}\vspace{-2mm}
+\subsection{R3: Repair Quality}\vspace{-2mm}
 \input{src/chapters/analysis/requirements/r3}
 
-\subsection{R4: Explainability and Transparency}\vspace{-2mm}
+\subsection{R4: Usability}\vspace{-2mm}
 \input{src/chapters/analysis/requirements/r4}
 
-\subsection{R5: Actionable Repair Suggestions}\vspace{-2mm}
+\subsection{R5: Privacy}\vspace{-2mm}
 \input{src/chapters/analysis/requirements/r5}
-
-\subsection{R6: Privacy-Preserving Operation}\vspace{-2mm}
-\input{src/chapters/analysis/requirements/r6}
-
-\subsection{R7: Usability and Responsiveness}\vspace{-2mm}
-\input{src/chapters/analysis/requirements/r7}
 
 
 \section{Related Work and Positioning}
@@ -96,7 +88,7 @@ The reviewed literature indicates that security assistants should be compared as
   \end{tabularx}
 \end{table}
 
-Two conclusions follow. First, no single paradigm satisfies R1--R7 alone; practical systems combine complementary mechanisms. Second, evaluation must jointly report quality and operational metrics because deployment value depends on recall, false-positive control, robustness, latency, and privacy guarantees together.
+Two conclusions follow. First, no single paradigm satisfies R1--R5 alone; practical systems combine complementary mechanisms. Second, evaluation must jointly report quality and operational metrics because deployment value depends on recall, false-positive control, repair quality, latency, and privacy guarantees together.
 
 \section{Summary}
 
