@@ -4,8 +4,9 @@
 # Personal Access Token for publishing (set via: export VSCE_PAT=your_token)
 # Or create a .vsce-pat file with your token
 VSCE_PAT ?= $(shell cat .vsce-pat 2>/dev/null || echo "")
+VSCE ?= npx @vscode/vsce
 
-.PHONY: help install compile test package publish publish-patch publish-minor publish-major clean dev lint format check-deps login set-pat release-patch release-minor release-major
+.PHONY: help install compile test package publish publish-patch publish-minor publish-major clean clean-test-cache dev lint format check-deps login set-pat release-patch release-minor release-major
 
 # Default target - show help
 help:
@@ -50,6 +51,7 @@ help:
 	@echo ""
 	@echo "  Utilities:"
 	@echo "    make clean        - Clean build artifacts"
+	@echo "    make clean-test-cache - Remove cached VS Code test download"
 	@echo "    make check-deps   - Check for outdated dependencies"
 	@echo "    make audit        - Run npm security audit"
 	@echo "    make audit-fix    - Fix npm security issues"
@@ -130,7 +132,7 @@ benchmark:
 # Package extension as VSIX
 package: clean compile test
 	@echo "📦 Packaging extension..."
-	vsce package --no-dependencies
+	$(VSCE) package --no-dependencies
 	@echo ""
 	@echo "✅ Package created successfully!"
 	@ls -lh *.vsix
@@ -139,7 +141,7 @@ package: clean compile test
 login:
 	@echo "🔐 Logging in to VS Code Marketplace..."
 	@if [ -n "$(VSCE_PAT)" ]; then \
-		echo "$(VSCE_PAT)" | vsce login DreamersRedemption; \
+		echo "$(VSCE_PAT)" | $(VSCE) login DreamersRedemption; \
 		echo "✅ Login successful!"; \
 	else \
 		echo "❌ No PAT found. Set VSCE_PAT in Makefile or environment variable"; \
@@ -151,7 +153,7 @@ login:
 publish: package
 	@echo "🚀 Publishing to VS Code Marketplace..."
 	@if [ -n "$(VSCE_PAT)" ]; then \
-		vsce publish --no-dependencies --pat "$(VSCE_PAT)"; \
+		$(VSCE) publish --no-dependencies --pat "$(VSCE_PAT)"; \
 		echo "✅ Published successfully!"; \
 	else \
 		echo "❌ No PAT found. Set VSCE_PAT in Makefile"; \
@@ -162,7 +164,7 @@ publish: package
 publish-patch: clean compile test
 	@echo "🚀 Publishing patch version..."
 	@if [ -n "$(VSCE_PAT)" ]; then \
-		vsce publish patch --no-dependencies --pat "$(VSCE_PAT)"; \
+		$(VSCE) publish patch --no-dependencies --pat "$(VSCE_PAT)"; \
 		echo "✅ Patch version published successfully!"; \
 	else \
 		echo "❌ No PAT found. Set VSCE_PAT in Makefile"; \
@@ -173,7 +175,7 @@ publish-patch: clean compile test
 publish-minor: clean compile test
 	@echo "🚀 Publishing minor version..."
 	@if [ -n "$(VSCE_PAT)" ]; then \
-		vsce publish minor --no-dependencies --pat "$(VSCE_PAT)"; \
+		$(VSCE) publish minor --no-dependencies --pat "$(VSCE_PAT)"; \
 		echo "✅ Minor version published successfully!"; \
 	else \
 		echo "❌ No PAT found. Set VSCE_PAT in Makefile"; \
@@ -184,7 +186,7 @@ publish-minor: clean compile test
 publish-major: clean compile test
 	@echo "🚀 Publishing major version..."
 	@if [ -n "$(VSCE_PAT)" ]; then \
-		vsce publish major --no-dependencies --pat "$(VSCE_PAT)"; \
+		$(VSCE) publish major --no-dependencies --pat "$(VSCE_PAT)"; \
 		echo "✅ Major version published successfully!"; \
 	else \
 		echo "❌ No PAT found. Set VSCE_PAT in Makefile"; \
@@ -309,9 +311,14 @@ clean:
 	rm -rf dist/
 	rm -rf out/
 	rm -rf coverage/
-	rm -rf .vscode-test/
 	rm -f *.vsix
 	@echo "✅ Clean complete!"
+
+# Remove downloaded VS Code test cache explicitly
+clean-test-cache:
+	@echo "🧹 Removing VS Code test cache..."
+	rm -rf .vscode-test/
+	@echo "✅ VS Code test cache removed!"
 
 # Check for outdated dependencies
 check-deps:

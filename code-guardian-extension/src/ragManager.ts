@@ -285,6 +285,9 @@ export class RAGManager {
             owasp: number;
             cves: number;
             javascript: number;
+            cheatsheets: number;
+            capec: number;
+            nodejs: number;
         };
         error?: string;
     }> {
@@ -296,7 +299,10 @@ export class RAGManager {
                 ...vulnerabilityData.cwe,
                 ...vulnerabilityData.owasp,
                 ...vulnerabilityData.cves,
-                ...vulnerabilityData.javascript
+                ...vulnerabilityData.javascript,
+                ...vulnerabilityData.cheatsheets,
+                ...vulnerabilityData.capec,
+                ...vulnerabilityData.nodejs
             ]);
 
             let added = 0;
@@ -339,7 +345,10 @@ export class RAGManager {
                     cwe: vulnerabilityData.cwe.length,
                     owasp: vulnerabilityData.owasp.length,
                     cves: vulnerabilityData.cves.length,
-                    javascript: vulnerabilityData.javascript.length
+                    javascript: vulnerabilityData.javascript.length,
+                    cheatsheets: vulnerabilityData.cheatsheets.length,
+                    capec: vulnerabilityData.capec.length,
+                    nodejs: vulnerabilityData.nodejs.length
                 }
             };
 
@@ -356,7 +365,10 @@ export class RAGManager {
                     cwe: 0,
                     owasp: 0,
                     cves: 0,
-                    javascript: 0
+                    javascript: 0,
+                    cheatsheets: 0,
+                    capec: 0,
+                    nodejs: 0
                 },
                 error: errorMsg
             };

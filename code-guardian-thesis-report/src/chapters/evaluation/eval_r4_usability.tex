@@ -103,7 +103,11 @@ Figure~\ref{fig:r4-latency-comparison} visualizes the median and p95 latency for
 
 \subsection{Latency Component Breakdown}
 
-LLM inference dominates 80--90\% of total latency. RAG adds 60--120\,ms overhead for retrieval and embedding, which is negligible relative to inference time. The remaining time is spent on prompt construction, JSON parsing, and diagnostic rendering.
+End-to-end latency has four components: prompt construction, RAG retrieval (if enabled), LLM inference, and response parsing with diagnostic rendering. LLM inference dominates 80--90\% of total latency across all configurations. RAG retrieval adds 60--120\,ms for embedding the query and searching the HNSWlib vector store, which is negligible relative to inference time.
+
+Prompt construction (building the system prompt, injecting code context, and formatting the JSON schema) takes 5--15\,ms. Response parsing (stripping Markdown fences, JSON deserialization, and mapping to VS Code diagnostics) adds another 10--30\,ms. These fixed costs are small enough that they do not meaningfully affect the user experience.
+
+The implication is clear: latency improvements must come from model selection (smaller models), hardware upgrades (faster GPU inference), or architectural changes (streaming partial results). Optimizing prompt construction or parsing yields negligible gains.
 
 \subsection{Latency Feasibility for IDE Workflows}
 

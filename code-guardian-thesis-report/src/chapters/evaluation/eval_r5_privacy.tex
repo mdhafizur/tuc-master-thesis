@@ -47,6 +47,36 @@ The optional vulnerability data refresh (\texttt{vulnerabilityDataManager.ts}) f
 \paragraph{Network verification.}
 During the evaluation run, network capture confirmed that analysis workflows produced zero outbound connections containing source code or code-derived content. The only outbound traffic was Ollama on localhost and optional metadata refresh to public vulnerability databases.
 
+\subsection{Comparison with Cloud-Based Tools}
+
+Table~\ref{tab:r5-comparison} compares Code Guardian's privacy model against cloud-based security tools.
+
+\begin{table}[H]
+  \centering
+  \caption{Privacy comparison: Code Guardian vs. cloud-based security tools.}
+  \label{tab:r5-comparison}
+  \small
+  \renewcommand{\arraystretch}{1.4}
+  \begin{tabularx}{\textwidth}{Xccc}
+    \toprule
+    \textbf{Property} & \textbf{Code Guardian} & \textbf{GitHub Copilot} & \textbf{Snyk Code} \\
+    \midrule
+    Inference location & Local only & Cloud & Cloud \\
+    Code transmitted to server & No & Yes & Yes \\
+    Requires internet for analysis & No & Yes & Yes \\
+    Works in air-gapped environments & Yes & No & No \\
+    Telemetry collection & None & Yes & Yes \\
+    Model weights stored locally & Yes & No & No \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+Cloud-based tools send code to external servers for analysis, which may conflict with corporate security policies, regulatory requirements (e.g., GDPR for EU-based code), or developer preference. Code Guardian avoids this by design. The trade-off is that local models are smaller and less capable than cloud-hosted models, which is reflected in the R1 accuracy results.
+
+\subsection{Architectural Enforcement}
+
+Privacy is not just a configuration choice but is enforced by the architecture. The extension's \texttt{analyzer.ts} constructs HTTP requests exclusively to the configured Ollama host (default \texttt{localhost:11434}). There is no code path that sends source code to any external endpoint. The RAG manager (\texttt{ragManager.ts}) generates embeddings through the same local Ollama instance. Even if Ollama were misconfigured to point to a remote server, the extension only communicates with a single configurable endpoint, making the privacy boundary auditable.
+
 \subsection{Level Mapping}
 
 All five privacy criteria are met.

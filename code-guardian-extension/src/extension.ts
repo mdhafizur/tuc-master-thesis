@@ -18,7 +18,9 @@ import { getLogger } from './logger';
  * @param context - The VS Code extension context.
  */
 export function activate(context: vscode.ExtensionContext) {
+    console.log('Code Guardian: activate() called');
     const logger = getLogger();
+    logger.show(); // Force the output channel to be visible
     logger.success('Code Guardian Extension Activated');
 
     // Check if RAG is enabled in settings
@@ -56,7 +58,8 @@ export function activate(context: vscode.ExtensionContext) {
     };
 
     if (isRAGEnabled) {
-        logger.info('RAG enabled - will initialize on first use');
+        logger.info('RAG enabled - initializing...');
+        initializeRAGIfNeeded();
     } else {
         logger.info('RAG disabled - using standard analysis mode');
     }
@@ -100,7 +103,8 @@ export function activate(context: vscode.ExtensionContext) {
                     funcCodeData.code,
                     doc,
                     diagnosticCollection,
-                    funcCodeData.startLine
+                    funcCodeData.startLine,
+                    ragManager
                 );
             } else {
                 logger.warn('Skipping function analysis due to size or extraction failure.');
@@ -135,7 +139,7 @@ export function activate(context: vscode.ExtensionContext) {
             return;
         }
 
-        analyzeAndReportDiagnosticsFromText(fullText, doc, diagnosticCollection);
+        analyzeAndReportDiagnosticsFromText(fullText, doc, diagnosticCollection, 0, ragManager);
         vscode.window.showInformationMessage('🔍 Analyzing full file for security issues...');
     });
     context.subscriptions.push(fullScanCommand);
@@ -797,9 +801,12 @@ Be thorough, specific, and provide actionable recommendations.`
                     const successMsg = `✅ Vulnerability Knowledge Base Synced!\n\n` +
                         `📊 Source Breakdown:\n` +
                         `   • CWE: ${result.sources.cwe} entries\n` +
-                        `   • OWASP: ${result.sources.owasp} entries\n` +
-                        `   • CVEs: ${result.sources.cves} entries\n` +
-                        `   • JavaScript: ${result.sources.javascript} entries\n\n` +
+                        `   • OWASP Top 10: ${result.sources.owasp} entries\n` +
+                        `   • CVEs (NVD): ${result.sources.cves} entries\n` +
+                        `   • JavaScript/npm: ${result.sources.javascript} entries\n` +
+                        `   • OWASP Cheat Sheets: ${result.sources.cheatsheets} entries\n` +
+                        `   • CAPEC Attack Patterns: ${result.sources.capec} entries\n` +
+                        `   • Node.js/Express: ${result.sources.nodejs} entries\n\n` +
                         `📈 Changes:\n` +
                         `   • Added: ${result.added} new entries\n` +
                         `   • Updated: ${result.updated} existing entries\n` +

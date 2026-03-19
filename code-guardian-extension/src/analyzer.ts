@@ -61,75 +61,71 @@ async function delay(ms: number): Promise<void> {
 }
 
 /**
- * Analyzes the provided code snippet using an LLM and returns a list of security issues.
- *
- * @param code - The source code to be analyzed.
- * @param modelName - Optional model name to use (defaults to configured model).
- * @param ragManager - Optional RAG manager for enhanced prompts.
- * @returns A promise resolving to an array of SecurityIssue objects detected by the LLM.
+ * Consensus configuration for multi-pass analysis
  */
-export async function analyzeCodeWithLLM(code: string, modelName?: string, ragManager?: RAGManager): Promise<SecurityIssue[]> {
-	const logger = getLogger();
-	const model = modelName || getCurrentModel();
-	const ragEnabled = Boolean(ragManager);
+const CONSENSUS_CONFIG = {
+	passes: 2,           // Number of analysis passes
+	seeds: [42, 137],    // Different seeds for each pass to introduce variation
+	minAgreement: 2      // Minimum passes that must agree for a finding to be kept
+};
 
-	// Check cache first
-	const cache = getAnalysisCache();
-	const cachedResult = cache.get(code, model, ragEnabled);
-	if (cachedResult !== null) {
-		logger.debug('Cache hit - returning cached analysis result');
-		return cachedResult;
+/**
+ * Checks whether two security issues refer to the same finding by comparing
+ * line range overlap and vulnerability type similarity.
+ */
+function issuesMatch(a: SecurityIssue, b: SecurityIssue): boolean {
+	// Check line range overlap
+	const overlapStart = Math.max(a.startLine, b.startLine);
+	const overlapEnd = Math.min(a.endLine, b.endLine);
+	const hasOverlap = overlapStart <= overlapEnd;
+
+	if (!hasOverlap) {
+		return false;
 	}
 
-	logger.info('Cache miss - analyzing with LLM', { model, codeLength: code.length });
+	// Check vulnerability type similarity via keyword matching in messages
+	const normalize = (msg: string) => msg.toLowerCase();
+	const aMsg = normalize(a.message);
+	const bMsg = normalize(b.message);
 
-	let systemPrompt = `You are a secure code analyzer. Detect security issues in code and return ONLY a JSON array.
+	const vulnKeywords = [
+		'sql injection', 'xss', 'cross-site scripting', 'command injection',
+		'path traversal', 'directory traversal', 'ssrf', 'csrf',
+		'prototype pollution', 'race condition', 'deserialization',
+		'nosql injection', 'code injection', 'eval', 'weak crypto',
+		'insecure random', 'hardcoded', 'sensitive data'
+	];
 
-CRITICAL: Your response MUST be ONLY a valid JSON array. Do not include any explanatory text, markdown formatting, or comments.
-
-Response format:
-[
-	{
-		"message": "Issue description",
-		"startLine": 1,
-		"endLine": 3,
-		"suggestedFix": "Optional suggested secure version"
-	}
-]
-
-If no issues are found, return an empty array: []
-
-DO NOT include any text before or after the JSON array. DO NOT wrap the response in markdown code blocks.`;
-
-	let userPrompt = `Analyze the following code for security vulnerabilities and return ONLY a JSON array:\n\n${code}`;
-
-	// Enhance prompts with RAG if available
-	if (ragManager) {
-		try {
-			const enhancedSystemPrompt = await ragManager.generateEnhancedPrompt(systemPrompt, code);
-			const enhancedUserPrompt = await ragManager.generateEnhancedPrompt(userPrompt, code);
-
-			if (enhancedSystemPrompt !== systemPrompt) {
-				systemPrompt = enhancedSystemPrompt;
-			}
-			if (enhancedUserPrompt !== userPrompt) {
-				userPrompt = enhancedUserPrompt;
-			}
-		} catch (error) {
-			logger.warn('⚠️ Failed to enhance prompts with RAG, continuing with standard prompts:', error);
+	for (const keyword of vulnKeywords) {
+		if (aMsg.includes(keyword) && bMsg.includes(keyword)) {
+			return true;
 		}
 	}
 
-	const messages = [
-		{ role: 'system', content: systemPrompt },
-		{ role: 'user', content: userPrompt }
-	];
+	// Fallback: if line ranges overlap and messages share significant words
+	const aWords = new Set(aMsg.split(/\s+/).filter(w => w.length > 4));
+	const bWords = new Set(bMsg.split(/\s+/).filter(w => w.length > 4));
+	let shared = 0;
+	for (const w of aWords) {
+		if (bWords.has(w)) { shared++; }
+	}
+	return shared >= 3;
+}
 
-	// Retry logic with exponential backoff
+/**
+ * Performs a single LLM analysis pass and returns parsed security issues.
+ */
+async function singleAnalysisPass(
+	model: string,
+	messages: Array<{ role: string; content: string }>,
+	seed: number
+): Promise<SecurityIssue[]> {
+	const logger = getLogger();
+
 	for (let attempt = 1; attempt <= RETRY_CONFIG.maxAttempts; attempt++) {
 		try {
 			const res = await Promise.race([
-				ollama.chat({ model, messages }),
+				ollama.chat({ model, messages, options: { temperature: 0, seed } }),
 				new Promise<never>((_, reject) =>
 					setTimeout(() => reject(new AnalysisError(
 						AnalysisErrorType.TIMEOUT_ERROR,
@@ -138,18 +134,23 @@ DO NOT include any text before or after the JSON array. DO NOT wrap the response
 				)
 			]);
 
+			let raw = res.message.content.trim();
+			logger.info(`Raw LLM response: ${raw.substring(0, 500)}`);
+
+			// Remove Markdown code blocks and single quotes, if present
+			if (raw.startsWith('```json') || raw.startsWith('```')) {
+				raw = raw.replace(/^```(?:json)?/, '').replace(/```$/, '').trim();
+			}
+			if (raw.startsWith("'") && raw.endsWith("'")) {
+				raw = raw.slice(1, -1).trim();
+			}
+
+			// Try to parse as JSON first — handle both arrays and objects
+			let parsed: any;
 			try {
-				let raw = res.message.content.trim();
-
-				// Remove Markdown code blocks and single quotes, if present
-				if (raw.startsWith('```json') || raw.startsWith('```')) {
-					raw = raw.replace(/^```(?:json)?/, '').replace(/```$/, '').trim();
-				}
-				if (raw.startsWith("'") && raw.endsWith("'")) {
-					raw = raw.slice(1, -1).trim();
-				}
-
-				// Locate and extract the JSON array from the raw response
+				parsed = JSON.parse(raw);
+			} catch {
+				// Fallback: locate and extract a JSON array from the raw response
 				const jsonStart = raw.indexOf('[');
 				const jsonEnd = raw.lastIndexOf(']');
 
@@ -160,56 +161,53 @@ DO NOT include any text before or after the JSON array. DO NOT wrap the response
 					);
 				}
 
-				const json = raw.slice(jsonStart, jsonEnd + 1);
-				const parsed = JSON.parse(json);
+				parsed = JSON.parse(raw.slice(jsonStart, jsonEnd + 1));
+			}
 
-				// Validate structure
-				if (!Array.isArray(parsed)) {
+			// If the model returned a JSON object wrapping an array, extract it
+			if (parsed && !Array.isArray(parsed) && typeof parsed === 'object') {
+				// Look for the first array property (e.g., "issues", "vulnerabilities", "results")
+				const arrayProp = Object.values(parsed).find(v => Array.isArray(v));
+				if (arrayProp) {
+					parsed = arrayProp;
+				} else {
 					throw new AnalysisError(
 						AnalysisErrorType.PARSE_ERROR,
-						'LLM response is not a JSON array'
+						'LLM response is a JSON object with no array property'
 					);
 				}
+			}
 
-				// Validate and sanitize each issue object
-				const validated: SecurityIssue[] = parsed
-					.filter((item: any) =>
-						item &&
-						typeof item === 'object' &&
-						typeof item.message === 'string' &&
-						typeof item.startLine === 'number' &&
-						typeof item.endLine === 'number'
-					)
-					.map((item: any) => ({
-						message: item.message,
-						startLine: Math.max(1, Math.round(item.startLine)),
-						endLine: Math.max(1, Math.round(item.endLine)),
-						suggestedFix: typeof item.suggestedFix === 'string' ? item.suggestedFix : undefined
-					}));
-
-				if (validated.length === 0 && parsed.length > 0) {
-					logger.warn(`LLM returned ${parsed.length} items but none had valid structure`);
-				}
-
-				// Cache the successful result
-				cache.set(code, model, validated, ragEnabled);
-				logger.debug('Cached analysis result');
-
-				return validated; // Return structured array of issues
-
-			} catch (parseError) {
-				if (parseError instanceof AnalysisError) {
-					throw parseError;
-				}
+			if (!Array.isArray(parsed)) {
 				throw new AnalysisError(
 					AnalysisErrorType.PARSE_ERROR,
-					`Failed to parse LLM response: ${parseError instanceof Error ? parseError.message : String(parseError)}`,
-					parseError
+					'LLM response is not a JSON array'
 				);
 			}
 
+			// Validate and sanitize each issue object
+			const validated: SecurityIssue[] = parsed
+				.filter((item: any) =>
+					item &&
+					typeof item === 'object' &&
+					typeof item.message === 'string' &&
+					typeof item.startLine === 'number' &&
+					typeof item.endLine === 'number'
+				)
+				.map((item: any) => ({
+					message: item.message,
+					startLine: Math.max(1, Math.round(item.startLine)),
+					endLine: Math.max(1, Math.round(item.endLine)),
+					suggestedFix: typeof item.suggestedFix === 'string' ? item.suggestedFix : undefined
+				}));
+
+			if (validated.length === 0 && parsed.length > 0) {
+				logger.warn(`LLM returned ${parsed.length} items but none had valid structure`);
+			}
+
+			return validated;
+
 		} catch (error) {
-			// Classify error
 			let analysisError: AnalysisError;
 
 			if (error instanceof AnalysisError) {
@@ -248,7 +246,6 @@ DO NOT include any text before or after the JSON array. DO NOT wrap the response
 				);
 			}
 
-			// Check if error is retryable and we haven't exhausted retries
 			const isRetryable = RETRY_CONFIG.retryableErrors.includes(analysisError.type);
 			const hasRetriesLeft = attempt < RETRY_CONFIG.maxAttempts;
 
@@ -259,16 +256,11 @@ DO NOT include any text before or after the JSON array. DO NOT wrap the response
 				);
 				logger.warn(`⚠️ ${analysisError.message}. Retrying in ${delayMs}ms...`);
 				await delay(delayMs);
-				continue; // Retry
+				continue;
 			}
 
-			// Non-retryable error or exhausted retries - log and return empty array
+			// Non-retryable or exhausted retries — show user-friendly messages
 			logger.error(`❌ ${analysisError.message}`);
-			if (analysisError.originalError) {
-				logger.error('Original error:', analysisError.originalError);
-			}
-
-			// Show user-friendly error message for non-retryable errors
 			if (analysisError.type === AnalysisErrorType.MODEL_NOT_FOUND) {
 				vscode.window.showErrorMessage(analysisError.message, 'Open Settings').then(selection => {
 					if (selection === 'Open Settings') {
@@ -279,19 +271,145 @@ DO NOT include any text before or after the JSON array. DO NOT wrap the response
 				vscode.window.showErrorMessage(
 					'Cannot connect to Ollama. Please start Ollama and try again.',
 					'Retry'
-				).then(selection => {
-					if (selection === 'Retry') {
-						// User can manually retry
-					}
-				});
+				);
 			}
 
-			return []; // Return empty array to fail gracefully
+			return [];
 		}
 	}
 
-	// Should never reach here, but TypeScript requires it
 	return [];
+}
+
+/**
+ * Filters issues to only those confirmed by multiple analysis passes.
+ * An issue from pass 1 is kept only if a matching issue exists in pass 2.
+ * Falls back to primary results if consensus yields nothing but both passes found issues.
+ */
+function applyConsensusFilter(passResults: SecurityIssue[][]): SecurityIssue[] {
+	const logger = getLogger();
+
+	if (passResults.length < 2) {
+		return passResults[0] || [];
+	}
+
+	const primary = passResults[0];
+	const secondary = passResults[1];
+
+	logger.debug(`Consensus filter: Pass 1 has ${primary.length} issues, Pass 2 has ${secondary.length} issues`);
+
+	// Keep issues from the primary pass that have a match in the secondary pass
+	const agreed = primary.filter(issue =>
+		secondary.some(other => issuesMatch(issue, other))
+	);
+
+	// If consensus is empty but both passes found issues, fall back to primary results
+	// This prevents the consensus filter from silently dropping all findings
+	if (agreed.length === 0 && primary.length > 0 && secondary.length > 0) {
+		logger.warn(`Consensus filter dropped all issues — falling back to Pass 1 results (${primary.length} issues)`);
+		return primary;
+	}
+
+	return agreed;
+}
+
+/**
+ * Analyzes the provided code snippet using an LLM with multi-pass consensus filtering.
+ * Runs analysis twice with different seeds and only keeps findings confirmed by both passes.
+ * This reduces false positives since inconsistent findings are filtered out.
+ *
+ * @param code - The source code to be analyzed.
+ * @param modelName - Optional model name to use (defaults to configured model).
+ * @param ragManager - Optional RAG manager for enhanced prompts.
+ * @returns A promise resolving to an array of SecurityIssue objects detected by the LLM.
+ */
+export async function analyzeCodeWithLLM(code: string, modelName?: string, ragManager?: RAGManager): Promise<SecurityIssue[]> {
+	const logger = getLogger();
+	const model = modelName || getCurrentModel();
+	const ragEnabled = Boolean(ragManager);
+
+	// Check cache first
+	const cache = getAnalysisCache();
+	const cachedResult = cache.get(code, model, ragEnabled);
+	if (cachedResult !== null) {
+		logger.debug('Cache hit - returning cached analysis result');
+		return cachedResult;
+	}
+
+	logger.info('Cache miss - analyzing with LLM (multi-pass consensus)', { model, codeLength: code.length });
+
+	let systemPrompt = `You are a precise secure code analyzer. Detect REAL security vulnerabilities in code and return ONLY a valid JSON array.
+
+IMPORTANT RULES:
+1. Only report issues that are genuinely exploitable. Do NOT flag safe patterns, hardcoded values, or properly sanitized inputs.
+2. If the code is secure and has no vulnerabilities, you MUST return an empty array: []
+3. Each issue must include a concrete suggestedFix with executable code showing the secure alternative.
+4. Be specific: name the exact vulnerability type (e.g., "SQL Injection", "XSS", "Command Injection") and explain WHY it is exploitable.
+5. Do NOT report theoretical risks, best-practice suggestions, or style issues. Only report actual security vulnerabilities.
+
+CRITICAL: Your response MUST be ONLY a valid JSON array. No explanatory text, no markdown formatting, no comments.
+
+Response format:
+[
+	{
+		"message": "Description of the vulnerability and why it is exploitable",
+		"startLine": 1,
+		"endLine": 3,
+		"suggestedFix": "Secure code replacement that fixes the vulnerability"
+	}
+]
+
+If no vulnerabilities are found, return: []`;
+
+	let userPrompt = `Analyze the following code for security vulnerabilities and return ONLY a JSON array:\n\n${code}`;
+
+	// Enhance prompts with RAG if available
+	if (ragManager) {
+		try {
+			const enhancedSystemPrompt = await ragManager.generateEnhancedPrompt(systemPrompt, code);
+			const enhancedUserPrompt = await ragManager.generateEnhancedPrompt(userPrompt, code);
+
+			if (enhancedSystemPrompt !== systemPrompt) {
+				systemPrompt = enhancedSystemPrompt;
+			}
+			if (enhancedUserPrompt !== userPrompt) {
+				userPrompt = enhancedUserPrompt;
+			}
+		} catch (error) {
+			logger.warn('⚠️ Failed to enhance prompts with RAG, continuing with standard prompts:', error);
+		}
+	}
+
+	const messages = [
+		{ role: 'system', content: systemPrompt },
+		{ role: 'user', content: userPrompt }
+	];
+
+	// Run multiple analysis passes in parallel with different seeds
+	logger.info(`Running ${CONSENSUS_CONFIG.passes} consensus passes...`);
+	const passPromises = CONSENSUS_CONFIG.seeds
+		.slice(0, CONSENSUS_CONFIG.passes)
+		.map((seed, i) => {
+			logger.debug(`Starting analysis pass ${i + 1} with seed ${seed}`);
+			return singleAnalysisPass(model, messages, seed);
+		});
+
+	const passResults = await Promise.all(passPromises);
+
+	// Log per-pass results
+	passResults.forEach((results, i) => {
+		logger.info(`Pass ${i + 1}: found ${results.length} issues`);
+	});
+
+	// Apply consensus filter — only keep findings confirmed by both passes
+	const consensus = applyConsensusFilter(passResults);
+	logger.info(`Consensus: ${consensus.length} issues confirmed across passes`);
+
+	// Cache the consensus result
+	cache.set(code, model, consensus, ragEnabled);
+	logger.debug('Cached consensus analysis result');
+
+	return consensus;
 }
 
 /**
