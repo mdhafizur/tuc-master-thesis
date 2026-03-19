@@ -35,7 +35,7 @@ async function main() {
 		sourcesContent: false,
 		platform: 'node',
 		outfile: 'dist/extension.js',
-		external: ['vscode'],
+		external: ['vscode', 'hnswlib-node'],
 		logLevel: 'silent',
 		// Define import.meta.url for CommonJS compatibility with ESM libraries
 		define: {

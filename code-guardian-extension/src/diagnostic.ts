@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { analyzeCodeWithLLM, SecurityIssue } from './analyzer';
+import { RAGManager } from './ragManager';
 
 import { getLogger } from './logger';
 /**
@@ -10,17 +11,26 @@ import { getLogger } from './logger';
  * @param doc - The active text document.
  * @param collection - The diagnostic collection to update.
  * @param lineOffset - The starting line number in the full document (used when analyzing a function snippet).
+ * @param ragManager - Optional RAG manager for enhanced analysis.
  */
 export async function analyzeAndReportDiagnosticsFromText(
 	code: string | null,
 	doc: vscode.TextDocument,
 	collection: vscode.DiagnosticCollection,
-	lineOffset: number = 0 // Used to shift line numbers if analyzing a sub-block
+	lineOffset: number = 0, // Used to shift line numbers if analyzing a sub-block
+	ragManager?: RAGManager
 ) {
+	const logger = getLogger();
+
 	if (!code) { return; }; // Skip analysis if no code is provided
 
 	// Run the LLM analysis and retrieve detected security issues
-	const issues: SecurityIssue[] = await analyzeCodeWithLLM(code);
+	const issues: SecurityIssue[] = await analyzeCodeWithLLM(code, undefined, ragManager);
+
+	logger.info(`Diagnostics: received ${issues.length} issues from LLM analysis`);
+	issues.forEach((issue, i) => {
+		logger.debug(`Issue ${i + 1}: [L${issue.startLine}-${issue.endLine}] ${issue.message} | Fix: ${issue.suggestedFix ? 'YES' : 'NO'}`);
+	});
 
 	const diagnostics: vscode.Diagnostic[] = issues.map(issue => {
 		/**

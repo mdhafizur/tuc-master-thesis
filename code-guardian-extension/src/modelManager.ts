@@ -53,10 +53,12 @@ const MODEL_CATEGORIES = {
 };
 
 /**
- * Check if a model is allowed/suitable for code analysis
+ * Check if a model is allowed/suitable for code analysis.
+ * Uses case-insensitive matching and allows all locally installed models.
  */
-function isModelAllowed(modelName: string): boolean {
-    return ALLOWED_MODEL_PATTERNS.some(pattern => pattern.test(modelName));
+function isModelAllowed(_modelName: string): boolean {
+    // Allow all locally available models — if the user installed it, they should be able to use it
+    return true;
 }
 
 /**

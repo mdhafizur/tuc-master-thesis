@@ -28,7 +28,7 @@ function getOllamaClient() {
 
 const DEFAULT_TIMEOUT_MS = 30000;
 const DEFAULT_DELAY_MS = 500;
-const DEFAULT_TEMPERATURE = 0.1;
+const DEFAULT_TEMPERATURE = 0;
 const DEFAULT_NUM_PREDICT = 1000;
 const DEFAULT_RUNS_PER_SAMPLE = 1;
 const DEFAULT_RAG_K = 5;
@@ -177,29 +177,45 @@ async function loadTestDataset(datasetArg = DATASET_FLAG) {
 }
 
 // System prompt for security analysis
-const SYSTEM_PROMPT = `You are a secure code analyzer. Detect security issues in code and return them in JSON format like this:
+const SYSTEM_PROMPT = `You are a precise secure code analyzer. Detect REAL security vulnerabilities in code and return them in JSON format.
+
+IMPORTANT RULES:
+1. Only report issues that are genuinely exploitable. Do NOT flag safe patterns, hardcoded values, or properly sanitized inputs.
+2. If the code is secure and has no vulnerabilities, you MUST return an empty array: []
+3. Each issue must include a concrete suggestedFix with executable code showing the secure alternative.
+4. Be specific: name the exact vulnerability type and explain WHY it is exploitable.
+5. Do NOT report theoretical risks, best-practice suggestions, or style issues.
+
+Response format:
 [
   {
-    "message": "Issue description",
+    "message": "Description of the vulnerability and why it is exploitable",
     "type": "Vulnerability type (e.g., SQL Injection, XSS)",
     "startLine": 1,
     "endLine": 3,
     "severity": "high|medium|low",
-    "suggestedFix": "Optional suggested secure version"
+    "suggestedFix": "Secure code replacement that fixes the vulnerability"
   }
 ]
 
 Return an empty array [] if no vulnerabilities are found. Only return valid JSON, no explanations.`;
 
 const RAG_KNOWLEDGE_SNIPPETS = [
-    'OWASP A03/CWE-89 SQL Injection: use parameterized queries and prepared statements.',
-    'OWASP A03/CWE-79 XSS: avoid unsafe HTML sinks and sanitize untrusted input.',
-    'OWASP A03/CWE-78 Command Injection: never concatenate user input into shell commands.',
-    'OWASP A01/CWE-22 Path Traversal: canonicalize paths and enforce allowlisted base directories.',
-    'CWE-327 Weak Crypto: avoid broken algorithms; use modern primitives and secure randomness.',
-    'CWE-798 Hardcoded Credentials: keep secrets out of source code and use secret managers.',
-    'CWE-352 CSRF: use anti-CSRF tokens and same-site cookies for state-changing requests.',
-    'CWE-611 XXE: disable external entities and DTD processing in XML parsers.'
+    // Core injection vulnerabilities
+    'OWASP A03/CWE-89 SQL Injection: use parameterized queries and prepared statements. FIX: Replace string concatenation like `db.query("SELECT * FROM users WHERE id=" + id)` with `db.query("SELECT * FROM users WHERE id = ?", [id])`.',
+    'OWASP A03/CWE-79 XSS: avoid unsafe HTML sinks and sanitize untrusted input. FIX: Replace `element.innerHTML = userInput` with `element.textContent = userInput` or use DOMPurify: `element.innerHTML = DOMPurify.sanitize(userInput)`.',
+    'OWASP A03/CWE-78 Command Injection: never concatenate user input into shell commands. FIX: Replace `exec("ls " + userInput)` with `execFile("ls", [userInput])` which does not invoke a shell.',
+    'OWASP A01/CWE-22 Path Traversal: canonicalize paths and enforce allowlisted base directories. FIX: Use `path.resolve(baseDir, userInput)` and verify the result starts with `baseDir` before reading.',
+    'CWE-327 Weak Crypto: avoid broken algorithms; use modern primitives and secure randomness. FIX: Replace `crypto.createHash("md5")` with `crypto.createHash("sha256")` and `Math.random()` with `crypto.randomBytes()`.',
+    'CWE-798 Hardcoded Credentials: keep secrets out of source code and use secret managers. FIX: Replace `const password = "admin123"` with `const password = process.env.DB_PASSWORD`.',
+    'CWE-352 CSRF: use anti-CSRF tokens and same-site cookies for state-changing requests. FIX: Add `app.use(csrf())` middleware and include `req.csrfToken()` in forms.',
+    'CWE-611 XXE: disable external entities and DTD processing in XML parsers. FIX: Set `parser.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true)`.',
+    // Niche categories (previously missing — improves R3 repair coverage)
+    'CWE-1321 Prototype Pollution: prevent modification of Object.prototype via untrusted input. FIX: Replace `obj[key] = value` with a check: `if (key === "__proto__" || key === "constructor" || key === "prototype") return;` or use `Object.create(null)` for lookup objects.',
+    'CWE-362 Race Condition (TOCTOU): avoid time-of-check-time-of-use gaps in file operations. FIX: Replace `if (fs.existsSync(f)) fs.readFileSync(f)` with a single `try { fs.readFileSync(f) } catch (e) { /* handle missing */ }` to eliminate the race window.',
+    'CWE-918 SSRF: validate and restrict outbound URLs to prevent server-side request forgery. FIX: Parse the URL, verify `hostname` against an allowlist, and reject private/internal IP ranges before making the request.',
+    'CWE-502 Insecure Deserialization: never deserialize untrusted data without validation. FIX: Replace `JSON.parse(untrustedInput)` with schema validation using a library like `ajv` or `zod`: `const data = schema.parse(JSON.parse(input))`.',
+    'CWE-943 NoSQL Injection: sanitize query operators in MongoDB queries. FIX: Replace `db.find({user: req.body.user})` with `db.find({user: String(req.body.user)})` or use `mongo-sanitize` to strip `$`-prefixed operators.'
 ];
 
 function buildRAGPrompt(ragK) {
@@ -1313,9 +1329,11 @@ async function analyzeWithModel(modelName, code, options) {
                 { role: 'system', content: systemPrompt },
                 { role: 'user', content: `Analyze the following code for security vulnerabilities:\n\n${code}` }
             ],
+            format: 'json',
             options: {
                 temperature,
-                num_predict: numPredict
+                num_predict: numPredict,
+                seed: 42
             }
         };
 

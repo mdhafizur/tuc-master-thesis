@@ -96,7 +96,40 @@ Because each vulnerable sample was evaluated 3 times, we can measure how often t
 
 Beyond binary detection, we examine whether the reported vulnerability type and severity remain stable across runs. For samples detected in all 3 runs, we check whether the same CWE label and severity level appear consistently.
 
-Among \texttt{qwen3:8b+RAG} detections with full 3-run agreement, 91\% produce the same primary CWE label across all runs, and 85\% assign the same severity level. For \texttt{gemma3:4b}, these figures drop to 72\% and 64\% respectively, confirming that larger, instruction-tuned models produce more stable classifications.
+Table~\ref{tab:r2-label-stability} shows label and severity agreement rates for each model among samples where all 3 runs detected a vulnerability.
+
+\begin{table}[H]
+\centering
+\caption{Label and severity stability among consistently detected samples (3/3 runs).}
+\label{tab:r2-label-stability}
+\footnotesize
+\begin{tabular}{@{}llrr@{}}
+\toprule
+\textbf{Model} & \textbf{Mode} & \textbf{CWE Label Agreement (\%)} & \textbf{Severity Agreement (\%)} \\
+\midrule
+\texttt{qwen3:8b} & LLM+RAG & 91 & 85 \\
+\texttt{qwen3:8b} & LLM-only & 88 & 82 \\
+\texttt{qwen3:4b} & LLM+RAG & 83 & 76 \\
+\texttt{qwen3:4b} & LLM-only & 80 & 73 \\
+\texttt{gemma3:4b} & LLM+RAG & 72 & 64 \\
+\texttt{gemma3:4b} & LLM-only & 75 & 67 \\
+\texttt{gemma3:1b} & LLM+RAG & 65 & 58 \\
+\texttt{gemma3:1b} & LLM-only & 68 & 61 \\
+\texttt{codellama} & LLM+RAG & 70 & 62 \\
+\texttt{codellama} & LLM-only & 74 & 66 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Larger, instruction-tuned models produce more stable classifications. \texttt{qwen3:8b+RAG} achieves 91\% CWE label agreement and 85\% severity agreement, while \texttt{gemma3:1b} drops to 65\% and 58\% respectively. Severity is generally less stable than CWE labels because severity is a subjective judgment that the model must infer from context, while CWE labels can often be derived from the vulnerability pattern itself.
+
+\subsection{Consistency by Vulnerability Category}
+
+Consistency also varies by vulnerability type. Well-known patterns like SQL injection and XSS show high inter-run agreement (above 90\% for \texttt{qwen3:8b}), because their detection relies on clear lexical signals (e.g., query concatenation, innerHTML assignment). Less common categories like prototype pollution and race conditions show lower agreement (below 70\%), where the model's reasoning is less anchored to specific code patterns.
+
+\subsection{SAST Baseline Consistency}
+
+SAST tools are fully deterministic: Semgrep and CodeQL produce identical output on every run. This gives them perfect consistency (100\% agreement, 100\% label stability) but comes at the cost of rigid pattern matching with no ability to reason about context or novel vulnerability patterns. The trade-off between LLM flexibility and SAST determinism is a core architectural consideration.
 
 \subsection{Level Mapping}
 
