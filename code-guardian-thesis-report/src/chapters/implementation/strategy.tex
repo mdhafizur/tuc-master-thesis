@@ -1,5 +1,5 @@
 \section{Analysis Modes and Orchestration}
-\label{sec:impl-modes}
+\label{sec:impl-responsiveness}
 
 Code Guardian supports multiple analysis modes that trade off latency, context breadth, and user disruption. Rather than implementing multiple independent pipelines, the system follows a single orchestration pattern: extract code context $\rightarrow$ (optional) retrieve security knowledge $\rightarrow$ run local LLM analysis $\rightarrow$ render diagnostics and optional fixes.
 
@@ -28,7 +28,7 @@ RAG can be toggled at runtime through settings and is surfaced via a status-bar 
 \subsection{Caching and Responsiveness}
 \label{subsec:impl-caching}
 
-To reduce repeated inference calls, Code Guardian caches analysis results keyed by (code snippet, model). Under typical editing patterns, small changes frequently return to previously seen states (undo/redo, formatting), making caching effective. Debouncing and caching together aim to keep real-time diagnostics responsive (R7) while maintaining stable behavior across repeated runs (R2).
+To reduce repeated inference calls, Code Guardian caches analysis results keyed by (code snippet, model). Under typical editing patterns, small changes frequently return to previously seen states (undo/redo, formatting), making caching effective. Debouncing and caching together aim to keep real-time diagnostics responsive (R4) while maintaining stable behavior across repeated runs (R2).
 
 \paragraph{Cache invalidation strategy.}
 The cache uses a hybrid eviction policy combining time-to-live (TTL), least-recently-used (LRU) ordering, and content-based hashing to balance memory usage and hit rate:

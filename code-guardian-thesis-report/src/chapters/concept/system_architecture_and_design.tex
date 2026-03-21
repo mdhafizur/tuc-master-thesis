@@ -161,7 +161,8 @@ Debouncing reduces unnecessary LLM invocations during continuous typing, balanci
 \centering
 \caption{Comparison of detection flow characteristics.}
 \label{tab:flow-characteristics}
-\begin{tabular}{llll}
+\small
+\begin{tabularx}{\textwidth}{lXll}
 \toprule
 \textbf{Flow} & \textbf{Trigger} & \textbf{Latency} & \textbf{LLM Invocation} \\
 \midrule
@@ -170,5 +171,5 @@ Inline (uncached) & Typing pause / new snippet & Model-dependent & Yes \\
 Audit + RAG & Manual scan & Model-dependent & Yes (with retrieval) \\
 Real-time (debounced) & Typing pause (800\,ms) & Variable & Conditional \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{table}

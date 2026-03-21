@@ -1,7 +1,7 @@
 \section{Technology Stack and Rationale}
-\label{sec:tech-stack}
+\label{sec:impl-tech-stack}
 
-Code Guardian is implemented as a Visual Studio Code extension that performs security analysis and repair suggestion \emph{locally} on the developer machine. The design goal is to integrate vulnerability detection into the IDE workflow while maintaining a strict \textit{no source-code exfiltration} property (R6) and practical responsiveness for interactive use (R7).
+Code Guardian is implemented as a Visual Studio Code extension that performs security analysis and repair suggestion \emph{locally} on the developer machine. The design goal is to integrate vulnerability detection into the IDE workflow while maintaining a strict \textit{no source-code exfiltration} property (R5) and practical responsiveness for interactive use (R4).
 
 \subsection*{VS Code Extension (TypeScript)}
 
@@ -20,10 +20,6 @@ The \texttt{nomic-embed-text} model was selected for three reasons: (1) native a
 \subsection*{Dynamic Vulnerability Knowledge Updates}
 
 The knowledge base is designed to be refreshable. Code Guardian supports updating OWASP and CVE information and persists cached data on disk. Importantly, only public vulnerability metadata is fetched; source code and extracted context remain local.
-
-\subsection*{Performance Mechanisms}
-
-To support near-real-time feedback, the system uses (i) debounced analysis triggers during editing, (ii) a lightweight function-level analysis mode for continuous feedback, and (iii) an LRU-style analysis cache that avoids repeated model calls for unchanged snippets. These mechanisms directly support R6 while keeping the user experience consistent.
 
 \subsection*{Engineering Selection Criteria}
 

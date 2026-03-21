@@ -3,11 +3,6 @@
 
 This section details the concrete implementation of Code Guardian’s main components. The prototype is implemented as a single VS Code extension located in \texttt{code-guardian-extension/}. Its primary tasks are (i) extracting relevant code context inside the IDE, (ii) invoking local LLM inference, (iii) optionally grounding the prompt with retrieved security knowledge (RAG), and (iv) presenting findings and repairs in an IDE-native way.
 
-\subsection{Extension Entry Point and Event Wiring}
-\label{subsec:impl-extension}
-
-The extension entry point registers event listeners and commands. Real-time analysis is triggered on document changes and is debounced (default: 800\,ms) to avoid excessive inference calls during typing. On-demand commands support analyzing a selection, a full file, or scanning the workspace. Findings are reported through the VS Code diagnostics API so they appear inline and in the Problems panel.
-
 \subsection{Context Extraction and Scoping}
 \label{subsec:impl-context}
 
@@ -72,23 +67,63 @@ Knowledge entries are chunked using a recursive text splitter to balance semanti
 \subsection{Vulnerability Knowledge Updates}
 \label{subsec:impl-knowledge}
 
-To keep retrieved content current, the vulnerability data manager can refresh public security sources on demand (e.g., OWASP Top~10 entries, a curated set of CWE patterns, and a bounded number of recent CVEs). Retrieved metadata is cached on disk and only public vulnerability information is fetched. No user source code or extracted code context is transmitted off-device, preserving the privacy goal (R6).
+To keep retrieved content current, the vulnerability data manager can refresh public security sources on demand (e.g., OWASP Top~10 entries, a curated set of CWE patterns, and a bounded number of recent CVEs). Retrieved metadata is cached on disk and only public vulnerability information is fetched. No user source code or extracted code context is transmitted off-device, preserving the privacy goal (R5).
 
 \paragraph{Offline fallback.}
 Because network access may be restricted in sensitive environments, the system includes a minimal baseline knowledge bundle that is used when updates fail. This ensures that RAG-enabled prompting remains functional offline, even though coverage is reduced relative to a refreshed knowledge base.
 
-\subsection{Diagnostics and Quick Fixes}
-\label{subsec:impl-diagnostics}
-
-Findings are mapped to VS Code diagnostics with appropriate text ranges. If the model provides a \texttt{suggestedFix}, a quick-fix code action is offered. Fixes are never applied automatically: the developer must confirm application, which maintains human control and reduces the risk of unintended behavioral changes (R5).
-
-\subsection{Caching and Responsiveness Mechanisms}
+\subsection{Analysis Cache}
 \label{subsec:impl-cache}
 
-To avoid repeated inference on unchanged snippets, Code Guardian caches analysis results keyed by the code snippet, active model, and prompt mode (RAG enabled/disabled) (\texttt{code-guardian-extension/src/analysisCache.ts}). In addition to caching, real-time analysis is debounced to reduce request volume during rapid edits. Together, these mechanisms reduce redundant local LLM calls and make continuous feedback feasible on developer hardware (R7), while also improving run-to-run consistency by limiting stochastic re-analysis (R2).
+To avoid repeated inference on unchanged snippets, Code Guardian caches analysis results keyed by the code snippet, active model, and prompt mode (RAG enabled/disabled) (\texttt{code-guardian-extension/src/analysisCache.ts}). The cache uses a hybrid eviction policy combining time-to-live (TTL), least-recently-used (LRU) ordering, and content-based hashing:
 
-\paragraph{Cache-key design and invalidation.}
-The cache key intentionally includes both content and execution context (model identity and prompt mode) to avoid cross-mode contamination. Entries are evicted through a bounded-size LRU policy and expire via TTL to prevent stale reuse during longer sessions. This combination balances memory usage with practical hit-rate gains during iterative editing patterns (undo/redo, small refactors, formatting cycles).
+\begin{lstlisting}[caption={Cache invalidation and eviction strategy}, label={lst:impl-cache-invalidation}]
+class AnalysisCache:
+  maxSize: number = 500
+  ttlMs: number = 30 * 60 * 1000  // 30 minutes
+  entries: Map<string, CacheEntry> = {}
+  lruQueue: string[] = []  // ordered by access time
+
+  get(key: string):
+    entry = entries[key]
+    if entry == null:
+      return null  // cache miss
+
+    // Check TTL expiration
+    age = now() - entry.timestamp
+    if age > ttlMs:
+      remove(key)
+      return null  // expired entry
+
+    // Update LRU position (move to end)
+    lruQueue.remove(key)
+    lruQueue.push(key)
+
+    return entry.result
+
+  put(key: string, result: AnalysisResult):
+    // Evict expired entries first
+    removeExpiredEntries()
+
+    // Evict LRU entries if at capacity
+    while entries.size >= maxSize:
+      oldestKey = lruQueue.shift()  // remove first
+      delete entries[oldestKey]
+
+    // Insert new entry
+    entries[key] = {
+      result: result,
+      timestamp: now()
+    }
+    lruQueue.push(key)
+
+  computeKey(code: string, model: string, ragEnabled: bool):
+    // Content-based hash to detect unchanged code
+    codeHash = sha256(code.trim())
+    return `${codeHash}-${model}-${ragEnabled}`
+\end{lstlisting}
+
+The content-based key includes model identity and prompt mode to avoid cross-mode contamination. The 30-minute TTL prevents stale results from persisting, while the bounded size limits memory growth. In repetitive editing patterns (undo/redo, small refactors), the cache removes a substantial share of otherwise repeated analyses.
 
 \subsection{Workspace Scanner and Dashboard}
 \label{subsec:impl-workspace}
