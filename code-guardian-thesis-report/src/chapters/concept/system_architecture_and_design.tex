@@ -21,7 +21,7 @@ Figure~\ref{fig:c4-context} positions Code Guardian within its operational envir
 \begin{figure}[H]
   \centering
   \safeincludegraphics[width=1\linewidth]{images/c4_context.drawio.pdf}
-  \caption{C4 Context diagram showing system boundary and external interactions. Code Guardian (blue box) operates as a VS Code extension with local backend. Developer interacts with VS Code, which triggers analysis. Code Guardian communicates with local Ollama LLM (localhost:11434), local vector database, and optionally fetches public metadata from CVE/NVD APIs (dashed gold). Privacy boundary (green dashed line): all source code analysis stays on localhost.}
+  \caption{C4 Context diagram showing Code Guardian within its operational environment. The system communicates with VS Code (IDE platform), Ollama (local LLM on localhost:11434), and a local vector database, all within the privacy boundary (green dashed). CVE/NVD APIs (gold, dashed) are the only optional external connection and do not receive source code.}
   \label{fig:c4-context}
 \end{figure}
 
@@ -41,7 +41,7 @@ Figure~\ref{fig:c4-container} summarizes the main internal containers and their 
 \begin{sidewaysfigure}
   \centering
   \safeincludegraphics[width=1\linewidth]{images/c4_container.drawio.pdf}
-  \caption{C4 Container diagram showing internal components. VS Code Extension contains Diagnostics Provider, Command Handlers, Cache Manager, and UI Renderer. Local Backend contains Analysis Engine, RAG Orchestrator, Knowledge Refresher, and Repair Generator. Data containers include Vector Database (CWE/OWASP/CVE embeddings) and Result Cache. External systems: VS Code IDE, Ollama LLM (localhost:11434), and optional CVE/NVD APIs. All source code stays within system boundary.}
+  \caption{C4 Container diagram showing internal components. The VS Code Extension handles triggers, caching, and UI rendering. The Local Analysis Backend performs LLM inference with JSON-mode and multi-pass consensus filtering, RAG orchestration, and Stage~2 repair generation. Vector Database and Result Cache are local data stores. All source code stays within the system boundary.}
   \label{fig:c4-container}
 \end{sidewaysfigure}
 
@@ -108,17 +108,17 @@ When a previously analyzed function reappears after a document change, the exten
 This flow is critical for IDE responsiveness, as it avoids LLM inference overhead for unmodified code.
 
 \paragraph{Audit Mode with RAG (Figure~\ref{fig:seq-audit-rag}).}
-When performing a full workspace scan with retrieval augmentation enabled, the backend orchestrates vector search and LLM generation:
+When performing a full workspace scan with retrieval augmentation enabled, the backend orchestrates vector search, multi-pass detection, and repair generation:
 \begin{enumerate}
-    \item Developer triggers audit scan.
-    \item Extension extracts code context.
+    \item Developer triggers audit scan; extension extracts code context.
     \item Backend generates embedding and queries the vector database (runtime default: top-$k=3$ chunks; the evaluated benchmark setting uses $k=5$).
-    \item Retrieved CWE/OWASP chunks are injected into the LLM prompt.
-    \item Ollama performs inference (model-dependent latency in the evaluated setup).
-    \item Backend parses JSON response and returns findings.
-    \item Extension updates cache and renders diagnostics.
+    \item Retrieved CWE/OWASP chunks are injected into a RAG-augmented prompt.
+    \item Stage~1: Two detection passes are sent to Ollama with different seeds (seed=42 and seed=137).
+    \item Backend applies consensus filtering, retaining only findings confirmed by both passes.
+    \item Stage~2: For each confirmed finding, a dedicated repair prompt is sent to Ollama.
+    \item Findings and repairs are returned to the extension, which updates the cache and renders diagnostics with quick fixes.
 \end{enumerate}
-Total latency is dominated by LLM inference time. In the evaluated setup, retrieval overhead remained modest relative to model generation and did not change the overall responsiveness ranking across workflows.
+Total latency includes two detection passes, consensus filtering, and repair generation. In the evaluated setup, retrieval overhead remained modest relative to model inference.
 
 \paragraph{Real-time Detection with Debouncing (Figure~\ref{fig:seq-realtime-debounced}).}
 During active typing, debouncing prevents analysis on every keystroke while maintaining responsiveness:
@@ -158,7 +158,7 @@ Real-time (debounced) & Typing pause (800\,ms) & Variable & Conditional \\
 \begin{figure}[htbp]
   \centering
   \safeincludegraphics[width=0.95\textwidth]{images/seq_audit_rag.drawio.pdf}
-  \caption{Sequence diagram: Audit mode with RAG. Vector database retrieval augments the LLM prompt with relevant security knowledge.}
+  \caption{Sequence diagram: Audit mode with RAG. The backend retrieves security knowledge via vector search, runs two detection passes with consensus filtering, and generates repairs for confirmed findings.}
   \label{fig:seq-audit-rag}
 \end{figure}
 
