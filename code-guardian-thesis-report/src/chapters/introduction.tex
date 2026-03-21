@@ -1,29 +1,66 @@
-\section{Current Situation}
+Modern software systems underpin critical infrastructure, enterprise platforms, and consumer services. Vulnerabilities introduced during implementation remain a persistent attack vector, with injection flaws, cross-site scripting, and insecure data handling among the most frequently reported weakness classes \cite{owaspTop10_2021,mitreCWE}. Developers are expected to write secure code, but the tools available to them either lack contextual reasoning or require transmitting source code to external services. This chapter introduces the problem, presents a motivating scenario, defines the scope and objectives, and outlines the structure of the thesis.
 
-Modern software systems underpin critical infrastructure, enterprise platforms, and consumer services. Vulnerabilities introduced during implementation remain a major attack vector, with recurring weakness classes such as injection and insecure design consistently reported by OWASP and CWE sources \cite{owaspTop10_2021,mitreCWEtop25,mitreCWE}. This persists despite secure development practices and automated checks \cite{howard2006sdl,mcgraw2006softwaresecurity,nist800218}.
+\section{Problem Description}
 
-Static Application Security Testing (SAST) tools are widely used because they are deterministic and scalable \cite{bessey2010billion,chess2004staticanalysis,livshits2005java}. In practice, however, developers still face noisy findings, weak framework-level context handling, and limited repair guidance \cite{johnson2013don,christakis2016developers}. Under delivery pressure, these limitations increase triage cost and reduce trust in security warnings.
+Static Application Security Testing (SAST) tools such as Semgrep and CodeQL have been the default approach to automated vulnerability detection for over a decade. They are deterministic, fast, and easy to integrate into CI/CD pipelines \cite{bessey2010billion,chess2004staticanalysis}. These tools work well for known patterns in controlled settings, but they break down when vulnerabilities require reasoning about context, data flow across framework boundaries, or developer intent.
 
-\section{Motivation and Problem Statement}
+A major limitation is shallowness. Rule-based scanners match syntactic patterns but cannot explain \emph{why} a finding matters in the surrounding code context. They do not distinguish a genuinely dangerous sink from one that is already guarded by upstream validation. As a result, developers frequently dismiss SAST warnings as noise, especially under delivery pressure \cite{johnson2013don,christakis2016developers}.
 
-Large Language Models (LLMs) add strong code understanding and explanation capabilities \cite{brown2020gpt3,chen2021codex,openai2023gpt4}, but they are probabilistic and can hallucinate or miss security constraints \cite{pearce2022copilot,ji2023hallucination}. Retrieval-Augmented Generation (RAG) can improve grounding by injecting relevant security knowledge at inference time \cite{lewis2020rag,karpukhin2020dpr,guu2020realm,mialon2023augmented}. Many existing assistants, however, rely on cloud inference, which raises confidentiality concerns for proprietary code \cite{carlini2021extracting,gdpr2016}.
+Another limitation is the absence of repair guidance. SAST tools flag problems but rarely suggest how to fix them. The developer must independently research the vulnerability class, identify the appropriate mitigation, and apply it correctly. This gap between detection and remediation slows the feedback loop and increases the chance that findings are ignored.
 
-This thesis investigates a local, privacy-preserving alternative: Code Guardian, a Visual Studio Code assistant that combines a locally hosted LLM, local retrieval over curated security knowledge, and IDE context extraction for JavaScript/TypeScript vulnerability detection and repair suggestions. The evaluation uses documented local experiments and reports precision, recall, F1, false-positive rate (FPR), JSON parse success, and latency.
+Large Language Models (LLMs) address both limitations: they can reason about code context, explain findings, and generate concrete repair suggestions \cite{chen2021codex,openai2023gpt4}. However, most LLM-powered security tools rely on cloud inference, which means the developer's source code must leave the machine. For organizations with confidentiality requirements, regulatory constraints such as GDPR, or air-gapped development environments, this is not acceptable \cite{carlini2021extracting,gdpr2016}.
 
-\subsection*{Motivating Scenario}
+These problems persist because current approaches optimize for one dimension at the expense of others. SAST tools prioritize determinism and privacy but sacrifice contextual reasoning. Cloud-based LLM assistants prioritize reasoning quality but sacrifice privacy. No existing tool combines contextual vulnerability reasoning, actionable repair suggestions, and strict source-code privacy in an IDE-integrated workflow.
 
-Consider a developer implementing an Express.js endpoint that builds a SQL query from request parameters. A conventional linter may remain silent, while a rule-based scanner may flag a generic injection warning without explaining whether existing validation is sufficient or how the code should be repaired. A cloud-based assistant might provide a stronger explanation, but at the cost of transmitting proprietary code outside the local environment. This scenario captures the gap addressed in this thesis: developers need contextual, explainable, and privacy-preserving security assistance directly in the IDE.
+To overcome these limitations, a local and modular design is needed --- one that keeps all inference on the developer's machine, grounds model reasoning in curated security knowledge, and integrates findings directly into the editor with developer-controlled remediation.
 
-\section{Objectives and Scope}
-\label{sec:intro-objectives}
+\section{Motivating Scenario}
 
-The objective is to design and evaluate an IDE-integrated assistant that improves secure-coding feedback while preserving source-code confidentiality. This thesis focuses on \textbf{JavaScript/TypeScript} projects in \textbf{Visual Studio Code}. The primary privacy goal is \textbf{no source-code exfiltration}: code and IDE context are processed only by local services. Optional knowledge-base refresh may fetch \emph{public} vulnerability metadata (for example CVE/CWE descriptions) and can be disabled for fully offline operation.
+To illustrate these challenges in a realistic development setting, consider a typical workflow at a fintech company building a Node.js backend.
 
-In scope are local privacy boundaries and robustness of developer-facing output. Out of scope are endpoint hardening, hardware attacks, and enterprise identity/network controls.
+A developer is implementing an Express.js endpoint that retrieves user account details. The handler reads a user ID from the request query string and constructs a SQL query to look up the account. The code is straightforward, the tests pass, and the pull request is approved by a colleague:
+
+\begin{lstlisting}[caption={Vulnerable Express.js endpoint with SQL injection}, label={lst:intro-scenario}]
+app.get('/api/account', (req, res) => {
+  const userId = req.query.id;
+  const query = "SELECT * FROM accounts WHERE id = '" + userId + "'";
+  db.query(query, (err, results) => {
+    res.json(results);
+  });
+});
+\end{lstlisting}
+
+The query is built by string concatenation. An attacker who sends \texttt{id=' OR '1'='1} retrieves every account in the database. No one notices the vulnerability until a penetration test three months later.
+
+This scenario reveals four gaps in existing security tooling:
+
+\begin{itemize}
+  \item \textbf{A linter stays silent.} ESLint with security plugins does not flag this pattern because the concatenation is syntactically valid JavaScript. The tool has no concept of tainted input or SQL semantics.
+  \item \textbf{A SAST scanner gives a generic warning.} Semgrep might flag string concatenation in a query, but the warning says ``potential SQL injection'' without explaining whether the specific data flow from \texttt{req.query} to \texttt{db.query} is actually dangerous, or how to fix it.
+  \item \textbf{A cloud-based LLM assistant explains and repairs --- but requires sending the code offsite.} A tool like GitHub Copilot could identify the injection, explain the tainted data flow, and suggest replacing the concatenation with a parameterized query (\texttt{db.query("SELECT * FROM accounts WHERE id = ?", [userId])}). But this requires transmitting the source code to an external server.
+  \item \textbf{No tool provides all three: context-aware detection, actionable repair, and privacy.} The developer needs an assistant that can reason about the vulnerability in context, suggest a concrete fix, and do so without the code leaving the machine.
+\end{itemize}
+
+Now imagine a local AI assistant integrated into VS Code. As the developer writes the endpoint, the assistant analyzes the enclosing function, identifies the unsanitized \texttt{req.query.id} flowing into a SQL string, and produces a finding:
+
+\begin{quote}
+\textbf{SQL Injection (CWE-89):} User-controlled input \texttt{req.query.id} is concatenated into a SQL query without sanitization. Replace with a parameterized query: \texttt{db.query("SELECT * FROM accounts WHERE id = ?", [userId])}.
+\end{quote}
+
+The finding appears as an inline diagnostic in the editor. The developer hovers to read the explanation, clicks the quick-fix action to preview the parameterized query, and applies the patch --- all without the code leaving the machine. This is what Code Guardian provides: contextual detection, grounded explanation, and developer-controlled repair, running entirely on localhost.
+
+\section{Scope of the Thesis}
+\label{sec:intro-scope}
+
+This thesis focuses on \textbf{JavaScript/TypeScript} projects in \textbf{Visual Studio Code}. The primary privacy goal is \textbf{no source-code exfiltration}: all code and IDE context are processed exclusively by local services running on the developer's machine. The system is designed as a VS Code extension that connects to a local Ollama instance for LLM inference, with an optional retrieval-augmented generation (RAG) module backed by a local HNSW vector store for security knowledge grounding.
+
+The technical scope includes local LLM inference via Ollama, function-level code scoping, structured JSON output enforcement, and retrieval-augmented prompting with curated security knowledge bases (CWE descriptions, OWASP guidance). No model fine-tuning or training is performed; the focus is on system-level orchestration --- prompt design, output parsing, caching, and IDE integration --- using off-the-shelf local models served through Ollama \cite{ollamaDocs}.
+
+The evaluation is limited to the accuracy, consistency, and latency of the structured output produced from code snippets in a controlled test harness. This thesis does not cover areas such as multi-language support beyond JavaScript/TypeScript, real-time collaborative editing, endpoint hardening, hardware-level attacks, or enterprise identity and network controls. Optional knowledge-base refresh may fetch \emph{public} vulnerability metadata (for example CVE/CWE descriptions) and can be disabled for fully offline operation.
 
 \subsection*{Research Questions}
 
-The thesis addresses:
+The thesis addresses three research questions:
 \begin{itemize}
   \item \textbf{RQ1 (Feasibility):} To what extent can a locally deployed LLM integrated into VS Code provide useful vulnerability detection and repair suggestions without transmitting source code to external services?
   \item \textbf{RQ2 (Grounding):} How does retrieval-augmented prompting influence detection quality and the qualitative grounding of explanations compared to an LLM-only configuration?
@@ -52,30 +89,28 @@ The main threat addressed is unintended disclosure of proprietary code through e
  \end{tabularx}
 \end{table}
 
-\section{Contributions}
-\label{sec:intro-contributions}
+\section{Objectives}
+\label{sec:intro-objectives}
 
-The thesis contributes:
-\begin{itemize}
-  \item \textbf{Code Guardian prototype:} a VS Code extension for local vulnerability analysis and developer-controlled repair suggestions, featuring multi-pass consensus filtering, JSON-mode decoding enforcement, and a two-stage detection-then-repair pipeline.
-  \item \textbf{Privacy-preserving architecture:} local inference and local retrieval that keep source code and analysis artifacts on-device.
-  \item \textbf{Documented evaluation harness:} repository-contained scripts and datasets for model/mode comparison over precision, recall, F1, FPR, parse success, and latency.
-  \item \textbf{IDE integration mechanisms:} debounced triggering, function-level scoping, and caching for practical interaction latency.
-  \item \textbf{Empirical findings:} in this thesis run, \texttt{qwen3:8b} with RAG provides the strongest overall trade-off among tested local configurations (F1 65.31\%, FPR 20.00\%, median latency \textasciitilde2.7\,s; Chapter~\ref{chap:evaluation}).
-\end{itemize}
+The main objective of this thesis is to design and evaluate an IDE-integrated assistant --- called Code Guardian --- that provides contextual vulnerability detection and repair suggestions while preserving source-code confidentiality. The system aims to overcome the limitations of existing approaches by combining local LLM inference with retrieval-augmented generation in a privacy-preserving architecture that runs entirely on the developer's machine.
 
-\section{Research Method}
-\label{sec:intro-method}
+To achieve this goal, the following three specific objectives are defined:
 
-The thesis follows a design-and-evaluate method: derive requirements from analysis and related work, map them to architecture and implementation, then evaluate the system under documented local settings. Evidence combines quantitative metrics (precision, recall, F1, FPR, parse success, latency) and qualitative case analysis (representative true positives, false positives, and false negatives).
+\begin{enumerate}
+  \item \textbf{Design a privacy-preserving VS Code extension for local vulnerability analysis} that separates the process into a two-stage pipeline: detection followed by developer-controlled repair suggestion. The extension enforces structured JSON output for machine-checkable diagnostics, integrates an optional RAG module backed by curated security knowledge (CWE descriptions, OWASP guidance), and implements performance mechanisms --- function-level scoping, LRU caching, and debounced triggering --- for practical IDE interaction latency.
 
-This mixed strategy is necessary because no single metric captures deployment value. High recall with persistent false positives increases triage cost, while low latency with poor recall limits security utility.
+  \item \textbf{Evaluate system performance across local model configurations} using a documented evaluation harness with 101 test cases spanning 14 CWE categories. Five local models are tested in both LLM-only and LLM+RAG modes, reporting precision, recall, F1, false-positive rate, JSON parse success, and end-to-end latency. Results from all configurations are compared to identify the most effective trade-off between detection quality, output robustness, and response time.
 
-\section{Outline}
+  \item \textbf{Assess the practical impact of retrieval-augmented prompting} by comparing LLM-only and LLM+RAG configurations to determine whether grounding model reasoning in external security knowledge improves detection quality and explanation grounding, or whether the added retrieval context introduces noise that degrades specific model configurations.
+\end{enumerate}
+
+These objectives guide the development and validation of a system that is not only technically functional but also practical for interactive developer workflows. In this thesis run, \texttt{qwen3:8b} with RAG provides the strongest overall trade-off among tested configurations (F1 65.31\%, FPR 20.00\%, median latency \textasciitilde2.7\,s; Chapter~\ref{chap:evaluation}).
+
+\section{Thesis Outline}
 \label{sec:intro-structure}
 
-Chapter~\ref{chap:analysis} derives requirements and reviews related work. Chapter~\ref{chap:concept} presents the architecture and design rationale. Chapter~\ref{chap:implementation} details the VS Code extension and runtime mechanisms. Chapter~\ref{chap:evaluation} reports quantitative and qualitative results. Chapter~\ref{chap:conclusion} summarizes findings and outlines next steps.
+Following this introduction, the thesis begins with a review of related work on static analysis tools, LLM-based vulnerability detection, and retrieval-augmented generation for secure coding. The literature is analyzed to identify current limitations and to derive requirements for a system that combines contextual reasoning, repair generation, and source-code privacy. This provides the conceptual foundation for understanding the need for a tool like Code Guardian.
 
-\section{Summary}
+The next chapter introduces the overall system concept. It presents the architecture of Code Guardian together with key design decisions such as the two-stage detection-then-repair pipeline, structured JSON output enforcement, and the optional RAG module. After outlining the concept, the implementation chapter describes the VS Code extension, technology choices, and how core components --- such as the analyzer, RAG manager, analysis cache, and diagnostic rendering --- were developed, with an emphasis on modularity and local execution.
 
-This introduction established the current limitations of secure-coding support, motivated a local privacy-preserving alternative, defined the research questions and scope, and outlined the method and chapter structure. The next chapter derives the requirements for such a system and positions the thesis against existing approaches.
+The evaluation chapter examines system performance across five local models in both LLM-only and LLM+RAG configurations, using metrics such as precision, recall, F1, false-positive rate, JSON parse success, and latency. The thesis concludes by summarizing key findings, discussing limitations, and outlining opportunities for future work.
