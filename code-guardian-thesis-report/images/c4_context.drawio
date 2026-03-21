@@ -118,7 +118,7 @@
         </mxCell>
 
         <!-- Vector DB -> CVE API (optional) -->
-        <mxCell id="rel5" value="" style="endArrow=classic;html=1;strokeWidth=2;strokeColor=#9f8c3d;dashed=1;dashPattern=8 8;" edge="1" parent="1" source="vectordb" target="cve-api">
+        <mxCell id="rel5" value="" style="endArrow=classic;html=1;strokeWidth=2;strokeColor=#9f8c3d;dashed=1;dashPattern=8 8;" edge="1" parent="1" source="code-guardian" target="cve-api">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="rel5-label" value="[Optional] Fetch public&#xa;vulnerability metadata&#xa;(no source code sent)" style="text;html=1;strokeColor=none;fillColor=#fff9e6;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=9;rounded=1;" vertex="1" parent="1">
@@ -127,7 +127,7 @@
 
         <!-- Privacy Boundary -->
         <mxCell id="privacy-boundary" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#00994d;strokeWidth=3;dashed=1;dashPattern=12 12;" vertex="1" parent="1">
-          <mxGeometry x="60" y="340" width="980" height="180" as="geometry" />
+          <mxGeometry x="60" y="340" width="980" height="360" as="geometry" />
         </mxCell>
 
         <mxCell id="privacy-label" value="Privacy Boundary: All source code analysis stays within localhost" style="text;html=1;strokeColor=none;fillColor=#e8f5e9;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=11;fontStyle=1;fontColor=#00994d;" vertex="1" parent="1">
