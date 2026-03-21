@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e \"const d = require\\(''./evaluation/datasets/vulnerability-test-cases.generated.json''\\); const s = d.filter\\(t => t.expectedVulnerabilities.length === 0\\); console.log\\(''Total:'', d.length, ''Secure:'', s.length\\)\")"
+    ]
+  }
+}

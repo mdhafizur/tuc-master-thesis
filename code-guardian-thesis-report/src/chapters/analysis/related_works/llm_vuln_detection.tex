@@ -28,9 +28,9 @@ Table~\ref{tab:eval-llm} evaluates representative LLM-based approaches against t
   \label{tab:eval-llm}
   \small
   \renewcommand{\arraystretch}{1.5}
-  \begin{tabular}{|m{3.2cm}|c|c|c|c|c|}
+  \begin{tabular}{|m{2.2cm}|c|c|c|c|c|m{3.8cm}|}
     \hline
-    \textbf{Approach} & \textbf{R1} & \textbf{R2} & \textbf{R3} & \textbf{R4} & \textbf{R5} \\
+    \textbf{Approach} & \textbf{R1} & \textbf{R2} & \textbf{R3} & \textbf{R4} & \textbf{R5} & \textbf{Key Gap} \\
     \hline
 
     GitHub Copilot \cite{chen2021codex} &
@@ -38,7 +38,8 @@ Table~\ref{tab:eval-llm} evaluates representative LLM-based approaches against t
     \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-30:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
     \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-90:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
     \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} &
-    \raisebox{-0.3cm}{\tikz{\draw (0,0) circle (0.35cm);}} \\
+    \raisebox{-0.3cm}{\tikz{\draw (0,0) circle (0.35cm);}} &
+    Cloud-only; source code leaves the machine \\
     \hline
 
     IRIS \cite{li2025iris} &
@@ -46,7 +47,8 @@ Table~\ref{tab:eval-llm} evaluates representative LLM-based approaches against t
     \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-90:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
     \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-90:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
     \raisebox{-0.3cm}{\tikz{\draw (0,0) circle (0.35cm);}} &
-    \raisebox{-0.3cm}{\tikz{\draw (0,0) circle (0.35cm);}} \\
+    \raisebox{-0.3cm}{\tikz{\draw (0,0) circle (0.35cm);}} &
+    Batch-only; no IDE integration or privacy \\
     \hline
 
     SecRepair \cite{islam2024secrepair} &
@@ -54,7 +56,8 @@ Table~\ref{tab:eval-llm} evaluates representative LLM-based approaches against t
     \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-90:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
     \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-90:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
     \raisebox{-0.3cm}{\tikz{\draw (0,0) circle (0.35cm);}} &
-    \raisebox{-0.3cm}{\tikz{\draw (0,0) circle (0.35cm);}} \\
+    \raisebox{-0.3cm}{\tikz{\draw (0,0) circle (0.35cm);}} &
+    No IDE workflow; cloud model assumed \\
     \hline
 
     CWEVAL \cite{peng2025cweval} &
@@ -62,7 +65,8 @@ Table~\ref{tab:eval-llm} evaluates representative LLM-based approaches against t
     \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-90:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
     \raisebox{-0.3cm}{\tikz{\draw (0,0) circle (0.35cm);}} &
     \raisebox{-0.3cm}{\tikz{\draw (0,0) circle (0.35cm);}} &
-    --- \\
+    --- &
+    Evaluation framework only; no repair or IDE \\
     \hline
   \end{tabular}
 \end{table}

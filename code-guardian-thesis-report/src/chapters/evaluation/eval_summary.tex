@@ -20,12 +20,12 @@ Table~\ref{tab:eval-compliance} maps the best configuration (\texttt{qwen3:8b+RA
     R1 &
     \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-150:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
     Medium &
-    F1 = 63.76\%, FPR = 26.67\%. Outperforms SAST on recall; FPR remains the main bottleneck. \\
+    F1 = 65.31\%, FPR = 20.00\%. Outperforms SAST on recall; FPR at the High-level boundary. \\
     \midrule
     R2 &
     \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-150:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
     Medium &
-    JSON parse 99.4\%, detection agreement 87.6\%. Mostly stable with occasional variation. \\
+    JSON parse 100\%, detection agreement 87.6\%. Structured output fully stable; detection mostly stable. \\
     \midrule
     R3 &
     \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-90:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
@@ -35,7 +35,7 @@ Table~\ref{tab:eval-compliance} maps the best configuration (\texttt{qwen3:8b+RA
     R4 &
     \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} &
     High (inline) &
-    Median 1.5\,s per function. Responsive for inline use; full-file scans are medium. \\
+    Median 2.7\,s per function. Within interactive thresholds; full-file scans are medium. \\
     \midrule
     R5 &
     \cmark &
@@ -48,9 +48,9 @@ Table~\ref{tab:eval-compliance} maps the best configuration (\texttt{qwen3:8b+RA
 \subsection{Key Findings}
 
 \begin{enumerate}
-  \item \textbf{Best configuration:} \texttt{qwen3:8b+RAG} achieves the highest F1 (63.76\%) with moderate FPR (26.67\%) and responsive latency (1.5\,s median).
-  \item \textbf{RAG is model-dependent:} Retrieval augmentation improves \texttt{qwen3} models (+3.8 to +5.6 F1 points) but degrades \texttt{gemma3} and \texttt{codellama} ($-2.9$ to $-3.3$ points).
-  \item \textbf{False-positive control is the main bottleneck:} Most LLM configurations show FPR of 100\% on secure samples. Only \texttt{qwen3:8b} achieves a practical FPR (26.67\%).
+  \item \textbf{Best configuration:} \texttt{qwen3:8b+RAG} achieves the highest F1 (65.31\%) with controlled FPR (20.00\%) and interactive latency (2.7\,s median).
+  \item \textbf{RAG is model-dependent:} Retrieval augmentation improves \texttt{qwen3} models (+3.8 to +5.4 F1 points) but degrades \texttt{gemma3} and \texttt{codellama} ($-2.9$ to $-3.3$ points).
+  \item \textbf{False-positive control improved but remains a challenge:} JSON-mode decoding and deterministic inference (temperature~0, fixed seed) reduced FPR from 26.67\% to 20.00\% for the best configuration. Most other LLM configurations still show high FPR.
   \item \textbf{SAST complements LLM analysis:} Semgrep provides very low FPR (6.67\%) with fast execution (52\,ms) but poor recall (9.73\%). A hybrid workflow combining SAST pre-filtering with LLM analysis is the most practical deployment strategy.
   \item \textbf{Privacy is fully preserved:} All analysis runs locally with no source code transmission.
 \end{enumerate}
@@ -67,7 +67,7 @@ Table~\ref{tab:eval-compliance} maps the best configuration (\texttt{qwen3:8b+RA
 
 \subsection{Threats to Validity}
 
-\paragraph{Internal validity.} Temperature is set to 0.1, not 0.0, which introduces minor nondeterminism. The 3-run design for vulnerable samples partially mitigates this but does not eliminate it.
+\paragraph{Internal validity.} Temperature is set to 0 with a fixed seed to maximize determinism. However, LLM inference on GPU hardware can still introduce minor nondeterminism from floating-point scheduling. The 3-run design for vulnerable samples partially mitigates this.
 
 \paragraph{External validity.} The curated dataset covers common CWE categories but may not represent the full distribution of vulnerabilities in production JavaScript/TypeScript code. Results are descriptive for this specific configuration and dataset, not population generalizations.
 

@@ -18,9 +18,9 @@ Table~\ref{tab:eval-sast} evaluates the main SAST tools discussed above against 
   \label{tab:eval-sast}
   \small
   \renewcommand{\arraystretch}{1.5}
-  \begin{tabular}{|m{3.2cm}|c|c|c|c|c|}
+  \begin{tabular}{|m{2.2cm}|c|c|c|c|c|m{3.8cm}|}
     \hline
-    \textbf{Tool} & \textbf{R1} & \textbf{R2} & \textbf{R3} & \textbf{R4} & \textbf{R5} \\
+    \textbf{Tool} & \textbf{R1} & \textbf{R2} & \textbf{R3} & \textbf{R4} & \textbf{R5} & \textbf{Key Gap} \\
     \hline
 
     Semgrep \cite{semgrepDocs} &
@@ -28,7 +28,8 @@ Table~\ref{tab:eval-sast} evaluates the main SAST tools discussed above against 
     \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} &
     \raisebox{-0.3cm}{\tikz{\draw (0,0) circle (0.35cm);}} &
     \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} &
-    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} \\
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} &
+    No contextual reasoning or repair generation \\
     \hline
 
     CodeQL \cite{codeqlDocs} &
@@ -36,7 +37,8 @@ Table~\ref{tab:eval-sast} evaluates the main SAST tools discussed above against 
     \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} &
     \raisebox{-0.3cm}{\tikz{\draw (0,0) circle (0.35cm);}} &
     \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} &
-    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} \\
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} &
+    No repair suggestions; rigid query language \\
     \hline
 
     ESLint security plugins &
@@ -44,7 +46,8 @@ Table~\ref{tab:eval-sast} evaluates the main SAST tools discussed above against 
     \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} &
     \raisebox{-0.3cm}{\tikz{\draw (0,0) circle (0.35cm);}} &
     \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} &
-    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} \\
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} &
+    Surface-level patterns only; no semantic analysis \\
     \hline
   \end{tabular}
 \end{table}

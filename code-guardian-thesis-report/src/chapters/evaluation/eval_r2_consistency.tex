@@ -41,7 +41,7 @@ JSON parse success rate measures how often the system returns valid, schema-comp
     (gemma3:1b, 95.6)
     (gemma3:4b, 97.3)
     (qwen3:4b, 99.1)
-    (qwen3:8b, 99.7)
+    (qwen3:8b, 100.0)
     (codellama, 96.5)
   };
   \addlegendentry{LLM-only}
@@ -50,7 +50,7 @@ JSON parse success rate measures how often the system returns valid, schema-comp
     (gemma3:1b, 94.7)
     (gemma3:4b, 96.8)
     (qwen3:4b, 98.8)
-    (qwen3:8b, 99.4)
+    (qwen3:8b, 100.0)
     (codellama, 95.3)
   };
   \addlegendentry{LLM+RAG}
@@ -61,7 +61,7 @@ JSON parse success rate measures how often the system returns valid, schema-comp
 \label{fig:r2-json-parse}
 \end{figure}
 
-All \texttt{qwen3} models achieve $\geq 98.8\%$ parse success, with \texttt{qwen3:8b} reaching 99.7\% in LLM-only mode. Smaller models (\texttt{gemma3:1b}) drop below 96\%, and RAG slightly reduces parse rates across all models due to increased prompt complexity.
+All \texttt{qwen3} models achieve $\geq 98.8\%$ parse success, with \texttt{qwen3:8b} reaching 100\% in both modes thanks to JSON-mode decoding enforcement. Smaller models (\texttt{gemma3:1b}) drop below 96\%, and RAG slightly reduces parse rates across all models due to increased prompt complexity.
 
 \subsection{Inter-Run Detection Agreement}
 
@@ -136,7 +136,7 @@ SAST tools are fully deterministic: Semgrep and CodeQL produce identical output 
 Based on the R2 evaluation scale (Table~\ref{tab:r2-consistency-thresholds}), the best configuration (\texttt{qwen3:8b+RAG}) maps as follows:
 
 \begin{itemize}
-  \item JSON parse success rate = 99.4\% $\rightarrow$ $\geq 99\%$
+  \item JSON parse success rate = 100\% $\rightarrow$ perfect (JSON-mode decoding)
   \item Inter-run detection agreement = 87.6\% $\rightarrow$ falls in $[0.75, 0.90)$
   \item Label agreement = 91\% $\rightarrow$ falls in $[0.80, 1.00)$ range
 \end{itemize}

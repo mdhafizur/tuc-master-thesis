@@ -16,8 +16,8 @@ Table~\ref{tab:eval-r1-all} shows detection metrics for all evaluated configurat
 \toprule
 \textbf{Model} & \textbf{Mode} & \textbf{Precision} & \textbf{Recall} & \textbf{F1} & \textbf{FPR} \\
 \midrule
-\texttt{qwen3:8b} & LLM+RAG & 62.93 & 64.60 & 63.76 & 26.67 \\
-\texttt{qwen3:8b} & LLM-only & 54.06 & 62.83 & 58.12 & 26.67 \\
+\texttt{qwen3:8b} & LLM+RAG & 63.16 & 67.61 & 65.31 & 20.00 \\
+\texttt{qwen3:8b} & LLM-only & 54.65 & 66.20 & 59.87 & 40.00 \\
 \texttt{qwen3:4b} & LLM+RAG & 53.53 & 64.90 & 58.67 & 100.00 \\
 \texttt{qwen3:4b} & LLM-only & 51.85 & 59.29 & 54.90 & 100.00 \\
 \texttt{gemma3:4b} & LLM+RAG & 47.62 & 44.25 & 45.88 & 100.00 \\
@@ -85,8 +85,8 @@ Figure~\ref{fig:r1-f1-comparison} visualizes the F1 scores across configurations
     (50.22,{codellama})
     (54.90,{qwen3:4b})
     (58.67,{qwen3:4b+RAG})
-    (58.12,{qwen3:8b})
-    (63.76,{qwen3:8b+RAG})
+    (59.87,{qwen3:8b})
+    (65.31,{qwen3:8b+RAG})
   };
 
   \end{axis}
@@ -133,7 +133,7 @@ RAG effects are model-dependent. Figure~\ref{fig:r1-rag-ablation} compares LLM-o
     (gemma3:1b, 32.77)
     (gemma3:4b, 48.87)
     (qwen3:4b, 54.90)
-    (qwen3:8b, 58.12)
+    (qwen3:8b, 59.87)
     (codellama, 50.22)
   };
   \addlegendentry{LLM-only}
@@ -142,7 +142,7 @@ RAG effects are model-dependent. Figure~\ref{fig:r1-rag-ablation} compares LLM-o
     (gemma3:1b, 31.65)
     (gemma3:4b, 45.88)
     (qwen3:4b, 58.67)
-    (qwen3:8b, 63.76)
+    (qwen3:8b, 65.31)
     (codellama, 46.96)
   };
   \addlegendentry{LLM+RAG}
@@ -153,7 +153,7 @@ RAG effects are model-dependent. Figure~\ref{fig:r1-rag-ablation} compares LLM-o
 \label{fig:r1-rag-ablation}
 \end{figure}
 
-RAG improves \texttt{qwen3:8b} by +5.64 F1 points and \texttt{qwen3:4b} by +3.77 points. However, \texttt{gemma3:4b} drops by $-2.99$ points and \texttt{codellama} by $-3.26$ points with RAG enabled. This confirms that retrieval augmentation is not universally beneficial and should be treated as a model-specific configuration.
+RAG improves \texttt{qwen3:8b} by +5.44 F1 points and \texttt{qwen3:4b} by +3.77 points. However, \texttt{gemma3:4b} drops by $-2.99$ points and \texttt{codellama} by $-3.26$ points with RAG enabled. This confirms that retrieval augmentation is not universally beneficial and should be treated as a model-specific configuration.
 
 \subsection{Per-Category Detection Breakdown}
 
@@ -219,10 +219,10 @@ SAST tools show a different trade-off profile. Semgrep achieves low FPR (6.67\%)
 Based on the R1 evaluation scale (Table~\ref{tab:r1-accuracy-thresholds}), the best configuration (\texttt{qwen3:8b+RAG}) maps as follows:
 
 \begin{itemize}
-  \item F1 = 63.76\% $\rightarrow$ falls in $[0.60, 0.75)$
-  \item Precision = 62.93\% $\rightarrow$ above 0.55
-  \item Recall = 64.60\% $\rightarrow$ above 0.55
-  \item FPR = 26.67\% $\rightarrow$ falls in $(0.20, 0.40]$
+  \item F1 = 65.31\% $\rightarrow$ falls in $[0.60, 0.75)$
+  \item Precision = 63.16\% $\rightarrow$ above 0.55
+  \item Recall = 67.61\% $\rightarrow$ above 0.55
+  \item FPR = 20.00\% $\rightarrow$ at the $\leq 0.20$ boundary
 \end{itemize}
 
 \begin{center}
