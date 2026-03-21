@@ -18,7 +18,7 @@ The context extraction component determines \emph{which} code is analyzed for a 
 
 \textbf{AST-based function extraction.} Function scope extraction is implemented by parsing the current document with the TypeScript compiler API and selecting the smallest enclosing \texttt{FunctionLikeDeclaration} around the cursor. The extractor returns both the extracted snippet and its start-line offset (0-based) in the original document. This offset enables precise mapping of model-reported line numbers back to VS Code diagnostic ranges.
 
-\textbf{Design rationale.} Function scoping is a practical mechanism to keep latency predictable for real-time use (R7), while the line-offset mapping improves explainability by ensuring that findings point to the correct source locations (R4). Deeper program context (imports, cross-file flows) is not extracted explicitly in the current prototype and is treated as a key future-work direction.
+\textbf{Design rationale.} Function scoping is a practical mechanism to keep latency predictable for real-time use (R4), while the line-offset mapping improves usability by ensuring that findings point to the correct source locations. Deeper program context (imports, cross-file flows) is not extracted explicitly in the current prototype and is treated as a key future-work direction.
 
 \subsection{Knowledge Retrieval Component (RAG)}
 \label{subsec:knowledge-retrieval}
@@ -36,20 +36,22 @@ Knowledge artifacts are cached on disk and reused across sessions. When network 
 
 \textbf{Indexing and retrieval.} Knowledge entries are chunked using a recursive splitter (chunk size 1000, overlap 200) and embedded locally through an Ollama-served embedding model. Embeddings are stored in a local HNSW vector index \cite{malkov2018hnsw} via LangChain tooling \cite{langchainDocs}. At query time, the top-$k$ most similar chunks are retrieved (runtime default $k=3$; the evaluation harness in Chapter~\ref{chap:evaluation} uses $k=5$) and injected into the prompt as an explicit ``relevant security knowledge'' section.
 
-\textbf{Privacy boundary.} Retrieval and embeddings are executed locally. Optional knowledge refresh operations fetch only public vulnerability metadata; user source code is not transmitted to those endpoints (R6).
+\textbf{Privacy boundary.} Retrieval and embeddings are executed locally. Optional knowledge refresh operations fetch only public vulnerability metadata; user source code is not transmitted to those endpoints (R5).
 
 \subsection{Vulnerability Detection Component}
 \label{subsec:vulnerability-detection}
 
 The vulnerability detection component performs local LLM inference and returns findings in a format suitable for IDE integration.
 
-\textbf{Structured-output analyzer for diagnostics.} For inline diagnostics, Code Guardian enforces a strict JSON-only output contract to reduce ambiguity and parsing failures. Each finding includes:
+\textbf{Structured-output analyzer for diagnostics.} For inline diagnostics, Code Guardian enforces structured output through two mechanisms: a strict JSON-only output contract in the system prompt, and JSON-mode decoding at the Ollama API level (\texttt{format: 'json'}), which constrains token sampling to valid JSON. Deterministic inference (temperature~0, fixed seed) further improves consistency (R2). Each finding includes:
 \begin{itemize}
     \item \textbf{message}: a short description of the issue.
     \item \textbf{startLine}/\textbf{endLine}: 1-based line indices relative to the analyzed snippet.
-    \item \textbf{suggestedFix} (optional): a replacement string that can be offered as a quick fix.
 \end{itemize}
+Repair suggestions are not requested during detection. They are generated separately in Stage~2 of the two-stage pipeline (Section~\ref{subsec:repair-generation}) and attached to confirmed findings before rendering.
 If no issues are found, the model must return an empty array \texttt{[]}. The analyzer performs defensive parsing by stripping code fences and extracting the first JSON array substring if the model emits additional text.
+
+\textbf{Multi-pass consensus filtering.} To reduce false positives (R1), the detection component runs the analysis prompt twice with different random seeds. Only findings confirmed by both passes---matched by vulnerability type and line range---are retained. This filters out spurious detections caused by sampling variance without requiring additional model capacity.
 
 \textbf{Failure handling and caching.} Transient inference failures (timeouts, local server warm-up) are handled through retry with exponential backoff. To reduce repeated inference on unchanged code, results are cached with an LRU-style strategy keyed by a hash of (code, model, prompt mode), improving responsiveness during iterative edits.
 
@@ -58,7 +60,9 @@ If no issues are found, the model must return an empty array \texttt{[]}. The an
 \subsection{Repair Generation Component}
 \label{subsec:repair-generation}
 
-In the current prototype, repair generation is implemented as an \emph{optional field} in the vulnerability report rather than as a separate autonomous patching system. When the analyzer includes a \texttt{suggestedFix}, the IDE integration layer exposes it as a quick fix action. Applying a fix is always user-initiated and can be reverted via the editor undo stack (R5). The system does not automatically validate functional correctness of repairs; this is treated as a major future improvement area.
+Repair generation follows a \textbf{two-stage pipeline} that separates detection from repair. In Stage~1, the detection prompt identifies vulnerabilities without requesting fixes. In Stage~2, each confirmed vulnerability (after consensus filtering) is sent to a dedicated repair prompt that receives the vulnerability type, affected lines, and full code context. This separation allows the repair model to focus on generating a targeted fix for a specific, validated issue rather than simultaneously reasoning about detection and remediation.
+
+The repair prompt returns a JSON object containing the suggested fix code. The IDE integration layer exposes each repair as a quick fix action. Applying a fix is always user-initiated and can be reverted via the editor undo stack (R3). The system does not automatically validate functional correctness of repairs; this is treated as a future improvement area.
 
 \subsection{IDE Integration Layer}
 \label{subsec:ide-integration}

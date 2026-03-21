@@ -1,23 +1,23 @@
 \section{Concept Derivation from Analysis Results}
 \label{sec:concept-derivation}
 
-The conceptual design of the proposed vulnerability detection system is derived systematically from the seven requirements identified in Section~\ref{sec:requirements} and the gaps observed in existing approaches reviewed in Section~\ref{sec:related-work}. This section traces how each architectural decision directly addresses specific limitations in current vulnerability detection systems, establishing the rationale for a local, RAG-augmented, IDE-integrated design.
+The conceptual design of the proposed vulnerability detection system is derived systematically from the five requirements identified in Section~\ref{sec:requirements} and the gaps observed in existing approaches reviewed in Section~\ref{sec:related-work}. This section traces how each architectural decision directly addresses specific limitations in current vulnerability detection systems, establishing the rationale for a local, RAG-augmented, IDE-integrated design.
 
 \subsection{From Cloud-Based to Privacy-Preserving Local Deployment}
 \label{subsec:cloud-to-local}
 
-The analysis in Section~\ref{sec:related-work} revealed that most LLM-based vulnerability detection systems rely on cloud-hosted models or external APIs, requiring transmission of source code to remote servers. This poses unacceptable privacy risks in industrial, governmental, and regulated settings where source code contains proprietary logic, intellectual property, or sensitive business information \cite{gdpr2016,carlini2021extracting,shokri2017membership,owaspLLMTop10_2023}.
+The analysis in Section~\ref{sec:related-work} revealed that most LLM-based vulnerability detection systems rely on cloud-hosted models or external APIs, requiring transmission of source code to remote servers. Regulatory frameworks such as GDPR impose strict constraints on transmitting sensitive data to external services, and the OWASP LLM Top~10 explicitly lists sensitive information disclosure as a key risk for LLM-based applications \cite{gdpr2016,owaspLLMTop10_2023}. Research has further shown that code generation models can leak sensitive information from their training data, including proprietary code submitted through cloud-based coding assistants \cite{carlini2021extracting,niu2023codexleaks}. Even without direct leakage, membership inference attacks can reveal whether specific code fragments were included in a model's training set \cite{shokri2017membership}.
 
-These observations directly motivate the decision to deploy all components locally within the developer's environment. By running LLMs, retrieval systems, and analysis components entirely on local hardware, the design aims to keep source code, intermediate representations, and analysis results on-device and to avoid external inference services. This local-first architecture supports R6 (privacy-preserving operation) and enables offline operation when knowledge refresh is disabled, making the system suitable for security-sensitive development environments.
+These observations directly motivate the decision to deploy all components locally within the developer's environment. By running LLMs, retrieval systems, and analysis components entirely on local hardware, the design aims to keep source code, intermediate representations, and analysis results on-device and to avoid external inference services. This local-first architecture supports R5 (privacy) and enables offline operation when knowledge refresh is disabled, making the system suitable for security-sensitive development environments.
 
 In the Code Guardian prototype, the privacy boundary is defined around \emph{source code}: analyzed code and IDE-derived context are sent only to a local LLM backend. The system may optionally refresh its \emph{security knowledge base} from public vulnerability metadata sources (e.g., CVE/NVD descriptions and references). Such refresh operations do not transmit user source code and can be disabled to operate fully offline with cached or baseline knowledge.
 
-The trade-off for local deployment is increased latency compared to cloud-based systems with dedicated accelerators. However, by carefully optimizing model selection, retrieval strategies, and context management, the system can achieve acceptable response times on standard developer hardware, addressing R7 (usability and responsiveness).
+The trade-off for local deployment is increased latency compared to cloud-based systems with dedicated accelerators. However, by carefully optimizing model selection, retrieval strategies, and context management, the system can achieve acceptable response times on standard developer hardware, addressing R4 (usability).
 
 \subsection{Retrieval-Augmented Generation for Security Knowledge Grounding}
 \label{subsec:rag-security}
 
-Requirements R1 and R2 demand accurate and consistent vulnerability detection across repeated analyses. Pure generative LLM approaches can suffer from hallucination and inconsistent classifications \cite{ji2023hallucination,openai2023gpt4}. Similarly, R3 requires context-aware reasoning that goes beyond surface-level pattern matching to understand data flow, control flow, and API semantics.
+Requirements R1 and R2 demand accurate and consistent vulnerability detection across repeated analyses. Pure generative LLM approaches can suffer from hallucination and inconsistent classifications \cite{ji2023hallucination}. R1 also requires context-aware reasoning that goes beyond surface-level pattern matching to understand data flow, control flow, and API semantics.
 
 The system addresses these requirements through Retrieval-Augmented Generation (RAG), which grounds vulnerability detection in a locally maintained knowledge base of security information \cite{lewis2020rag,karpukhin2020dpr}. This knowledge base includes:
 \begin{itemize}
@@ -26,9 +26,9 @@ The system addresses these requirements through Retrieval-Augmented Generation (
 \item \textbf{CVE/NVD summaries} (public descriptions and references) to keep the knowledge base current \cite{mitreCVE,nistNVD}
 \item \textbf{Curated JavaScript/TypeScript security notes} (e.g., prototype pollution, unsafe deserialization patterns)
 \end{itemize}
-These sources are grounded in established taxonomies and practitioner guidance such as CWE and OWASP materials \cite{mitreCWE,owaspCheatSheets,owaspTop10_2021}.
+During analysis, relevant security knowledge is retrieved based on semantic similarity to the code under examination and provided as context to the LLM. This design reduces reliance on purely generative reasoning and enables the knowledge base to evolve independently of model parameters. By decoupling security knowledge from the model, the system supports continuous updates to vulnerability information without requiring model retraining.
 
-During analysis, relevant security knowledge is retrieved based on semantic similarity to the code under examination and provided as context to the LLM. This design reduces reliance on purely generative reasoning, improves detection consistency by anchoring outputs to established security knowledge, and enables the knowledge base to evolve independently of model parameters. By decoupling security knowledge from the model, the system supports continuous updates to vulnerability information without requiring model retraining.
+However, retrieval augmentation is not universally beneficial. As demonstrated in the evaluation (Chapter~\ref{chap:evaluation}), RAG improves detection quality for some model families but degrades it for others. This model-dependent effect means RAG should be treated as a configurable option rather than a default assumption.
 
 \subsection{IDE Integration for In-Context Security Assistance}
 \label{subsec:ide-integration-derivation}
@@ -41,7 +41,7 @@ The proposed system integrates directly into Visual Studio Code as an extension,
 \item \textbf{On-demand analysis}: Explicit analysis commands for comprehensive security audits of selected code regions or entire files
 \end{itemize}
 
-IDE integration directly addresses R4 (explainability and transparency) by enabling rich, interactive presentation of vulnerability findings, explanations, and repair suggestions within the developer's familiar environment. It also supports R5 (actionable repair suggestions) by allowing developers to preview, review, and apply suggested fixes with minimal friction.
+IDE integration directly addresses R4 (usability) by enabling rich, interactive presentation of vulnerability findings, explanations, and repair suggestions within the developer's familiar environment. It also supports R3 (repair quality) by allowing developers to preview, review, and apply suggested fixes with minimal friction.
 
 \subsection{Modular Component Architecture}
 \label{subsec:modular-architecture}
@@ -61,7 +61,7 @@ This modular design enables component-level analysis, isolated improvement, and 
 \subsection{Context-Aware Analysis with Code Understanding}
 \label{subsec:context-aware-analysis}
 
-Requirement R3 demands that the system correctly identify vulnerabilities based on semantic and structural context rather than syntactic patterns alone. Surface-level pattern matching produces false positives when secure code resembles vulnerable patterns, and false negatives when vulnerabilities depend on data flow or control flow relationships.
+Requirement R1 demands that the system correctly identify vulnerabilities based on semantic and structural context rather than syntactic patterns alone. Surface-level pattern matching produces false positives when secure code resembles vulnerable patterns, and false negatives when vulnerabilities depend on data flow or control flow relationships.
 
 The system addresses this requirement primarily through \emph{scope selection} and \emph{prompt grounding}. In the current prototype, context extraction focuses on reliably selecting a coherent code region (e.g., the enclosing function) and mapping findings back to the editor. The LLM is then expected to reason about data flow and control flow \emph{within the provided scope}, optionally grounded by retrieved security guidance.
 
@@ -72,12 +72,12 @@ Conceptually, context-aware reasoning benefits from multiple kinds of context, i
 \item \textbf{Inferred data/control flow}: reasoning about sources, sinks, and guards within the snippet
 \end{itemize}
 
-This approach supports R3 for many localized vulnerability patterns, but it has inherent limitations when required evidence lies outside the analyzed scope (e.g., validation in a different file). Chapter~\ref{chap:conclusion} outlines extensions such as explicit taint-style traces and cross-file context extraction to address these cases.
+This approach supports R1 for many localized vulnerability patterns, but it has inherent limitations when required evidence lies outside the analyzed scope (e.g., validation in a different file). Chapter~\ref{chap:conclusion} outlines extensions such as explicit taint-style traces and cross-file context extraction to address these cases.
 
 \subsection{Explainability Through Structured Reasoning}
 \label{subsec:explainability-design}
 
-Requirement R4 demands transparent explanations that link detected vulnerabilities to concrete code regions and recognized security principles. Opaque "black box" detection undermines developer trust and makes it difficult to validate findings or apply fixes correctly \cite{johnson2013don,christakis2016developers}.
+Transparent explanations that link detected vulnerabilities to concrete code regions and recognized security principles are essential for usability (R4) and repair quality (R3). Opaque "black box" detection undermines developer trust and makes it difficult to validate findings or apply fixes correctly \cite{johnson2013don,christakis2016developers}.
 
 The system enforces explainability through structured reporting and IDE-native presentation. In the diagnostics pipeline, vulnerability reports include:
 \begin{itemize}
@@ -86,8 +86,30 @@ The system enforces explainability through structured reporting and IDE-native p
 \item \textbf{Optional repair}: A suggested patch presented as a quick fix (developer-controlled)
 \end{itemize}
 
-In interactive webview modes, the system can provide longer, Markdown-formatted explanations, and (when enabled) can cite retrieved guidance to anchor the reasoning \cite{mitreCWE,owaspCheatSheets}. The evaluation harness used in Chapter~\ref{chap:evaluation} additionally requests explicit \texttt{type} and \texttt{severity} fields to support quantitative scoring.
+In interactive webview modes, the system can provide longer, Markdown-formatted explanations, and (when enabled) can incorporate retrieved security knowledge from sources such as CWE and OWASP into the prompt to ground the reasoning \cite{mitreCWE,owaspCheatSheets}. The evaluation harness used in Chapter~\ref{chap:evaluation} additionally requests explicit \texttt{type} and \texttt{severity} fields to support quantitative scoring.
 
-By grounding explanations in retrieved security knowledge (when used) and enforcing structured output formats where needed, the system produces actionable vulnerability reports that are auditable at the IDE level. This design directly supports R4 and improves developer trust by making detection outputs inspectable and reviewable.
+By grounding explanations in retrieved security knowledge (when used) and enforcing structured output formats where needed, the system produces actionable vulnerability reports that are auditable at the IDE level. This design improves developer trust by making detection outputs inspectable and reviewable, supporting both usability (R4) and repair quality (R3).
+
+\subsection{Deterministic Inference and Consensus-Based Detection}
+\label{subsec:deterministic-consensus}
+
+A key challenge for LLM-based detection is output instability: the same code analyzed twice may yield different findings, undermining developer trust and complicating evaluation (R2). Two complementary mechanisms address this.
+
+\textbf{Deterministic inference controls.} The system configures the LLM backend with temperature~0 and a fixed random seed to maximize reproducibility across runs. Additionally, JSON-mode decoding (\texttt{format: 'json'}) is enabled at the Ollama API level, which constrains the model's token sampling to produce only valid JSON tokens. This eliminates parse failures caused by malformed output and ensures that every response is machine-readable without post-hoc repair.
+
+\textbf{Multi-pass consensus filtering.} To reduce false positives (R1), the system runs the detection prompt twice with different random seeds (e.g., seed 42 and seed 137). Findings are compared across passes using vulnerability-type and line-range matching. Only issues confirmed by both passes are retained in the final result. This consensus mechanism filters out spurious detections that arise from sampling variance, improving precision without sacrificing recall on consistently detected vulnerabilities. If consensus filtering removes all findings, the system falls back to the first pass result to avoid silent suppression.
+
+\subsection{Two-Stage Detection and Repair Pipeline}
+\label{subsec:two-stage-pipeline}
+
+Existing approaches typically generate detection findings and repair suggestions in a single prompt, which forces the model to reason about both tasks simultaneously. This coupling can degrade both detection precision and repair quality, because the model may anchor on generating a plausible fix rather than accurately classifying the vulnerability.
+
+Code Guardian separates these concerns into two stages:
+\begin{enumerate}
+    \item \textbf{Stage 1 --- Detection:} The detection prompt asks the model to identify vulnerabilities and return structured findings (type, severity, location, description). No repair is requested at this stage.
+    \item \textbf{Stage 2 --- Repair:} For each confirmed vulnerability from Stage 1 (after consensus filtering), a dedicated repair prompt provides the vulnerability type, affected lines, and full code context. The model generates a targeted fix for the specific issue.
+\end{enumerate}
+
+This separation allows each prompt to focus on a single task, improving both detection accuracy (R1) and repair quality (R3). The two-stage design also enables parallel repair generation when multiple vulnerabilities are detected, since each repair prompt is independent.
 
 Each architectural decision in this section is tied to the requirements established in Chapter~\ref{chap:analysis}. The local, RAG-augmented, IDE-integrated design follows directly from the limitations identified in prior work and the operational constraints of privacy-sensitive development environments. The next section details the core components that realize this design, including their inputs, outputs, and processing logic.

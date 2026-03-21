@@ -154,7 +154,7 @@ Retrieved knowledge is placed before code so security guidance is in context bef
 To reproduce the reported behavior:
 \begin{enumerate}
   \item Use the same prompt structure as Listings~\ref{lst:complete-llm-prompt} and~\ref{lst:complete-rag-prompt}.
-  \item Keep generation settings fixed (\texttt{temperature=0.1}, \texttt{num\_predict=1000}).
+  \item Keep generation settings fixed (\texttt{temperature=0}, \texttt{seed=42}, \texttt{format='json'}, \texttt{num\_predict=1000}).
   \item Use the same retrieval setup (\texttt{k=5}, cosine similarity, \texttt{nomic-embed-text}, local HNSW index).
   \item Use the same model artifacts and digests reported in the evaluation chapter.
 \end{enumerate}

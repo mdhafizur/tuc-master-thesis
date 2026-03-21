@@ -57,11 +57,11 @@ The main threat addressed is unintended disclosure of proprietary code through e
 
 The thesis contributes:
 \begin{itemize}
-  \item \textbf{Code Guardian prototype:} a VS Code extension for local vulnerability analysis and developer-controlled repair suggestions.
+  \item \textbf{Code Guardian prototype:} a VS Code extension for local vulnerability analysis and developer-controlled repair suggestions, featuring multi-pass consensus filtering, JSON-mode decoding enforcement, and a two-stage detection-then-repair pipeline.
   \item \textbf{Privacy-preserving architecture:} local inference and local retrieval that keep source code and analysis artifacts on-device.
   \item \textbf{Documented evaluation harness:} repository-contained scripts and datasets for model/mode comparison over precision, recall, F1, FPR, parse success, and latency.
   \item \textbf{IDE integration mechanisms:} debounced triggering, function-level scoping, and caching for practical interaction latency.
-  \item \textbf{Empirical findings:} in this thesis run, \texttt{qwen3:8b} with RAG provides the strongest overall trade-off among tested local configurations (F1 63.76\%, FPR 26.67\%, median latency \textasciitilde1.5\,s; Chapter~\ref{chap:evaluation}).
+  \item \textbf{Empirical findings:} in this thesis run, \texttt{qwen3:8b} with RAG provides the strongest overall trade-off among tested local configurations (F1 65.31\%, FPR 20.00\%, median latency \textasciitilde2.7\,s; Chapter~\ref{chap:evaluation}).
 \end{itemize}
 
 \section{Research Method}

@@ -58,7 +58,7 @@ Table~\ref{tab:eval-compliance} maps the best configuration (\texttt{qwen3:8b+RA
 \subsection{Limitations}
 
 \begin{itemize}
-  \item \textbf{Small dataset:} 128 test cases (113 vulnerable, 15 secure) limit statistical power. Secure-sample FPR has wide Wilson confidence intervals due to $n=15$.
+  \item \textbf{Small dataset:} 101 test cases (71 vulnerable, 30 secure) limit statistical power. The expanded secure-sample set ($n=30$, doubled from 15) improves FPR confidence intervals but remains modest.
   \item \textbf{Snippet-centric evaluation:} Test cases are isolated code snippets, not full repository files. Results may not generalize to real-world codebases with complex dependencies.
   \item \textbf{No user study:} Usability is measured by latency only. Developer satisfaction, trust, and adoption were not evaluated.
   \item \textbf{Single hardware profile:} All results are from Apple M4 Max with 64\,GB RAM. Performance on lower-end hardware may differ.
@@ -71,4 +71,4 @@ Table~\ref{tab:eval-compliance} maps the best configuration (\texttt{qwen3:8b+RA
 
 \paragraph{External validity.} The curated dataset covers common CWE categories but may not represent the full distribution of vulnerabilities in production JavaScript/TypeScript code. Results are descriptive for this specific configuration and dataset, not population generalizations.
 
-\paragraph{Construct validity.} Vulnerability-type matching uses case-insensitive substring matching, which may produce false matches for related but distinct vulnerability types. The secure-sample set ($n=15$) is small, making FPR estimates noisy.
+\paragraph{Construct validity.} Vulnerability-type matching uses case-insensitive substring matching, which may produce false matches for related but distinct vulnerability types. The secure-sample set ($n=30$) is modest, though doubled from the initial 15 to reduce FPR estimation noise.
