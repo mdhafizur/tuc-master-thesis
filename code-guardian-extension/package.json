@@ -2,7 +2,7 @@
   "name": "code-guardian",
   "displayName": "Code Guardian",
   "description": "AI-powered VS Code extension that detects security vulnerabilities and suggests secure coding practices.",
-  "version": "1.0.23",
+  "version": "1.0.24",
   "icon": "icon.png",
   "publisher": "DreamersRedemption",
   "engines": {

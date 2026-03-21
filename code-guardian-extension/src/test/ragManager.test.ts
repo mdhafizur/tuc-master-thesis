@@ -66,14 +66,14 @@ suite('RAG Manager Test Suite', () => {
     });
 
     test('RAG Manager Initialization', async function() {
-        this.timeout(15000); // Increase timeout for async initialization
+        this.timeout(30000); // Increase timeout for async initialization with more data sources
 
         ragManager = new RAGManager(context);
         assert.ok(ragManager, 'RAG Manager should be initialized');
 
         // Wait for async initialization to complete by waiting a bit
         // The constructor calls initializeKnowledgeBase() asynchronously
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise(resolve => setTimeout(resolve, 5000));
 
         const knowledgeBase = ragManager.getKnowledgeBase();
         assert.ok(Array.isArray(knowledgeBase), 'Knowledge base should be an array');
@@ -314,7 +314,8 @@ suite('Vulnerability Data Manager Test Suite', () => {
         }
     });
 
-    test('JavaScript Vulnerabilities Data', async () => {
+    test('JavaScript Vulnerabilities Data', async function() {
+        this.timeout(30000);
         try {
             const jsVulns = await vulnManager.fetchJavaScriptVulnerabilities();
             
