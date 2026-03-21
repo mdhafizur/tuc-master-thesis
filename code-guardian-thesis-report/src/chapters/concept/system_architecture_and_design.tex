@@ -16,7 +16,7 @@ Figure~\ref{fig:c4-context} positions Code Guardian within its operational envir
     \item \textbf{Local caches} for analysis results and vulnerability metadata.
 \end{itemize}
 
-\textbf{Optional external data.} Code Guardian may optionally fetch \emph{public vulnerability metadata} to refresh the knowledge base (e.g., CVE records from the NVD API). This traffic does not include user source code and can be disabled by running in offline mode. After a refresh, cached knowledge can be reused without network access. This separation preserves the core privacy goal (no source-code exfiltration) while still allowing the knowledge base to evolve over time.
+\textbf{Optional external data.} Code Guardian may optionally fetch \emph{public vulnerability metadata} to refresh the knowledge base (e.g., CVE records from the NVD API). This traffic does not include user source code and can be disabled by running in offline mode. After a refresh, cached knowledge can be reused without network access. This separation preserves the core privacy goal (no source-code exfiltration, R5) while still allowing the knowledge base to evolve over time.
 
 \begin{figure}[H]
   \centering
