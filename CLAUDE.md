@@ -163,7 +163,7 @@ Default Ollama host: `http://localhost:11434` (configurable in VS Code settings)
 - Run with `npm run test:unit` or `make test-unit`
 
 **Evaluation**: Run model accuracy tests
-- 48 vulnerability test cases across major CWE categories
+- 101 test cases (71 vulnerable + 30 secure) across 14 CWE categories
 - `npm run evaluate` or `make evaluate`
 
 ### Building for Release
@@ -187,6 +187,14 @@ make release-patch        # Bumps version, tags, pushes
 
 - **Citation limit:** Use no more than two citations per statement. Prefer the most frequently cited references in the thesis (`bibliography.bib`) over less-used ones.
 - **Simple English:** Use plain, straightforward language. Prefer short sentences and common words. Avoid ornate phrasing, jargon-heavy constructions, and unnecessarily complex sentence structures.
+- **Writing style:** Follow a flowing prose pattern. Chapter/section preambles should progressively narrow from broad context to the specific topic. Use numbered lists with bold lead-ins for objectives and contributions. Avoid flat one-sentence-per-chapter outlines — group chapters thematically into paragraphs.
+- **Requirements mapping (R1–R5):**
+  - R1 = Accuracy (precision, recall, F1)
+  - R2 = Consistency (structured output reliability, JSON parse success)
+  - R3 = Repair quality (fix suggestions)
+  - R4 = Usability (latency, IDE integration)
+  - R5 = Privacy (local execution, no code exfiltration)
+  - Note: Old references R6/R7 are stale and have been consolidated into R1–R5.
 
 ## Security Considerations
 
