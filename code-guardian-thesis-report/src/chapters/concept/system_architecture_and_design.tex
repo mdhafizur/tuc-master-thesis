@@ -45,6 +45,8 @@ Figure~\ref{fig:c4-container} summarizes the main internal containers and their 
   \label{fig:c4-container}
 \end{sidewaysfigure}
 
+\clearpage
+
 \subsection{Process View: End-to-End Workflows}
 \label{subsec:process-view}
 
@@ -83,14 +85,16 @@ Figure~\ref{fig:bpmn} illustrates the dynamic execution flow for the main workfl
 
 \textbf{Privacy considerations in the process view.} Across all workflows, source code is sent only to the local LLM backend on \texttt{localhost}. Optional knowledge refresh operations fetch only public metadata and are cached; disabling refresh yields a fully offline analysis mode.
 
+These architecture views make explicit how Code Guardian operationalizes the conceptual design: modular responsibilities, local inference as the default deployment, optional retrieval grounding, and IDE-native presentation with developer-controlled remediation.
+
 \begin{sidewaysfigure}
   \centering
   \safeincludegraphics[width=\linewidth]{images/bpmn_process_flow.pdf}
-  \caption{Process view showing two primary workflows with swim lanes. Workflow 1: Real-time function analysis with debouncing (800\,ms) and caching, where cache hits bypass LLM inference and cache misses invoke local analysis. Workflow 2: On-demand analysis with optional RAG, including embedding generation, configurable vector search, prompt augmentation, and local LLM inference. The runtime default uses $k=3$ retrieved chunks; Chapter~\ref{chap:evaluation} benchmarks a $k=5$ setting. Color coding: user events (yellow), extension (orange), backend (purple), LLM (green). Privacy boundary (green dashed): all processes execute on localhost.}
+  \caption{Process view showing two primary workflows with swim lanes. Workflow~1: Real-time function analysis with debouncing (800\,ms) and caching, where cache hits bypass LLM inference and cache misses invoke local analysis. Workflow~2: On-demand analysis with optional RAG; when enabled, the backend generates embeddings, performs vector search (runtime default $k{=}3$; evaluation uses $k{=}5$), and augments the prompt before LLM invocation. When RAG is disabled, analysis proceeds directly to LLM inference without retrieval. Color coding: user events (yellow), extension (orange), backend (purple), LLM (green). Privacy boundary (green dashed): all processes execute on localhost.}
   \label{fig:bpmn}
 \end{sidewaysfigure}
 
-These architecture views make explicit how Code Guardian operationalizes the conceptual design: modular responsibilities, local inference as the default deployment, optional retrieval grounding, and IDE-native presentation with developer-controlled remediation.
+\clearpage
 
 \subsection{Sequence Diagrams: Concrete Detection Flows}
 \label{sec:sequence-diagrams}
@@ -107,11 +111,18 @@ When a previously analyzed function reappears after a document change, the exten
 \end{enumerate}
 This flow is critical for IDE responsiveness, as it avoids LLM inference overhead for unmodified code.
 
+\begin{figure}[H]
+  \centering
+  \safeincludegraphics[width=0.9\textwidth]{images/seq_inline_cached.drawio.pdf}
+  \caption{Sequence diagram: Inline mode with cache hit. No LLM invocation is required for previously analyzed code.}
+  \label{fig:seq-inline-cached}
+\end{figure}
+
 \paragraph{Audit Mode with RAG (Figure~\ref{fig:seq-audit-rag}).}
 When performing a full workspace scan with retrieval augmentation enabled, the backend orchestrates vector search, multi-pass detection, and repair generation:
 \begin{enumerate}
-    \item Developer triggers audit scan; extension extracts code context.
-    \item Backend generates embedding and queries the vector database (runtime default: top-$k=3$ chunks; the evaluated benchmark setting uses $k=5$).
+    \item Developer triggers audit scan; extension extracts code context and sends it to the backend.
+    \item Backend generates embedding, queries the vector database (runtime default: top-$k=3$ chunks; the evaluated benchmark setting uses $k=5$), and receives the top-$k$ chunks.
     \item Retrieved CWE/OWASP chunks are injected into a RAG-augmented prompt.
     \item Stage~1: Two detection passes are sent to Ollama with different seeds (seed=42 and seed=137).
     \item Backend applies consensus filtering, retaining only findings confirmed by both passes.
@@ -119,6 +130,13 @@ When performing a full workspace scan with retrieval augmentation enabled, the b
     \item Findings and repairs are returned to the extension, which updates the cache and renders diagnostics with quick fixes.
 \end{enumerate}
 Total latency includes two detection passes, consensus filtering, and repair generation. In the evaluated setup, retrieval overhead remained modest relative to model inference.
+
+\begin{figure}[H]
+  \centering
+  \safeincludegraphics[width=0.95\textwidth]{images/seq_audit_rag.drawio.pdf}
+  \caption{Sequence diagram: Audit mode with RAG. The backend retrieves security knowledge via vector search, runs two detection passes with consensus filtering, and generates repairs for confirmed findings.}
+  \label{fig:seq-audit-rag}
+\end{figure}
 
 \paragraph{Real-time Detection with Debouncing (Figure~\ref{fig:seq-realtime-debounced}).}
 During active typing, debouncing prevents analysis on every keystroke while maintaining responsiveness:
@@ -132,7 +150,14 @@ During active typing, debouncing prevents analysis on every keystroke while main
 \end{enumerate}
 Debouncing reduces unnecessary LLM invocations during continuous typing, balancing responsiveness with resource efficiency.
 
-\begin{table}[htbp]
+\begin{figure}[H]
+  \centering
+  \safeincludegraphics[width=0.95\textwidth]{images/seq_realtime.drawio.pdf}
+  \caption{Sequence diagram: Real-time detection flow with debouncing. An 800\,ms timer prevents excessive LLM invocations during active typing.}
+  \label{fig:seq-realtime-debounced}
+\end{figure}
+
+\begin{table}[H]
 \centering
 \caption{Comparison of detection flow characteristics.}
 \label{tab:flow-characteristics}
@@ -147,24 +172,3 @@ Real-time (debounced) & Typing pause (800\,ms) & Variable & Conditional \\
 \bottomrule
 \end{tabular}
 \end{table}
-
-\begin{figure}[htbp]
-  \centering
-  \safeincludegraphics[width=0.9\textwidth]{images/seq_inline_cached.drawio.pdf}
-  \caption{Sequence diagram: Inline mode with cache hit. No LLM invocation is required for previously analyzed code.}
-  \label{fig:seq-inline-cached}
-\end{figure}
-
-\begin{figure}[htbp]
-  \centering
-  \safeincludegraphics[width=0.95\textwidth]{images/seq_audit_rag.drawio.pdf}
-  \caption{Sequence diagram: Audit mode with RAG. The backend retrieves security knowledge via vector search, runs two detection passes with consensus filtering, and generates repairs for confirmed findings.}
-  \label{fig:seq-audit-rag}
-\end{figure}
-
-\begin{figure}[htbp]
-  \centering
-  \safeincludegraphics[width=0.95\textwidth]{images/seq_realtime.drawio.pdf}
-  \caption{Sequence diagram: Real-time detection flow with debouncing. An 800\,ms timer prevents excessive LLM invocations during active typing.}
-  \label{fig:seq-realtime-debounced}
-\end{figure}

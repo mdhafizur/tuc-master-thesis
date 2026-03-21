@@ -51,7 +51,7 @@
         </mxCell>
 
         <!-- Flow -->
-        <mxCell id="step1" value="1. Save file" style="edgeStyle=orthogonalEdgeStyle;html=1;align=left;spacingLeft=2;endArrow=block;rounded=0;" edge="1" parent="1">
+        <mxCell id="step1" value="1. Pause after editing" style="edgeStyle=orthogonalEdgeStyle;html=1;align=left;spacingLeft=2;endArrow=block;rounded=0;" edge="1" parent="1">
           <mxGeometry relative="1" as="geometry">
             <mxPoint x="100" y="160" as="sourcePoint" />
             <mxPoint x="260" y="160" as="targetPoint" />
