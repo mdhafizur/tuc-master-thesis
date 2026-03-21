@@ -25,9 +25,9 @@ Table~\ref{tab:eval-rag} evaluates representative RAG-based approaches against t
   \label{tab:eval-rag}
   \small
   \renewcommand{\arraystretch}{1.5}
-  \begin{tabular}{|m{3.2cm}|c|c|c|c|c|}
+  \begin{tabular}{|m{2.2cm}|c|c|c|c|c|m{3.8cm}|}
     \hline
-    \textbf{Approach} & \textbf{R1} & \textbf{R2} & \textbf{R3} & \textbf{R4} & \textbf{R5} \\
+    \textbf{Approach} & \textbf{R1} & \textbf{R2} & \textbf{R3} & \textbf{R4} & \textbf{R5} & \textbf{Key Gap} \\
     \hline
 
     Generic RAG \cite{lewis2020rag} &
@@ -35,7 +35,8 @@ Table~\ref{tab:eval-rag} evaluates representative RAG-based approaches against t
     \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-90:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
     \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-90:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
     \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-90:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
-    --- \\
+    --- &
+    No IDE integration; privacy depends on deployment \\
     \hline
 
     RESCUE \cite{shi2025rescue} &
@@ -43,7 +44,8 @@ Table~\ref{tab:eval-rag} evaluates representative RAG-based approaches against t
     \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-150:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
     \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} &
     \raisebox{-0.3cm}{\tikz{\draw (0,0) circle (0.35cm);}} &
-    --- \\
+    --- &
+    No IDE or usability focus; cloud evaluation only \\
     \hline
   \end{tabular}
 \end{table}

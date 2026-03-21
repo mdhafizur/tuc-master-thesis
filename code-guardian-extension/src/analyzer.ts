@@ -314,9 +314,99 @@ function applyConsensusFilter(passResults: SecurityIssue[][]): SecurityIssue[] {
 }
 
 /**
- * Analyzes the provided code snippet using an LLM with multi-pass consensus filtering.
- * Runs analysis twice with different seeds and only keeps findings confirmed by both passes.
- * This reduces false positives since inconsistent findings are filtered out.
+ * Generates a targeted repair for a single detected vulnerability using a dedicated prompt.
+ * This second-stage prompt focuses purely on fix generation, producing higher-quality repairs
+ * than asking the model to detect and fix simultaneously.
+ */
+async function generateRepair(
+	model: string,
+	code: string,
+	issue: SecurityIssue,
+	ragManager?: RAGManager
+): Promise<string | undefined> {
+	const logger = getLogger();
+
+	const vulnerableLines = code.split('\n')
+		.slice(Math.max(0, issue.startLine - 1), issue.endLine)
+		.join('\n');
+
+	let repairSystemPrompt = `You are a secure code repair specialist. You are given a code snippet and a specific vulnerability found in it. Your ONLY job is to produce a fixed version of the vulnerable lines.
+
+RULES:
+1. Return ONLY a JSON object with a single "fix" field containing the corrected code.
+2. The fix must directly address the reported vulnerability type.
+3. The fix must be executable code, not prose or explanation.
+4. Preserve the original code's functionality while eliminating the vulnerability.
+5. Use established secure coding patterns (parameterized queries, input validation, safe APIs).
+
+Response format:
+{"fix": "the corrected code here"}`;
+
+	let repairUserPrompt = `Vulnerability: ${issue.message}
+Vulnerable lines (${issue.startLine}-${issue.endLine}):
+${vulnerableLines}
+
+Full code context:
+${code}
+
+Return ONLY the JSON object with the fix.`;
+
+	// Enhance repair prompt with RAG if available
+	if (ragManager) {
+		try {
+			const enhanced = await ragManager.generateEnhancedPrompt(repairSystemPrompt, vulnerableLines);
+			if (enhanced !== repairSystemPrompt) {
+				repairSystemPrompt = enhanced;
+			}
+		} catch {
+			// Continue with standard prompt
+		}
+	}
+
+	try {
+		const res = await Promise.race([
+			ollama.chat({
+				model,
+				messages: [
+					{ role: 'system', content: repairSystemPrompt },
+					{ role: 'user', content: repairUserPrompt }
+				],
+				format: 'json',
+				options: { temperature: 0, seed: 42 }
+			}),
+			new Promise<never>((_, reject) =>
+				setTimeout(() => reject(new Error('Repair generation timed out')), 15000)
+			)
+		]);
+
+		const raw = res.message.content.trim();
+		const parsed = JSON.parse(raw);
+
+		if (parsed && typeof parsed.fix === 'string' && parsed.fix.trim().length > 0) {
+			return parsed.fix.trim();
+		}
+
+		// Fallback: check for any string value in the response
+		const firstString = Object.values(parsed).find(v => typeof v === 'string' && (v as string).trim().length > 0);
+		if (firstString) {
+			return (firstString as string).trim();
+		}
+
+		return undefined;
+	} catch (error) {
+		logger.debug(`Repair generation failed for lines ${issue.startLine}-${issue.endLine}: ${error}`);
+		return undefined;
+	}
+}
+
+/**
+ * Analyzes the provided code snippet using an LLM with multi-pass consensus filtering
+ * and two-stage repair generation.
+ *
+ * Stage 1: Detect vulnerabilities using consensus filtering (two passes, keep only agreed findings).
+ * Stage 2: For each confirmed vulnerability, generate a targeted repair using a dedicated prompt.
+ *
+ * This separation improves both detection precision (consensus) and repair quality (focused prompt).
  *
  * @param code - The source code to be analyzed.
  * @param modelName - Optional model name to use (defaults to configured model).
@@ -336,16 +426,17 @@ export async function analyzeCodeWithLLM(code: string, modelName?: string, ragMa
 		return cachedResult;
 	}
 
-	logger.info('Cache miss - analyzing with LLM (multi-pass consensus)', { model, codeLength: code.length });
+	logger.info('Cache miss - analyzing with LLM (multi-pass consensus + two-stage repair)', { model, codeLength: code.length });
+
+	// ========== STAGE 1: Detection with consensus filtering ==========
 
 	let systemPrompt = `You are a precise secure code analyzer. Detect REAL security vulnerabilities in code and return ONLY a valid JSON array.
 
 IMPORTANT RULES:
 1. Only report issues that are genuinely exploitable. Do NOT flag safe patterns, hardcoded values, or properly sanitized inputs.
 2. If the code is secure and has no vulnerabilities, you MUST return an empty array: []
-3. Each issue must include a concrete suggestedFix with executable code showing the secure alternative.
-4. Be specific: name the exact vulnerability type (e.g., "SQL Injection", "XSS", "Command Injection") and explain WHY it is exploitable.
-5. Do NOT report theoretical risks, best-practice suggestions, or style issues. Only report actual security vulnerabilities.
+3. Be specific: name the exact vulnerability type (e.g., "SQL Injection", "XSS", "Command Injection") and explain WHY it is exploitable.
+4. Do NOT report theoretical risks, best-practice suggestions, or style issues. Only report actual security vulnerabilities.
 
 CRITICAL: Your response MUST be ONLY a valid JSON array. No explanatory text, no markdown formatting, no comments.
 
@@ -354,8 +445,7 @@ Response format:
 	{
 		"message": "Description of the vulnerability and why it is exploitable",
 		"startLine": 1,
-		"endLine": 3,
-		"suggestedFix": "Secure code replacement that fixes the vulnerability"
+		"endLine": 3
 	}
 ]
 
@@ -396,20 +486,42 @@ If no vulnerabilities are found, return: []`;
 
 	const passResults = await Promise.all(passPromises);
 
-	// Log per-pass results
 	passResults.forEach((results, i) => {
 		logger.info(`Pass ${i + 1}: found ${results.length} issues`);
 	});
 
-	// Apply consensus filter — only keep findings confirmed by both passes
 	const consensus = applyConsensusFilter(passResults);
 	logger.info(`Consensus: ${consensus.length} issues confirmed across passes`);
 
-	// Cache the consensus result
-	cache.set(code, model, consensus, ragEnabled);
-	logger.debug('Cached consensus analysis result');
+	if (consensus.length === 0) {
+		cache.set(code, model, consensus, ragEnabled);
+		return consensus;
+	}
 
-	return consensus;
+	// ========== STAGE 2: Targeted repair generation ==========
+
+	logger.info(`Generating targeted repairs for ${consensus.length} confirmed issues...`);
+
+	const repairPromises = consensus.map(issue =>
+		generateRepair(model, code, issue, ragManager)
+	);
+
+	const repairs = await Promise.all(repairPromises);
+
+	// Merge repairs into issues
+	const finalResults = consensus.map((issue, i) => ({
+		...issue,
+		suggestedFix: repairs[i] || issue.suggestedFix
+	}));
+
+	const repairCount = repairs.filter(r => r !== undefined).length;
+	logger.info(`Repairs generated: ${repairCount}/${consensus.length}`);
+
+	// Cache the final result
+	cache.set(code, model, finalResults, ragEnabled);
+	logger.debug('Cached analysis result with repairs');
+
+	return finalResults;
 }
 
 /**

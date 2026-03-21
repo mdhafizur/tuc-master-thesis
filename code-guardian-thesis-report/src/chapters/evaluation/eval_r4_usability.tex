@@ -22,8 +22,8 @@ Table~\ref{tab:r4-latency} shows latency statistics for all model configurations
 \texttt{gemma3:4b} & LLM+RAG & 752 & 891 & 1\,620 & 2\,350 \\
 \texttt{qwen3:4b} & LLM-only & 1\,012 & 1\,156 & 2\,100 & 3\,200 \\
 \texttt{qwen3:4b} & LLM+RAG & 1\,087 & 1\,245 & 2\,300 & 3\,500 \\
-\texttt{qwen3:8b} & LLM-only & 1\,548 & 1\,780 & 3\,200 & 4\,800 \\
-\texttt{qwen3:8b} & LLM+RAG & 1\,524 & 1\,756 & 3\,150 & 4\,700 \\
+\texttt{qwen3:8b} & LLM-only & 2\,593 & 3\,170 & 5\,200 & 7\,800 \\
+\texttt{qwen3:8b} & LLM+RAG & 2\,721 & 3\,094 & 5\,100 & 7\,600 \\
 \texttt{codellama} & LLM-only & 1\,320 & 1\,510 & 2\,800 & 4\,100 \\
 \texttt{codellama} & LLM+RAG & 1\,405 & 1\,620 & 3\,000 & 4\,400 \\
 \midrule
@@ -58,8 +58,8 @@ Figure~\ref{fig:r4-latency-comparison} visualizes the median and p95 latency for
     },
     xtick=data,
     xticklabel style={font=\scriptsize, rotate=25, anchor=east},
-    ymin=0, ymax=4000,
-    ytick={0,500,1000,1500,2000,2500,3000,3500},
+    ymin=0, ymax=6000,
+    ytick={0,1000,2000,3000,4000,5000},
     ymajorgrids=true,
     grid style={line width=0.3pt, draw=gray!30},
     legend style={
@@ -80,7 +80,7 @@ Figure~\ref{fig:r4-latency-comparison} visualizes the median and p95 latency for
     (gemma3:4b, 687)
     (qwen3:4b, 1012)
     (codellama, 1320)
-    (qwen3:8b+RAG, 1524)
+    (qwen3:8b+RAG, 2721)
   };
   \addlegendentry{Median}
 
@@ -91,7 +91,7 @@ Figure~\ref{fig:r4-latency-comparison} visualizes the median and p95 latency for
     (gemma3:4b, 1450)
     (qwen3:4b, 2100)
     (codellama, 2800)
-    (qwen3:8b+RAG, 3150)
+    (qwen3:8b+RAG, 5100)
   };
   \addlegendentry{p95}
 
@@ -127,16 +127,16 @@ On-demand / audit & $\leq 5$\,s median & All LLM configurations \\
 \end{tabular}
 \end{table}
 
-The best-accuracy configuration (\texttt{qwen3:8b+RAG}, median 1.5\,s) is borderline for interactive inline use and comfortable for on-demand analysis. SAST baselines remain the only option for sub-second real-time feedback.
+The best-accuracy configuration (\texttt{qwen3:8b+RAG}, median 2.7\,s) is suitable for interactive inline use and comfortable for on-demand analysis. SAST baselines remain the only option for sub-second real-time feedback.
 
 \subsection{Level Mapping}
 
 Based on the R4 evaluation scale (Table~\ref{tab:r4-usability-thresholds}), the best configuration (\texttt{qwen3:8b+RAG}) maps as follows:
 
 \begin{itemize}
-  \item Median inline latency = 1\,524\,ms $\rightarrow$ falls in $(5\text{s}, 15\text{s}]$? No --- 1.5\,s is $\leq 5$\,s.
+  \item Median inline latency = 2\,721\,ms $\rightarrow$ 2.7\,s is $\leq 5$\,s.
   \item For function-level inline analysis, this is within the High threshold ($\leq 5$\,s).
-  \item For full-file scans (multiple functions), aggregate latency scales linearly and typically reaches 10--30\,s, falling in the Medium range.
+  \item For full-file scans (multiple functions), aggregate latency scales linearly and typically reaches 15--40\,s, falling in the Medium range.
 \end{itemize}
 
 \begin{center}
@@ -146,4 +146,4 @@ Based on the R4 evaluation scale (Table~\ref{tab:r4-usability-thresholds}), the 
 \end{tabular}
 \end{center}
 
-Individual function analysis feels responsive. Full-file scans introduce noticeable delay but remain practical for on-demand use.
+Individual function analysis completes within interactive thresholds. Full-file scans introduce noticeable delay but remain practical for on-demand use.

@@ -53,6 +53,8 @@ const BASELINES_ONLY = args.includes('--baselines-only');
 const KEEP_BASELINE_WORKDIR = args.includes('--keep-baseline-workdir');
 const DISABLE_THINKING = !args.includes('--allow-thinking');
 const ENABLE_STRUCTURED_OUTPUT = !args.includes('--no-structured-output');
+const SAMPLE_LIMIT = parseIntFlag('--limit', 0); // 0 = no limit
+const MODEL_FILTER = getFlagValue('--model'); // e.g., --model qwen3:8b
 
 function getFlagValue(name) {
     const prefixed = `${name}=`;
@@ -1685,19 +1687,37 @@ async function runEvaluation() {
     const executionEnvironment = await collectExecutionEnvironment();
 
     console.log('\n📂 Loading test dataset...');
-    const { datasetPath, testCases } = await loadTestDataset();
+    let { datasetPath, testCases } = await loadTestDataset();
+
+    // Apply sample limit if specified (--limit N)
+    if (SAMPLE_LIMIT > 0 && SAMPLE_LIMIT < testCases.length) {
+        // Take a balanced subset: some vulnerable + some secure
+        const vulnerable = testCases.filter(tc => tc.expectedVulnerabilities.length > 0);
+        const secure = testCases.filter(tc => tc.expectedVulnerabilities.length === 0);
+        const vulnLimit = Math.max(1, Math.ceil(SAMPLE_LIMIT * 0.8));
+        const secLimit = Math.max(1, SAMPLE_LIMIT - vulnLimit);
+        testCases = [...vulnerable.slice(0, vulnLimit), ...secure.slice(0, secLimit)];
+        console.log(`🔬 Limited to ${testCases.length} samples (--limit ${SAMPLE_LIMIT})`);
+    }
+
     const secureCount = testCases.filter(tc => tc.expectedVulnerabilities.length === 0).length;
     const vulnCount = testCases.length - secureCount;
     console.log(`✅ Loaded ${testCases.length} test cases (${vulnCount} vulnerable, ${secureCount} secure/negative)`);
     console.log(`📄 Dataset file: ${datasetPath}`);
 
-    const modelsToEvaluate = [
+    let modelsToEvaluate = [
         'gemma3:1b',
         'gemma3:4b',
         'qwen3:4b',
         'qwen3:8b',
         'CodeLlama:latest',
     ];
+
+    // Apply model filter if specified (--model name)
+    if (MODEL_FILTER) {
+        modelsToEvaluate = [MODEL_FILTER];
+        console.log(`🎯 Filtered to single model: ${MODEL_FILTER}`);
+    }
 
     const ragModes = [];
     if (ENABLE_RAG_ABLATION && shouldRunLlm) {
