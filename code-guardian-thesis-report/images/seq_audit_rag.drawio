@@ -102,48 +102,70 @@
           <mxGeometry x="310" y="380" width="120" height="40" as="geometry" />
         </mxCell>
 
-        <mxCell id="step8" value="8. Generate(prompt)" style="edgeStyle=orthogonalEdgeStyle;html=1;align=left;spacingLeft=2;endArrow=block;rounded=0;" edge="1" parent="1">
+        <mxCell id="step8" value="8. Stage 1: Detection pass 1 (seed=42)" style="edgeStyle=orthogonalEdgeStyle;html=1;align=left;spacingLeft=2;endArrow=block;rounded=0;" edge="1" parent="1">
           <mxGeometry relative="1" as="geometry">
             <mxPoint x="370" y="440" as="sourcePoint" />
             <mxPoint x="690" y="440" as="targetPoint" />
           </mxGeometry>
         </mxCell>
 
-        <mxCell id="step9" value="9. LLM inference (~1.5s)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
-          <mxGeometry x="630" y="460" width="120" height="60" as="geometry" />
+        <mxCell id="step9" value="9. LLM inference (~2.7s)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="630" y="460" width="120" height="40" as="geometry" />
         </mxCell>
 
-        <mxCell id="step10" value="10. JSON response" style="edgeStyle=orthogonalEdgeStyle;html=1;align=left;spacingLeft=2;endArrow=block;rounded=0;dashed=1;" edge="1" parent="1">
+        <mxCell id="step9b" value="10. Detection pass 2 (seed=137)" style="edgeStyle=orthogonalEdgeStyle;html=1;align=left;spacingLeft=2;endArrow=block;rounded=0;" edge="1" parent="1">
           <mxGeometry relative="1" as="geometry">
-            <mxPoint x="690" y="540" as="sourcePoint" />
-            <mxPoint x="370" y="540" as="targetPoint" />
+            <mxPoint x="370" y="520" as="sourcePoint" />
+            <mxPoint x="690" y="520" as="targetPoint" />
           </mxGeometry>
         </mxCell>
 
-        <mxCell id="step11" value="11. Parse & validate" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;" vertex="1" parent="1">
-          <mxGeometry x="310" y="560" width="120" height="40" as="geometry" />
+        <mxCell id="step9c" value="11. LLM inference (~2.7s)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="630" y="540" width="120" height="40" as="geometry" />
         </mxCell>
 
-        <mxCell id="step12" value="12. Return findings" style="edgeStyle=orthogonalEdgeStyle;html=1;align=left;spacingLeft=2;endArrow=block;rounded=0;dashed=1;" edge="1" parent="1">
+        <mxCell id="step10" value="12. JSON responses" style="edgeStyle=orthogonalEdgeStyle;html=1;align=left;spacingLeft=2;endArrow=block;rounded=0;dashed=1;" edge="1" parent="1">
           <mxGeometry relative="1" as="geometry">
-            <mxPoint x="370" y="620" as="sourcePoint" />
-            <mxPoint x="210" y="620" as="targetPoint" />
+            <mxPoint x="690" y="600" as="sourcePoint" />
+            <mxPoint x="370" y="600" as="targetPoint" />
           </mxGeometry>
         </mxCell>
 
-        <mxCell id="step13" value="13. Update cache" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;" vertex="1" parent="1">
-          <mxGeometry x="150" y="640" width="120" height="40" as="geometry" />
+        <mxCell id="step11" value="13. Consensus filter&#xa;(keep agreed findings)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;" vertex="1" parent="1">
+          <mxGeometry x="310" y="620" width="120" height="40" as="geometry" />
         </mxCell>
 
-        <mxCell id="step14" value="14. Render diagnostics" style="edgeStyle=orthogonalEdgeStyle;html=1;align=left;spacingLeft=2;endArrow=block;rounded=0;dashed=1;" edge="1" parent="1">
+        <mxCell id="step11b" value="14. Stage 2: Repair prompt&#xa;(per confirmed issue)" style="edgeStyle=orthogonalEdgeStyle;html=1;align=left;spacingLeft=2;endArrow=block;rounded=0;" edge="1" parent="1">
           <mxGeometry relative="1" as="geometry">
-            <mxPoint x="210" y="700" as="sourcePoint" />
-            <mxPoint x="80" y="700" as="targetPoint" />
+            <mxPoint x="370" y="680" as="sourcePoint" />
+            <mxPoint x="690" y="680" as="targetPoint" />
           </mxGeometry>
         </mxCell>
 
-        <mxCell id="note1" value="Total latency: ~1.5-2s&#xa;(RAG overhead + inference)" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;fillColor=#f5f5f5;size=15;align=left;" vertex="1" parent="1">
-          <mxGeometry x="530" y="720" width="180" height="60" as="geometry" />
+        <mxCell id="step11c" value="15. Generate fix" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="630" y="700" width="120" height="40" as="geometry" />
+        </mxCell>
+
+        <mxCell id="step12" value="16. Return findings + repairs" style="edgeStyle=orthogonalEdgeStyle;html=1;align=left;spacingLeft=2;endArrow=block;rounded=0;dashed=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="370" y="760" as="sourcePoint" />
+            <mxPoint x="210" y="760" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="step13" value="17. Update cache" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;" vertex="1" parent="1">
+          <mxGeometry x="150" y="780" width="120" height="40" as="geometry" />
+        </mxCell>
+
+        <mxCell id="step14" value="18. Render diagnostics + quick fixes" style="edgeStyle=orthogonalEdgeStyle;html=1;align=left;spacingLeft=2;endArrow=block;rounded=0;dashed=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="210" y="840" as="sourcePoint" />
+            <mxPoint x="80" y="840" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="note1" value="Total latency: ~5-6s&#xa;(2x detection + consensus + repair)" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;fillColor=#f5f5f5;size=15;align=left;" vertex="1" parent="1">
+          <mxGeometry x="530" y="840" width="200" height="60" as="geometry" />
         </mxCell>
 
         <mxCell id="title" value="Sequence: Audit Mode with RAG" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=14;fontStyle=1;" vertex="1" parent="1">

@@ -3,7 +3,7 @@ This chapter summarizes the thesis outcomes, answers the research questions, and
 \section{Summary of Contributions}
 
 \textbf{Code Guardian: local IDE security assistance.}
-The thesis delivers \textbf{Code Guardian}, a VS Code extension for on-device vulnerability analysis in JavaScript/TypeScript projects. Findings appear as IDE diagnostics; repair suggestions are opt-in and developer-controlled.
+The thesis delivers \textbf{Code Guardian}, a VS Code extension for on-device vulnerability analysis in JavaScript/TypeScript projects. The system features multi-pass consensus filtering to reduce false positives, JSON-mode decoding enforcement for structured output stability, deterministic inference controls (temperature~0, fixed seed), and a two-stage detection-then-repair pipeline. Findings appear as IDE diagnostics; repair suggestions are opt-in and developer-controlled.
 
 \textbf{Privacy-preserving architecture with optional RAG.}
 Code analysis is executed locally (Ollama). Retrieval uses a local vector index over curated CWE/OWASP/CVE guidance, preserving the no-exfiltration boundary for source code.
@@ -51,7 +51,7 @@ Table~\ref{tab:conclusion-deployment-profiles} summarizes practical deployment p
     \midrule
     Fast inline & \texttt{gemma3:1b} (LLM-only) & Very low median latency (\textasciitilde333 ms) & Low recall and FPR 100\% & Suitable only for optional lightweight hints \\
     Audit-focused & \texttt{qwen3:4b} (LLM+RAG) & Higher recall (64.90\%); moderate latency (\textasciitilde1.1 s) & FPR 100\% & Use in explicit scan mode with manual triage \\
-    Best overall local run & \texttt{qwen3:8b} (LLM+RAG) & Best F1 (63.76\%); lower LLM FPR (26.67\%) & Higher latency (\textasciitilde1.5 s) & Recommended default for quality-oriented local analysis \\
+    Best overall local run & \texttt{qwen3:8b} (LLM+RAG) & Best F1 (65.31\%); lower LLM FPR (20.00\%) & Higher latency (\textasciitilde2.7 s) & Recommended default for quality-oriented local analysis \\
     Proposed hybrid low-noise & Semgrep + \texttt{qwen3:8b} (not directly benchmarked) & Deterministic low-noise anchors plus contextual reasoning & Combined performance not measured in this thesis; recall remains bounded by SAST coverage unless LLM-only findings are also surfaced & Use SAST as filter and LLM as targeted triage/repair layer \\
     \bottomrule
   \end{tabularx}

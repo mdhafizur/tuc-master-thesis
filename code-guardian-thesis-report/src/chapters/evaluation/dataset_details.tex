@@ -1,7 +1,7 @@
 \section{Datasets}
 \label{sec:eval-dataset}
 
-This section describes the evaluation dataset used to assess Code Guardian. The dataset contains 128 test cases (113 vulnerable and 15 secure) covering common JavaScript and TypeScript vulnerability patterns. Each test case includes a code snippet, expected vulnerability labels with CWE identifiers, and optional remediation guidance. The following subsections explain the design rationale, dataset composition, and schema.
+This section describes the evaluation dataset used to assess Code Guardian. The dataset contains 101 test cases (71 vulnerable and 30 secure) covering common JavaScript and TypeScript vulnerability patterns. Each test case includes a code snippet, expected vulnerability labels with CWE identifiers, and optional remediation guidance. The following subsections explain the design rationale, dataset composition, and schema.
 
 \subsection{Dataset Design Rationale}
 \label{sec:eval-dataset-rationale}
@@ -27,11 +27,11 @@ To ensure the curated dataset reflects real-world security issues, Code Guardian
 These verified cases provide \textbf{ecological validity anchors} for the synthetic test set and demonstrate that the system can reason about vulnerabilities observed in production code, not just laboratory-crafted examples.
 
 \paragraph{Balancing scale and depth.}
-The curated approach prioritizes \textbf{depth of analysis over breadth of coverage}. By maintaining a human-auditable dataset (128 cases in the primary evaluation set), this thesis can:
+The curated approach prioritizes \textbf{depth of analysis over breadth of coverage}. By maintaining a human-auditable dataset (101 cases in the primary evaluation set), this thesis can:
 \begin{itemize}
   \item Perform qualitative inspection of true positives, false positives, and false negatives to understand \emph{why} the system succeeds or fails.
   \item Assess explanation quality and repair suggestion coherence on a per-case basis, supporting requirements R4 and R5.
-  \item Enable documented local evaluation with documented model configurations and prompt templates, essential for privacy-preserving system validation (R6).
+  \item Enable documented local evaluation with documented model configurations and prompt templates, essential for privacy-preserving system validation (R5).
   \item Support rapid iteration on detection strategies, retrieval parameters, and output validation without multi-day evaluation cycles.
 \end{itemize}
 
@@ -39,7 +39,7 @@ The curated approach prioritizes \textbf{depth of analysis over breadth of cover
 The curated dataset is not intended to replace standard benchmarks but to \textbf{complement} them with controlled, transparent, and human-reviewable evidence. Section~\ref{sec:eval-dataset} (paragraph ``Toward larger benchmarks'') explicitly identifies OWASP Benchmark and Juliet as targets for future work to validate generalization. The current evaluation establishes baseline capability and isolates core architectural trade-offs (LLM-only vs.\ LLM+RAG, model size vs.\ latency, recall vs.\ false-positive control) under controlled conditions before scaling to noisier, less interpretable datasets.
 
 \paragraph{Limitations acknowledged.}
-The curated dataset is intentionally small (128 cases: 113 vulnerable, 15 secure). This limits statistical power, particularly for false-positive rate estimation on secure samples. The secure-sample count (15) was chosen to balance FPR observability with evaluation runtime, but it results in wide confidence intervals (reported in Section~\ref{sec:eval-summary}). Results on this dataset should be interpreted as \textbf{indicative of capability under controlled conditions} rather than definitive performance guarantees for production repositories. Threats to external validity are discussed explicitly in Section~\ref{sec:eval-summary}.
+The curated dataset is intentionally small (101 cases: 71 vulnerable, 30 secure). This limits statistical power, but the expanded secure-sample count (30, doubled from an initial 15) improves FPR confidence intervals. The 15 additional secure cases were sourced from OWASP Cheat Sheets, CWE mitigations, and Node.js security best practices to cover diverse defensive patterns (parameterized queries, input validation, secure headers, CSRF tokens, rate limiting, cryptographic best practices). Results on this dataset should be interpreted as \textbf{indicative of capability under controlled conditions} rather than definitive performance guarantees for production repositories. Threats to external validity are discussed explicitly in Section~\ref{sec:eval-summary}.
 
 \medskip
 
@@ -50,10 +50,10 @@ The evaluation dataset is a project-authored curated set of JavaScript and TypeS
   \item \textbf{Real-world verified dataset:} \texttt{real-world/real-world\_dataset.json} (maintained in \path{code-guardian-evaluation/datasets/}) contains 11 verified vulnerability cases derived from actual CVEs (CVE-2022-24999, CVE-2021-23337) and security patterns extracted from production open-source projects (Lodash, Express, Mongoose, Node-Forge). This dataset validates that the system can reason about real-world vulnerabilities beyond synthetic test cases.
 \end{itemize}
 
-In the evaluated prototype version used for this thesis run, the scored thesis result set combines \textbf{128} test cases (\textbf{113} vulnerable and \textbf{15} secure). The vulnerable portion comes from \texttt{all-test-cases.generated.json} (all-sources generation), while secure cases are merged from \texttt{negatives-only.generated.json}. Expected findings are annotated with CWE identifiers to support aggregation by vulnerability class.
+In the evaluated prototype version used for this thesis run, the scored thesis result set combines \textbf{101} test cases (\textbf{71} vulnerable and \textbf{30} secure). The vulnerable portion comes from \texttt{vulnerability-test-cases.generated.json}, while secure cases are merged from \texttt{negatives-only.generated.json}. The secure set was expanded from 15 to 30 samples to improve FPR estimation confidence. Expected findings are annotated with CWE identifiers to support aggregation by vulnerability class.
 
 \paragraph{Which dataset is scored in this chapter.}
-The repository-contained evaluation harness used in this thesis (\path{code-guardian-extension/evaluation/evaluate-models.js}) was run in ablation mode with \texttt{--ablation --runs=3} for the generated vulnerable set, and complemented with a negatives-only run to restore secure-sample coverage for FPR/TN interpretation. Unless stated otherwise, quantitative results in Chapter~\ref{chap:evaluation} refer to this merged 128-case thesis result set.
+The repository-contained evaluation harness used in this thesis (\path{code-guardian-extension/evaluation/evaluate-models.js}) was run in ablation mode with \texttt{--ablation --runs=3} for the generated vulnerable set, and complemented with a negatives-only run to restore secure-sample coverage for FPR/TN interpretation. Unless stated otherwise, quantitative results in Chapter~\ref{chap:evaluation} refer to this merged 101-case thesis result set.
 
 Vulnerability classes are aligned with the Common Weakness Enumeration taxonomy \cite{mitreCWE}, and severities are recorded as coarse labels to support prioritization and reporting. Where applicable, severity can be related back to standardized scoring systems such as CVSS and public vulnerability databases such as CVE/NVD \cite{firstCvss31,mitreCVE,nistNVD}.
 

@@ -59,7 +59,7 @@
           <mxGeometry x="400" y="460" width="80" height="50" as="geometry" />
         </mxCell>
 
-        <mxCell id="w1-inference" value="LLM&#xa;inference&#xa;(1-3s)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#66bb6a;strokeColor=#2e7d32;fontSize=10;fontColor=#FFFFFF;" vertex="1" parent="1">
+        <mxCell id="w1-inference" value="LLM&#xa;inference&#xa;(~2.7s)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#66bb6a;strokeColor=#2e7d32;fontSize=10;fontColor=#FFFFFF;" vertex="1" parent="1">
           <mxGeometry x="400" y="660" width="80" height="50" as="geometry" />
         </mxCell>
 
@@ -103,7 +103,7 @@
           <mxGeometry x="1240" y="540" width="80" height="50" as="geometry" />
         </mxCell>
 
-        <mxCell id="w2-inference" value="LLM&#xa;inference&#xa;(1.5-2.5s)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#66bb6a;strokeColor=#2e7d32;fontSize=10;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+        <mxCell id="w2-inference" value="LLM&#xa;inference&#xa;(~2.7s)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#66bb6a;strokeColor=#2e7d32;fontSize=10;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="1240" y="660" width="80" height="50" as="geometry" />
         </mxCell>
 

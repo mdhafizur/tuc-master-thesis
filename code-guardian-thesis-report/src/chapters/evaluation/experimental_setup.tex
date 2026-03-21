@@ -1,7 +1,7 @@
 \section{Experimental Setup}
 \label{sec:eval-setup}
 
-All experiments are executed locally using the Code Guardian evaluation harness in \path{code-guardian-extension/evaluation/evaluate-models.js}. The harness iterates over the curated dataset described in Section~\ref{sec:eval-dataset} and invokes Ollama with a strict JSON-only system prompt. Model decoding is configured for low randomness (\texttt{temperature=0.1}) to reduce output variance and improve parsing stability. Temperature 0.1 was chosen over temperature 0.0 (greedy decoding) because preliminary runs showed that strictly greedy decoding occasionally produced repetitive output artifacts and reduced schema adherence in smaller models; the minimal randomness at 0.1 mitigated these artifacts while maintaining near-deterministic behavior.
+All experiments are executed locally using the Code Guardian evaluation harness in \path{code-guardian-extension/evaluation/evaluate-models.js}. The harness iterates over the curated dataset described in Section~\ref{sec:eval-dataset} and invokes Ollama with a strict JSON-only system prompt. Model decoding is configured for deterministic inference (\texttt{temperature=0}, \texttt{seed=42}) to maximize reproducibility. JSON-mode decoding (\texttt{format: 'json'}) is enabled to enforce structured output at the decoding level, eliminating parse failures caused by malformed responses.
 
 \subsection*{Response Schema for Scoring}
 
@@ -56,11 +56,11 @@ These controls reduce avoidable variance, but they do not remove all confounders
     \toprule
     Item & Value \\
     \midrule
-    Dataset files & \texttt{all-test-cases.generated.json} (113 vulnerable) + \texttt{negatives-only.generated.json} (15 secure) \\
+    Dataset files & \texttt{vulnerability-test-cases.generated.json} (71 vulnerable) + \texttt{negatives-only.generated.json} (30 secure) \\
     Runs per sample & 3 (main ablation run) + 1 (negatives-only overlay) \\
     Prompt modes & LLM-only, LLM+RAG \\
     RAG settings & static security snippets, \texttt{k=5} \\
-    Generation settings & \texttt{temperature=0.1}, \texttt{num\_predict=1000} \\
+    Generation settings & \texttt{temperature=0}, \texttt{seed=42}, \texttt{format='json'}, \texttt{num\_predict=1000} \\
     Request controls & \texttt{timeoutMs=30000}, \texttt{requestDelayMs=500} \\
     Execution mode & sequential, no warm-up, no retries \\
     Models requested & \texttt{gemma3:1b}, \texttt{gemma3:4b}, \texttt{qwen3:4b}, \texttt{qwen3:8b}, \texttt{CodeLlama:latest} \\
@@ -88,8 +88,8 @@ To document run provenance, Table~\ref{tab:eval-artifact-manifest} records the m
     Run window (UTC) & 2026-02-27 08:36:19 to 2026-02-27 10:37:54 (main) + 2026-02-27 10:46:09 to 2026-02-27 10:51:51 (negatives overlay) \\
     Total runtime & 7\,295\,016 ms (main) + 341\,765 ms (negatives overlay) \\
     Execution policy & sequential order, no retries, no warm-up \\
-    Dataset path & \path{code-guardian-extension/evaluation/datasets/all-test-cases.generated.json} + \path{code-guardian-extension/evaluation/datasets/negatives-only.generated.json} \\
-    Invocation command & \texttt{node evaluation/evaluate-models.js --ablation --include-baselines --dataset=datasets/all-test-cases.generated.json --runs=3 --rag-k=5 --temperature=0.1 --num-predict=1000 --timeout-ms=30000 --delay-ms=500} \\
+    Dataset path & \path{code-guardian-extension/evaluation/datasets/vulnerability-test-cases.generated.json} + \path{code-guardian-extension/evaluation/datasets/negatives-only.generated.json} \\
+    Invocation command & \texttt{node evaluation/evaluate-models.js --ablation --include-baselines --dataset=datasets/vulnerability-test-cases.generated.json --runs=3 --rag-k=5 --temperature=0 --num-predict=1000 --timeout-ms=30000 --delay-ms=500} \\
     Model fingerprint (\texttt{gemma3:1b}) & digest prefix \texttt{8648f39daa8f} \\
     Model fingerprint (\texttt{gemma3:4b}) & digest prefix \texttt{a2af6cc3eb7f} \\
     Model fingerprint (\texttt{qwen3:4b}) & digest prefix \texttt{359d7dd4bcda} \\
@@ -109,21 +109,21 @@ This thesis evaluation uses a \textbf{two-run merged configuration} to balance s
 \paragraph{Why two separate runs were necessary.}
 The evaluation initially prioritized vulnerable-case coverage with repeated measurements (\texttt{runsPerSample=3}) to assess detection stability and reduce influence of transient model behavior. However, the original run configuration did not include sufficient secure-sample coverage for reliable false-positive rate (FPR) estimation—a critical usability metric for IDE-integrated tools.
 
-Re-running the full ablation with both vulnerable and secure samples at \texttt{runsPerSample=3} would have required an additional 7+ hours of compute time. Instead, a pragmatic approach was adopted: execute a \textbf{negatives-only overlay run} (\texttt{runsPerSample=1}) to add 15 secure samples, then merge results for FPR computation while preserving the repeated vulnerable measurements for recall/precision.
+Re-running the full ablation with both vulnerable and secure samples at \texttt{runsPerSample=3} would have required an additional 7+ hours of compute time. Instead, a pragmatic approach was adopted: execute a \textbf{negatives-only overlay run} (\texttt{runsPerSample=1}) to add 30 secure samples, then merge results for FPR computation while preserving the repeated vulnerable measurements for recall/precision.
 
 \paragraph{How results were merged.}
 The final thesis evaluation set combines:
 \begin{itemize}
-  \item \textbf{Vulnerable samples:} 113 samples $\times$ 3 runs = 339 evaluations (from \texttt{all-test-cases.generated.json})
-  \item \textbf{Secure samples:} 15 samples $\times$ 1 run = 15 evaluations (from \texttt{negatives-only.generated.json})
+  \item \textbf{Vulnerable samples:} 71 samples $\times$ 3 runs = 213 evaluations (from \texttt{vulnerability-test-cases.generated.json})
+  \item \textbf{Secure samples:} 30 samples $\times$ 1 run = 30 evaluations (from \texttt{negatives-only.generated.json})
 \end{itemize}
 
 Per-model metrics are computed as follows:
 \begin{itemize}
-  \item \textbf{Precision \& Recall:} Calculated over 339 vulnerable evaluations using type-level matching (expected vs predicted vulnerability labels).
-  \item \textbf{False-Positive Rate (FPR):} Calculated over 15 secure evaluations using sample-level counting (a secure sample is FP if \emph{any} issue is emitted).
-  \item \textbf{Latency:} Pooled across all 354 evaluations (339 vulnerable + 15 secure).
-  \item \textbf{Parse Success Rate:} Pooled across all 354 evaluations.
+  \item \textbf{Precision \& Recall:} Calculated over 213 vulnerable evaluations using type-level matching (expected vs predicted vulnerability labels).
+  \item \textbf{False-Positive Rate (FPR):} Calculated over 30 secure evaluations using sample-level counting (a secure sample is FP if \emph{any} issue is emitted).
+  \item \textbf{Latency:} Pooled across all 243 evaluations (213 vulnerable + 30 secure).
+  \item \textbf{Parse Success Rate:} Pooled across all 243 evaluations.
 \end{itemize}
 
 \paragraph{Statistical implications.}
@@ -131,14 +131,14 @@ The merged design creates an \textbf{asymmetry in measurement robustness}: vulne
 
 \begin{enumerate}
   \item \textbf{Recall and precision estimates are more stable} due to repeated measurements reducing transient inference variance.
-  \item \textbf{FPR estimates have wider confidence intervals} because the secure-sample count ($n=15$) is small and each sample is evaluated once. Wilson intervals (Table~\ref{tab:eval-ci-key}) reflect this uncertainty.
+  \item \textbf{FPR estimates have improved confidence intervals} due to the expanded secure-sample count ($n=30$), though each sample is evaluated once. Wilson intervals (Table~\ref{tab:eval-ci-key}) reflect remaining uncertainty.
   \item \textbf{Inferential scope remains narrow}: preserved detailed logs permit exploratory paired tests on binary sample-level outcomes, but pooled issue-level precision/recall/F1 differences between LLM-only and LLM+RAG remain descriptive rather than fully inferential.
 \end{enumerate}
 
 \paragraph{Why pooled counts are still valid for descriptive reporting.}
 Despite the asymmetry, the merged approach provides operationally useful evidence:
 \begin{itemize}
-  \item FPR observability is substantially improved (15 secure samples vs.\ 0--2 in early iterations).
+  \item FPR observability is substantially improved (30 secure samples vs.\ 0--2 in early iterations).
   \item The primary evaluation goal is to \emph{compare model/mode profiles under controlled conditions}, not to establish statistically generalized population claims.
   \item Metrics are interpreted as \textbf{indicative measurements for this specific run configuration}, with explicit documentation of limitations (Section~\ref{sec:eval-summary}).
 \end{itemize}
@@ -148,7 +148,7 @@ For production-scale evaluation, a unified design with matched \texttt{runsPerSa
 
 \subsection*{Run-to-Run Variability (Descriptive)}
 
-The main ablation run evaluates each vulnerable sample three times in each configuration; secure-sample evidence is merged from a negatives-only run with one pass per sample. Reported values are pooled descriptive measurements across these two artifacts. Because repeated runs reuse the same snippets and the final tables merge outputs from two runs, issue-level mode-to-mode differences are still interpreted descriptively for this specific run. Where paired inferential analysis is reported later in this chapter, it is limited to binary sample-level outcomes and treated as exploratory.
+The main ablation run evaluates each vulnerable sample three times in each configuration; secure-sample evidence is merged from a negatives-only run with one pass per sample (30 secure cases). Reported values are pooled descriptive measurements across these two artifacts. Because repeated runs reuse the same snippets and the final tables merge outputs from two runs, issue-level mode-to-mode differences are still interpreted descriptively for this specific run. Where paired inferential analysis is reported later in this chapter, it is limited to binary sample-level outcomes and treated as exploratory.
 
 \paragraph{Implications of merged-run reporting.}
 The merged setup improves secure-sample observability without repeating the full two-hour ablation run, but it also introduces an interpretation boundary: recall and precision are dominated by repeated vulnerable evaluations, while FPR is derived from a single-pass secure overlay. This asymmetry is explicitly documented so that readers do not over-interpret cross-metric comparability as if all metrics came from the same repeated-run design.
@@ -164,10 +164,10 @@ The evaluation can be reproduced by running:
 \begin{lstlisting}[language=Java, caption={Running the Code Guardian evaluation harness}, label={lst:eval-run}]
 cd code-guardian-extension
 node evaluation/evaluate-models.js --ablation --include-baselines \
-  --dataset=datasets/all-test-cases.generated.json --runs=3 --rag-k=5 --temperature=0.1 \
+  --dataset=datasets/vulnerability-test-cases.generated.json --runs=3 --rag-k=5 --temperature=0 \
   --num-predict=1000 --timeout-ms=30000 --delay-ms=500
 node evaluation/evaluate-models.js --ablation --include-baselines \
-  --dataset=datasets/negatives-only.generated.json --runs=1 --rag-k=5 --temperature=0.1 \
+  --dataset=datasets/negatives-only.generated.json --runs=1 --rag-k=5 --temperature=0 \
   --num-predict=1000 --timeout-ms=30000 --delay-ms=500
 \end{lstlisting}
 

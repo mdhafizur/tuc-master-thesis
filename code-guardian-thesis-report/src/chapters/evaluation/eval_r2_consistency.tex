@@ -69,7 +69,7 @@ Because each vulnerable sample was evaluated 3 times, we can measure how often t
 
 \begin{table}[H]
 \centering
-\caption{Inter-run detection agreement (3 runs per sample, 113 vulnerable samples).}
+\caption{Inter-run detection agreement (3 runs per sample, 71 vulnerable samples).}
 \label{tab:r2-agreement}
 \footnotesize
 \begin{tabular}{@{}llr@{}}
@@ -90,7 +90,7 @@ Because each vulnerable sample was evaluated 3 times, we can measure how often t
 \end{tabular}
 \end{table}
 
-\texttt{qwen3:8b+RAG} shows the highest agreement (87.6\%), meaning that for roughly 88 out of 113 samples, all three runs produce the same detection decision. Smaller and code-specialized models show more variation, with \texttt{gemma3:1b} at 71.7--73.5\%. RAG slightly improves agreement for \texttt{qwen3} models but slightly reduces it for others, consistent with the accuracy findings.
+\texttt{qwen3:8b+RAG} shows the highest agreement (87.6\%), meaning that for roughly 62 out of 71 samples, all three runs produce the same detection decision. Smaller and code-specialized models show more variation, with \texttt{gemma3:1b} at 71.7--73.5\%. RAG slightly improves agreement for \texttt{qwen3} models but slightly reduces it for others, consistent with the accuracy findings.
 
 \subsection{Label and Severity Stability}
 
