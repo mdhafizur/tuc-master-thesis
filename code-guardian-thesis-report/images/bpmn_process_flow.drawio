@@ -29,14 +29,14 @@
 
         <!-- Workflow 1: Real-time Analysis -->
         <mxCell id="w1-start" value="" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#4caf50;strokeColor=#2e7d32;" vertex="1" parent="1">
-          <mxGeometry x="80" y="110" width="40" height="40" as="geometry" />
+          <mxGeometry x="80" y="130" width="40" height="40" as="geometry" />
         </mxCell>
         <mxCell id="w1-start-label" value="Type code" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="60" y="155" width="80" height="20" as="geometry" />
+          <mxGeometry x="60" y="175" width="80" height="20" as="geometry" />
         </mxCell>
 
         <mxCell id="w1-event1" value="onChange&#xa;event" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffeb3b;strokeColor=#f57f17;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="160" y="110" width="80" height="40" as="geometry" />
+          <mxGeometry x="160" y="130" width="80" height="40" as="geometry" />
         </mxCell>
 
         <mxCell id="w1-debounce" value="Debounce&#xa;(800ms)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ff9800;strokeColor=#e65100;fontSize=10;fontStyle=1;" vertex="1" parent="1">
@@ -73,10 +73,10 @@
 
         <!-- Workflow 2: On-Demand Analysis with RAG -->
         <mxCell id="w2-start" value="" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#4caf50;strokeColor=#2e7d32;" vertex="1" parent="1">
-          <mxGeometry x="800" y="110" width="40" height="40" as="geometry" />
+          <mxGeometry x="800" y="130" width="40" height="40" as="geometry" />
         </mxCell>
         <mxCell id="w2-start-label" value="Trigger&#xa;command" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="780" y="155" width="80" height="30" as="geometry" />
+          <mxGeometry x="780" y="175" width="80" height="30" as="geometry" />
         </mxCell>
 
         <mxCell id="w2-extract" value="Extract&#xa;selection/&#xa;file" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ff9800;strokeColor=#e65100;fontSize=10;" vertex="1" parent="1">
@@ -99,7 +99,7 @@
           <mxGeometry x="1240" y="460" width="80" height="50" as="geometry" />
         </mxCell>
 
-        <mxCell id="w2-invoke" value="Invoke&#xa;LLM&#xa;+RAG" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#9c27b0;strokeColor=#6a1b9a;fontSize=10;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+        <mxCell id="w2-invoke" value="Invoke&#xa;LLM" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#9c27b0;strokeColor=#6a1b9a;fontSize=10;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="1240" y="540" width="80" height="50" as="geometry" />
         </mxCell>
 
@@ -107,7 +107,7 @@
           <mxGeometry x="1240" y="660" width="80" height="50" as="geometry" />
         </mxCell>
 
-        <mxCell id="w2-parse" value="Parse &&#xa;validate" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#9c27b0;strokeColor=#6a1b9a;fontSize=10;fontColor=#FFFFFF;" vertex="1" parent="1">
+        <mxCell id="w2-parse" value="Parse &amp;&#xa;validate" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#9c27b0;strokeColor=#6a1b9a;fontSize=10;fontColor=#FFFFFF;" vertex="1" parent="1">
           <mxGeometry x="1360" y="460" width="80" height="50" as="geometry" />
         </mxCell>
 
@@ -205,22 +205,22 @@
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <mxCell id="a2-10" value="NO" style="endArrow=classic;html=1;strokeWidth=2;strokeColor=#f57c00;dashed=1;dashPattern=8 8;" edge="1" parent="1" source="w2-rag-check" target="w2-render">
+        <mxCell id="a2-10" value="NO" style="endArrow=classic;html=1;strokeWidth=2;strokeColor=#f57c00;dashed=1;dashPattern=8 8;" edge="1" parent="1" source="w2-rag-check" target="w2-invoke">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
-              <mxPoint x="1100" y="240" />
-              <mxPoint x="1400" y="240" />
+              <mxPoint x="1340" y="295" />
+              <mxPoint x="1340" y="565" />
             </Array>
           </mxGeometry>
         </mxCell>
 
         <!-- Labels -->
-        <mxCell id="workflow1-label" value="Workflow 1: Real-time Function Analysis (Debounced)" style="text;html=1;strokeColor=none;fillColor=#e1f5fe;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=12;fontStyle=1;rounded=1;" vertex="1" parent="1">
-          <mxGeometry x="280" y="180" width="320" height="30" as="geometry" />
+        <mxCell id="workflow1-label" value="Workflow 1: Real-time Function Analysis (Debounced)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=12;fontStyle=1;fontColor=#1976d2;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="200" y="90" width="380" height="25" as="geometry" />
         </mxCell>
 
-        <mxCell id="workflow2-label" value="Workflow 2: On-Demand Analysis with RAG" style="text;html=1;strokeColor=none;fillColor=#f3e5f5;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=12;fontStyle=1;rounded=1;" vertex="1" parent="1">
-          <mxGeometry x="1040" y="180" width="300" height="30" as="geometry" />
+        <mxCell id="workflow2-label" value="Workflow 2: On-Demand Analysis with RAG" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=12;fontStyle=1;fontColor=#7b1fa2;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="980" y="90" width="300" height="25" as="geometry" />
         </mxCell>
 
         <!-- Privacy Boundary -->
@@ -228,12 +228,12 @@
           <mxGeometry x="40" y="80" width="1520" height="680" as="geometry" />
         </mxCell>
 
-        <mxCell id="privacy-text" value="Privacy Boundary: All processes execute locally" style="text;html=1;strokeColor=none;fillColor=#e8f5e9;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=12;fontStyle=1;fontColor=#00994d;" vertex="1" parent="1">
+        <mxCell id="privacy-text" value="Privacy Boundary: All processes execute locally" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=12;fontStyle=1;fontColor=#00994d;" vertex="1" parent="1">
           <mxGeometry x="60" y="725" width="400" height="25" as="geometry" />
         </mxCell>
 
         <!-- Legend -->
-        <mxCell id="legend-box2" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;" vertex="1" parent="1">
+        <mxCell id="legend-box2" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;" vertex="1" parent="1">
           <mxGeometry x="40" y="800" width="1520" height="100" as="geometry" />
         </mxCell>
 
@@ -266,15 +266,15 @@
         </mxCell>
 
         <!-- Performance Notes -->
-        <mxCell id="perf-note1" value="Typical latency pattern:&#xa;• Cache hit: no new LLM call&#xa;• Cache miss: dominated by model latency&#xa;• RAG adds modest retrieval overhead" style="text;html=1;strokeColor=none;fillColor=#fff3e0;align=left;verticalAlign=top;whiteSpace=wrap;fontSize=10;fontStyle=2;" vertex="1" parent="1">
+        <mxCell id="perf-note1" value="Typical latency pattern:&#xa;• Cache hit: no new LLM call&#xa;• Cache miss: dominated by model latency&#xa;• RAG adds modest retrieval overhead" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;fontSize=10;fontStyle=2;" vertex="1" parent="1">
           <mxGeometry x="680" y="830" width="200" height="70" as="geometry" />
         </mxCell>
 
-        <mxCell id="perf-note2" value="Key optimizations:&#xa;• Debouncing reduces repeated calls during typing&#xa;• Function-level scoping limits prompt size&#xa;• Cache helps on repeated snippets&#xa;• RAG retrieval depth is configurable" style="text;html=1;strokeColor=none;fillColor=#f3e5f5;align=left;verticalAlign=top;whiteSpace=wrap;fontSize=10;fontStyle=2;" vertex="1" parent="1">
+        <mxCell id="perf-note2" value="Key optimizations:&#xa;• Debouncing reduces repeated calls during typing&#xa;• Function-level scoping limits prompt size&#xa;• Cache helps on repeated snippets&#xa;• RAG retrieval depth is configurable" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;fontSize=10;fontStyle=2;" vertex="1" parent="1">
           <mxGeometry x="900" y="820" width="240" height="80" as="geometry" />
         </mxCell>
 
-        <mxCell id="perf-note3" value="Privacy guarantees:&#xa;• All code analysis local (no exfiltration)&#xa;• LLM runs on localhost:11434&#xa;• Vector DB stored locally&#xa;• Optional CVE refresh: metadata only" style="text;html=1;strokeColor=none;fillColor=#e8f5e9;align=left;verticalAlign=top;whiteSpace=wrap;fontSize=10;fontStyle=2;" vertex="1" parent="1">
+        <mxCell id="perf-note3" value="Privacy guarantees:&#xa;• All code analysis local (no exfiltration)&#xa;• LLM runs on localhost:11434&#xa;• Vector DB stored locally&#xa;• Optional CVE refresh: metadata only" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;fontSize=10;fontStyle=2;" vertex="1" parent="1">
           <mxGeometry x="1160" y="820" width="230" height="80" as="geometry" />
         </mxCell>
 
