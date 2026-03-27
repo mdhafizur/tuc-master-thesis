@@ -49,7 +49,7 @@ Table~\ref{tab:eval-compliance} maps the best configuration (\texttt{qwen3:8b+RA
 
 \begin{enumerate}
   \item \textbf{Best configuration:} \texttt{qwen3:8b+RAG} achieves the highest F1 (65.31\%) with controlled FPR (20.00\%) and interactive latency (2.7\,s median).
-  \item \textbf{RAG is model-dependent:} Retrieval augmentation improves \texttt{qwen3} models (+3.8 to +5.4 F1 points) but degrades \texttt{gemma3} and \texttt{codellama} ($-2.9$ to $-3.3$ points).
+  \item \textbf{RAG is model-dependent:} Retrieval augmentation improves \texttt{qwen3} models (+3.8 to +5.4 F1 points) but degrades \texttt{gemma3} and \texttt{codellama} ($-2.9$ to $-3.3$ points). However, exploratory McNemar tests on matched sample-level outcomes did not reach statistical significance for the \texttt{qwen3} improvements in this dataset ($n=71$), so the observed gains should be interpreted as indicative rather than confirmed.
   \item \textbf{False-positive control improved but remains a challenge:} JSON-mode decoding and deterministic inference (temperature~0, fixed seed) reduced FPR from 26.67\% to 20.00\% for the best configuration. Most other LLM configurations still show high FPR.
   \item \textbf{SAST complements LLM analysis:} Semgrep provides very low FPR (6.67\%) with fast execution (52\,ms) but poor recall (9.73\%). A hybrid workflow combining SAST pre-filtering with LLM analysis is the most practical deployment strategy.
   \item \textbf{Privacy is fully preserved:} All analysis runs locally with no source code transmission.
