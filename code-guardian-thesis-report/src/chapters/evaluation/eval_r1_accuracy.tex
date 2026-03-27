@@ -155,9 +155,11 @@ RAG effects are model-dependent. Figure~\ref{fig:r1-rag-ablation} compares LLM-o
 
 RAG improves \texttt{qwen3:8b} by +5.44 F1 points and \texttt{qwen3:4b} by +3.77 points. However, \texttt{gemma3:4b} drops by $-2.99$ points and \texttt{codellama} by $-3.26$ points with RAG enabled. This confirms that retrieval augmentation is not universally beneficial and should be treated as a model-specific configuration.
 
+\paragraph{Statistical power.} The observed F1 differences are descriptive measurements from a single evaluation run. Exploratory exact McNemar tests on matched sample-level detection outcomes (LLM-only vs.\ LLM+RAG for each model) did not reach statistical significance for the \texttt{qwen3} improvements in this dataset ($n = 71$ vulnerable samples). This is consistent with the modest sample size: a 5-point F1 difference requires a substantially larger evaluation set to detect reliably. The RAG effect should therefore be interpreted as an indicative trend rather than a confirmed improvement, and the direction of the effect (positive for \texttt{qwen3}, negative for \texttt{gemma3} and \texttt{codellama}) is more robust than the precise magnitude.
+
 \subsection{Per-Category Detection Breakdown}
 
-Figure~\ref{fig:r1-category} shows recall by vulnerability category for the best configuration (\texttt{qwen3:8b+RAG}).
+Figure~\ref{fig:r1-category} shows recall by vulnerability category for the best configuration (\texttt{qwen3:8b+RAG}), restricted to categories with at least 3 test cases. The $n$ value indicates the number of vulnerable samples per category.
 
 \begin{figure}[H]
 \centering
@@ -170,20 +172,20 @@ Figure~\ref{fig:r1-category} shows recall by vulnerability category for the best
     xlabel={Recall (\%)},
     xlabel style={font=\small\bfseries},
     symbolic y coords={
-      {Deserialization},
-      {NoSQL Injection},
-      {Prototype Pollution},
-      {Race Condition},
-      {CSRF},
-      {SSRF},
-      {Path Traversal},
-      {Command Injection},
-      {XSS},
-      {SQL Injection}
+      {Improper Auth (n=3)},
+      {Insecure Deser (n=3)},
+      {Weak Crypto (n=4)},
+      {Input Validation (n=9)},
+      {SQL Injection (n=10)},
+      {Command Inj (n=4)},
+      {Prototype Poll (n=7)},
+      {Path Traversal (n=9)},
+      {XSS (n=10)}
     },
     ytick=data,
     yticklabel style={font=\scriptsize},
-    xmin=0, xmax=100,
+    xmin=0, xmax=115,
+    xtick={0,20,40,60,80,100},
     xmajorgrids=true,
     grid style={line width=0.3pt, draw=gray!30},
     enlarge y limits=0.08,
@@ -192,23 +194,24 @@ Figure~\ref{fig:r1-category} shows recall by vulnerability category for the best
   ]
 
   \addplot[fill=blue!60, draw=blue!80!black] coordinates {
-    (85,{SQL Injection})
-    (80,{XSS})
-    (75,{Command Injection})
-    (70,{Path Traversal})
-    (60,{SSRF})
-    (55,{CSRF})
-    (45,{Race Condition})
-    (40,{Prototype Pollution})
-    (30,{NoSQL Injection})
-    (25,{Deserialization})
+    (0,{Improper Auth (n=3)})
+    (0,{Insecure Deser (n=3)})
+    (0,{Weak Crypto (n=4)})
+    (0,{Input Validation (n=9)})
+    (90,{SQL Injection (n=10)})
+    (100,{Command Inj (n=4)})
+    (100,{Prototype Poll (n=7)})
+    (100,{Path Traversal (n=9)})
+    (100,{XSS (n=10)})
   };
 
   \end{axis}
 \end{tikzpicture}
-\caption{Recall by vulnerability category for \texttt{qwen3:8b+RAG}. Injection-style vulnerabilities (SQL, XSS, command) are detected most reliably. Niche categories (NoSQL, deserialization) remain challenging.}
+\caption{Per-category recall for \texttt{qwen3:8b+RAG}, showing categories with $n \geq 3$ test cases. The results reveal a bimodal pattern: injection-style categories achieve 90--100\% recall, while categories requiring semantic reasoning (validation, authentication, cryptography) achieve 0\%.}
 \label{fig:r1-category}
 \end{figure}
+
+The per-category breakdown reveals a sharp split rather than a smooth gradient. Categories with well-known syntactic signatures --- injection sinks (SQL, XSS, command injection), path traversal, and prototype pollution --- are detected at 90--100\% recall. In contrast, categories where the vulnerability is the \emph{absence} of a required check rather than the presence of a dangerous pattern --- input validation, authentication, cryptographic misuse, and deserialization --- achieve 0\% recall in this dataset. This suggests that the model reliably recognizes taint-to-sink patterns but struggles when detection requires reasoning about missing logic. Per-category sample sizes range from 3 to 10, so individual percentages should be interpreted cautiously; categories with fewer than 3 samples are excluded from this figure.
 
 \subsection{SAST Baseline Comparison}
 
