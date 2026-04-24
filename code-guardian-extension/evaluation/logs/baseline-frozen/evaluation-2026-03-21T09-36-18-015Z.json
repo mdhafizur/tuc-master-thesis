@@ -1,0 +1,571 @@
+{
+  "timestamp": "2026-03-21T09:36:18.015Z",
+  "config": {
+    "mode": "base-only",
+    "ragAblation": false,
+    "runLlm": true,
+    "runBaselines": false,
+    "llmUnavailableReason": null,
+    "testCases": 10,
+    "secureCases": 2,
+    "vulnerableCases": 8,
+    "datasetPath": "/Users/hafiz/personal/repos/tuc-master-thesis/code-guardian-extension/evaluation/datasets/vulnerability-test-cases.generated.json",
+    "runsPerSample": 1,
+    "promptModes": [
+      "LLM-only"
+    ],
+    "rag": {
+      "strategy": "static_security_snippets",
+      "k": 5
+    },
+    "baselines": {
+      "requestedTools": [
+        "codeql",
+        "semgrep",
+        "eslint-security"
+      ],
+      "completedTools": [],
+      "skippedTools": [],
+      "timeoutMs": 180000
+    },
+    "modelGeneration": {
+      "temperature": 0,
+      "numPredict": 1000,
+      "timeoutMs": 30000,
+      "requestDelayMs": 500
+    },
+    "outputContract": {
+      "structuredOutput": true,
+      "disableThinking": true,
+      "schema": "MODEL_RESPONSE_SCHEMA"
+    },
+    "startedAt": "2026-03-21T09:35:20.184Z",
+    "finishedAt": "2026-03-21T09:36:18.015Z",
+    "totalDurationMs": 57831,
+    "runtimeConditions": {
+      "executionOrder": "sequential",
+      "retries": 0,
+      "warmup": "none"
+    }
+  },
+  "executionEnvironment": {
+    "os": {
+      "platform": "darwin",
+      "release": "25.3.0",
+      "arch": "arm64"
+    },
+    "nodeVersion": "v20.19.5",
+    "ollamaVersion": "ollama version is 0.18.2",
+    "hardware": {
+      "cpuModel": "Apple M4 Max",
+      "cpuCores": 16,
+      "totalMemoryGB": 64,
+      "freeMemoryGB": 3.82,
+      "gpu": "not captured by this script (Ollama backend dependent)"
+    }
+  },
+  "modelsResolved": [
+    {
+      "requestedModel": "qwen3:8b",
+      "resolvedModel": "qwen3:8b",
+      "modelDigest": "500a1f067a9f782620b40bee6f7b0c89e17ae61f686b92c24933e4ca4b2b8b41",
+      "modelSizeBytes": 5225388164,
+      "modifiedAt": "2026-02-25T11:19:39.425460804+01:00",
+      "details": {
+        "parent_model": "",
+        "format": "gguf",
+        "family": "qwen3",
+        "families": [
+          "qwen3"
+        ],
+        "parameter_size": "8.2B",
+        "quantization_level": "Q4_K_M"
+      }
+    }
+  ],
+  "results": [
+    {
+      "requestedModel": "qwen3:8b",
+      "model": "qwen3:8b",
+      "modelVersion": {
+        "digest": "500a1f067a9f782620b40bee6f7b0c89e17ae61f686b92c24933e4ca4b2b8b41",
+        "sizeBytes": 5225388164,
+        "modifiedAt": "2026-02-25T11:19:39.425460804+01:00",
+        "details": {
+          "parent_model": "",
+          "format": "gguf",
+          "family": "qwen3",
+          "families": [
+            "qwen3"
+          ],
+          "parameter_size": "8.2B",
+          "quantization_level": "Q4_K_M"
+        }
+      },
+      "promptMode": "LLM-only",
+      "evaluationFamily": "llm",
+      "ragEnabled": false,
+      "ragConfig": {
+        "retrievalMode": "none",
+        "k": 0
+      },
+      "runsPerSample": 1,
+      "testCases": 10,
+      "totalRequests": 10,
+      "successfulRequests": 10,
+      "meanLatencyMs": 5274,
+      "medianLatencyMs": 4422,
+      "parseSuccessRate": "100.00",
+      "parseDiagnostics": {
+        "reasons": {
+          "content_direct_array": 9,
+          "content_extracted_object": 1
+        },
+        "failures": {}
+      },
+      "metrics": {
+        "precision": "63.64",
+        "recall": "87.50",
+        "f1Score": "73.68",
+        "accuracy": "61.54",
+        "falsePositiveRate": "50.00",
+        "lineAccuracy": "96.30",
+        "truePositives": 7,
+        "falsePositives": 4,
+        "falseNegatives": 1,
+        "trueNegatives": 1,
+        "secureFalsePositiveCases": 1,
+        "secureTrueNegativeCases": 1
+      },
+      "detailedResults": [
+        {
+          "testCaseId": "owasp_bench_sql_concat",
+          "testCaseName": "SQL Injection - SQL injection via string concatenation (OWASP Benchmark)",
+          "run": 1,
+          "success": true,
+          "responseTime": 4780,
+          "detected": 1,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code is vulnerable to SQL injection because it directly concatenates user input into the SQL query string, allowing an attacker to manipulate the query and potentially access or modify the database.",
+              "type": "SQL Injection",
+              "startLine": 4,
+              "endLine": 6,
+              "severity": "high",
+              "suggestedFix": "Use parameterized queries to safely handle user input. Replace the vulnerable code with:\n\nconst query = 'SELECT * FROM products WHERE name LIKE ?';\n\ndb.all(query, [`%${searchTerm}%`], (err, rows) => { ... });"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "SQL Injection",
+              "cwe": "CWE-89",
+              "severity": "high",
+              "description": "SQL injection via string concatenation (OWASP Benchmark)"
+            }
+          ],
+          "expectedFix": "Use parameterized SQL queries or prepared statements.",
+          "metrics": {
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": false
+        },
+        {
+          "testCaseId": "owasp_bench_sql_template",
+          "testCaseName": "SQL Injection - SQL injection via template literals (OWASP Benchmark)",
+          "run": 1,
+          "success": true,
+          "responseTime": 2112,
+          "detected": 1,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code is vulnerable to SQL injection because it directly interpolates user input into the SQL query without proper sanitization or parameterization, allowing attackers to manipulate the SQL logic.",
+              "type": "SQL Injection",
+              "startLine": 4,
+              "endLine": 6,
+              "severity": "high",
+              "suggestedFix": "Use parameterized queries to prevent SQL injection. Replace the vulnerable code with:\n\nconst sql = 'SELECT id, role FROM users WHERE username=? AND password=?';\nconnection.query(sql, [username, password], (error, results) => { ... });"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "SQL Injection",
+              "cwe": "CWE-89",
+              "severity": "high",
+              "description": "SQL injection via template literals (OWASP Benchmark)"
+            }
+          ],
+          "expectedFix": "Use parameterized SQL queries or prepared statements.",
+          "metrics": {
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": false
+        },
+        {
+          "testCaseId": "owasp_bench_xss_innerHTML",
+          "testCaseName": "Cross-Site Scripting (XSS) - XSS via innerHTML assignment (OWASP Benchmark)",
+          "run": 1,
+          "success": true,
+          "responseTime": 4063,
+          "detected": 2,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code is vulnerable to XSS (Cross-Site Scripting) because it directly injects user-provided data into the DOM using innerHTML without proper sanitization or escaping, allowing attackers to execute arbitrary scripts in the browser.",
+              "type": "XSS",
+              "startLine": 4,
+              "endLine": 10,
+              "severity": "high",
+              "suggestedFix": "Use textContent or a secure HTML escaping function instead of innerHTML. Example:\n\nconst profileHtml = `<div class=\"profile\"><h2>Profile: ${encodeURIComponent(userName)}</h2><div class=\"bio\">${encodeURIComponent(userBio)}</div></div>`;\nprofileContainer.innerHTML = profileHtml;"
+            },
+            {
+              "message": "The code is vulnerable to XSS because it directly injects user-provided data into the DOM using innerHTML without proper sanitization or escaping, allowing attackers to execute arbitrary scripts in the browser.",
+              "type": "XSS",
+              "startLine": 12,
+              "endLine": 16,
+              "severity": "high",
+              "suggestedFix": "Use textContent or a secure HTML escaping function instead of innerHTML. Example:\n\ndocument.getElementById('alerts').textContent = `<div class='alert'>${encodeURIComponent(message)}</div>`;"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Cross-Site Scripting (XSS)",
+              "cwe": "CWE-79",
+              "severity": "high",
+              "description": "XSS via innerHTML assignment (OWASP Benchmark)"
+            }
+          ],
+          "expectedFix": "Escape/sanitize untrusted content and avoid unsafe DOM sinks.",
+          "metrics": {
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": false
+        },
+        {
+          "testCaseId": "owasp_bench_xss_document_write",
+          "testCaseName": "Cross-Site Scripting (XSS) - XSS via document.write (OWASP Benchmark)",
+          "run": 1,
+          "success": true,
+          "responseTime": 14405,
+          "detected": 1,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_extracted_object",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code is vulnerable to XSS (Cross-Site Scripting) because it directly injects untrusted content into the HTML without proper escaping, allowing attackers to execute arbitrary scripts in the browser.",
+              "type": "XSS",
+              "startLine": 3,
+              "endLine": 11,
+              "severity": "high",
+              "suggestedFix": "Use a secure HTML escaping function to sanitize user input before rendering. Example:\n\nfunction escapeHTML(str) {\n    return str.replace(/[&<>\"]/g, function(match) {\n        switch (match) {\n            case '&': return '&amp;';\n            case '<': return '&lt;';\n            case '>': return '&gt;';\n            case '"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Cross-Site Scripting (XSS)",
+              "cwe": "CWE-79",
+              "severity": "high",
+              "description": "XSS via document.write (OWASP Benchmark)"
+            }
+          ],
+          "expectedFix": "Escape/sanitize untrusted content and avoid unsafe DOM sinks.",
+          "metrics": {
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": false
+        },
+        {
+          "testCaseId": "owasp_bench_cmd_exec",
+          "testCaseName": "Command Injection - Command injection via exec (OWASP Benchmark)",
+          "run": 1,
+          "success": true,
+          "responseTime": 10258,
+          "detected": 2,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code is vulnerable to command injection because it directly concatenates user-provided input into a command string without proper sanitization or validation, allowing an attacker to execute arbitrary commands.",
+              "type": "Command Injection",
+              "startLine": 5,
+              "endLine": 9,
+              "severity": "high",
+              "suggestedFix": "Use a secure method to handle command execution, such as using a library that allows for safe command execution or validating and sanitizing inputs before using them in commands.\n\nExample:\n\nconst { exec } = require('child_process');\n\nfunction analyzeFile(filename) {\n    // Validate and sanitize filename\n    const sanitizedFilename = filename.replace(/[^a-zA-Z0-9\\_\\-\\.\\s]/g, '');\n    const command = `file ${sanitizedFilename}`;\n\n    return new Promise((resolve, reject) => {\n        exec(command, (error, stdout, stderr) => {\n            if (error) reject(error);\n            else resolve(stdout);\n        });\n    });\n}\n\nfunction compressFile(inputFile, outputFile) {\n    // Validate and sanitize inputs\n    const sanitizedInput = inputFile.replace(/[^a-zA-Z0-9\\_\\-\\.\\s]/g, '');\n    const sanitizedOutput = outputFile.replace(/[^a-zA-Z0-9\\_\\-\\.\\s]/g, '');\n    exec(`gzip -c ${sanitizedInput} > ${sanitizedOutput}`, (error, stdout) => {\n        console.log('Compression complete');\n    });\n}"
+            },
+            {
+              "message": "The code is vulnerable to command injection because it directly concatenates user-provided input into a command string without proper sanitization or validation, allowing an attacker to execute arbitrary commands.",
+              "type": "Command Injection",
+              "startLine": 12,
+              "endLine": 16,
+              "severity": "high",
+              "suggestedFix": "Use a secure method to handle command execution, such as using a library that allows for safe command execution or validating and sanitizing inputs before using them in commands.\n\nExample:\n\nconst { exec } = require('child_process');\n\nfunction analyzeFile(filename) {\n    // Validate and sanitize filename\n    const sanitizedFilename = filename.replace(/[^a-zA-Z0-9\\_\\-\\.\\s]/g, '');\n    const command = `file ${sanitizedFilename}`;\n\n    return new Promise((resolve, reject) => {\n        exec(command, (error, stdout, stderr) => {\n            if (error) reject(error);\n            else resolve(stdout);\n        });\n    });\n}\n\nfunction compressFile(inputFile, outputFile) {\n    // Validate and sanitize inputs\n    const sanitizedInput = inputFile.replace(/[^a-zA-Z0-9\\_\\-\\.\\s]/g, '');\n    const sanitizedOutput = outputFile.replace(/[^a-zA-Z0-9\\_\\-\\.\\s]/g, '');\n    exec(`gzip -c ${sanitizedInput} > ${sanitizedOutput}`, (error, stdout) => {\n        console.log('Compression complete');\n    });\n}"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Command Injection",
+              "cwe": "CWE-78",
+              "severity": "high",
+              "description": "Command injection via exec (OWASP Benchmark)"
+            }
+          ],
+          "expectedFix": "Use safe process APIs and never concatenate untrusted input into commands.",
+          "metrics": {
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": false
+        },
+        {
+          "testCaseId": "owasp_bench_path_traversal",
+          "testCaseName": "Path Traversal - Path traversal in file serving (OWASP Benchmark)",
+          "run": 1,
+          "success": true,
+          "responseTime": 7337,
+          "detected": 2,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code is vulnerable to Path Traversal attacks because it directly concatenates user input into file paths without validation, allowing attackers to access arbitrary files outside the intended directory.",
+              "type": "Path Traversal",
+              "startLine": 6,
+              "endLine": 12,
+              "severity": "high",
+              "suggestedFix": "Use a secure method to validate and sanitize file paths. Replace the vulnerable code with the following:\n\nconst allowedExtensions = ['.txt', '.json'];\nconst sanitizedFilename = filename.replace(/[^a-zA-Z0-9\\._-]/g, '');\nconst filepath = path.join('./uploads', sanitizedFilename);\n\n// Ensure the file is within the allowed directory and has a valid extension\nif (path.resolve(filepath).startsWith(path.resolve('./uploads'))) {\n  try {\n    const content = fs.readFileSync(filepath, 'utf8');\n    res.send(content);\n  } catch (error) {\n    res.status(404).send('File not found');\n  }\n} else {\n  res.status(403).send('Forbidden');\n}"
+            },
+            {
+              "message": "The code is vulnerable to Path Traversal attacks because it directly concatenates user input into file paths without validation, allowing attackers to access arbitrary files outside the intended directory.",
+              "type": "Path Traversal",
+              "startLine": 15,
+              "endLine": 21,
+              "severity": "high",
+              "suggestedFix": "Use a secure method to validate and sanitize file paths. Replace the vulnerable code with the following:\n\nconst allowedExtensions = ['.json'];\nconst sanitizedConfigName = configName.replace(/[^a-zA-Z0-9\\._-]/g, '');\nconst configPath = path.join('./config', sanitizedConfigName + '.json');\n\n// Ensure the file is within the allowed directory and has a valid extension\nif (path.resolve(configPath).startsWith(path.resolve('./config'))) {\n  try {\n    return JSON.parse(fs.readFileSync(configPath, 'utf8'));\n  } catch (error) {\n    throw new Error('Invalid config file');\n  }\n} else {\n  throw new Error('Invalid config file');\n}"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Path Traversal",
+              "cwe": "CWE-22",
+              "severity": "high",
+              "description": "Path traversal in file serving (OWASP Benchmark)"
+            }
+          ],
+          "expectedFix": "Canonicalize paths and restrict access to approved directories.",
+          "metrics": {
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": false
+        },
+        {
+          "testCaseId": "owasp_bench_weak_crypto",
+          "testCaseName": "Weak Cryptography - Weak cryptographic algorithms (OWASP Benchmark)",
+          "run": 1,
+          "success": true,
+          "responseTime": 5960,
+          "detected": 3,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code uses MD5 for password hashing, which is considered weak and vulnerable to collision and rainbow table attacks.",
+              "type": "Weak Password Hashing",
+              "startLine": 5,
+              "endLine": 9,
+              "severity": "high",
+              "suggestedFix": "Use a strong password hashing algorithm like bcrypt, scrypt, or Argon2. Example:\n\nconst bcrypt = require('bcrypt');\nasync function hashPassword(password) {\n    const salt = await bcrypt.genSalt(10);\n    return await bcrypt.hash(password, salt);\n}"
+            },
+            {
+              "message": "The code uses DES encryption, which is outdated and vulnerable to brute-force attacks due to its short key length.",
+              "type": "Weak Encryption",
+              "startLine": 11,
+              "endLine": 17,
+              "severity": "high",
+              "suggestedFix": "Use a modern encryption algorithm like AES. Example:\n\nconst crypto = require('crypto');\nfunction encryptData(data, key) {\n    const cipher = crypto.createCipher('aes-256-cbc', key);\n    let encrypted = cipher.update(data, 'utf8', 'hex');\n    encrypted += cipher.final('hex');\n    return encrypted;\n}"
+            },
+            {
+              "message": "The code uses Math.random() for generating tokens, which is predictable and insecure for generating random values.",
+              "type": "Weak Random Number Generation",
+              "startLine": 19,
+              "endLine": 23,
+              "severity": "high",
+              "suggestedFix": "Use a cryptographically secure random number generator. Example:\n\nconst crypto = require('crypto');\nfunction generateToken() {\n    return crypto.randomBytes(16).toString('hex');\n}"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Weak Cryptography",
+              "cwe": "CWE-327",
+              "severity": "medium",
+              "description": "Weak cryptographic algorithms (OWASP Benchmark)"
+            }
+          ],
+          "expectedFix": "Use strong algorithms and secure key generation/management.",
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 3,
+            "falseNegatives": 1,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 0.6666666666666666
+          },
+          "ragEnabled": false
+        },
+        {
+          "testCaseId": "owasp_bench_ldap_injection",
+          "testCaseName": "LDAP Injection - LDAP injection vulnerability (OWASP Benchmark)",
+          "run": 1,
+          "success": true,
+          "responseTime": 2000,
+          "detected": 1,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The LDAP filter is constructed using string interpolation, making it vulnerable to LDAP injection attacks. An attacker can manipulate the username or password to inject malicious LDAP queries.",
+              "type": "LDAP Injection",
+              "startLine": 6,
+              "endLine": 8,
+              "severity": "high",
+              "suggestedFix": "Use LDAP's escape function to properly encode user input before constructing the filter. Replace the vulnerable line with:\n\nconst filter = `(&(uid=${ldap.escape(username)})(userPassword=${ldap.escape(password)}))`;"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "LDAP Injection",
+              "cwe": "CWE-90",
+              "severity": "high",
+              "description": "LDAP injection vulnerability (OWASP Benchmark)"
+            }
+          ],
+          "expectedFix": "Use parameterized LDAP queries and sanitize user-controlled input.",
+          "metrics": {
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": false
+        },
+        {
+          "testCaseId": "secure-code-1",
+          "testCaseName": "Secure Code - Parameterized Query (No Vulnerability)",
+          "run": 1,
+          "success": true,
+          "responseTime": 254,
+          "detected": 0,
+          "expected": 0,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [],
+          "expectedVulnerabilities": [],
+          "expectedFix": "No fix required; code is secure as written.",
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 1,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 1,
+            "lineAccuracy": null
+          },
+          "ragEnabled": false
+        },
+        {
+          "testCaseId": "secure-code-2",
+          "testCaseName": "Secure Code - textContent Usage (No Vulnerability)",
+          "run": 1,
+          "success": true,
+          "responseTime": 1573,
+          "detected": 1,
+          "expected": 0,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code is vulnerable to Cross-Site Scripting (XSS) because it directly assigns user input to the textContent property without sanitization or escaping, allowing malicious scripts to be executed.",
+              "type": "XSS",
+              "startLine": 1,
+              "endLine": 3,
+              "severity": "high",
+              "suggestedFix": "Secure code replacement that fixes the vulnerability\nfunction displayMessage(userInput) {\n    const element = document.getElementById('output');\n    element.textContent = userInput;\n}"
+            }
+          ],
+          "expectedVulnerabilities": [],
+          "expectedFix": "No fix required; code is secure as written.",
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 1,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 1,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": false
+        }
+      ]
+    }
+  ]
+}

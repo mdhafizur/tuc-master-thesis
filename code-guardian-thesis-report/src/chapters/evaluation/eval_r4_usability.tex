@@ -128,6 +128,8 @@ On-demand / audit & $\leq 5$\,s median & All LLM configurations \\
 
 The best-accuracy configuration (\texttt{qwen3:8b+RAG}, median 2.7\,s) is suitable for interactive inline use and comfortable for on-demand analysis. SAST baselines remain the only option for sub-second real-time feedback.
 
+\paragraph{Note on mean latency.} For \texttt{qwen3:8b}, the LLM-only mean (3\,170\,ms) slightly exceeds the LLM+RAG mean (3\,094\,ms), despite RAG adding retrieval overhead. This inversion reflects a small number of high-latency outliers in the LLM-only run rather than a systematic effect; the median values show the expected pattern (2\,593\,ms vs.\ 2\,721\,ms).
+
 \subsection{Level Mapping}
 
 Based on the R4 evaluation scale (Table~\ref{tab:r4-usability-thresholds}), the best configuration (\texttt{qwen3:8b+RAG}) maps as follows:

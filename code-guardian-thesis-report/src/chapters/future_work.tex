@@ -23,19 +23,19 @@ Prompt-injection and retrieval-poisoning scenarios should be tested explicitly. 
 \noindent\textbf{5) Broader evaluation and user-facing evidence.}
 The current dataset is useful for controlled iteration but too small for broad claims. Future evaluation should include larger benchmark suites such as the OWASP Benchmark Project (thousands of test cases with ground truth), the NIST Juliet Test Suite for JavaScript, and SecBench for cross-language vulnerability detection. Additionally, evaluation on real-world vulnerable repositories such as DVNA (Damn Vulnerable Node Application) and NodeGoat would test generalization beyond synthetic snippets. Workflow impact should be validated with developer studies measuring usability (SUS), cognitive load (NASA-TLX), and time-to-fix metrics \cite{brooke1996sus,hart1988nasa}.
 
-\subsection*{Open Research Questions}
-
 Beyond the concrete engineering improvements described above, several broader questions remain open for future research.
 
-\noindent\textbf{False-positive control and model scale.}
+\medskip
+
+\noindent\textbf{6) False-positive control and model scale.}
 Only \texttt{qwen3:8b} achieved acceptable FPR among tested configurations. Understanding whether this reflects a threshold effect of model scale, a property of the instruction-tuning approach, or an artifact of the specific prompt structure would help generalize the results to future model generations.
 
 \medskip
 
-\noindent\textbf{Cross-file context for semantic vulnerability categories.}
+\noindent\textbf{7) Cross-file context for semantic vulnerability categories.}
 Categories requiring reasoning about missing logic (input validation, authentication) achieved 0\% recall, likely because the relevant evidence lies outside the analyzed function scope. Investigating whether lightweight cross-file context extraction --- such as import-chain summaries or taint-style source-to-sink traces --- can bridge this gap without full interprocedural analysis is a natural next step.
 
 \medskip
 
-\noindent\textbf{Developer interaction with LLM-generated security findings.}
+\noindent\textbf{8) Developer interaction with LLM-generated security findings.}
 The current evaluation measures detection quality and latency but not developer behavior. User studies measuring trust calibration, time-to-fix, and alert fatigue thresholds under realistic conditions would determine whether the measured accuracy levels translate to practical adoption \cite{brooke1996sus,hart1988nasa}.

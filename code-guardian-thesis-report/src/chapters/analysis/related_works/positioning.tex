@@ -4,10 +4,10 @@ In contrast to much prior work, this thesis focuses on privacy-preserving vulner
 GitHub Copilot and Amazon CodeWhisperer represent the dominant paradigm for AI-assisted coding, including security-related suggestions \cite{chen2021codex,li2023codewhisperer}. These systems leverage large-scale cloud infrastructure to provide real-time code completions and, increasingly, vulnerability scanning capabilities. GitHub Advanced Security integrates Copilot-powered code scanning with secret detection and dependency review \cite{githubAdvancedSecurity}. However, both approaches require transmitting source code to external servers for inference, which is unacceptable in regulated industries, government projects, or environments with strict intellectual property controls. Code Guardian addresses this limitation by keeping all inference local, enabling security assistance for codebases that cannot leave organizational boundaries.
 
 \paragraph{Comparison with Hybrid SAST Tools.}
-Modern SAST vendors increasingly offer hybrid modes. Snyk Code provides both cloud-based and local analysis options, with the local mode running a proprietary semantic analysis engine on-device \cite{snykDocs}. Semgrep supports fully local rule-based scanning with optional cloud features for team management and custom rule sharing \cite{semgrepDocs}. Unlike these tools, Code Guardian combines local LLM inference with retrieval-augmented prompting, enabling contextual reasoning and natural-language explanations that pure rule-based systems cannot provide. The trade-off is that LLM-based analysis introduces probabilistic behavior and higher latency compared to deterministic SAST, which motivates the hybrid deployment strategies discussed in Chapter~\ref{chap:evaluation}.
+Modern SAST vendors increasingly offer hybrid modes. Snyk Code provides both cloud-based and local analysis options, with the local mode running a proprietary semantic analysis engine on-device \cite{snykDocs}. Semgrep supports fully local rule-based scanning with optional cloud features for team management and custom rule sharing \cite{semgrepDocs}. These tools are fast and deterministic, but they do not generate natural-language explanations or repair suggestions --- their output is a rule identifier and a flagged line. Code Guardian adds LLM-based contextual reasoning on top of a local deployment model, at the cost of probabilistic behavior and higher latency. Chapter~\ref{chap:evaluation} evaluates whether this cost is justified.
 
 \paragraph{Comparison with Research Prototypes.}
-Academic systems such as IRIS \cite{li2025iris} and SecRepair \cite{islam2024secrepair} demonstrate strong results by combining static analysis with LLM reasoning. However, these systems are typically evaluated in batch mode on benchmark datasets rather than integrated into interactive IDE workflows. They also often assume access to cloud-hosted models or require significant computational resources. Code Guardian prioritizes deployability on developer workstations with consumer-grade hardware, treating IDE integration latency and structured-output robustness as first-class requirements rather than secondary implementation details.
+Academic systems such as IRIS \cite{li2025iris} and SecRepair \cite{islam2024secrepair} report strong results by combining static analysis with LLM reasoning, but they target a different deployment context. They are evaluated in batch mode on benchmark datasets, often assume cloud-hosted models, and do not report IDE integration latency. Code Guardian makes a different bet: it accepts weaker models (local, consumer-grade hardware) in exchange for interactive response times, structured output contracts, and no dependency on external infrastructure.
 
 \paragraph{Differentiation Summary.}
 Table~\ref{tab:positioning-comparison} summarizes the key differences between Code Guardian and representative alternatives across the dimensions most relevant to this thesis.
@@ -89,7 +89,7 @@ Table~\ref{tab:positioning-r1r5} provides a unified requirement-level comparison
     \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-150:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
     \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} &
     \raisebox{-0.3cm}{\tikz{\draw (0,0) circle (0.35cm);}} &
-    --- \\
+    ---\textsuperscript{*} \\
     \hline
 
     Snyk Code &
@@ -108,6 +108,17 @@ Table~\ref{tab:positioning-r1r5} provides a unified requirement-level comparison
     \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} \\
     \hline
   \end{tabular}
+
+  \vspace{0.3em}
+  \footnotesize
+  \noindent
+  Legend:
+  \raisebox{-0.15cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.2cm);}}~High \quad
+  \raisebox{-0.15cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.2cm) arc (90:-150:0.2cm) -- cycle; \draw (0,0) circle (0.2cm);}}~Medium \quad
+  \raisebox{-0.15cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.2cm) arc (90:-90:0.2cm) -- cycle; \draw (0,0) circle (0.2cm);}}~Medium--Low \quad
+  \raisebox{-0.15cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.2cm) arc (90:-30:0.2cm) -- cycle; \draw (0,0) circle (0.2cm);}}~Low \quad
+  \raisebox{-0.15cm}{\tikz{\draw (0,0) circle (0.2cm);}}~Insufficient/None \\[0.2em]
+  \textsuperscript{*}Property not evaluated or reported in the original work.
 \end{table}
 
 The table shows that no existing approach satisfies all five requirements at medium or above. SAST tools excel at R2, R4, and R5 but lack contextual reasoning (R1) and repair generation (R3). LLM-based research prototypes offer strong R1 and R3 but fail on R4 (no IDE integration) and R5 (cloud dependency). Cloud assistants like Copilot trade privacy for usability. Code Guardian is the only approach that achieves at least medium on all five requirements simultaneously, addressing the combined gap that motivates this thesis.

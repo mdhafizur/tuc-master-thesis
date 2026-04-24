@@ -207,15 +207,53 @@ Figure~\ref{fig:r1-category} shows recall by vulnerability category for the best
 
   \end{axis}
 \end{tikzpicture}
-\caption{Per-category recall for \texttt{qwen3:8b+RAG}, showing categories with $n \geq 3$ test cases. The results reveal a bimodal pattern: injection-style categories achieve 90--100\% recall, while categories requiring semantic reasoning (validation, authentication, cryptography) achieve 0\%.}
+\caption{Per-category type-matched recall for \texttt{qwen3:8b+RAG}, showing categories with $n \geq 3$ test cases. Injection-style categories achieve 90--100\%, while four categories score 0\% under type-level matching. Section~\ref{sec:eval-error-analysis} investigates how much of this gap reflects true detection failure versus label mismatch.}
 \label{fig:r1-category}
 \end{figure}
 
-The per-category breakdown reveals a sharp split rather than a smooth gradient. Categories with well-known syntactic signatures --- injection sinks (SQL, XSS, command injection), path traversal, and prototype pollution --- are detected at 90--100\% recall. In contrast, categories where the vulnerability is the \emph{absence} of a required check rather than the presence of a dangerous pattern --- input validation, authentication, cryptographic misuse, and deserialization --- achieve 0\% recall in this dataset. This suggests that the model reliably recognizes taint-to-sink patterns but struggles when detection requires reasoning about missing logic. Per-category sample sizes range from 3 to 10, so individual percentages should be interpreted cautiously; categories with fewer than 3 samples are excluded from this figure.
+The per-category breakdown reveals a sharp split rather than a smooth gradient. Categories with well-known syntactic signatures --- injection sinks (SQL, XSS, command injection), path traversal, and prototype pollution --- are detected at 90--100\% recall. In contrast, input validation, authentication, cryptographic misuse, and deserialization achieve 0\% \emph{type-matched} recall. However, as the qualitative error analysis in Section~\ref{sec:eval-error-analysis} shows, much of this gap is a scoring artifact: the model detects most of these vulnerabilities but labels them with more specific names than the evaluation taxonomy expects. Per-category sample sizes range from 3 to 10, so individual percentages should be interpreted cautiously; categories with fewer than 3 samples are excluded from this figure.
+
+\subsection{Qualitative Error Analysis on Zero-Recall Categories}
+\label{sec:eval-error-analysis}
+
+The four categories with 0\% type-matched recall account for 19 of the 71 vulnerable test cases. To understand whether these zeros reflect genuine detection failures or scoring artifacts, every model response for these 19 cases was inspected manually under the best configuration (\texttt{qwen3:8b+RAG}). Three distinct failure modes emerged, summarized in Table~\ref{tab:failure-modes}.
+
+\begin{table}[H]
+\centering
+\caption{Failure-mode classification for zero-recall categories (\texttt{qwen3:8b+RAG}).}
+\label{tab:failure-modes}
+\footnotesize
+\begin{tabular}{@{}lcccp{4.8cm}@{}}
+\toprule
+\textbf{Category} & \textbf{$n$} & \textbf{Type mismatch} & \textbf{True miss} & \textbf{Model labels used} \\
+\midrule
+Insecure Deserialization & 3 & 3 & 0 & Code Injection \\
+Improper Authentication  & 3 & 3 & 0 & Authentication Bypass, Timing Attack \\
+Weak Cryptography        & 4 & 2 & 0 & Weak Random Number Generation, Weak Hashing Algorithm, Weak Cipher Algorithm \\
+Input Validation         & 9 & 3 & 6 & Role Escalation, ReDoS, Command Injection \\
+\midrule
+\textbf{Total}           & \textbf{19} & \textbf{11} & \textbf{6} & \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Failure mode 1: True miss (empty output).}
+Six of the 19 cases produced no model output at all. All six belong to the Input Validation category, and all six are real-world library code extracted from lodash, mongoose, moment, and serialize-javascript. These snippets contain subtle validation gaps embedded in dense utility logic or minified source. For example, a lodash internal that resolves \texttt{toStringTag} without bounds checking, or a moment.js ISO parser that accepts untrimmed date strings. The model appears unable to reason about validation requirements in the absence of an obvious sink, which is consistent with the broader pattern that local models perform best when a recognizable dangerous API call is present.
+
+\paragraph{Failure mode 2: Correct detection, wrong type label.}
+Eight cases produced findings that correctly identify the security issue but use a more specific or mechanistic label than the expected CWE-aligned category. All three Insecure Deserialization samples involve \texttt{eval()}-based deserialization; the model labels them ``Code Injection'' --- technically accurate, since \texttt{eval()} is the injection vector, but the harness expects the higher-level CWE-502 label. Similarly, the three Improper Authentication samples are labeled ``Authentication Bypass'' or ``Timing Attack'' rather than the umbrella ``Improper Authentication''. In both cases the suggested fixes are appropriate (replace \texttt{eval()} with \texttt{JSON.parse()}; use constant-time comparison), confirming that the underlying detection is sound.
+
+\paragraph{Failure mode 3: Hierarchical label inconsistency.}
+Two of the four Weak Cryptography cases exhibit a subtler variant of label mismatch. The model detects all cryptographic weaknesses (MD5, DES, \texttt{Math.random()}) in every case, but its labeling is inconsistent: for two cases it uses the exact expected label ``Weak Cryptography'', while for two structurally identical cases it uses sub-type labels (``Weak Hashing Algorithm'', ``Weak Cipher Algorithm'', ``Weak Random Number Generation''). The difference appears to depend on prompt phrasing rather than code content, since the underlying code patterns are similar across all four cases.
+
+\paragraph{Construct validity implications.}
+Of the 19 zero-recall cases, 11 (58\%) are scoring artifacts caused by type-label vocabulary mismatch rather than detection failures. If these 11 cases were re-scored at the sample level (``did the model flag any relevant issue?''), the effective sample-level detection rate for the four categories would rise from 0/19 to 11/19 (58\%), and overall recall would increase by approximately 5 percentage points. This finding highlights a known limitation of type-level matching in LLM-based detection: models generate natural-language labels that may be semantically correct but lexically different from the evaluation taxonomy~\cite{li2025correct}. The true detection gap --- cases where the model produces no output at all --- is concentrated in real-world library code with implicit validation requirements, a genuinely harder task that warrants targeted evaluation in future work.
 
 \subsection{SAST Baseline Comparison}
 
 SAST tools show a different trade-off profile. Semgrep achieves low FPR (6.67\%) but very low recall (9.73\%). CodeQL has higher FPR (53.33\%) with similarly low recall. ESLint security plugins detect none of the test cases. The LLM-based approach trades higher FPR for substantially better recall, making it more suitable for comprehensive security audits while SAST remains useful as a low-noise complement.
+
+\paragraph{FPR confidence intervals.} Because the secure-sample set contains only $n=30$ cases, FPR point estimates carry wide uncertainty. For the best configuration (\texttt{qwen3:8b+RAG}, 6 of 30 flagged, FPR = 20\%), the 95\% exact binomial confidence interval is $[7.7\%, 38.6\%]$. For configurations that flag all 30 secure samples (FPR = 100\%), the 95\% CI lower bound is 88.4\%. These intervals should be kept in mind when interpreting FPR differences across configurations.
 
 \subsection{Level Mapping}
 

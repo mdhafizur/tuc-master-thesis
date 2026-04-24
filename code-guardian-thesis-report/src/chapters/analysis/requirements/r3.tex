@@ -6,7 +6,7 @@ This matters because developers often receive warnings without usable guidance o
 
 For Code Guardian, R3 means repairs should target the affected code region, use established mitigations like parameterization, input validation, and safer API choices, and be delivered as optional diffs rather than automatic edits. The developer always keeps control over whether to apply a fix.
 
-To measure repair quality, we define a three-level scale. The metrics focus on whether repairs are syntactically valid, address the reported vulnerability type, and follow recognized secure-coding patterns. Table~\ref{tab:r3-repair-thresholds} shows this scale.
+To measure repair quality, we define a three-level scale. Unlike R1 and R2, which use four levels, a coarser scale is appropriate here because repair quality is assessed through qualitative manual review rather than continuous metrics, making fine-grained distinctions less reliable. The metrics focus on whether repairs are syntactically valid, address the reported vulnerability type, and follow recognized secure-coding patterns. Table~\ref{tab:r3-repair-thresholds} shows this scale.
 
 \begin{table}[H]
   \centering

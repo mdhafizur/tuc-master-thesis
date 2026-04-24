@@ -7,13 +7,29 @@ import { getAnalysisCache } from './analysisCache';
 import { getLogger } from './logger';
 
 /**
+ * Provenance of a finding. `llm` = produced by the model only; `sast` = produced by a
+ * deterministic baseline tool only; `hybrid` = both agreed (used by the SAST+LLM gate
+ * introduced in Phase 2 of the thesis refinement plan).
+ */
+export type DetectionSource = 'llm' | 'sast' | 'hybrid';
+
+/**
  * Interface for the expected structure of a security issue returned by the LLM.
+ *
+ * `confidence` is in [0, 1]: 1.0 = both consensus passes agreed; 0.3 = single-pass
+ * fallback (consensus filter dropped everything but at least one pass found issues);
+ * undefined = no consensus information available (e.g. legacy callers).
+ *
+ * `detectionSource` is set by the analyzer pipeline so downstream gates can apply
+ * different policies to LLM-only vs SAST-confirmed findings.
  */
 export interface SecurityIssue {
-	message: string;         // Description of the issue
-	startLine: number;       // 1-based line number where the issue starts
-	endLine: number;         // 1-based line number where the issue ends
-	suggestedFix?: string;   // Optional secure version or remediation advice
+	message: string;                // Description of the issue
+	startLine: number;              // 1-based line number where the issue starts
+	endLine: number;                // 1-based line number where the issue ends
+	suggestedFix?: string;          // Optional secure version or remediation advice
+	confidence?: number;            // [0,1] — see comment above
+	detectionSource?: DetectionSource;
 }
 
 /**
@@ -290,7 +306,11 @@ function applyConsensusFilter(passResults: SecurityIssue[][]): SecurityIssue[] {
 	const logger = getLogger();
 
 	if (passResults.length < 2) {
-		return passResults[0] || [];
+		return (passResults[0] || []).map(issue => ({
+			...issue,
+			confidence: issue.confidence ?? 0.5,
+			detectionSource: issue.detectionSource ?? 'llm'
+		}));
 	}
 
 	const primary = passResults[0];
@@ -298,16 +318,26 @@ function applyConsensusFilter(passResults: SecurityIssue[][]): SecurityIssue[] {
 
 	logger.debug(`Consensus filter: Pass 1 has ${primary.length} issues, Pass 2 has ${secondary.length} issues`);
 
-	// Keep issues from the primary pass that have a match in the secondary pass
-	const agreed = primary.filter(issue =>
-		secondary.some(other => issuesMatch(issue, other))
-	);
+	// Keep issues from the primary pass that have a match in the secondary pass.
+	// Both-pass agreement is the strongest LLM signal we can produce locally → confidence 1.0.
+	const agreed = primary
+		.filter(issue => secondary.some(other => issuesMatch(issue, other)))
+		.map(issue => ({
+			...issue,
+			confidence: 1.0,
+			detectionSource: 'llm' as DetectionSource
+		}));
 
 	// If consensus is empty but both passes found issues, fall back to primary results
-	// This prevents the consensus filter from silently dropping all findings
+	// at low confidence. This preserves recall but lets downstream confidence gates
+	// (Phase 2) suppress these findings if the user opts into stricter filtering.
 	if (agreed.length === 0 && primary.length > 0 && secondary.length > 0) {
-		logger.warn(`Consensus filter dropped all issues — falling back to Pass 1 results (${primary.length} issues)`);
-		return primary;
+		logger.warn(`Consensus filter dropped all issues — falling back to Pass 1 results at confidence 0.3 (${primary.length} issues)`);
+		return primary.map(issue => ({
+			...issue,
+			confidence: 0.3,
+			detectionSource: 'llm' as DetectionSource
+		}));
 	}
 
 	return agreed;
