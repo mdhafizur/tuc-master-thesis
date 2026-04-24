@@ -1,0 +1,699 @@
+{
+  "timestamp": "2026-02-27T11:11:55.716Z",
+  "type": "merged-existing-runs",
+  "note": "Merged post-hoc from separate runs. Full run used runs=3 on vulnerable-only set; negatives run used runs=1 on secure-only set.",
+  "sources": {
+    "fullRun": "/Users/hafiz/personal/repos/tuc-master-thesis/code-guardian-extension/evaluation/logs/evaluation-2026-02-27T10-37-54-207Z-ablation-baselines.json",
+    "negativesRun": "/Users/hafiz/personal/repos/tuc-master-thesis/code-guardian-extension/evaluation/logs/evaluation-2026-02-27T10-51-51-455Z-ablation-baselines.json"
+  },
+  "dataset": {
+    "vulnerableCasesFromFullRun": 113,
+    "secureCasesFromNegativesRun": 15,
+    "combinedCases": 128
+  },
+  "results": [
+    {
+      "requestedModel": "qwen3:8b",
+      "model": "qwen3:8b",
+      "modelVersion": {
+        "digest": "500a1f067a9f782620b40bee6f7b0c89e17ae61f686b92c24933e4ca4b2b8b41",
+        "sizeBytes": 5225388164,
+        "modifiedAt": "2026-02-25T11:19:39.425460804+01:00",
+        "details": {
+          "parent_model": "",
+          "format": "gguf",
+          "family": "qwen3",
+          "families": [
+            "qwen3"
+          ],
+          "parameter_size": "8.2B",
+          "quantization_level": "Q4_K_M"
+        }
+      },
+      "promptMode": "LLM+RAG",
+      "evaluationFamily": "llm",
+      "ragEnabled": true,
+      "ragConfig": {
+        "retrievalMode": "static_security_snippets",
+        "k": 5
+      },
+      "runsPerSample": "hybrid(full:3, negatives:1)",
+      "testCases": 128,
+      "totalRequests": 354,
+      "successfulRequests": 354,
+      "meanLatencyMs": 1776,
+      "medianLatencyMs": null,
+      "parseSuccessRate": "100.00",
+      "parseDiagnostics": {
+        "reasons": {
+          "content_direct_array": 354
+        },
+        "failures": {}
+      },
+      "metrics": {
+        "precision": "62.93",
+        "recall": "64.60",
+        "f1Score": "63.76",
+        "accuracy": "48.02",
+        "falsePositiveRate": "92.14",
+        "truePositives": 219,
+        "falsePositives": 129,
+        "falseNegatives": 120,
+        "trueNegatives": 11
+      },
+      "source": {
+        "fullRun": "evaluation-2026-02-27T10-37-54-207Z-ablation-baselines.json",
+        "negativesRun": "evaluation-2026-02-27T10-51-51-455Z-ablation-baselines.json"
+      }
+    },
+    {
+      "requestedModel": "qwen3:4b",
+      "model": "qwen3:4b",
+      "modelVersion": {
+        "digest": "359d7dd4bcdab3d86b87d73ac27966f4dbb9f5efdfcc75d34a8764a09474fae7",
+        "sizeBytes": 2497293931,
+        "modifiedAt": "2026-02-25T11:20:14.214022954+01:00",
+        "details": {
+          "parent_model": "",
+          "format": "gguf",
+          "family": "qwen3",
+          "families": [
+            "qwen3"
+          ],
+          "parameter_size": "4.0B",
+          "quantization_level": "Q4_K_M"
+        }
+      },
+      "promptMode": "LLM+RAG",
+      "evaluationFamily": "llm",
+      "ragEnabled": true,
+      "ragConfig": {
+        "retrievalMode": "static_security_snippets",
+        "k": 5
+      },
+      "runsPerSample": "hybrid(full:3, negatives:1)",
+      "testCases": 128,
+      "totalRequests": 354,
+      "successfulRequests": 354,
+      "meanLatencyMs": 1414,
+      "medianLatencyMs": null,
+      "parseSuccessRate": "100.00",
+      "parseDiagnostics": {
+        "reasons": {
+          "content_direct_array": 354
+        },
+        "failures": {}
+      },
+      "metrics": {
+        "precision": "53.53",
+        "recall": "64.90",
+        "f1Score": "58.67",
+        "accuracy": "41.51",
+        "falsePositiveRate": "100.00",
+        "truePositives": 220,
+        "falsePositives": 191,
+        "falseNegatives": 119,
+        "trueNegatives": 0
+      },
+      "source": {
+        "fullRun": "evaluation-2026-02-27T10-37-54-207Z-ablation-baselines.json",
+        "negativesRun": "evaluation-2026-02-27T10-51-51-455Z-ablation-baselines.json"
+      }
+    },
+    {
+      "requestedModel": "qwen3:8b",
+      "model": "qwen3:8b",
+      "modelVersion": {
+        "digest": "500a1f067a9f782620b40bee6f7b0c89e17ae61f686b92c24933e4ca4b2b8b41",
+        "sizeBytes": 5225388164,
+        "modifiedAt": "2026-02-25T11:19:39.425460804+01:00",
+        "details": {
+          "parent_model": "",
+          "format": "gguf",
+          "family": "qwen3",
+          "families": [
+            "qwen3"
+          ],
+          "parameter_size": "8.2B",
+          "quantization_level": "Q4_K_M"
+        }
+      },
+      "promptMode": "LLM-only",
+      "evaluationFamily": "llm",
+      "ragEnabled": false,
+      "ragConfig": {
+        "retrievalMode": "none",
+        "k": 0
+      },
+      "runsPerSample": "hybrid(full:3, negatives:1)",
+      "testCases": 128,
+      "totalRequests": 354,
+      "successfulRequests": 354,
+      "meanLatencyMs": 1863,
+      "medianLatencyMs": null,
+      "parseSuccessRate": "100.00",
+      "parseDiagnostics": {
+        "reasons": {
+          "content_direct_array": 354
+        },
+        "failures": {}
+      },
+      "metrics": {
+        "precision": "54.06",
+        "recall": "62.83",
+        "f1Score": "58.12",
+        "accuracy": "42.18",
+        "falsePositiveRate": "94.27",
+        "truePositives": 213,
+        "falsePositives": 181,
+        "falseNegatives": 126,
+        "trueNegatives": 11
+      },
+      "source": {
+        "fullRun": "evaluation-2026-02-27T10-37-54-207Z-ablation-baselines.json",
+        "negativesRun": "evaluation-2026-02-27T10-51-51-455Z-ablation-baselines.json"
+      }
+    },
+    {
+      "requestedModel": "gemma3:4b",
+      "model": "gemma3:4b",
+      "modelVersion": {
+        "digest": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+        "sizeBytes": 3338801804,
+        "modifiedAt": "2026-02-25T11:23:23.073516066+01:00",
+        "details": {
+          "parent_model": "",
+          "format": "gguf",
+          "family": "gemma3",
+          "families": [
+            "gemma3"
+          ],
+          "parameter_size": "4.3B",
+          "quantization_level": "Q4_K_M"
+        }
+      },
+      "promptMode": "LLM-only",
+      "evaluationFamily": "llm",
+      "ragEnabled": false,
+      "ragConfig": {
+        "retrievalMode": "none",
+        "k": 0
+      },
+      "runsPerSample": "hybrid(full:3, negatives:1)",
+      "testCases": 128,
+      "totalRequests": 354,
+      "successfulRequests": 354,
+      "meanLatencyMs": 2272,
+      "medianLatencyMs": null,
+      "parseSuccessRate": "100.00",
+      "parseDiagnostics": {
+        "reasons": {
+          "content_direct_array": 354
+        },
+        "failures": {}
+      },
+      "metrics": {
+        "precision": "50.59",
+        "recall": "62.83",
+        "f1Score": "56.05",
+        "accuracy": "38.94",
+        "falsePositiveRate": "100.00",
+        "truePositives": 213,
+        "falsePositives": 208,
+        "falseNegatives": 126,
+        "trueNegatives": 0
+      },
+      "source": {
+        "fullRun": "evaluation-2026-02-27T10-37-54-207Z-ablation-baselines.json",
+        "negativesRun": "evaluation-2026-02-27T10-51-51-455Z-ablation-baselines.json"
+      }
+    },
+    {
+      "requestedModel": "qwen3:4b",
+      "model": "qwen3:4b",
+      "modelVersion": {
+        "digest": "359d7dd4bcdab3d86b87d73ac27966f4dbb9f5efdfcc75d34a8764a09474fae7",
+        "sizeBytes": 2497293931,
+        "modifiedAt": "2026-02-25T11:20:14.214022954+01:00",
+        "details": {
+          "parent_model": "",
+          "format": "gguf",
+          "family": "qwen3",
+          "families": [
+            "qwen3"
+          ],
+          "parameter_size": "4.0B",
+          "quantization_level": "Q4_K_M"
+        }
+      },
+      "promptMode": "LLM-only",
+      "evaluationFamily": "llm",
+      "ragEnabled": false,
+      "ragConfig": {
+        "retrievalMode": "none",
+        "k": 0
+      },
+      "runsPerSample": "hybrid(full:3, negatives:1)",
+      "testCases": 128,
+      "totalRequests": 354,
+      "successfulRequests": 354,
+      "meanLatencyMs": 1523,
+      "medianLatencyMs": null,
+      "parseSuccessRate": "100.00",
+      "parseDiagnostics": {
+        "reasons": {
+          "content_direct_array": 354
+        },
+        "failures": {}
+      },
+      "metrics": {
+        "precision": "48.74",
+        "recall": "62.83",
+        "f1Score": "54.90",
+        "accuracy": "37.83",
+        "falsePositiveRate": "100.00",
+        "truePositives": 213,
+        "falsePositives": 224,
+        "falseNegatives": 126,
+        "trueNegatives": 0
+      },
+      "source": {
+        "fullRun": "evaluation-2026-02-27T10-37-54-207Z-ablation-baselines.json",
+        "negativesRun": "evaluation-2026-02-27T10-51-51-455Z-ablation-baselines.json"
+      }
+    },
+    {
+      "requestedModel": "gemma3:4b",
+      "model": "gemma3:4b",
+      "modelVersion": {
+        "digest": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+        "sizeBytes": 3338801804,
+        "modifiedAt": "2026-02-25T11:23:23.073516066+01:00",
+        "details": {
+          "parent_model": "",
+          "format": "gguf",
+          "family": "gemma3",
+          "families": [
+            "gemma3"
+          ],
+          "parameter_size": "4.3B",
+          "quantization_level": "Q4_K_M"
+        }
+      },
+      "promptMode": "LLM+RAG",
+      "evaluationFamily": "llm",
+      "ragEnabled": true,
+      "ragConfig": {
+        "retrievalMode": "static_security_snippets",
+        "k": 5
+      },
+      "runsPerSample": "hybrid(full:3, negatives:1)",
+      "testCases": 128,
+      "totalRequests": 354,
+      "successfulRequests": 354,
+      "meanLatencyMs": 2171,
+      "medianLatencyMs": null,
+      "parseSuccessRate": "100.00",
+      "parseDiagnostics": {
+        "reasons": {
+          "content_direct_array": 354
+        },
+        "failures": {}
+      },
+      "metrics": {
+        "precision": "44.06",
+        "recall": "56.93",
+        "f1Score": "49.68",
+        "accuracy": "33.05",
+        "falsePositiveRate": "100.00",
+        "truePositives": 193,
+        "falsePositives": 245,
+        "falseNegatives": 146,
+        "trueNegatives": 0
+      },
+      "source": {
+        "fullRun": "evaluation-2026-02-27T10-37-54-207Z-ablation-baselines.json",
+        "negativesRun": "evaluation-2026-02-27T10-51-51-455Z-ablation-baselines.json"
+      }
+    },
+    {
+      "requestedModel": "CodeLlama:latest",
+      "model": "CodeLlama:latest",
+      "modelVersion": {
+        "digest": "8fdf8f752f6e80de33e82f381aba784c025982752cd1ae9377add66449d2225f",
+        "sizeBytes": 3825910662,
+        "modifiedAt": "2026-02-24T22:01:38.828690931+01:00",
+        "details": {
+          "parent_model": "",
+          "format": "gguf",
+          "family": "llama",
+          "families": null,
+          "parameter_size": "7B",
+          "quantization_level": "Q4_0"
+        }
+      },
+      "promptMode": "LLM-only",
+      "evaluationFamily": "llm",
+      "ragEnabled": false,
+      "ragConfig": {
+        "retrievalMode": "none",
+        "k": 0
+      },
+      "runsPerSample": "hybrid(full:3, negatives:1)",
+      "testCases": 128,
+      "totalRequests": 354,
+      "successfulRequests": 354,
+      "meanLatencyMs": 1781,
+      "medianLatencyMs": null,
+      "parseSuccessRate": "100.00",
+      "parseDiagnostics": {
+        "reasons": {
+          "content_direct_array": 353,
+          "content_extracted_object": 1
+        },
+        "failures": {}
+      },
+      "metrics": {
+        "precision": "38.42",
+        "recall": "46.02",
+        "f1Score": "41.88",
+        "accuracy": "26.49",
+        "falsePositiveRate": "100.00",
+        "truePositives": 156,
+        "falsePositives": 250,
+        "falseNegatives": 183,
+        "trueNegatives": 0
+      },
+      "source": {
+        "fullRun": "evaluation-2026-02-27T10-37-54-207Z-ablation-baselines.json",
+        "negativesRun": "evaluation-2026-02-27T10-51-51-455Z-ablation-baselines.json"
+      }
+    },
+    {
+      "requestedModel": "gemma3:1b",
+      "model": "gemma3:1b",
+      "modelVersion": {
+        "digest": "8648f39daa8fbf5b18c7b4e6a8fb4990c692751d49917417b8842ca5758e7ffc",
+        "sizeBytes": 815319791,
+        "modifiedAt": "2026-02-22T10:02:01.827951066+01:00",
+        "details": {
+          "parent_model": "",
+          "format": "gguf",
+          "family": "gemma3",
+          "families": [
+            "gemma3"
+          ],
+          "parameter_size": "999.89M",
+          "quantization_level": "Q4_K_M"
+        }
+      },
+      "promptMode": "LLM+RAG",
+      "evaluationFamily": "llm",
+      "ragEnabled": true,
+      "ragConfig": {
+        "retrievalMode": "static_security_snippets",
+        "k": 5
+      },
+      "runsPerSample": "hybrid(full:3, negatives:1)",
+      "testCases": 128,
+      "totalRequests": 354,
+      "successfulRequests": 354,
+      "meanLatencyMs": 1161,
+      "medianLatencyMs": null,
+      "parseSuccessRate": "99.72",
+      "parseDiagnostics": {
+        "reasons": {
+          "content_direct_array": 351,
+          "content_extracted_object": 2,
+          "non_json_content": 1
+        },
+        "failures": {
+          "non_json_content": 1
+        }
+      },
+      "metrics": {
+        "precision": "30.49",
+        "recall": "44.25",
+        "f1Score": "36.10",
+        "accuracy": "22.03",
+        "falsePositiveRate": "100.00",
+        "truePositives": 150,
+        "falsePositives": 342,
+        "falseNegatives": 189,
+        "trueNegatives": 0
+      },
+      "source": {
+        "fullRun": "evaluation-2026-02-27T10-37-54-207Z-ablation-baselines.json",
+        "negativesRun": "evaluation-2026-02-27T10-51-51-455Z-ablation-baselines.json"
+      }
+    },
+    {
+      "requestedModel": "gemma3:1b",
+      "model": "gemma3:1b",
+      "modelVersion": {
+        "digest": "8648f39daa8fbf5b18c7b4e6a8fb4990c692751d49917417b8842ca5758e7ffc",
+        "sizeBytes": 815319791,
+        "modifiedAt": "2026-02-22T10:02:01.827951066+01:00",
+        "details": {
+          "parent_model": "",
+          "format": "gguf",
+          "family": "gemma3",
+          "families": [
+            "gemma3"
+          ],
+          "parameter_size": "999.89M",
+          "quantization_level": "Q4_K_M"
+        }
+      },
+      "promptMode": "LLM-only",
+      "evaluationFamily": "llm",
+      "ragEnabled": false,
+      "ragConfig": {
+        "retrievalMode": "none",
+        "k": 0
+      },
+      "runsPerSample": "hybrid(full:3, negatives:1)",
+      "testCases": 128,
+      "totalRequests": 354,
+      "successfulRequests": 354,
+      "meanLatencyMs": 643,
+      "medianLatencyMs": null,
+      "parseSuccessRate": "100.00",
+      "parseDiagnostics": {
+        "reasons": {
+          "content_direct_array": 351,
+          "content_extracted_object": 3
+        },
+        "failures": {}
+      },
+      "metrics": {
+        "precision": "45.31",
+        "recall": "25.66",
+        "f1Score": "32.77",
+        "accuracy": "19.59",
+        "falsePositiveRate": "100.00",
+        "truePositives": 87,
+        "falsePositives": 105,
+        "falseNegatives": 252,
+        "trueNegatives": 0
+      },
+      "source": {
+        "fullRun": "evaluation-2026-02-27T10-37-54-207Z-ablation-baselines.json",
+        "negativesRun": "evaluation-2026-02-27T10-51-51-455Z-ablation-baselines.json"
+      }
+    },
+    {
+      "requestedModel": "CodeLlama:latest",
+      "model": "CodeLlama:latest",
+      "modelVersion": {
+        "digest": "8fdf8f752f6e80de33e82f381aba784c025982752cd1ae9377add66449d2225f",
+        "sizeBytes": 3825910662,
+        "modifiedAt": "2026-02-24T22:01:38.828690931+01:00",
+        "details": {
+          "parent_model": "",
+          "format": "gguf",
+          "family": "llama",
+          "families": null,
+          "parameter_size": "7B",
+          "quantization_level": "Q4_0"
+        }
+      },
+      "promptMode": "LLM+RAG",
+      "evaluationFamily": "llm",
+      "ragEnabled": true,
+      "ragConfig": {
+        "retrievalMode": "static_security_snippets",
+        "k": 5
+      },
+      "runsPerSample": "hybrid(full:3, negatives:1)",
+      "testCases": 128,
+      "totalRequests": 354,
+      "successfulRequests": 354,
+      "meanLatencyMs": 1829,
+      "medianLatencyMs": null,
+      "parseSuccessRate": "100.00",
+      "parseDiagnostics": {
+        "reasons": {
+          "content_direct_array": 354
+        },
+        "failures": {}
+      },
+      "metrics": {
+        "precision": "28.89",
+        "recall": "34.51",
+        "f1Score": "31.45",
+        "accuracy": "18.66",
+        "falsePositiveRate": "100.00",
+        "truePositives": 117,
+        "falsePositives": 288,
+        "falseNegatives": 222,
+        "trueNegatives": 0
+      },
+      "source": {
+        "fullRun": "evaluation-2026-02-27T10-37-54-207Z-ablation-baselines.json",
+        "negativesRun": "evaluation-2026-02-27T10-51-51-455Z-ablation-baselines.json"
+      }
+    },
+    {
+      "requestedModel": "semgrep",
+      "model": "semgrep",
+      "modelVersion": {
+        "digest": null,
+        "sizeBytes": null,
+        "modifiedAt": null,
+        "details": {
+          "toolVersion": "1.152.0"
+        }
+      },
+      "promptMode": "SAST baseline",
+      "evaluationFamily": "baseline",
+      "ragEnabled": false,
+      "ragConfig": {
+        "retrievalMode": "none",
+        "k": 0
+      },
+      "runsPerSample": "hybrid(full:1, negatives:1)",
+      "testCases": 128,
+      "totalRequests": 128,
+      "successfulRequests": 128,
+      "meanLatencyMs": 87,
+      "medianLatencyMs": null,
+      "parseSuccessRate": "100.00",
+      "parseDiagnostics": {
+        "reasons": {
+          "baseline_tool_output": 128
+        },
+        "failures": {}
+      },
+      "metrics": {
+        "precision": "57.89",
+        "recall": "9.73",
+        "f1Score": "16.67",
+        "accuracy": "18.52",
+        "falsePositiveRate": "36.36",
+        "truePositives": 11,
+        "falsePositives": 8,
+        "falseNegatives": 102,
+        "trueNegatives": 14
+      },
+      "source": {
+        "fullRun": "evaluation-2026-02-27T10-37-54-207Z-ablation-baselines.json",
+        "negativesRun": "evaluation-2026-02-27T10-51-51-455Z-ablation-baselines.json"
+      }
+    },
+    {
+      "requestedModel": "codeql",
+      "model": "codeql",
+      "modelVersion": {
+        "digest": null,
+        "sizeBytes": null,
+        "modifiedAt": null,
+        "details": {
+          "toolVersion": "CodeQL command-line toolchain release 2.24.2."
+        }
+      },
+      "promptMode": "SAST baseline",
+      "evaluationFamily": "baseline",
+      "ragEnabled": false,
+      "ragConfig": {
+        "retrievalMode": "none",
+        "k": 0
+      },
+      "runsPerSample": "hybrid(full:1, negatives:1)",
+      "testCases": 128,
+      "totalRequests": 128,
+      "successfulRequests": 128,
+      "meanLatencyMs": 250,
+      "medianLatencyMs": null,
+      "parseSuccessRate": "100.00",
+      "parseDiagnostics": {
+        "reasons": {
+          "baseline_tool_output": 128
+        },
+        "failures": {}
+      },
+      "metrics": {
+        "precision": "15.71",
+        "recall": "9.73",
+        "f1Score": "12.02",
+        "accuracy": "10.06",
+        "falsePositiveRate": "89.39",
+        "truePositives": 11,
+        "falsePositives": 59,
+        "falseNegatives": 102,
+        "trueNegatives": 7
+      },
+      "source": {
+        "fullRun": "evaluation-2026-02-27T10-37-54-207Z-ablation-baselines.json",
+        "negativesRun": "evaluation-2026-02-27T10-51-51-455Z-ablation-baselines.json"
+      }
+    },
+    {
+      "requestedModel": "eslint-security",
+      "model": "eslint-security",
+      "modelVersion": {
+        "digest": null,
+        "sizeBytes": null,
+        "modifiedAt": null,
+        "details": {
+          "toolVersion": "v9.39.2"
+        }
+      },
+      "promptMode": "SAST baseline",
+      "evaluationFamily": "baseline",
+      "ragEnabled": false,
+      "ragConfig": {
+        "retrievalMode": "none",
+        "k": 0
+      },
+      "runsPerSample": "hybrid(full:1, negatives:1)",
+      "testCases": 128,
+      "totalRequests": 128,
+      "successfulRequests": 128,
+      "meanLatencyMs": 2,
+      "medianLatencyMs": null,
+      "parseSuccessRate": "100.00",
+      "parseDiagnostics": {
+        "reasons": {
+          "baseline_tool_output": 128
+        },
+        "failures": {}
+      },
+      "metrics": {
+        "precision": "0.00",
+        "recall": "0.00",
+        "f1Score": "0.00",
+        "accuracy": "11.72",
+        "falsePositiveRate": "0.00",
+        "truePositives": 0,
+        "falsePositives": 0,
+        "falseNegatives": 113,
+        "trueNegatives": 15
+      },
+      "source": {
+        "fullRun": "evaluation-2026-02-27T10-37-54-207Z-ablation-baselines.json",
+        "negativesRun": "evaluation-2026-02-27T10-51-51-455Z-ablation-baselines.json"
+      }
+    }
+  ]
+}

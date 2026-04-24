@@ -27,24 +27,7 @@ Code Guardian exposes multiple analysis triggers (real-time and explicit command
 
 Although model inference is probabilistic, orchestration in the extension is intentionally deterministic. For a fixed input snapshot, active model, and prompt mode, the non-model part of the pipeline (scope extraction, prompt assembly structure, parsing, localization mapping, and diagnostic emission) follows a fixed sequence with explicit guard conditions. This reduces operational variance and isolates model effects during debugging and evaluation.
 
-The runtime control flow can be summarized as:
-\begin{lstlisting}[caption={Simplified orchestration logic for diagnostics flow}, label={lst:impl-orchestration}]
-onTrigger(event):
-  scope = extractScope(event, mode)
-  if scope.isEmpty or scope.size > scopeLimit: return
-
-  key = hash(scope.text, model, ragEnabled)
-  if cache.hasFresh(key):
-    return render(cache.get(key), scope.offset)
-
-  prompt = buildPrompt(scope.text, ragContextIfEnabled)
-  raw = callLocalModel(prompt, timeout, retries)
-  issues = parseAndValidateJsonArray(raw)
-  mapped = mapSnippetLinesToDocument(issues, scope.offset)
-
-  cache.put(key, mapped)
-  render(mapped, scope.offset)
-\end{lstlisting}
+On each trigger, the extension extracts the analysis scope and rejects it if empty or oversized. It then computes a content-based cache key; on a hit, cached findings are rendered immediately without model invocation. On a miss, the extension assembles a prompt (with RAG context if enabled), calls the local model, parses and validates the JSON response, maps snippet-relative line numbers to document positions, stores the result in the cache, and renders diagnostics.
 
 \subsection*{Debouncing Logic for Real-time Analysis}
 

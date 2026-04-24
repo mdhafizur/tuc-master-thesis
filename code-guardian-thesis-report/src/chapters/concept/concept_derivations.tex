@@ -1,14 +1,14 @@
 \section{Concept Derivation from Analysis Results}
 \label{sec:concept-derivation}
 
-The conceptual design of the proposed vulnerability detection system is derived systematically from the five requirements identified in Section~\ref{sec:requirements} and the gaps observed in existing approaches reviewed in Section~\ref{sec:related-work}. This section traces how each architectural decision directly addresses specific limitations in current vulnerability detection systems, establishing the rationale for a local, RAG-augmented, IDE-integrated design.
+The previous chapter identified five requirements and showed that no existing tool satisfies all of them simultaneously. This section works through the main architectural decisions of Code Guardian and explains why each one was chosen, starting from the privacy boundary and moving inward through retrieval, detection strategy, and IDE integration.
 
 \subsection{From Cloud-Based to Privacy-Preserving Local Deployment}
 \label{subsec:cloud-to-local}
 
-The analysis in Section~\ref{sec:related-work} revealed that most LLM-based vulnerability detection systems rely on cloud-hosted models or external APIs, requiring transmission of source code to remote servers. Regulatory frameworks such as GDPR impose strict constraints on transmitting sensitive data to external services, and the OWASP LLM Top~10 explicitly lists sensitive information disclosure as a key risk for LLM-based applications \cite{gdpr2016,owaspLLMTop10_2023}. Research has further shown that code generation models can leak sensitive information from their training data, including proprietary code submitted through cloud-based coding assistants \cite{carlini2021extracting,niu2023codexleaks}. Even without direct leakage, membership inference attacks can reveal whether specific code fragments were included in a model's training set \cite{shokri2017membership}.
+Most LLM-based vulnerability detection systems assume access to cloud-hosted models, which means source code must leave the developer's machine. This is not just a preference issue. Regulatory frameworks such as GDPR restrict transmitting source code to external services, the OWASP LLM Top~10 lists sensitive information disclosure as a key risk \cite{gdpr2016,owaspLLMTop10_2023}, and research has shown that code generation models can leak training data --- including proprietary code submitted through cloud assistants \cite{carlini2021extracting,niu2023codexleaks}. Even without direct leakage, membership inference attacks can reveal whether specific code fragments were part of a model's training set \cite{shokri2017membership}.
 
-These observations directly motivate the decision to deploy all components locally within the developer's environment. By running LLMs, retrieval systems, and analysis components entirely on local hardware, the design aims to keep source code, intermediate representations, and analysis results on-device and to avoid external inference services. This local-first architecture supports R5 (privacy) and enables offline operation when knowledge refresh is disabled, making the system suitable for security-sensitive development environments.
+Local deployment is therefore the starting design constraint, not an optimization. By running LLMs, retrieval systems, and analysis components entirely on local hardware, the design aims to keep source code, intermediate representations, and analysis results on-device and to avoid external inference services. This local-first architecture supports R5 (privacy) and enables offline operation when knowledge refresh is disabled, making the system suitable for security-sensitive development environments.
 
 In the Code Guardian prototype, the privacy boundary is defined around \emph{source code}: analyzed code and IDE-derived context are sent only to a local LLM backend. The system may optionally refresh its \emph{security knowledge base} from public vulnerability metadata sources (e.g., CVE/NVD descriptions and references). Such refresh operations do not transmit user source code and can be disabled to operate fully offline with cached or baseline knowledge.
 
@@ -17,9 +17,9 @@ The trade-off for local deployment is increased latency compared to cloud-based 
 \subsection{Retrieval-Augmented Generation for Security Knowledge Grounding}
 \label{subsec:rag-security}
 
-Requirements R1 and R2 demand accurate and consistent vulnerability detection across repeated analyses. Pure generative LLM approaches can suffer from hallucination and inconsistent classifications \cite{ji2023hallucination}. R1 also requires context-aware reasoning that goes beyond surface-level pattern matching to understand data flow, control flow, and API semantics.
+A standalone LLM can hallucinate vulnerability types, misclassify severity, and produce inconsistent results across repeated analyses of the same code \cite{ji2023hallucination}. Grounding model reasoning in external security knowledge --- rather than relying on whatever the model internalized during training --- is one way to mitigate this.
 
-The system addresses these requirements through Retrieval-Augmented Generation (RAG), which grounds vulnerability detection in a locally maintained knowledge base of security information \cite{lewis2020rag,karpukhin2020dpr}. This knowledge base includes:
+The system uses Retrieval-Augmented Generation (RAG) for this purpose, maintaining a local knowledge base of security information \cite{lewis2020rag,karpukhin2020dpr}. This knowledge base includes:
 \begin{itemize}
 \item \textbf{CWE-aligned vulnerability patterns} and mitigation summaries \cite{mitreCWE}
 \item \textbf{OWASP guidance} for recurring web vulnerability categories \cite{owaspTop10_2021,owaspCheatSheets}
@@ -46,7 +46,7 @@ IDE integration directly addresses R4 (usability) by enabling rich, interactive 
 \subsection{Modular Component Architecture}
 \label{subsec:modular-architecture}
 
-The analysis in Section~\ref{sec:related-work} showed that monolithic vulnerability detection systems lack transparency: when detection fails or produces unexpected results, it is difficult to diagnose whether the error originated in context extraction, retrieval, reasoning, or explanation generation.
+When a monolithic detection system produces a wrong result, it is hard to tell what went wrong --- was the context extraction incomplete, the retrieval off-target, or the model reasoning flawed? Transparency requires decomposition.
 
 The proposed system decomposes vulnerability detection into four core components, each with clearly defined responsibilities:
 \begin{enumerate}
@@ -112,4 +112,4 @@ Code Guardian separates these concerns into two stages:
 
 This separation allows each prompt to focus on a single task, improving both detection accuracy (R1) and repair quality (R3). The two-stage design also enables parallel repair generation when multiple vulnerabilities are detected, since each repair prompt is independent.
 
-Each architectural decision in this section is tied to the requirements established in Chapter~\ref{chap:analysis}. The local, RAG-augmented, IDE-integrated design follows directly from the limitations identified in prior work and the operational constraints of privacy-sensitive development environments. The next section details the core components that realize this design, including their inputs, outputs, and processing logic.
+The next section describes the core components that realize this design, including their inputs, outputs, and interactions.

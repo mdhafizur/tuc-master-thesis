@@ -72,6 +72,8 @@ Repairs are model-generated and may change behavior. Developer review is require
 
 Code Guardian is a decision-support tool, not an autonomous security verifier. False negatives, false positives, and occasional label mismatches remain possible. Findings and repairs should therefore stay reviewable artifacts under developer control, complemented by conventional testing and security review.
 
+As local models continue to improve, the privacy advantage of on-device analysis grows, but so does the potential for misuse --- for instance, using the tool to identify exploitable weaknesses rather than to fix them. Organizations deploying Code Guardian should establish policies for how LLM-generated findings are triaged, how repair suggestions are reviewed before merging, and who has access to aggregated vulnerability reports. The tool is designed to keep the developer in control at every step; maintaining that principle in organizational workflows is essential for responsible adoption.
+
 \section{Future Work}
 
 \input{src/chapters/future_work}

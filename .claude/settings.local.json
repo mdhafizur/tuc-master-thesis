@@ -1,7 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(node -e \"const d = require\\(''./evaluation/datasets/vulnerability-test-cases.generated.json''\\); const s = d.filter\\(t => t.expectedVulnerabilities.length === 0\\); console.log\\(''Total:'', d.length, ''Secure:'', s.length\\)\")"
+      "Bash(node -e \"const d = require\\(''./evaluation/datasets/vulnerability-test-cases.generated.json''\\); const s = d.filter\\(t => t.expectedVulnerabilities.length === 0\\); console.log\\(''Total:'', d.length, ''Secure:'', s.length\\)\")",
+      "Bash(git -C /Users/hafiz/personal/repos/tuc-master-thesis stash pop)",
+      "Bash(npm install *)",
+      "Bash(timeout 10 node evaluation/evaluate-models.js --baselines-only --baseline-tools=eslint-security --limit 2 --keep-baseline-workdir)",
+      "Bash(node evaluation/evaluate-models.js --baselines-only --baseline-tools=eslint-security --limit 2)"
     ]
   }
 }

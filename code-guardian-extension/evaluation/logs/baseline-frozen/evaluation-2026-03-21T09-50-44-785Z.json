@@ -1,0 +1,3657 @@
+{
+  "timestamp": "2026-03-21T09:50:44.785Z",
+  "config": {
+    "mode": "rag-only",
+    "ragAblation": false,
+    "runLlm": true,
+    "runBaselines": false,
+    "llmUnavailableReason": null,
+    "testCases": 86,
+    "secureCases": 15,
+    "vulnerableCases": 71,
+    "datasetPath": "/Users/hafiz/personal/repos/tuc-master-thesis/code-guardian-extension/evaluation/datasets/vulnerability-test-cases.generated.json",
+    "runsPerSample": 1,
+    "promptModes": [
+      "LLM+RAG"
+    ],
+    "rag": {
+      "strategy": "static_security_snippets",
+      "k": 5
+    },
+    "baselines": {
+      "requestedTools": [
+        "codeql",
+        "semgrep",
+        "eslint-security"
+      ],
+      "completedTools": [],
+      "skippedTools": [],
+      "timeoutMs": 180000
+    },
+    "modelGeneration": {
+      "temperature": 0,
+      "numPredict": 1000,
+      "timeoutMs": 30000,
+      "requestDelayMs": 500
+    },
+    "outputContract": {
+      "structuredOutput": true,
+      "disableThinking": true,
+      "schema": "MODEL_RESPONSE_SCHEMA"
+    },
+    "startedAt": "2026-03-21T09:45:35.605Z",
+    "finishedAt": "2026-03-21T09:50:44.785Z",
+    "totalDurationMs": 309180,
+    "runtimeConditions": {
+      "executionOrder": "sequential",
+      "retries": 0,
+      "warmup": "none"
+    }
+  },
+  "executionEnvironment": {
+    "os": {
+      "platform": "darwin",
+      "release": "25.3.0",
+      "arch": "arm64"
+    },
+    "nodeVersion": "v20.19.5",
+    "ollamaVersion": "ollama version is 0.18.2",
+    "hardware": {
+      "cpuModel": "Apple M4 Max",
+      "cpuCores": 16,
+      "totalMemoryGB": 64,
+      "freeMemoryGB": 1.61,
+      "gpu": "not captured by this script (Ollama backend dependent)"
+    }
+  },
+  "modelsResolved": [
+    {
+      "requestedModel": "qwen3:8b",
+      "resolvedModel": "qwen3:8b",
+      "modelDigest": "500a1f067a9f782620b40bee6f7b0c89e17ae61f686b92c24933e4ca4b2b8b41",
+      "modelSizeBytes": 5225388164,
+      "modifiedAt": "2026-02-25T11:19:39.425460804+01:00",
+      "details": {
+        "parent_model": "",
+        "format": "gguf",
+        "family": "qwen3",
+        "families": [
+          "qwen3"
+        ],
+        "parameter_size": "8.2B",
+        "quantization_level": "Q4_K_M"
+      }
+    }
+  ],
+  "results": [
+    {
+      "requestedModel": "qwen3:8b",
+      "model": "qwen3:8b",
+      "modelVersion": {
+        "digest": "500a1f067a9f782620b40bee6f7b0c89e17ae61f686b92c24933e4ca4b2b8b41",
+        "sizeBytes": 5225388164,
+        "modifiedAt": "2026-02-25T11:19:39.425460804+01:00",
+        "details": {
+          "parent_model": "",
+          "format": "gguf",
+          "family": "qwen3",
+          "families": [
+            "qwen3"
+          ],
+          "parameter_size": "8.2B",
+          "quantization_level": "Q4_K_M"
+        }
+      },
+      "promptMode": "LLM+RAG",
+      "evaluationFamily": "llm",
+      "ragEnabled": true,
+      "ragConfig": {
+        "retrievalMode": "static_security_snippets",
+        "k": 5
+      },
+      "runsPerSample": 1,
+      "testCases": 86,
+      "totalRequests": 86,
+      "successfulRequests": 86,
+      "meanLatencyMs": 3094,
+      "medianLatencyMs": 2721,
+      "parseSuccessRate": "100.00",
+      "parseDiagnostics": {
+        "reasons": {
+          "content_direct_array": 86
+        },
+        "failures": {}
+      },
+      "metrics": {
+        "precision": "63.16",
+        "recall": "67.61",
+        "f1Score": "65.31",
+        "accuracy": "54.05",
+        "falsePositiveRate": "20.00",
+        "lineAccuracy": "91.29",
+        "truePositives": 48,
+        "falsePositives": 28,
+        "falseNegatives": 23,
+        "trueNegatives": 12,
+        "secureFalsePositiveCases": 3,
+        "secureTrueNegativeCases": 12
+      },
+      "detailedResults": [
+        {
+          "testCaseId": "owasp_bench_sql_concat",
+          "testCaseName": "SQL Injection - SQL injection via string concatenation (OWASP Benchmark)",
+          "run": 1,
+          "success": true,
+          "responseTime": 2979,
+          "detected": 1,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code is vulnerable to SQL Injection because it directly concatenates user input into the SQL query string, allowing an attacker to manipulate the query and potentially access or modify unauthorized data.",
+              "type": "SQL Injection",
+              "startLine": 5,
+              "endLine": 7,
+              "severity": "high",
+              "suggestedFix": "Use parameterized queries to prevent SQL injection. Replace the vulnerable code with:\n\nconst query = 'SELECT * FROM products WHERE name LIKE ?';\n\nreturn new Promise((resolve, reject) => {\n    db.all(query, [`%${searchTerm}%`], (err, rows) => {\n        if (err) reject(err);\n        else resolve(rows);\n    });\n});"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "SQL Injection",
+              "cwe": "CWE-89",
+              "severity": "high",
+              "description": "SQL injection via string concatenation (OWASP Benchmark)"
+            }
+          ],
+          "expectedFix": "Use parameterized SQL queries or prepared statements.",
+          "metrics": {
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "owasp_bench_sql_template",
+          "testCaseName": "SQL Injection - SQL injection via template literals (OWASP Benchmark)",
+          "run": 1,
+          "success": true,
+          "responseTime": 2145,
+          "detected": 1,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code is vulnerable to SQL Injection because it directly concatenates user input into the SQL query string without using parameterized queries or prepared statements, allowing attackers to manipulate the SQL logic.",
+              "type": "SQL Injection",
+              "startLine": 4,
+              "endLine": 6,
+              "severity": "high",
+              "suggestedFix": "Use parameterized queries to safely handle user input. Replace the vulnerable code with:\n\nconst sql = 'SELECT id, role FROM users WHERE username=? AND password=?';\nconnection.query(sql, [username, password], (error, results) => { ... });"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "SQL Injection",
+              "cwe": "CWE-89",
+              "severity": "high",
+              "description": "SQL injection via template literals (OWASP Benchmark)"
+            }
+          ],
+          "expectedFix": "Use parameterized SQL queries or prepared statements.",
+          "metrics": {
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "owasp_bench_xss_innerHTML",
+          "testCaseName": "Cross-Site Scripting (XSS) - XSS via innerHTML assignment (OWASP Benchmark)",
+          "run": 1,
+          "success": true,
+          "responseTime": 4266,
+          "detected": 2,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code is vulnerable to XSS (Cross-Site Scripting) because it directly uses innerHTML to insert user-provided data without escaping or sanitizing it, allowing attackers to inject malicious scripts.",
+              "type": "XSS",
+              "startLine": 4,
+              "endLine": 11,
+              "severity": "high",
+              "suggestedFix": "Replace the use of innerHTML with textContent or a safe HTML sanitizer like DOMPurify. Example:\n\nconst profileHtml = `<div class=\"profile\"><h2>Profile: ${userName}</h2><div class=\"bio\">${DOMPurify.sanitize(userBio)}</div></div>`;\nprofileContainer.innerHTML = profileHtml;"
+            },
+            {
+              "message": "The code is vulnerable to XSS because it directly uses innerHTML to insert user-provided data without escaping or sanitizing it, allowing attackers to inject malicious scripts.",
+              "type": "XSS",
+              "startLine": 13,
+              "endLine": 18,
+              "severity": "high",
+              "suggestedFix": "Replace the use of innerHTML with textContent or a safe HTML sanitizer like DOMPurify. Example:\n\ndocument.getElementById('alerts').innerHTML = `<div class='alert'>${DOMPurify.sanitize(message)}</div>`;"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Cross-Site Scripting (XSS)",
+              "cwe": "CWE-79",
+              "severity": "high",
+              "description": "XSS via innerHTML assignment (OWASP Benchmark)"
+            }
+          ],
+          "expectedFix": "Escape/sanitize untrusted content and avoid unsafe DOM sinks.",
+          "metrics": {
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "owasp_bench_xss_document_write",
+          "testCaseName": "Cross-Site Scripting (XSS) - XSS via document.write (OWASP Benchmark)",
+          "run": 1,
+          "success": true,
+          "responseTime": 5539,
+          "detected": 2,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code is vulnerable to XSS (Cross-Site Scripting) because it directly injects untrusted content into HTML without proper escaping, allowing attackers to execute arbitrary scripts in the browser.",
+              "type": "XSS",
+              "startLine": 4,
+              "endLine": 14,
+              "severity": "high",
+              "suggestedFix": "Use a secure HTML escaping library or method to sanitize inputs before rendering. Replace the vulnerable code with:\n\nfunction renderPage(title, content) {\n    const escapedTitle = encodeURIComponent(title);\n    const escapedContent = encodeURIComponent(content);\n    document.write(`\n        <html>\n            <head><title>${escapedTitle}</title></head>\n            <body>\n                <h1>${escapedTitle}</h1>\n                <div>${escapedContent}</div>\n            </body>\n        </html>\n    `);\n}"
+            },
+            {
+              "message": "The code is vulnerable to XSS (Cross-Site Scripting) because it directly injects untrusted script content into a <script> tag without sanitization, allowing attackers to execute arbitrary scripts in the browser.",
+              "type": "XSS",
+              "startLine": 16,
+              "endLine": 20,
+              "severity": "high",
+              "suggestedFix": "Avoid directly injecting untrusted script content. Instead, use a secure method to sanitize or use a sandboxed environment. Replace the vulnerable code with:\n\nfunction insertScript(scriptContent) {\n    const sanitizedScript = scriptContent.replace(/</g, '&lt;').replace(/>/g, '&gt;');\n    document.write(`<script>${sanitizedScript}</script>`);\n}"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Cross-Site Scripting (XSS)",
+              "cwe": "CWE-79",
+              "severity": "high",
+              "description": "XSS via document.write (OWASP Benchmark)"
+            }
+          ],
+          "expectedFix": "Escape/sanitize untrusted content and avoid unsafe DOM sinks.",
+          "metrics": {
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 0.5
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "owasp_bench_cmd_exec",
+          "testCaseName": "Command Injection - Command injection via exec (OWASP Benchmark)",
+          "run": 1,
+          "success": true,
+          "responseTime": 4149,
+          "detected": 2,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code is vulnerable to command injection because it directly concatenates user-controlled input into shell commands without proper validation or sanitization, allowing attackers to execute arbitrary commands.",
+              "type": "Command Injection",
+              "startLine": 5,
+              "endLine": 9,
+              "severity": "high",
+              "suggestedFix": "Use the `execFile` method instead of `exec` to avoid shell injection. Replace the vulnerable code with:\n\nexecFile('file', [filename], (error, stdout) => {\n    if (error) reject(error);\n    else resolve(stdout);\n});"
+            },
+            {
+              "message": "The code is vulnerable to command injection because it directly concatenates user-controlled input into shell commands without proper validation or sanitization, allowing attackers to execute arbitrary commands.",
+              "type": "Command Injection",
+              "startLine": 11,
+              "endLine": 15,
+              "severity": "high",
+              "suggestedFix": "Use the `execFile` method instead of `exec` to avoid shell injection. Replace the vulnerable code with:\n\nexecFile('gzip', ['-c', inputFile, '>', outputFile], (error, stdout) => {\n    console.log('Compression complete');\n});"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Command Injection",
+              "cwe": "CWE-78",
+              "severity": "high",
+              "description": "Command injection via exec (OWASP Benchmark)"
+            }
+          ],
+          "expectedFix": "Use safe process APIs and never concatenate untrusted input into commands.",
+          "metrics": {
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "owasp_bench_path_traversal",
+          "testCaseName": "Path Traversal - Path traversal in file serving (OWASP Benchmark)",
+          "run": 1,
+          "success": true,
+          "responseTime": 5705,
+          "detected": 2,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code is vulnerable to Path Traversal attacks because it directly appends user input to the file path without validation, allowing attackers to access arbitrary files outside the intended directory.",
+              "type": "Path Traversal",
+              "startLine": 6,
+              "endLine": 12,
+              "severity": "high",
+              "suggestedFix": "Use path resolution with a base directory and validate the resolved path to ensure it stays within the allowed directory. Replace:\n\nconst filepath = './uploads/' + filename;\n\nwith:\n\nconst baseDir = './uploads/';\nconst filepath = path.resolve(baseDir, filename);\nif (!filepath.startsWith(baseDir)) {\n  throw new Error('Invalid file path');\n}\nconst content = fs.readFileSync(filepath, 'utf8');"
+            },
+            {
+              "message": "The code is vulnerable to Path Traversal attacks because it directly appends user input to the file path without validation, allowing attackers to access arbitrary files outside the intended directory.",
+              "type": "Path Traversal",
+              "startLine": 15,
+              "endLine": 21,
+              "severity": "high",
+              "suggestedFix": "Use path resolution with a base directory and validate the resolved path to ensure it stays within the allowed directory. Replace:\n\nconst configPath = './config/' + configName + '.json';\n\nwith:\n\nconst baseDir = './config/';\nconst configPath = path.resolve(baseDir, configName + '.json');\nif (!configPath.startsWith(baseDir)) {\n  throw new Error('Invalid config path');\n}\nreturn JSON.parse(fs.readFileSync(configPath, 'utf8'));"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Path Traversal",
+              "cwe": "CWE-22",
+              "severity": "high",
+              "description": "Path traversal in file serving (OWASP Benchmark)"
+            }
+          ],
+          "expectedFix": "Canonicalize paths and restrict access to approved directories.",
+          "metrics": {
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "owasp_bench_weak_crypto",
+          "testCaseName": "Weak Cryptography - Weak cryptographic algorithms (OWASP Benchmark)",
+          "run": 1,
+          "success": true,
+          "responseTime": 7998,
+          "detected": 3,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code uses the MD5 algorithm for hashing passwords, which is considered weak and vulnerable to collision attacks. MD5 is not suitable for password hashing due to its susceptibility to rainbow table attacks and collision vulnerabilities.",
+              "type": "Weak Cryptography",
+              "startLine": 6,
+              "endLine": 10,
+              "severity": "high",
+              "suggestedFix": "Replace MD5 with a stronger hashing algorithm like SHA-256 or bcrypt. Use bcrypt for password hashing as it is designed for secure password storage.\n\n// Secure alternative:\nconst bcrypt = require('bcrypt');\nasync function hashPassword(password) {\n    const salt = await bcrypt.genSalt(10);\n    const hashedPassword = await bcrypt.hash(password, salt);\n    return hashedPassword;\n}"
+            },
+            {
+              "message": "The code uses the DES encryption algorithm, which is outdated and insecure. DES has a small key size (56 bits) and is vulnerable to brute-force attacks. It is no longer considered secure for modern applications.",
+              "type": "Weak Cryptography",
+              "startLine": 12,
+              "endLine": 20,
+              "severity": "high",
+              "suggestedFix": "Replace DES with a stronger encryption algorithm like AES-256. Use the crypto library's AES implementation for secure encryption.\n\n// Secure alternative:\nconst crypto = require('crypto');\nfunction encryptData(data, key) {\n    const cipher = crypto.createCipher('aes-256-cbc', key);\n    let encrypted = cipher.update(data, 'utf8', 'hex');\n    encrypted += cipher.final('hex');\n    return encrypted;\n}"
+            },
+            {
+              "message": "The code uses Math.random() for generating tokens, which is not cryptographically secure. Math.random() is predictable and can be exploited to guess the generated tokens, making it unsuitable for security-sensitive applications.",
+              "type": "Weak Cryptography",
+              "startLine": 22,
+              "endLine": 26,
+              "severity": "high",
+              "suggestedFix": "Replace Math.random() with a cryptographically secure random number generator, such as crypto.randomBytes().\n\n// Secure alternative:\nconst crypto = require('crypto');\nfunction generateToken() {\n    const token = crypto.randomBytes(16).toString('hex');\n    return token;\n}"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Weak Cryptography",
+              "cwe": "CWE-327",
+              "severity": "medium",
+              "description": "Weak cryptographic algorithms (OWASP Benchmark)"
+            }
+          ],
+          "expectedFix": "Use strong algorithms and secure key generation/management.",
+          "metrics": {
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 0.6666666666666666
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "owasp_bench_ldap_injection",
+          "testCaseName": "LDAP Injection - LDAP injection vulnerability (OWASP Benchmark)",
+          "run": 1,
+          "success": true,
+          "responseTime": 2069,
+          "detected": 1,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code is vulnerable to LDAP injection because user input is directly concatenated into the LDAP filter without proper escaping, allowing attackers to manipulate the LDAP query and potentially access unauthorized data.",
+              "type": "LDAP Injection",
+              "startLine": 6,
+              "endLine": 8,
+              "severity": "high",
+              "suggestedFix": "Use ldapjs's built-in escaping functions to safely format the LDAP filter. Replace the vulnerable code with:\n\nconst filter = `(&(uid=${ldap.escaped(username)})(userPassword=${ldap.escaped(password)}))`;"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "LDAP Injection",
+              "cwe": "CWE-90",
+              "severity": "high",
+              "description": "LDAP injection vulnerability (OWASP Benchmark)"
+            }
+          ],
+          "expectedFix": "Use parameterized LDAP queries and sanitize user-controlled input.",
+          "metrics": {
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "owasp_bench_header_injection",
+          "testCaseName": "Header Injection - HTTP header injection (OWASP Benchmark)",
+          "run": 1,
+          "success": true,
+          "responseTime": 5260,
+          "detected": 3,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code is vulnerable to HTTP header injection due to the direct use of user-provided values in header setting without validation or sanitization.",
+              "type": "Header Injection",
+              "startLine": 12,
+              "endLine": 14,
+              "severity": "high",
+              "suggestedFix": "Use a secure method to sanitize and validate the header value before setting it. For example:\n\nres.setHeader('X-Custom-Header', encodeURIComponent(headerValue));"
+            },
+            {
+              "message": "The code is vulnerable to HTTP header injection due to the direct use of user-provided values in header setting without validation or sanitization.",
+              "type": "Header Injection",
+              "startLine": 6,
+              "endLine": 8,
+              "severity": "high",
+              "suggestedFix": "Use a secure method to sanitize and validate the redirect URL. For example:\n\nconst sanitizedUrl = new URL(req.query.url, 'http://example.com').toString();\nres.redirect(sanitizedUrl);"
+            },
+            {
+              "message": "The code is vulnerable to HTTP header injection due to the direct use of user-provided values in header setting without validation or sanitization.",
+              "type": "Header Injection",
+              "startLine": 16,
+              "endLine": 18,
+              "severity": "high",
+              "suggestedFix": "Use a secure method to sanitize and validate the cookie value. For example:\n\nres.setHeader('Set-Cookie', `userdata=${encodeURIComponent(value)}`);"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Header Injection",
+              "cwe": "CWE-113",
+              "severity": "medium",
+              "description": "HTTP header injection (OWASP Benchmark)"
+            }
+          ],
+          "expectedFix": "Sanitize header values and enforce strict header construction.",
+          "metrics": {
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "nodejs_cve_2021_23337",
+          "testCaseName": "Prototype Pollution - Prototype pollution in lodash merge function",
+          "run": 1,
+          "success": true,
+          "responseTime": 2628,
+          "detected": 1,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code is vulnerable to prototype pollution via the use of lodash.merge, which can allow an attacker to modify the prototype of built-in objects, leading to potential exploitation of global object properties.",
+              "type": "Prototype Pollution",
+              "startLine": 6,
+              "endLine": 11,
+              "severity": "high",
+              "suggestedFix": "Use a safer method to merge objects that prevents prototype pollution. Replace `_.merge` with `Object.assign` or a custom merge function that avoids modifying the prototype chain.\n\nSecure code replacement:\n\nfunction mergeUserSettings(defaultSettings, userPreferences) {\n    // Use Object.assign to avoid prototype pollution\n    return Object.assign({}, defaultSettings, userPreferences);\n}"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Prototype Pollution",
+              "cwe": "CWE-1321",
+              "severity": "high",
+              "description": "Prototype pollution in lodash merge function"
+            }
+          ],
+          "expectedFix": "Block dangerous keys and clone/validate objects before merge operations.",
+          "metrics": {
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "nodejs_cve_2022_24999",
+          "testCaseName": "Path Traversal - Path traversal in express static file serving",
+          "run": 1,
+          "success": true,
+          "responseTime": 3362,
+          "detected": 1,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code is vulnerable to Path Traversal attacks because it does not validate or sanitize the filename parameter, allowing attackers to access arbitrary files on the server.",
+              "type": "Path Traversal",
+              "startLine": 8,
+              "endLine": 14,
+              "severity": "high",
+              "suggestedFix": "Use path resolution with a base directory and validate that the resolved path is within the allowed directory. Replace the vulnerable code with the following:\n\nconst allowedBaseDir = path.resolve(__dirname, 'public');\nconst resolvedPath = path.resolve(allowedBaseDir, filename);\n\nif (resolvedPath.startsWith(allowedBaseDir)) {\n    if (fs.existsSync(resolvedPath)) {\n        res.sendFile(resolvedPath);\n    } else {\n        res.status(404).send('File not found');\n    }\n} else {\n    res.status(403).send('Forbidden');\n}"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Path Traversal",
+              "cwe": "CWE-22",
+              "severity": "high",
+              "description": "Path traversal in express static file serving"
+            }
+          ],
+          "expectedFix": "Canonicalize paths and restrict access to approved directories.",
+          "metrics": {
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "benchmark_additional_01",
+          "testCaseName": "Cross-Site Scripting (XSS) - DOM-based XSS via URL parameters",
+          "run": 1,
+          "success": true,
+          "responseTime": 1811,
+          "detected": 1,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code is vulnerable to DOM-based XSS because it directly inserts untrusted user input into the DOM using innerHTML, which can execute malicious scripts.",
+              "type": "XSS",
+              "startLine": 4,
+              "endLine": 6,
+              "severity": "high",
+              "suggestedFix": "Replace `document.getElementById('content').innerHTML = message;` with `document.getElementById('content').textContent = message;` or use a sanitization library like DOMPurify."
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Cross-Site Scripting (XSS)",
+              "cwe": "CWE-79",
+              "severity": "high",
+              "description": "DOM-based XSS via URL parameters"
+            }
+          ],
+          "expectedFix": "Escape/sanitize untrusted content and avoid unsafe DOM sinks.",
+          "metrics": {
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "benchmark_additional_02",
+          "testCaseName": "SQL Injection - SQL injection in ORDER BY clause",
+          "run": 1,
+          "success": true,
+          "responseTime": 2163,
+          "detected": 1,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code is vulnerable to SQL Injection because the ORDER BY clause is directly concatenated with user-provided input, allowing attackers to manipulate the SQL query structure.",
+              "type": "SQL Injection",
+              "startLine": 5,
+              "endLine": 7,
+              "severity": "high",
+              "suggestedFix": "Use parameterized queries or prepared statements to safely handle ORDER BY parameters. Replace the vulnerable code with:\n\nconst query = 'SELECT * FROM users ORDER BY ? ?';\nconnection.query(query, [sortBy, sortOrder], (error, results) => { ... });"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "SQL Injection",
+              "cwe": "CWE-89",
+              "severity": "high",
+              "description": "SQL injection in ORDER BY clause"
+            }
+          ],
+          "expectedFix": "Use parameterized SQL queries or prepared statements.",
+          "metrics": {
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "benchmark_additional_03",
+          "testCaseName": "Command Injection - Command injection via file processing",
+          "run": 1,
+          "success": true,
+          "responseTime": 2562,
+          "detected": 1,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code is vulnerable to command injection because it directly appends user-controlled input to the command arguments without proper validation or sanitization.",
+              "type": "Command Injection",
+              "startLine": 4,
+              "endLine": 6,
+              "severity": "high",
+              "suggestedFix": "Use a secure method to handle file parameters and avoid directly appending user input to the command arguments. Replace the line:\n\nconst args = ['-format', outputFormat, inputFile, `output.${outputFormat}`];\n\nwith:\n\nconst args = ['-format', outputFormat, inputFile, `output.${outputFormat}`];\n\nand ensure that inputFile and outputFormat are properly validated and sanitized before being used."
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Command Injection",
+              "cwe": "CWE-78",
+              "severity": "high",
+              "description": "Command injection via file processing"
+            }
+          ],
+          "expectedFix": "Use safe process APIs and never concatenate untrusted input into commands.",
+          "metrics": {
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "benchmark_additional_04",
+          "testCaseName": "Path Traversal - Path traversal in template inclusion",
+          "run": 1,
+          "success": true,
+          "responseTime": 2936,
+          "detected": 1,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code is vulnerable to Path Traversal attacks because it does not validate or sanitize the templateName input, allowing attackers to access arbitrary files outside the intended directory.",
+              "type": "Path Traversal",
+              "startLine": 6,
+              "endLine": 11,
+              "severity": "high",
+              "suggestedFix": "Use path validation to ensure the templatePath is within the allowed directory. Replace the vulnerable code with:\n\nconst allowedDir = path.resolve(__dirname, './templates');\nconst templatePath = path.join(allowedDir, templateName + '.html');\nconst resolvedPath = path.resolve(templatePath);\nif (!resolvedPath.startsWith(allowedDir)) {\n  return '<div>Template not found</div>';\n}\nreturn fs.readFileSync(resolvedPath, 'utf8');"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Path Traversal",
+              "cwe": "CWE-22",
+              "severity": "medium",
+              "description": "Path traversal in template inclusion"
+            }
+          ],
+          "expectedFix": "Canonicalize paths and restrict access to approved directories.",
+          "metrics": {
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "benchmark_additional_05",
+          "testCaseName": "Insecure Deserialization - Unsafe deserialization in session handling",
+          "run": 1,
+          "success": true,
+          "responseTime": 2814,
+          "detected": 1,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code uses eval() for deserialization, which is highly vulnerable to code injection attacks. An attacker can inject malicious code into the session data, which will be executed in the context of the application.",
+              "type": "Code Injection",
+              "startLine": 3,
+              "endLine": 5,
+              "severity": "high",
+              "suggestedFix": "Replace the eval-based deserialization with a secure deserialization method. For example, use JSON.parse() instead of eval() and ensure the data is properly validated and sanitized.\n\n// Secure alternative:\nfunction deserializeSession(sessionData) {\n    try {\n        // Validate and sanitize sessionData before parsing\n        return JSON.parse(sessionData);\n    } catch (error) {\n        return null;\n    }\n}"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Insecure Deserialization",
+              "cwe": "CWE-502",
+              "severity": "high",
+              "description": "Unsafe deserialization in session handling"
+            }
+          ],
+          "expectedFix": "Use safe serializers or strict type/schema validation.",
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 1,
+            "falseNegatives": 1,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "benchmark_additional_06",
+          "testCaseName": "Hardcoded Credentials - Hardcoded database credentials",
+          "run": 1,
+          "success": true,
+          "responseTime": 4075,
+          "detected": 2,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "Hardcoded credentials are stored in plain text, which can be exposed through source code leaks or configuration files, leading to unauthorized access.",
+              "type": "Hardcoded Credentials",
+              "startLine": 5,
+              "endLine": 10,
+              "severity": "high",
+              "suggestedFix": "Use environment variables or secure credential management systems to store sensitive information. Example:\n\nconst connection = mysql.createConnection({\n    host: 'localhost',\n    user: process.env.DB_USER,\n    password: process.env.DB_PASSWORD,\n    database: process.env.DB_NAME\n});"
+            },
+            {
+              "message": "Hardcoded credentials are stored in plain text, which can be exposed through source code leaks or configuration files, leading to unauthorized access.",
+              "type": "Hardcoded Credentials",
+              "startLine": 12,
+              "endLine": 15,
+              "severity": "high",
+              "suggestedFix": "Use environment variables or secure credential management systems to store sensitive information. Example:\n\nconst dbConfig = {\n    apiKey: process.env.API_KEY,\n    secretKey: process.env.SECRET_KEY\n};"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Hardcoded Credentials",
+              "cwe": "CWE-798",
+              "severity": "high",
+              "description": "Hardcoded database credentials"
+            }
+          ],
+          "expectedFix": "Remove hardcoded secrets and load credentials from secure storage.",
+          "metrics": {
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "benchmark_additional_07",
+          "testCaseName": "Weak Cryptography - Weak cryptographic hash functions",
+          "run": 1,
+          "success": true,
+          "responseTime": 6341,
+          "detected": 3,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "SHA1 is a weak cryptographic hash function and is vulnerable to collision attacks. It should not be used for password hashing.",
+              "type": "Weak Cryptography",
+              "startLine": 6,
+              "endLine": 10,
+              "severity": "high",
+              "suggestedFix": "Use a strong password hashing algorithm like bcrypt, scrypt, or Argon2. Example:\n\nconst bcrypt = require('bcrypt');\nasync function hashUserPassword(password, salt) {\n    return await bcrypt.hash(password, 10);\n}"
+            },
+            {
+              "message": "Math.random() is not cryptographically secure and can be predicted, making session IDs vulnerable to guessing attacks.",
+              "type": "Weak Cryptography",
+              "startLine": 12,
+              "endLine": 18,
+              "severity": "high",
+              "suggestedFix": "Use a cryptographically secure random number generator. Example:\n\nconst crypto = require('crypto');\nfunction generateSessionId() {\n    return crypto.randomBytes(16).toString('hex');\n}"
+            },
+            {
+              "message": "RC4 is a deprecated and insecure cipher algorithm. It is vulnerable to various attacks and should not be used for encryption.",
+              "type": "Weak Cryptography",
+              "startLine": 20,
+              "endLine": 30,
+              "severity": "high",
+              "suggestedFix": "Use a modern and secure cipher algorithm like AES. Example:\n\nconst crypto = require('crypto');\nfunction encryptSensitiveData(data, key) {\n    const cipher = crypto.createCipher('aes-256-cbc', key);\n    let encrypted = cipher.update(data, 'utf8', 'hex');\n    encrypted += cipher.final('hex');\n    return encrypted;\n}"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Weak Cryptography",
+              "cwe": "CWE-327",
+              "severity": "medium",
+              "description": "Weak cryptographic hash functions"
+            }
+          ],
+          "expectedFix": "Use strong algorithms and secure key generation/management.",
+          "metrics": {
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 0.6666666666666666
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "benchmark_additional_08",
+          "testCaseName": "Improper Authentication - Authentication bypass via parameter manipulation",
+          "run": 1,
+          "success": true,
+          "responseTime": 4367,
+          "detected": 2,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code allows bypassing authentication by directly accepting the 'admin' query parameter as a boolean, which can be manipulated by an attacker.",
+              "type": "Authentication Bypass",
+              "startLine": 10,
+              "endLine": 12,
+              "severity": "high",
+              "suggestedFix": "Replace the check with a secure authentication mechanism that verifies the user's credentials through a proper session or token-based system. Example:\n\nif (req.user && req.user.role === 'admin') { req.user = { role: 'admin' }; } else { return res.status(403).send('Forbidden'); }"
+            },
+            {
+              "message": "The 'isAdmin' parameter is directly compared to 'true' as a string, which can be manipulated by an attacker to bypass authentication checks.",
+              "type": "Authentication Bypass",
+              "startLine": 5,
+              "endLine": 7,
+              "severity": "high",
+              "suggestedFix": "Use a secure authentication mechanism that verifies the user's credentials through a proper session or token-based system. Example:\n\nif (req.user && req.user.role === 'admin') { return { authenticated: true, role: 'admin', user: user }; }"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Improper Authentication",
+              "cwe": "CWE-287",
+              "severity": "high",
+              "description": "Authentication bypass via parameter manipulation"
+            }
+          ],
+          "expectedFix": "Enforce robust authentication and fail securely on invalid auth state.",
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 1,
+            "falseNegatives": 1,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "benchmark_additional_09",
+          "testCaseName": "Server-Side Request Forgery (SSRF) - Server-Side Request Forgery in webhook",
+          "run": 1,
+          "success": true,
+          "responseTime": 8855,
+          "detected": 3,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code allows SSRF (Server-Side Request Forgery) by not validating or sanitizing the webhookUrl, which could be used to access internal services.",
+              "type": "SSRF",
+              "startLine": 5,
+              "endLine": 9,
+              "severity": "high",
+              "suggestedFix": "Validate and sanitize the webhookUrl to ensure it is within a trusted domain. Example:\n\nasync function processWebhook(webhookUrl, data) {\n    try {\n        // Validate URL\n        const parsedUrl = new URL(webhookUrl);\n        if (!parsedUrl.hostname.endsWith('trusted-domain.com')) {\n            throw new Error('Invalid URL');\n        }\n        const response = await axios.post(webhookUrl, data);\n        return response.data;\n    } catch (error) {\n        throw new Error('Webhook failed');\n    }\n}"
+            },
+            {
+              "message": "The code allows unrestricted URL access in fetchExternalResource, which could be used to access internal or malicious resources.",
+              "type": "SSRF",
+              "startLine": 11,
+              "endLine": 15,
+              "severity": "high",
+              "suggestedFix": "Validate and sanitize the URL to ensure it is within a trusted domain. Example:\n\nasync function fetchExternalResource(url) {\n    try {\n        // Validate URL\n        const parsedUrl = new URL(url);\n        if (!parsedUrl.hostname.endsWith('trusted-domain.com')) {\n            throw new Error('Invalid URL');\n        }\n        const response = await fetch(url);\n        return response.text();\n    } catch (error) {\n        throw new Error('External resource failed');\n    }\n}"
+            },
+            {
+              "message": "The code allows open proxy functionality in proxyRequest, which could be used to relay requests to any external service.",
+              "type": "SSRF",
+              "startLine": 17,
+              "endLine": 21,
+              "severity": "high",
+              "suggestedFix": "Validate and sanitize the targetUrl to ensure it is within a trusted domain. Example:\n\nfunction proxyRequest(targetUrl) {\n    try {\n        // Validate URL\n        const parsedUrl = new URL(targetUrl);\n        if (!parsedUrl.hostname.endsWith('trusted-domain.com')) {\n            throw new Error('Invalid URL');\n        }\n        return fetch(targetUrl).then(r => r.text());\n    } catch (error) {\n        throw new Error('Proxy request failed');\n    }\n}"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Server-Side Request Forgery (SSRF)",
+              "cwe": "CWE-918",
+              "severity": "high",
+              "description": "Server-Side Request Forgery in webhook"
+            }
+          ],
+          "expectedFix": "Validate outbound targets and restrict requests with allowlists/network controls.",
+          "metrics": {
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "benchmark_additional_10",
+          "testCaseName": "Prototype Pollution - Prototype pollution via recursive merge",
+          "run": 1,
+          "success": true,
+          "responseTime": 3590,
+          "detected": 1,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The recursiveMerge function is vulnerable to prototype pollution due to the lack of protection against the __proto__ property, allowing an attacker to modify the prototype of objects and potentially exploit it for malicious purposes.",
+              "type": "Prototype Pollution",
+              "startLine": 4,
+              "endLine": 12,
+              "severity": "high",
+              "suggestedFix": "Modify the recursiveMerge function to explicitly check for the __proto__ property and skip merging it. Here's the secure version:\n\nfunction recursiveMerge(target, source) {\n    for (const key in source) {\n        if (source.hasOwnProperty(key)) {\n            if (key === '__proto__') continue;\n            if (typeof source[key] === 'object' && source[key] !== null) {\n                if (!target[key]) target[key] = {};\n                recursiveMerge(target[key], source[key]);\n            } else {\n                target[key] = source[key];\n            }\n        }\n    }\n    return target;\n}"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Prototype Pollution",
+              "cwe": "CWE-1321",
+              "severity": "high",
+              "description": "Prototype pollution via recursive merge"
+            }
+          ],
+          "expectedFix": "Block dangerous keys and clone/validate objects before merge operations.",
+          "metrics": {
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "juice_shop_3",
+          "testCaseName": "Code Injection - Arbitrary file write via ZIP slip",
+          "run": 1,
+          "success": true,
+          "responseTime": 3277,
+          "detected": 1,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code allows arbitrary file writes via ZIP slip, which can lead to directory traversal and overwrite critical system files. This is a critical vulnerability as it allows an attacker to write files to any location on the server.",
+              "type": "Path Traversal",
+              "startLine": 4,
+              "endLine": 6,
+              "severity": "high",
+              "suggestedFix": "Use a secure method to handle file uploads and ensure that the extracted files are confined to a specific, non-writable directory. Replace the code with:\n\nconst unzipper = require('unzipper');\nconst path = require('path');\nconst fs = require('fs');\n\n// Ensure the upload directory is safe and exists\nconst uploadDir = path.resolve(__dirname, 'safe_upload_dir');\nfs.mkdirSync(uploadDir, { recursive: true });\n\narchive.pipe(unzipper.Extract({ \n  path: uploadDir \n}));"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Code Injection",
+              "cwe": "CWE-95",
+              "severity": "high",
+              "description": "Arbitrary file write via ZIP slip"
+            }
+          ],
+          "expectedFix": "Avoid dynamic code execution and validate or whitelist inputs.",
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 1,
+            "falseNegatives": 1,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "juliet_cwe95_js_01",
+          "testCaseName": "Code Injection - Code injection via eval (adapted from Juliet CWE95)",
+          "run": 1,
+          "success": true,
+          "responseTime": 3183,
+          "detected": 1,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code is vulnerable to Code Injection via the `eval()` function, which allows an attacker to execute arbitrary code by injecting malicious scripts into the input.",
+              "type": "Code Injection",
+              "startLine": 5,
+              "endLine": 5,
+              "severity": "high",
+              "suggestedFix": "Replace the use of `eval()` with a secure alternative such as `new Function()` or a parser that evaluates only safe expressions. For example:\n\nfunction processUserCommand(command) {\n    try {\n        // Use a safer approach to evaluate the command\n        const func = new Function('return ' + command);\n        const result = func();\n        return {\n            success: true,\n            result: result\n        };\n    } catch (error) {\n        return {\n            success: false,\n            error: error.message\n        };\n}"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Code Injection",
+              "cwe": "CWE-95",
+              "severity": "high",
+              "description": "Code injection via eval (adapted from Juliet CWE95)"
+            }
+          ],
+          "expectedFix": "Avoid dynamic code execution and validate or whitelist inputs.",
+          "metrics": {
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "juliet_cwe22_js_01",
+          "testCaseName": "Path Traversal - Path traversal via file access (adapted from Juliet CWE22)",
+          "run": 1,
+          "success": true,
+          "responseTime": 2602,
+          "detected": 1,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code is vulnerable to Path Traversal attacks because it directly appends user-provided input to a base directory without validating or sanitizing it, allowing attackers to access files outside the intended directory.",
+              "type": "Path Traversal",
+              "startLine": 8,
+              "endLine": 8,
+              "severity": "high",
+              "suggestedFix": "Use the `path.resolve()` function to canonicalize the path and ensure it starts with the base directory. Replace:\n\nconst filePath = baseDir + fileName;\n\nWith:\n\nconst filePath = path.resolve(baseDir, fileName);\nif (!filePath.startsWith(baseDir)) {\n  throw new Error('Invalid file path');\n}"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Path Traversal",
+              "cwe": "CWE-22",
+              "severity": "high",
+              "description": "Path traversal via file access (adapted from Juliet CWE22)"
+            }
+          ],
+          "expectedFix": "Canonicalize paths and restrict access to approved directories.",
+          "metrics": {
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "nodegoat_session-fixation",
+          "testCaseName": "Authentication Bypass - Session fixation vulnerability",
+          "run": 1,
+          "success": true,
+          "responseTime": 1661,
+          "detected": 1,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code lacks proper session management and could be vulnerable to session fixation attacks if the session ID is not regenerated upon login.",
+              "type": "Session Fixation",
+              "startLine": 5,
+              "endLine": 10,
+              "severity": "high",
+              "suggestedFix": "Regenerate the session ID upon successful login to prevent session fixation. Example:\n\nreq.session.regenerate((err) => {\n  if (err) return next(err);\n  // Proceed with login logic\n});"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Authentication Bypass",
+              "cwe": "CWE-384",
+              "severity": "high",
+              "description": "Session fixation vulnerability"
+            }
+          ],
+          "expectedFix": "Regenerate session IDs after authentication and set secure session flags.",
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 1,
+            "falseNegatives": 1,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "juice_shop_1",
+          "testCaseName": "SQL Injection - SQL injection in user login",
+          "run": 1,
+          "success": true,
+          "responseTime": 911,
+          "detected": 1,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code is secure and does not contain any exploitable vulnerabilities.",
+              "type": "None",
+              "startLine": 1,
+              "endLine": 1,
+              "severity": "low",
+              "suggestedFix": "No fix needed, the code is secure."
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "SQL Injection",
+              "cwe": "CWE-89",
+              "severity": "high",
+              "description": "SQL injection in user login"
+            }
+          ],
+          "expectedFix": "Use parameterized SQL queries or prepared statements.",
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 1,
+            "falseNegatives": 1,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "juliet_cwe89_js_01",
+          "testCaseName": "SQL Injection - SQL injection via string concatenation (adapted from Juliet CWE89)",
+          "run": 1,
+          "success": true,
+          "responseTime": 2408,
+          "detected": 1,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code is vulnerable to SQL injection because it directly concatenates user input into the SQL query string, allowing an attacker to manipulate the query and access unauthorized data.",
+              "type": "SQL Injection",
+              "startLine": 10,
+              "endLine": 10,
+              "severity": "high",
+              "suggestedFix": "Use parameterized queries to prevent SQL injection. Replace the line:\n\nconst query = \"SELECT * FROM users WHERE id = \" + userId;\n\nwith:\n\nconst query = \"SELECT * FROM users WHERE id = ?\";\nconnection.query(query, [userId], (error, results) => { ... });"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "SQL Injection",
+              "cwe": "CWE-89",
+              "severity": "high",
+              "description": "SQL injection via string concatenation (adapted from Juliet CWE89)"
+            }
+          ],
+          "expectedFix": "Use parameterized SQL queries or prepared statements.",
+          "metrics": {
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "owasp_bench_sql_01",
+          "testCaseName": "SQL Injection - SQL injection in search functionality (OWASP Benchmark pattern)",
+          "run": 1,
+          "success": true,
+          "responseTime": 2392,
+          "detected": 1,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code is vulnerable to SQL Injection because it directly concatenates user input into the SQL query string, allowing an attacker to manipulate the query and access unauthorized data.",
+              "type": "SQL Injection",
+              "startLine": 7,
+              "endLine": 7,
+              "severity": "high",
+              "suggestedFix": "Use parameterized queries to prevent SQL injection. Replace the vulnerable line with:\n\nconst query = 'SELECT * FROM products WHERE name LIKE ?';\n\nThen execute the query with parameters:\n\ndb.all(query, [`%${searchTerm}%`], (err, rows) => { ... });"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "SQL Injection",
+              "cwe": "CWE-89",
+              "severity": "high",
+              "description": "SQL injection in search functionality (OWASP Benchmark pattern)"
+            }
+          ],
+          "expectedFix": "Use parameterized SQL queries or prepared statements.",
+          "metrics": {
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "juice_shop_2",
+          "testCaseName": "Cross-Site Scripting (XSS) - DOM-based XSS in search",
+          "run": 1,
+          "success": true,
+          "responseTime": 1837,
+          "detected": 1,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code is vulnerable to DOM-based XSS because it directly inserts user input into the HTML content without sanitization, allowing attackers to inject malicious scripts.",
+              "type": "XSS",
+              "startLine": 3,
+              "endLine": 6,
+              "severity": "medium",
+              "suggestedFix": "Use DOMPurify to sanitize the user input before inserting it into the HTML content. Replace the line with: `element.innerHTML = DOMPurify.sanitize(searchValue)`."
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Cross-Site Scripting (XSS)",
+              "cwe": "CWE-79",
+              "severity": "medium",
+              "description": "DOM-based XSS in search"
+            }
+          ],
+          "expectedFix": "Escape/sanitize untrusted content and avoid unsafe DOM sinks.",
+          "metrics": {
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "juliet_cwe79_js_01",
+          "testCaseName": "Cross-Site Scripting (XSS) - Cross-site scripting via innerHTML (adapted from Juliet CWE79)",
+          "run": 1,
+          "success": true,
+          "responseTime": 2520,
+          "detected": 1,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code is vulnerable to Cross-site scripting (XSS) because it directly inserts untrusted user input into the DOM using innerHTML without sanitization, allowing attackers to inject malicious scripts.",
+              "type": "XSS",
+              "startLine": 6,
+              "endLine": 6,
+              "severity": "high",
+              "suggestedFix": "Replace `messageContainer.innerHTML = \"<div class='message'>\" + userInput + \"</div>\";` with `messageContainer.innerHTML = '<div class='message'>&#39; + userInput + '&#39;</div>';` or use `textContent` instead of `innerHTML` for non-HTML content."
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Cross-Site Scripting (XSS)",
+              "cwe": "CWE-79",
+              "severity": "high",
+              "description": "Cross-site scripting via innerHTML (adapted from Juliet CWE79)"
+            }
+          ],
+          "expectedFix": "Escape/sanitize untrusted content and avoid unsafe DOM sinks.",
+          "metrics": {
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "owasp_bench_xss_01",
+          "testCaseName": "Cross-Site Scripting (XSS) - XSS in dynamic content generation (OWASP Benchmark pattern)",
+          "run": 1,
+          "success": true,
+          "responseTime": 4288,
+          "detected": 1,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code is vulnerable to XSS (Cross-Site Scripting) because it directly interpolates user-provided data into HTML without escaping or sanitizing it, allowing attackers to inject malicious scripts.",
+              "type": "XSS",
+              "startLine": 9,
+              "endLine": 11,
+              "severity": "high",
+              "suggestedFix": "Use a safer method to insert HTML content, such as using `textContent` or a library like DOMPurify to sanitize the input. Replace the vulnerable code with:\n\n\nconst profileHtml = `\\n    <div class=\"profile\">\\n        <h2>Profile: ${encodeURIComponent(userName)}</h2>\\n        <div class=\"bio\">${encodeURIComponent(userBio)}</div>\\n    </div>\\n`;\n\nOr use DOMPurify:\n\n\nconst profileHtml = `\\n    <div class=\"profile\">\\n        <h2>Profile: ${userName}</h2>\\n        <div class=\"bio\">${DOMPurify.sanitize(userBio)}</div>\\n    </div>\\n`;\n\nThen update the innerHTML assignment."
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Cross-Site Scripting (XSS)",
+              "cwe": "CWE-79",
+              "severity": "high",
+              "description": "XSS in dynamic content generation (OWASP Benchmark pattern)"
+            }
+          ],
+          "expectedFix": "Escape/sanitize untrusted content and avoid unsafe DOM sinks.",
+          "metrics": {
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "devign_fallback_01",
+          "testCaseName": "SQL Injection - SQL injection pattern (Devign-style)",
+          "run": 1,
+          "success": true,
+          "responseTime": 1999,
+          "detected": 1,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code is vulnerable to SQL Injection because it directly concatenates user input into the SQL query, allowing an attacker to manipulate the query structure.",
+              "type": "SQL Injection",
+              "startLine": 2,
+              "endLine": 4,
+              "severity": "high",
+              "suggestedFix": "Use parameterized queries to safely handle user input. Replace the code with:\n\nfunction queryUser(userId) {\n    const query = 'SELECT * FROM users WHERE id = ?';\n    return database.execute(query, [userId]);\n}"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "SQL Injection",
+              "cwe": "CWE-89",
+              "severity": "high",
+              "description": "SQL injection pattern (Devign-style)"
+            }
+          ],
+          "expectedFix": "Use parameterized SQL queries or prepared statements.",
+          "metrics": {
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "devign_fallback_02",
+          "testCaseName": "Command Injection - Command injection vulnerability (Devign-style)",
+          "run": 1,
+          "success": true,
+          "responseTime": 2550,
+          "detected": 1,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code is vulnerable to command injection because it directly concatenates user input into a shell command without proper sanitization or validation, allowing an attacker to execute arbitrary commands.",
+              "type": "Command Injection",
+              "startLine": 3,
+              "endLine": 7,
+              "severity": "high",
+              "suggestedFix": "Use the `execFile` method instead of `exec` to avoid shell injection. Replace the vulnerable code with:\n\nconst { execFile } = require('child_process');\n\nfunction processFile(filename) {\n    // Validate and sanitize filename if necessary\n    execFile('file', [filename], (error, stdout, stderr) => {\n        console.log(stdout);\n    });\n}"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Command Injection",
+              "cwe": "CWE-78",
+              "severity": "high",
+              "description": "Command injection vulnerability (Devign-style)"
+            }
+          ],
+          "expectedFix": "Use safe process APIs and never concatenate untrusted input into commands.",
+          "metrics": {
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "devign_fallback_03",
+          "testCaseName": "Cross-Site Scripting (XSS) - XSS vulnerability in DOM manipulation (Devign-style)",
+          "run": 1,
+          "success": true,
+          "responseTime": 3899,
+          "detected": 2,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code is vulnerable to XSS (Cross-Site Scripting) because it directly inserts untrusted user input into the DOM using innerHTML, allowing attackers to inject malicious scripts.",
+              "type": "XSS",
+              "startLine": 4,
+              "endLine": 6,
+              "severity": "high",
+              "suggestedFix": "Replace the use of innerHTML with textContent or a safe HTML sanitizer like DOMPurify. Example:\n\ncontainer.innerHTML = '<div class=\"message\">' + DOMPurify.sanitize(userMessage) + '</div>';"
+            },
+            {
+              "message": "The code is vulnerable to XSS because it directly inserts untrusted user input into the DOM using innerHTML, allowing attackers to inject malicious scripts.",
+              "type": "XSS",
+              "startLine": 9,
+              "endLine": 11,
+              "severity": "high",
+              "suggestedFix": "Replace the use of innerHTML with textContent or a safe HTML sanitizer like DOMPurify. Example:\n\ndocument.getElementById('userName').textContent = name;\ndocument.getElementById('userBio').textContent = bio;"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Cross-Site Scripting (XSS)",
+              "cwe": "CWE-79",
+              "severity": "high",
+              "description": "XSS vulnerability in DOM manipulation (Devign-style)"
+            }
+          ],
+          "expectedFix": "Escape/sanitize untrusted content and avoid unsafe DOM sinks.",
+          "metrics": {
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "devign_fallback_04",
+          "testCaseName": "Path Traversal - Path traversal in file operations (Devign-style)",
+          "run": 1,
+          "success": true,
+          "responseTime": 3321,
+          "detected": 1,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code is vulnerable to path traversal attacks because it directly concatenates user input into the file path without validation, allowing attackers to access arbitrary files.",
+              "type": "Path Traversal",
+              "startLine": 4,
+              "endLine": 10,
+              "severity": "high",
+              "suggestedFix": "Use path resolution with a base directory and validate the resolved path to ensure it stays within the allowed directory. Replace the vulnerable code with:\n\nconst path = require('path');\n\nfunction readUserFile(userId, filename) {\n    const baseDir = './users/';\n    const filepath = path.resolve(baseDir, userId, filename);\n\n    if (!filepath.startsWith(baseDir)) {\n        throw new Error('Invalid file path');\n    }\n\n    try {\n        return fs.readFileSync(filepath, 'utf8');\n    } catch (error) {\n        throw new Error('File not found');\n    }\n}"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Path Traversal",
+              "cwe": "CWE-22",
+              "severity": "high",
+              "description": "Path traversal in file operations (Devign-style)"
+            }
+          ],
+          "expectedFix": "Canonicalize paths and restrict access to approved directories.",
+          "metrics": {
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "devign_fallback_05",
+          "testCaseName": "Insecure Deserialization - Insecure deserialization vulnerability (Devign-style)",
+          "run": 1,
+          "success": true,
+          "responseTime": 3863,
+          "detected": 2,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code uses eval() for deserialization, which is highly vulnerable to code injection attacks. An attacker can inject arbitrary code through the serializedData parameter, leading to remote code execution.",
+              "type": "Code Injection",
+              "startLine": 2,
+              "endLine": 5,
+              "severity": "high",
+              "suggestedFix": "Replace the use of eval() with a secure deserialization method. For example, use JSON.parse() if the data is known to be JSON:\n\nconst userData = JSON.parse(serializedData);"
+            },
+            {
+              "message": "The code uses eval() for deserialization in the deserializeConfig function, which is vulnerable to code injection. An attacker can inject arbitrary code through the configString parameter, leading to remote code execution.",
+              "type": "Code Injection",
+              "startLine": 8,
+              "endLine": 11,
+              "severity": "high",
+              "suggestedFix": "Replace the use of eval() with a secure deserialization method. For example, use JSON.parse() if the data is known to be JSON:\n\nconst config = JSON.parse(configString);"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Insecure Deserialization",
+              "cwe": "CWE-502",
+              "severity": "high",
+              "description": "Insecure deserialization vulnerability (Devign-style)"
+            }
+          ],
+          "expectedFix": "Use safe serializers or strict type/schema validation.",
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 1,
+            "falseNegatives": 1,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "devign_fallback_06",
+          "testCaseName": "Improper Authentication - Weak authentication bypass (Devign-style)",
+          "run": 1,
+          "success": true,
+          "responseTime": 3552,
+          "detected": 2,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code uses a simple equality check for password comparison, which is vulnerable to timing attacks. Attackers can measure the time it takes to perform the comparison and infer whether the password is correct.",
+              "type": "Timing Attack",
+              "startLine": 6,
+              "endLine": 6,
+              "severity": "medium",
+              "suggestedFix": "Use a constant-time password comparison function to prevent timing attacks. Replace `user.password === password` with `crypto.timingSafeEqual(user.password, password)`."
+            },
+            {
+              "message": "The code uses a simple equality check for username comparison, which is vulnerable to bypass if the username is case-insensitive or if there are special characters that are not properly handled.",
+              "type": "Authentication Bypass",
+              "startLine": 4,
+              "endLine": 4,
+              "severity": "medium",
+              "suggestedFix": "Use a case-insensitive comparison and sanitize the username input. Replace `username == 'admin'` with `username.toLowerCase() === 'admin'.toLowerCase()`."
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Improper Authentication",
+              "cwe": "CWE-287",
+              "severity": "high",
+              "description": "Weak authentication bypass (Devign-style)"
+            }
+          ],
+          "expectedFix": "Enforce robust authentication and fail securely on invalid auth state.",
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 2,
+            "falseNegatives": 1,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "bigvul_fallback_01",
+          "testCaseName": "SQL Injection - SQL injection vulnerability (Big-Vul style)",
+          "run": 1,
+          "success": true,
+          "responseTime": 2135,
+          "detected": 1,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "This code is vulnerable to SQL Injection because it directly concatenates user input into the SQL query string, allowing an attacker to manipulate the SQL query and potentially access or modify unauthorized data.",
+              "type": "SQL Injection",
+              "startLine": 2,
+              "endLine": 4,
+              "severity": "high",
+              "suggestedFix": "Use parameterized queries to safely handle user input. Replace the code with:\n\nfunction searchRecords(term) {\n    const sql = 'SELECT * FROM records WHERE title LIKE ?';\n    return db.query(sql, [`%${term}%`]);\n}"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "SQL Injection",
+              "cwe": "CWE-89",
+              "severity": "high",
+              "description": "SQL injection vulnerability (Big-Vul style)"
+            }
+          ],
+          "expectedFix": "Use parameterized SQL queries or prepared statements.",
+          "metrics": {
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "bigvul_fallback_02",
+          "testCaseName": "Prototype Pollution - Prototype pollution vulnerability (Big-Vul style)",
+          "run": 1,
+          "success": true,
+          "responseTime": 7580,
+          "detected": 2,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The merge function is vulnerable to prototype pollution due to the lack of protection against the '__proto__' key, which can be used to modify the prototype chain of objects.",
+              "type": "Prototype Pollution",
+              "startLine": 2,
+              "endLine": 10,
+              "severity": "high",
+              "suggestedFix": "Modify the merge function to exclude the '__proto__' key and ensure it is not used for merging. Here is a secure version:\n\nfunction merge(target, source) {\n    for (let key in source) {\n        if (key === '__proto__' || key === 'constructor') continue;\n        if (typeof source[key] === 'object' && source[key] !== null) {\n            if (!target[key]) target[key] = {};\n            merge(target[key], source[key]);\n        } else {\n            target[key] = source[key];\n        }\n    }\n    return target;\n}"
+            },
+            {
+              "message": "The setPath function is vulnerable to prototype pollution because it does not validate the final key, allowing an attacker to inject keys like '__proto__' to modify the prototype chain.",
+              "type": "Prototype Pollution",
+              "startLine": 12,
+              "endLine": 18,
+              "severity": "high",
+              "suggestedFix": "Modify the setPath function to validate the final key and prevent prototype pollution. Here is a secure version:\n\nfunction setPath(object, path, value) {\n    const keys = path.split('.');\n    let current = object;\n\n    for (let i = 0; i < keys.length - 1; i++) {\n        const key = keys[i];\n        if (!current[key]) current[key] = {};\n        current = current[key];\n    }\n\n    // Validate the final key to prevent prototype pollution\n    const finalKey = keys[keys.length - 1];\n    if (finalKey === '__proto__' || finalKey === 'constructor') {\n        throw new Error('Invalid key name');\n    }\n\n    current[finalKey] = value;\n}"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Prototype Pollution",
+              "cwe": "CWE-1321",
+              "severity": "high",
+              "description": "Prototype pollution vulnerability (Big-Vul style)"
+            }
+          ],
+          "expectedFix": "Block dangerous keys and clone/validate objects before merge operations.",
+          "metrics": {
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "bigvul_fallback_03",
+          "testCaseName": "Path Traversal - Express.js path traversal (Big-Vul style)",
+          "run": 1,
+          "success": true,
+          "responseTime": 3706,
+          "detected": 1,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code is vulnerable to path traversal attacks because it directly uses user-provided input in the file path without validating or sanitizing it, allowing attackers to access arbitrary files on the server.",
+              "type": "Path Traversal",
+              "startLine": 7,
+              "endLine": 14,
+              "severity": "high",
+              "suggestedFix": "Use path validation to ensure the file is within the allowed directory. Replace the vulnerable code with the following:\n\nconst allowedDir = path.resolve(__dirname, 'static');\nconst filePath = path.join(allowedDir, req.params.file);\nconst resolvedPath = path.resolve(filePath);\n\nif (resolvedPath.startsWith(allowedDir)) {\n  fs.readFile(resolvedPath, (err, data) => {\n    if (err) {\n      res.status(404).send('File not found');\n    } else {\n      res.send(data);\n    }\n  });\n} else {\n  res.status(403).send('Forbidden');\n}"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Path Traversal",
+              "cwe": "CWE-22",
+              "severity": "high",
+              "description": "Express.js path traversal (Big-Vul style)"
+            }
+          ],
+          "expectedFix": "Canonicalize paths and restrict access to approved directories.",
+          "metrics": {
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "bigvul_fallback_04",
+          "testCaseName": "Weak Cryptography - Weak cryptographic implementation (Big-Vul style)",
+          "run": 1,
+          "success": true,
+          "responseTime": 5520,
+          "detected": 3,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code uses Math.random() for generating random bytes, which is not cryptographically secure and can lead to predictable values.",
+              "type": "Weak Random Number Generation",
+              "startLine": 5,
+              "endLine": 9,
+              "severity": "high",
+              "suggestedFix": "Use the crypto module's secure random number generator instead of Math.random().\n\nconst randomBytes = crypto.randomBytes(16);\nreturn randomBytes.toString('base64');"
+            },
+            {
+              "message": "The code uses MD5 for password hashing, which is a weak and outdated cryptographic algorithm that is vulnerable to collision and rainbow table attacks.",
+              "type": "Weak Hashing Algorithm",
+              "startLine": 11,
+              "endLine": 15,
+              "severity": "high",
+              "suggestedFix": "Use a strong, modern hashing algorithm like bcrypt or Argon2.\n\nconst hash = bcrypt.hashSync(password + salt, 10);"
+            },
+            {
+              "message": "The code uses the deprecated DES cipher, which is insecure and vulnerable to brute-force attacks due to its short key length.",
+              "type": "Weak Cipher Algorithm",
+              "startLine": 17,
+              "endLine": 23,
+              "severity": "high",
+              "suggestedFix": "Use a modern and secure cipher like AES.\n\nconst cipher = crypto.createCipher('aes-256-cbc', key);\nlet encrypted = cipher.update(data, 'utf8', 'hex');\nencrypted += cipher.final('hex');\nreturn encrypted;"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Weak Cryptography",
+              "cwe": "CWE-327",
+              "severity": "medium",
+              "description": "Weak cryptographic implementation (Big-Vul style)"
+            }
+          ],
+          "expectedFix": "Use strong algorithms and secure key generation/management.",
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 3,
+            "falseNegatives": 1,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 0.6666666666666666
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "bigvul_fallback_05",
+          "testCaseName": "Cross-Site Scripting (XSS) - React DOM XSS vulnerability (Big-Vul style)",
+          "run": 1,
+          "success": true,
+          "responseTime": 4565,
+          "detected": 2,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The use of dangerouslySetInnerHTML without sanitization allows for XSS attacks as user-provided data is rendered as HTML without validation.",
+              "type": "XSS",
+              "startLine": 6,
+              "endLine": 9,
+              "severity": "high",
+              "suggestedFix": "Replace the use of dangerouslySetInnerHTML with a safer alternative like textContent or a sanitization library like DOMPurify.\n\nSecure code replacement:\n\n<div className=\"bio\" dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(userData.bio)}} />\n\nOr use textContent:\n\n<div className=\"bio\">{userData.bio}</div>"
+            },
+            {
+              "message": "The use of dangerouslySetInnerHTML without sanitization allows for XSS attacks as user-provided data is rendered as HTML without validation.",
+              "type": "XSS",
+              "startLine": 13,
+              "endLine": 16,
+              "severity": "high",
+              "suggestedFix": "Replace the use of dangerouslySetInnerHTML with a safer alternative like textContent or a sanitization library like DOMPurify.\n\nSecure code replacement:\n\n<div dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(commentHtml)}} />\n\nOr use textContent:\n\n<div>{commentHtml}</div>"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Cross-Site Scripting (XSS)",
+              "cwe": "CWE-79",
+              "severity": "high",
+              "description": "React DOM XSS vulnerability (Big-Vul style)"
+            }
+          ],
+          "expectedFix": "Escape/sanitize untrusted content and avoid unsafe DOM sinks.",
+          "metrics": {
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "bigvul_fallback_06",
+          "testCaseName": "Prototype Pollution - Lodash template prototype pollution (Big-Vul style)",
+          "run": 1,
+          "success": true,
+          "responseTime": 8906,
+          "detected": 2,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code is vulnerable to prototype pollution via template injection. The `template` function allows arbitrary key injection into the data object, which can overwrite or delete prototype properties, leading to potential code execution or data corruption.",
+              "type": "Prototype Pollution",
+              "startLine": 3,
+              "endLine": 11,
+              "severity": "high",
+              "suggestedFix": "Use a secure template engine that prevents prototype pollution. Replace the custom template function with a safer alternative like Handlebars or use a whitelist for keys. Example:\n\nfunction template(templateString, data) {\n    const template = Handlebars.compile(templateString);\n    return template(data);\n}\n\nfunction processTemplate(userInput, templateData) {\n    try {\n        const parsed = JSON.parse(userInput);\n        const merged = Object.assign({}, templateData, parsed);\n        return template('Hello {{name}}, your role is {{role}}', merged);\n    } catch (e) {\n        console.error('Invalid JSON input');\n        return 'Invalid input';\n    }\n}"
+            },
+            {
+              "message": "The `processTemplate` function uses `JSON.parse(userInput)` without validation, which can lead to code injection if the input is not properly sanitized. This allows an attacker to inject malicious code into the template data.",
+              "type": "Code Injection",
+              "startLine": 13,
+              "endLine": 17,
+              "severity": "high",
+              "suggestedFix": "Validate and sanitize the user input before parsing. Use a JSON schema or a library like Ajv to validate the structure. Example:\n\nfunction processTemplate(userInput, templateData) {\n    try {\n        const parsed = JSON.parse(userInput);\n        // Validate parsed data against a schema\n        const isValid = validateSchema(parsed);\n        if (isValid) {\n            const merged = Object.assign({}, templateData, parsed);\n            return template('Hello {{name}}, your role is {{role}}', merged);\n        }\n        throw new Error('Invalid JSON structure');\n    } catch (e) {\n        console.error('Invalid JSON input');\n        return 'Invalid input';\n    }\n}\n\nfunction validateSchema(data) {\n    // Implement schema validation logic here\n    return true; // Placeholder\n}"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Prototype Pollution",
+              "cwe": "CWE-1321",
+              "severity": "high",
+              "description": "Lodash template prototype pollution (Big-Vul style)"
+            }
+          ],
+          "expectedFix": "Block dangerous keys and clone/validate objects before merge operations.",
+          "metrics": {
+            "truePositives": 1,
+            "falsePositives": 1,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "devign_fallback_01-extended-1",
+          "testCaseName": "SQL Injection - SQL injection pattern (Devign-style)",
+          "run": 1,
+          "success": true,
+          "responseTime": 2263,
+          "detected": 1,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code is vulnerable to SQL Injection because it directly concatenates user input into the SQL query, allowing an attacker to manipulate the query structure.",
+              "type": "SQL Injection",
+              "startLine": 2,
+              "endLine": 4,
+              "severity": "high",
+              "suggestedFix": "Use parameterized queries to safely handle user input. Replace the code with:\n\nfunction queryUser(userId) {\n    const query = 'SELECT * FROM users WHERE id = ?';\n    return database.execute(query, [userId]);\n}"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "SQL Injection",
+              "cwe": "CWE-89",
+              "severity": "high",
+              "description": "SQL injection pattern (Devign-style)"
+            }
+          ],
+          "expectedFix": "Use parameterized SQL queries or prepared statements.",
+          "metrics": {
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "devign_fallback_02-extended-1",
+          "testCaseName": "Command Injection - Command injection vulnerability (Devign-style)",
+          "run": 1,
+          "success": true,
+          "responseTime": 2948,
+          "detected": 1,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code is vulnerable to command injection because it directly concatenates user input into a shell command without proper sanitization or validation, allowing an attacker to execute arbitrary commands.",
+              "type": "Command Injection",
+              "startLine": 3,
+              "endLine": 7,
+              "severity": "high",
+              "suggestedFix": "Use the `execFile` method instead of `exec` to avoid shell injection. Replace the vulnerable code with:\n\nconst { execFile } = require('child_process');\n\nfunction processFile(filename) {\n    // Validate and sanitize filename if necessary\n    execFile('file', [filename], (error, stdout, stderr) => {\n        console.log(stdout);\n    });\n}"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Command Injection",
+              "cwe": "CWE-78",
+              "severity": "high",
+              "description": "Command injection vulnerability (Devign-style)"
+            }
+          ],
+          "expectedFix": "Use safe process APIs and never concatenate untrusted input into commands.",
+          "metrics": {
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "devign_fallback_03-extended-1",
+          "testCaseName": "Cross-Site Scripting (XSS) - XSS vulnerability in DOM manipulation (Devign-style)",
+          "run": 1,
+          "success": true,
+          "responseTime": 4464,
+          "detected": 2,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code is vulnerable to XSS (Cross-Site Scripting) because it directly inserts untrusted user input into the DOM using innerHTML, allowing attackers to inject malicious scripts.",
+              "type": "XSS",
+              "startLine": 4,
+              "endLine": 6,
+              "severity": "high",
+              "suggestedFix": "Replace the use of innerHTML with textContent or a safe HTML sanitizer like DOMPurify. Example:\n\ncontainer.innerHTML = '<div class=\"message\">' + DOMPurify.sanitize(userMessage) + '</div>';"
+            },
+            {
+              "message": "The code is vulnerable to XSS because it directly inserts untrusted user input into the DOM using innerHTML, allowing attackers to inject malicious scripts.",
+              "type": "XSS",
+              "startLine": 9,
+              "endLine": 11,
+              "severity": "high",
+              "suggestedFix": "Replace the use of innerHTML with textContent or a safe HTML sanitizer like DOMPurify. Example:\n\ndocument.getElementById('userName').textContent = name;\ndocument.getElementById('userBio').textContent = bio;"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Cross-Site Scripting (XSS)",
+              "cwe": "CWE-79",
+              "severity": "high",
+              "description": "XSS vulnerability in DOM manipulation (Devign-style)"
+            }
+          ],
+          "expectedFix": "Escape/sanitize untrusted content and avoid unsafe DOM sinks.",
+          "metrics": {
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "devign_fallback_04-extended-1",
+          "testCaseName": "Path Traversal - Path traversal in file operations (Devign-style)",
+          "run": 1,
+          "success": true,
+          "responseTime": 3461,
+          "detected": 1,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code is vulnerable to path traversal attacks because it directly concatenates user input into the file path without validation, allowing attackers to access arbitrary files.",
+              "type": "Path Traversal",
+              "startLine": 4,
+              "endLine": 10,
+              "severity": "high",
+              "suggestedFix": "Use path resolution with a base directory and validate the resolved path to ensure it stays within the allowed directory. Replace the vulnerable code with:\n\nconst path = require('path');\n\nfunction readUserFile(userId, filename) {\n    const baseDir = './users/';\n    const filepath = path.resolve(baseDir, userId, filename);\n\n    if (!filepath.startsWith(baseDir)) {\n        throw new Error('Invalid file path');\n    }\n\n    try {\n        return fs.readFileSync(filepath, 'utf8');\n    } catch (error) {\n        throw new Error('File not found');\n    }\n}"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Path Traversal",
+              "cwe": "CWE-22",
+              "severity": "high",
+              "description": "Path traversal in file operations (Devign-style)"
+            }
+          ],
+          "expectedFix": "Canonicalize paths and restrict access to approved directories.",
+          "metrics": {
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "devign_fallback_05-extended-1",
+          "testCaseName": "Insecure Deserialization - Insecure deserialization vulnerability (Devign-style)",
+          "run": 1,
+          "success": true,
+          "responseTime": 4106,
+          "detected": 2,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code uses eval() for deserialization, which is highly vulnerable to code injection attacks. An attacker can inject arbitrary code through the serializedData parameter, leading to remote code execution.",
+              "type": "Code Injection",
+              "startLine": 2,
+              "endLine": 5,
+              "severity": "high",
+              "suggestedFix": "Replace the use of eval() with a secure deserialization method. For example, use JSON.parse() if the data is known to be JSON:\n\nconst userData = JSON.parse(serializedData);"
+            },
+            {
+              "message": "The code uses eval() for deserialization in the deserializeConfig function, which is vulnerable to code injection. An attacker can inject arbitrary code through the configString parameter, leading to remote code execution.",
+              "type": "Code Injection",
+              "startLine": 8,
+              "endLine": 11,
+              "severity": "high",
+              "suggestedFix": "Replace the use of eval() with a secure deserialization method. For example, use JSON.parse() if the data is known to be JSON:\n\nconst config = JSON.parse(configString);"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Insecure Deserialization",
+              "cwe": "CWE-502",
+              "severity": "high",
+              "description": "Insecure deserialization vulnerability (Devign-style)"
+            }
+          ],
+          "expectedFix": "Use safe serializers or strict type/schema validation.",
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 1,
+            "falseNegatives": 1,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "devign_fallback_06-extended-1",
+          "testCaseName": "Improper Authentication - Weak authentication bypass (Devign-style)",
+          "run": 1,
+          "success": true,
+          "responseTime": 4496,
+          "detected": 2,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code uses a simple equality check for password comparison, which is vulnerable to timing attacks. Attackers can measure the time it takes to perform the comparison and infer whether the password is correct.",
+              "type": "Timing Attack",
+              "startLine": 6,
+              "endLine": 6,
+              "severity": "medium",
+              "suggestedFix": "Use a constant-time password comparison function to prevent timing attacks. Replace `user.password === password` with `crypto.timingSafeEqual(user.password, password)`."
+            },
+            {
+              "message": "The code uses a simple equality check for username comparison, which is vulnerable to bypass if the username is case-insensitive or if there are special characters that are not properly handled.",
+              "type": "Authentication Bypass",
+              "startLine": 4,
+              "endLine": 4,
+              "severity": "medium",
+              "suggestedFix": "Use a case-insensitive comparison and sanitize the username input. Replace `username == 'admin'` with `username.toLowerCase() === 'admin'.toLowerCase()`."
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Improper Authentication",
+              "cwe": "CWE-287",
+              "severity": "high",
+              "description": "Weak authentication bypass (Devign-style)"
+            }
+          ],
+          "expectedFix": "Enforce robust authentication and fail securely on invalid auth state.",
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 2,
+            "falseNegatives": 1,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "bigvul_fallback_01-extended-1",
+          "testCaseName": "SQL Injection - SQL injection vulnerability (Big-Vul style)",
+          "run": 1,
+          "success": true,
+          "responseTime": 2350,
+          "detected": 1,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "This code is vulnerable to SQL Injection because it directly concatenates user input into the SQL query string, allowing an attacker to manipulate the SQL query and potentially access or modify unauthorized data.",
+              "type": "SQL Injection",
+              "startLine": 2,
+              "endLine": 4,
+              "severity": "high",
+              "suggestedFix": "Use parameterized queries to safely handle user input. Replace the code with:\n\nfunction searchRecords(term) {\n    const sql = 'SELECT * FROM records WHERE title LIKE ?';\n    return db.query(sql, [`%${term}%`]);\n}"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "SQL Injection",
+              "cwe": "CWE-89",
+              "severity": "high",
+              "description": "SQL injection vulnerability (Big-Vul style)"
+            }
+          ],
+          "expectedFix": "Use parameterized SQL queries or prepared statements.",
+          "metrics": {
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "bigvul_fallback_02-extended-1",
+          "testCaseName": "Prototype Pollution - Prototype pollution vulnerability (Big-Vul style)",
+          "run": 1,
+          "success": true,
+          "responseTime": 8758,
+          "detected": 2,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The merge function is vulnerable to prototype pollution due to the lack of protection against the '__proto__' key, which can be used to modify the prototype chain of objects.",
+              "type": "Prototype Pollution",
+              "startLine": 2,
+              "endLine": 10,
+              "severity": "high",
+              "suggestedFix": "Modify the merge function to exclude the '__proto__' key and ensure it is not used for merging. Here is a secure version:\n\nfunction merge(target, source) {\n    for (let key in source) {\n        if (key === '__proto__' || key === 'constructor') continue;\n        if (typeof source[key] === 'object' && source[key] !== null) {\n            if (!target[key]) target[key] = {};\n            merge(target[key], source[key]);\n        } else {\n            target[key] = source[key];\n        }\n    }\n    return target;\n}"
+            },
+            {
+              "message": "The setPath function is vulnerable to prototype pollution because it does not validate the final key, allowing an attacker to inject keys like '__proto__' to modify the prototype chain.",
+              "type": "Prototype Pollution",
+              "startLine": 12,
+              "endLine": 18,
+              "severity": "high",
+              "suggestedFix": "Modify the setPath function to validate the final key and prevent prototype pollution. Here is a secure version:\n\nfunction setPath(object, path, value) {\n    const keys = path.split('.');\n    let current = object;\n\n    for (let i = 0; i < keys.length - 1; i++) {\n        const key = keys[i];\n        if (!current[key]) current[key] = {};\n        current = current[key];\n    }\n\n    // Validate the final key to prevent prototype pollution\n    const finalKey = keys[keys.length - 1];\n    if (finalKey === '__proto__' || finalKey === 'constructor') {\n        throw new Error('Invalid key name');\n    }\n\n    current[finalKey] = value;\n}"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Prototype Pollution",
+              "cwe": "CWE-1321",
+              "severity": "high",
+              "description": "Prototype pollution vulnerability (Big-Vul style)"
+            }
+          ],
+          "expectedFix": "Block dangerous keys and clone/validate objects before merge operations.",
+          "metrics": {
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "bigvul_fallback_03-extended-1",
+          "testCaseName": "Path Traversal - Express.js path traversal (Big-Vul style)",
+          "run": 1,
+          "success": true,
+          "responseTime": 4133,
+          "detected": 1,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code is vulnerable to path traversal attacks because it directly uses user-provided input in the file path without validating or sanitizing it, allowing attackers to access arbitrary files on the server.",
+              "type": "Path Traversal",
+              "startLine": 7,
+              "endLine": 14,
+              "severity": "high",
+              "suggestedFix": "Use path validation to ensure the file is within the allowed directory. Replace the vulnerable code with the following:\n\nconst allowedDir = path.resolve(__dirname, 'static');\nconst filePath = path.join(allowedDir, req.params.file);\nconst resolvedPath = path.resolve(filePath);\n\nif (resolvedPath.startsWith(allowedDir)) {\n  fs.readFile(resolvedPath, (err, data) => {\n    if (err) {\n      res.status(404).send('File not found');\n    } else {\n      res.send(data);\n    }\n  });\n} else {\n  res.status(403).send('Forbidden');\n}"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Path Traversal",
+              "cwe": "CWE-22",
+              "severity": "high",
+              "description": "Express.js path traversal (Big-Vul style)"
+            }
+          ],
+          "expectedFix": "Canonicalize paths and restrict access to approved directories.",
+          "metrics": {
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "bigvul_fallback_04-extended-1",
+          "testCaseName": "Weak Cryptography - Weak cryptographic implementation (Big-Vul style)",
+          "run": 1,
+          "success": true,
+          "responseTime": 6185,
+          "detected": 3,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code uses Math.random() for generating random bytes, which is not cryptographically secure and can lead to predictable values.",
+              "type": "Weak Random Number Generation",
+              "startLine": 5,
+              "endLine": 9,
+              "severity": "high",
+              "suggestedFix": "Use the crypto module's secure random number generator instead of Math.random().\n\nconst randomBytes = crypto.randomBytes(16);\nreturn randomBytes.toString('base64');"
+            },
+            {
+              "message": "The code uses MD5 for password hashing, which is a weak and outdated cryptographic algorithm that is vulnerable to collision and rainbow table attacks.",
+              "type": "Weak Hashing Algorithm",
+              "startLine": 11,
+              "endLine": 15,
+              "severity": "high",
+              "suggestedFix": "Use a strong, modern hashing algorithm like bcrypt or Argon2.\n\nconst hash = bcrypt.hashSync(password + salt, 10);"
+            },
+            {
+              "message": "The code uses the deprecated DES cipher, which is insecure and vulnerable to brute-force attacks due to its short key length.",
+              "type": "Weak Cipher Algorithm",
+              "startLine": 17,
+              "endLine": 23,
+              "severity": "high",
+              "suggestedFix": "Use a modern and secure cipher like AES.\n\nconst cipher = crypto.createCipher('aes-256-cbc', key);\nlet encrypted = cipher.update(data, 'utf8', 'hex');\nencrypted += cipher.final('hex');\nreturn encrypted;"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Weak Cryptography",
+              "cwe": "CWE-327",
+              "severity": "medium",
+              "description": "Weak cryptographic implementation (Big-Vul style)"
+            }
+          ],
+          "expectedFix": "Use strong algorithms and secure key generation/management.",
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 3,
+            "falseNegatives": 1,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 0.6666666666666666
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "bigvul_fallback_05-extended-1",
+          "testCaseName": "Cross-Site Scripting (XSS) - React DOM XSS vulnerability (Big-Vul style)",
+          "run": 1,
+          "success": true,
+          "responseTime": 5027,
+          "detected": 2,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The use of dangerouslySetInnerHTML without sanitization allows for XSS attacks as user-provided data is rendered as HTML without validation.",
+              "type": "XSS",
+              "startLine": 6,
+              "endLine": 9,
+              "severity": "high",
+              "suggestedFix": "Replace the use of dangerouslySetInnerHTML with a safer alternative like textContent or a sanitization library like DOMPurify.\n\nSecure code replacement:\n\n<div className=\"bio\" dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(userData.bio)}} />\n\nOr use textContent:\n\n<div className=\"bio\">{userData.bio}</div>"
+            },
+            {
+              "message": "The use of dangerouslySetInnerHTML without sanitization allows for XSS attacks as user-provided data is rendered as HTML without validation.",
+              "type": "XSS",
+              "startLine": 13,
+              "endLine": 16,
+              "severity": "high",
+              "suggestedFix": "Replace the use of dangerouslySetInnerHTML with a safer alternative like textContent or a sanitization library like DOMPurify.\n\nSecure code replacement:\n\n<div dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(commentHtml)}} />\n\nOr use textContent:\n\n<div>{commentHtml}</div>"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Cross-Site Scripting (XSS)",
+              "cwe": "CWE-79",
+              "severity": "high",
+              "description": "React DOM XSS vulnerability (Big-Vul style)"
+            }
+          ],
+          "expectedFix": "Escape/sanitize untrusted content and avoid unsafe DOM sinks.",
+          "metrics": {
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "bigvul_fallback_06-extended-1",
+          "testCaseName": "Prototype Pollution - Lodash template prototype pollution (Big-Vul style)",
+          "run": 1,
+          "success": true,
+          "responseTime": 8976,
+          "detected": 2,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code is vulnerable to prototype pollution via template injection. The `template` function allows arbitrary key injection into the data object, which can overwrite or delete prototype properties, leading to potential code execution or data corruption.",
+              "type": "Prototype Pollution",
+              "startLine": 3,
+              "endLine": 11,
+              "severity": "high",
+              "suggestedFix": "Use a secure template engine that prevents prototype pollution. Replace the custom template function with a safer alternative like Handlebars or use a whitelist for keys. Example:\n\nfunction template(templateString, data) {\n    const template = Handlebars.compile(templateString);\n    return template(data);\n}\n\nfunction processTemplate(userInput, templateData) {\n    try {\n        const parsed = JSON.parse(userInput);\n        const merged = Object.assign({}, templateData, parsed);\n        return template('Hello {{name}}, your role is {{role}}', merged);\n    } catch (e) {\n        console.error('Invalid JSON input');\n        return 'Invalid input';\n    }\n}"
+            },
+            {
+              "message": "The `processTemplate` function uses `JSON.parse(userInput)` without validation, which can lead to code injection if the input is not properly sanitized. This allows an attacker to inject malicious code into the template data.",
+              "type": "Code Injection",
+              "startLine": 13,
+              "endLine": 17,
+              "severity": "high",
+              "suggestedFix": "Validate and sanitize the user input before parsing. Use a JSON schema or a library like Ajv to validate the structure. Example:\n\nfunction processTemplate(userInput, templateData) {\n    try {\n        const parsed = JSON.parse(userInput);\n        // Validate parsed data against a schema\n        const isValid = validateSchema(parsed);\n        if (isValid) {\n            const merged = Object.assign({}, templateData, parsed);\n            return template('Hello {{name}}, your role is {{role}}', merged);\n        }\n        throw new Error('Invalid JSON structure');\n    } catch (e) {\n        console.error('Invalid JSON input');\n        return 'Invalid input';\n    }\n}\n\nfunction validateSchema(data) {\n    // Implement schema validation logic here\n    return true; // Placeholder\n}"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Prototype Pollution",
+              "cwe": "CWE-1321",
+              "severity": "high",
+              "description": "Lodash template prototype pollution (Big-Vul style)"
+            }
+          ],
+          "expectedFix": "Block dangerous keys and clone/validate objects before merge operations.",
+          "metrics": {
+            "truePositives": 1,
+            "falsePositives": 1,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "extended_memory_leak_01",
+          "testCaseName": "Memory Leak - Memory leak via event listener accumulation",
+          "run": 1,
+          "success": true,
+          "responseTime": 357,
+          "detected": 0,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [],
+          "expectedVulnerabilities": [
+            {
+              "type": "Memory Leak",
+              "cwe": "CWE-401",
+              "severity": "medium",
+              "description": "Memory leak via event listener accumulation"
+            }
+          ],
+          "expectedFix": "Release resources deterministically and avoid unbounded allocations.",
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 0,
+            "falseNegatives": 1,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": null
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "extended_async_race_01",
+          "testCaseName": "Race Condition - Async race condition in data processing",
+          "run": 1,
+          "success": true,
+          "responseTime": 4135,
+          "detected": 1,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code has a race condition where multiple asynchronous calls can interfere with each other, leading to data corruption or missed processing. This is exploitable because the state is not properly synchronized across asynchronous operations.",
+              "type": "Race Condition",
+              "startLine": 6,
+              "endLine": 12,
+              "severity": "high",
+              "suggestedFix": "Use a mutex or lock mechanism to ensure exclusive access to shared state during processing. Example:\n\nclass DataProcessor {\n    constructor() {\n        this.processing = false;\n        this.queue = [];\n        this.lock = new Mutex();\n    }\n\n    async processData(data) {\n        const release = await this.lock.acquire();\n        try {\n            if (this.processing) {\n                this.queue.push(data);\n                return;\n            }\n\n            this.processing = true;\n\n            try {\n                await this.heavyProcessing(data);\n\n                while (this.queue.length > 0) {\n                    const nextData = this.queue.shift();\n                    await this.heavyProcessing(nextData);\n                }\n            } finally {\n                this.processing = false;\n            }\n        } finally {\n            release();\n        }\n    }\n}"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Race Condition",
+              "cwe": "CWE-362",
+              "severity": "medium",
+              "description": "Async race condition in data processing"
+            }
+          ],
+          "expectedFix": "Use synchronization/atomic operations to protect shared state.",
+          "metrics": {
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "extended_input_validation_01",
+          "testCaseName": "Input Validation - Insufficient input validation in API",
+          "run": 1,
+          "success": true,
+          "responseTime": 1987,
+          "detected": 1,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code allows role escalation by allowing the 'role' field to be set to 'admin' via user input without validation, which is exploitable as it can grant unauthorized privileges.",
+              "type": "Role Escalation",
+              "startLine": 10,
+              "endLine": 13,
+              "severity": "high",
+              "suggestedFix": "Validate and restrict the 'role' field to a predefined list of allowed roles. Replace `role: role || 'user'` with `role: ['user', 'admin'].includes(role) ? role : 'user'`"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Input Validation",
+              "cwe": "CWE-20",
+              "severity": "medium",
+              "description": "Insufficient input validation in API"
+            }
+          ],
+          "expectedFix": "Validate and sanitize all untrusted input before use.",
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 1,
+            "falseNegatives": 1,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "extended_crypto_weak_key_01",
+          "testCaseName": "Weak Encryption - Weak encryption key generation",
+          "run": 1,
+          "success": true,
+          "responseTime": 7845,
+          "detected": 3,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code uses MD5 for key generation, which is a weak cryptographic hash function and can be easily attacked. MD5 is vulnerable to collision attacks and is not suitable for cryptographic purposes.",
+              "type": "Weak Crypto",
+              "startLine": 6,
+              "endLine": 10,
+              "severity": "high",
+              "suggestedFix": "Replace MD5 with a stronger cryptographic hash function like SHA-256 and use a key derivation function (KDF) such as PBKDF2 or bcrypt for key generation.\n\n// Secure key generation\nconst key = crypto.pbkdf2Sync(userPassword, 'salt', 100000, 16, 'sha256');"
+            },
+            {
+              "message": "The code uses AES-128-ECB mode, which is insecure due to its lack of diffusion and vulnerability to pattern analysis. ECB mode should never be used for encrypting data that contains patterns.",
+              "type": "Weak Crypto",
+              "startLine": 11,
+              "endLine": 15,
+              "severity": "high",
+              "suggestedFix": "Replace AES-128-ECB with a more secure mode like AES-128-CBC or AES-256-GCM, and ensure proper initialization vector (IV) handling.\n\n// Secure encryption\nconst cipher = crypto.createCipheriv('aes-128-cbc', key, iv);"
+            },
+            {
+              "message": "The code uses a fixed weak key ('weakKey123') for encryption, which is easily guessable and provides no security against brute-force attacks.",
+              "type": "Weak Crypto",
+              "startLine": 18,
+              "endLine": 22,
+              "severity": "high",
+              "suggestedFix": "Replace the fixed weak key with a securely generated key using a key derivation function (KDF) such as PBKDF2 or bcrypt.\n\n// Secure key generation\nthis.encryptionKey = crypto.pbkdf2Sync('securePassword', 'salt', 100000, 16, 'sha256');"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Weak Encryption",
+              "cwe": "CWE-326",
+              "severity": "high",
+              "description": "Weak encryption key generation"
+            }
+          ],
+          "expectedFix": "Use modern encryption modes with secure keys and nonces.",
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 1,
+            "falseNegatives": 1,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "extended_information_exposure_01",
+          "testCaseName": "Information Exposure - Sensitive information exposure in error messages",
+          "run": 1,
+          "success": true,
+          "responseTime": 4891,
+          "detected": 2,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "Exposing detailed database errors can reveal sensitive information about the database structure and potential vulnerabilities.",
+              "type": "Information Exposure",
+              "startLine": 6,
+              "endLine": 10,
+              "severity": "high",
+              "suggestedFix": "Avoid exposing detailed error messages. Instead, log the error and return a generic message to the client.\n\n// Secure version:\nif (error) {\n    // Log the error for debugging\n    console.error('Database error:', error);\n    reject({\n        error: 'Authentication failed',\n        timestamp: new Date(),\n        attemptedUsername: username\n    });\n    return;\n}"
+            },
+            {
+              "message": "Exposing whether a username exists can lead to user enumeration attacks, allowing attackers to guess valid usernames.",
+              "type": "User Enumeration",
+              "startLine": 12,
+              "endLine": 16,
+              "severity": "medium",
+              "suggestedFix": "Avoid revealing whether a username exists. Instead, return a generic message for all authentication failures.\n\n// Secure version:\nif (results.length === 0) {\n    reject({\n        error: 'Authentication failed',\n        timestamp: new Date(),\\n        attemptedUsername: username\n    });\n    return;\n}"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Information Exposure",
+              "cwe": "CWE-200",
+              "severity": "medium",
+              "description": "Sensitive information exposure in error messages"
+            }
+          ],
+          "expectedFix": "Avoid leaking sensitive data and apply redaction/minimization controls.",
+          "metrics": {
+            "truePositives": 1,
+            "falsePositives": 1,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "real_world_express_cve_2022_24999",
+          "testCaseName": "Path Traversal - Real CVE-2022-24999 vulnerability in express",
+          "run": 1,
+          "success": true,
+          "responseTime": 1695,
+          "detected": 1,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code is vulnerable to Path Traversal attacks because it resolves the path without validating that it stays within the allowed root directory.",
+              "type": "Path Traversal",
+              "startLine": 7,
+              "endLine": 12,
+              "severity": "high",
+              "suggestedFix": "Use path.resolve with a base directory and check that the resolved path starts with the base directory before accessing the file."
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Path Traversal",
+              "cwe": "CWE-22",
+              "severity": "high",
+              "description": "Real CVE-2022-24999 vulnerability in express"
+            }
+          ],
+          "expectedFix": "Canonicalize paths and restrict access to approved directories.",
+          "metrics": {
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "real_world_lodash_cve_2021_23337",
+          "testCaseName": "Prototype Pollution - Real CVE-2021-23337 vulnerability in lodash",
+          "run": 1,
+          "success": true,
+          "responseTime": 3961,
+          "detected": 1,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code is vulnerable to prototype pollution due to the lack of protection against __proto__ pollution. An attacker can inject properties into the prototype chain, leading to potential exploitation of global objects.",
+              "type": "Prototype Pollution",
+              "startLine": 3,
+              "endLine": 12,
+              "severity": "high",
+              "suggestedFix": "Modify the code to check if the key is '__proto__' or 'constructor' before merging. Here's a secure version:\n\nfunction merge(object, sources) {\n    sources.forEach(source => {\n        for (let key in source) {\n            if (source.hasOwnProperty(key)) {\n                // Prevent prototype pollution\n                if (key === '__proto__' || key === 'constructor') {\n                    continue;\n                }\n                if (typeof source[key] === 'object' && typeof object[key] === 'object') {\n                    merge(object[key], [source[key]]);\n                } else {\n                    object[key] = source[key];\n                }\n            }\n        }\n    });\n    return object;\n}"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Prototype Pollution",
+              "cwe": "CWE-1321",
+              "severity": "high",
+              "description": "Real CVE-2021-23337 vulnerability in lodash"
+            }
+          ],
+          "expectedFix": "Block dangerous keys and clone/validate objects before merge operations.",
+          "metrics": {
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "real_world_lodash_pattern_1",
+          "testCaseName": "Input Validation - Vulnerability pattern found in lodash",
+          "run": 1,
+          "success": true,
+          "responseTime": 450,
+          "detected": 0,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [],
+          "expectedVulnerabilities": [
+            {
+              "type": "Input Validation",
+              "cwe": "CWE-20",
+              "severity": "medium",
+              "description": "Vulnerability pattern found in lodash"
+            }
+          ],
+          "expectedFix": "Validate and sanitize all untrusted input before use.",
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 0,
+            "falseNegatives": 1,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": null
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "real_world_lodash_pattern_3",
+          "testCaseName": "Input Validation - Vulnerability pattern found in lodash",
+          "run": 1,
+          "success": true,
+          "responseTime": 1656,
+          "detected": 1,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The regular expression used to extract the basename from filePath is vulnerable to regular expression denial of service (ReDoS) attacks due to its potential for catastrophic backtracking.",
+              "type": "ReDoS",
+              "startLine": 245,
+              "endLine": 245,
+              "severity": "medium",
+              "suggestedFix": "Replace the regex with a more efficient and safe pattern. For example: var basename = /[^\\/]+$/\\.exec(filePath)[0];"
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Input Validation",
+              "cwe": "CWE-20",
+              "severity": "medium",
+              "description": "Vulnerability pattern found in lodash"
+            }
+          ],
+          "expectedFix": "Validate and sanitize all untrusted input before use.",
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 1,
+            "falseNegatives": 1,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 0
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "real_world_lodash_pattern_7",
+          "testCaseName": "Input Validation - Vulnerability pattern found in lodash",
+          "run": 1,
+          "success": true,
+          "responseTime": 346,
+          "detected": 0,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [],
+          "expectedVulnerabilities": [
+            {
+              "type": "Input Validation",
+              "cwe": "CWE-20",
+              "severity": "medium",
+              "description": "Vulnerability pattern found in lodash"
+            }
+          ],
+          "expectedFix": "Validate and sanitize all untrusted input before use.",
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 0,
+            "falseNegatives": 1,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": null
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "real_world_lodash_pattern_9",
+          "testCaseName": "Input Validation - Vulnerability pattern found in lodash",
+          "run": 1,
+          "success": true,
+          "responseTime": 3487,
+          "detected": 0,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [],
+          "expectedVulnerabilities": [
+            {
+              "type": "Input Validation",
+              "cwe": "CWE-20",
+              "severity": "medium",
+              "description": "Vulnerability pattern found in lodash"
+            }
+          ],
+          "expectedFix": "Validate and sanitize all untrusted input before use.",
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 0,
+            "falseNegatives": 1,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": null
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "real_world_node-forge_cve_2022_24771",
+          "testCaseName": "Crypto Verification - Real CVE-2022-24771 vulnerability in node-forge",
+          "run": 1,
+          "success": true,
+          "responseTime": 1605,
+          "detected": 1,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The function silently returns true on error, which could allow attackers to bypass signature verification and potentially exploit the system.",
+              "type": "Improper Error Handling",
+              "startLine": 7,
+              "endLine": 9,
+              "severity": "high",
+              "suggestedFix": "Remove the silent return and properly handle errors. Update the function to throw or log errors instead of returning true on failure."
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Crypto Verification",
+              "cwe": "CWE-347",
+              "severity": "high",
+              "description": "Real CVE-2022-24771 vulnerability in node-forge"
+            }
+          ],
+          "expectedFix": "Use constant-time comparison and verified cryptographic APIs.",
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 1,
+            "falseNegatives": 1,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "real_world_react-dom_pattern_9",
+          "testCaseName": "Input Validation - Vulnerability pattern found in react-dom",
+          "run": 1,
+          "success": true,
+          "responseTime": 1866,
+          "detected": 1,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code is vulnerable to command injection because it directly executes user-provided commands without proper sanitization or validation.",
+              "type": "Command Injection",
+              "startLine": 18,
+              "endLine": 24,
+              "severity": "high",
+              "suggestedFix": "Use the `execFile` method instead of `exec` to avoid shell injection. Replace `exec(command, ...)` with `execFile(command, args, ...)` and ensure that user input is properly validated and sanitized."
+            }
+          ],
+          "expectedVulnerabilities": [
+            {
+              "type": "Input Validation",
+              "cwe": "CWE-20",
+              "severity": "medium",
+              "description": "Vulnerability pattern found in react-dom"
+            }
+          ],
+          "expectedFix": "Validate and sanitize all untrusted input before use.",
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 1,
+            "falseNegatives": 1,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 0
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "real_world_serialize-javascript_pattern_2",
+          "testCaseName": "Input Validation - Vulnerability pattern found in serialize-javascript",
+          "run": 1,
+          "success": true,
+          "responseTime": 345,
+          "detected": 0,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [],
+          "expectedVulnerabilities": [
+            {
+              "type": "Input Validation",
+              "cwe": "CWE-20",
+              "severity": "medium",
+              "description": "Vulnerability pattern found in serialize-javascript"
+            }
+          ],
+          "expectedFix": "Validate and sanitize all untrusted input before use.",
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 0,
+            "falseNegatives": 1,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": null
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "real_world_moment_pattern_1",
+          "testCaseName": "Input Validation - Vulnerability pattern found in moment",
+          "run": 1,
+          "success": true,
+          "responseTime": 351,
+          "detected": 0,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [],
+          "expectedVulnerabilities": [
+            {
+              "type": "Input Validation",
+              "cwe": "CWE-20",
+              "severity": "medium",
+              "description": "Vulnerability pattern found in moment"
+            }
+          ],
+          "expectedFix": "Validate and sanitize all untrusted input before use.",
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 0,
+            "falseNegatives": 1,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": null
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "real_world_mongoose_pattern_7",
+          "testCaseName": "Input Validation - Vulnerability pattern found in mongoose",
+          "run": 1,
+          "success": true,
+          "responseTime": 391,
+          "detected": 0,
+          "expected": 1,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [],
+          "expectedVulnerabilities": [
+            {
+              "type": "Input Validation",
+              "cwe": "CWE-20",
+              "severity": "medium",
+              "description": "Vulnerability pattern found in mongoose"
+            }
+          ],
+          "expectedFix": "Validate and sanitize all untrusted input before use.",
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 0,
+            "falseNegatives": 1,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": null
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "secure-code-1",
+          "testCaseName": "Secure Code - Parameterized Query (No Vulnerability)",
+          "run": 1,
+          "success": true,
+          "responseTime": 241,
+          "detected": 0,
+          "expected": 0,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [],
+          "expectedVulnerabilities": [],
+          "expectedFix": "No fix required; code is secure as written.",
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 1,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 1,
+            "lineAccuracy": null
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "secure-code-2",
+          "testCaseName": "Secure Code - textContent Usage (No Vulnerability)",
+          "run": 1,
+          "success": true,
+          "responseTime": 243,
+          "detected": 0,
+          "expected": 0,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [],
+          "expectedVulnerabilities": [],
+          "expectedFix": "No fix required; code is secure as written.",
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 1,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 1,
+            "lineAccuracy": null
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "secure-code-3",
+          "testCaseName": "Secure Code - execFile with Array Arguments (No Vulnerability)",
+          "run": 1,
+          "success": true,
+          "responseTime": 2543,
+          "detected": 1,
+          "expected": 0,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code is vulnerable to command injection because the sanitized input is not properly validated and could still allow malicious commands to be executed through the 'ls' command.",
+              "type": "Command Injection",
+              "startLine": 4,
+              "endLine": 8,
+              "severity": "high",
+              "suggestedFix": "Use a safer approach to handle directory listing without allowing user input to be directly used in command execution. Replace the code with the following:\n\nconst { execFile } = require('child_process');\nfunction listDir(dirName) {\n    execFile('ls', ['-la', dirName], (error, stdout) => {\n        console.log(stdout);\n    });\n}\n\n// Ensure dirName is validated and sanitized before use."
+            }
+          ],
+          "expectedVulnerabilities": [],
+          "expectedFix": "No fix required; code is secure as written.",
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 1,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 1,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 0
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "secure-code-4",
+          "testCaseName": "Secure Code - bcrypt Password Hashing (No Vulnerability)",
+          "run": 1,
+          "success": true,
+          "responseTime": 270,
+          "detected": 0,
+          "expected": 0,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [],
+          "expectedVulnerabilities": [],
+          "expectedFix": "No fix required; code is secure as written.",
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 1,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 1,
+            "lineAccuracy": null
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "secure-code-5",
+          "testCaseName": "Secure Code - Path Traversal Prevention (No Vulnerability)",
+          "run": 1,
+          "success": true,
+          "responseTime": 3015,
+          "detected": 1,
+          "expected": 0,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code attempts to prevent path traversal but does not properly handle cases where the filename contains null bytes or other path traversal techniques.",
+              "type": "Path Traversal",
+              "startLine": 6,
+              "endLine": 11,
+              "severity": "medium",
+              "suggestedFix": "Use a secure method to validate the filename and ensure it does not contain any path traversal characters. Replace the current logic with a more robust validation approach.\n\nconst path = require('path');\nconst fs = require('fs');\n\nfunction readUserFile(filename) {\n    const uploadsDir = path.resolve('./uploads');\n    const sanitizedFilename = filename.replace(/[^a-zA-Z0-9\\._-]/g, '');\n    const filePath = path.resolve(path.join(uploadsDir, sanitizedFilename));\n    if (!filePath.startsWith(uploadsDir)) {\n        throw new Error('Access denied: path traversal attempt');\n    }\n    return fs.readFileSync(filePath, 'utf8');\n}"
+            }
+          ],
+          "expectedVulnerabilities": [],
+          "expectedFix": "No fix required; code is secure as written.",
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 1,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 1,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 0
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "secure-code-6",
+          "testCaseName": "Secure Code - CSRF Token Validation (No Vulnerability)",
+          "run": 1,
+          "success": true,
+          "responseTime": 285,
+          "detected": 0,
+          "expected": 0,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [],
+          "expectedVulnerabilities": [],
+          "expectedFix": "No fix required; code is secure as written.",
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 1,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 1,
+            "lineAccuracy": null
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "secure-code-7",
+          "testCaseName": "Secure Code - Input Validation with Joi (No Vulnerability)",
+          "run": 1,
+          "success": true,
+          "responseTime": 323,
+          "detected": 0,
+          "expected": 0,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [],
+          "expectedVulnerabilities": [],
+          "expectedFix": "No fix required; code is secure as written.",
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 1,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 1,
+            "lineAccuracy": null
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "secure-code-8",
+          "testCaseName": "Secure Code - Helmet Security Headers (No Vulnerability)",
+          "run": 1,
+          "success": true,
+          "responseTime": 282,
+          "detected": 0,
+          "expected": 0,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [],
+          "expectedVulnerabilities": [],
+          "expectedFix": "No fix required; code is secure as written.",
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 1,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 1,
+            "lineAccuracy": null
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "secure-code-9",
+          "testCaseName": "Secure Code - Rate Limiting (No Vulnerability)",
+          "run": 1,
+          "success": true,
+          "responseTime": 284,
+          "detected": 0,
+          "expected": 0,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [],
+          "expectedVulnerabilities": [],
+          "expectedFix": "No fix required; code is secure as written.",
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 1,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 1,
+            "lineAccuracy": null
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "secure-code-10",
+          "testCaseName": "Secure Code - JWT with Proper Verification (No Vulnerability)",
+          "run": 1,
+          "success": true,
+          "responseTime": 283,
+          "detected": 0,
+          "expected": 0,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [],
+          "expectedVulnerabilities": [],
+          "expectedFix": "No fix required; code is secure as written.",
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 1,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 1,
+            "lineAccuracy": null
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "secure-code-11",
+          "testCaseName": "Secure Code - DOMPurify Sanitization (No Vulnerability)",
+          "run": 1,
+          "success": true,
+          "responseTime": 2345,
+          "detected": 1,
+          "expected": 0,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [
+            {
+              "message": "The code uses DOMPurify to sanitize HTML input, but the allowed tags are restricted to only a few elements. This could potentially allow malicious content if the allowed tags are not comprehensive enough or if other vectors are exploited.",
+              "type": "XSS",
+              "startLine": 3,
+              "endLine": 5,
+              "severity": "medium",
+              "suggestedFix": "Use a more comprehensive set of allowed tags or consider additional sanitization steps. Example: `DOMPurify.sanitize(htmlInput, { ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'p', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'] })`"
+            }
+          ],
+          "expectedVulnerabilities": [],
+          "expectedFix": "No fix required; code is secure as written.",
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 1,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "secureFalsePositiveCases": 1,
+            "secureTrueNegativeCases": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "secure-code-12",
+          "testCaseName": "Secure Code - Prototype Pollution Prevention (No Vulnerability)",
+          "run": 1,
+          "success": true,
+          "responseTime": 277,
+          "detected": 0,
+          "expected": 0,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [],
+          "expectedVulnerabilities": [],
+          "expectedFix": "No fix required; code is secure as written.",
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 1,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 1,
+            "lineAccuracy": null
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "secure-code-13",
+          "testCaseName": "Secure Code - Crypto Random Values (No Vulnerability)",
+          "run": 1,
+          "success": true,
+          "responseTime": 277,
+          "detected": 0,
+          "expected": 0,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [],
+          "expectedVulnerabilities": [],
+          "expectedFix": "No fix required; code is secure as written.",
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 1,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 1,
+            "lineAccuracy": null
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "secure-code-14",
+          "testCaseName": "Secure Code - Environment Variable Config (No Vulnerability)",
+          "run": 1,
+          "success": true,
+          "responseTime": 279,
+          "detected": 0,
+          "expected": 0,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [],
+          "expectedVulnerabilities": [],
+          "expectedFix": "No fix required; code is secure as written.",
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 1,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 1,
+            "lineAccuracy": null
+          },
+          "ragEnabled": true
+        },
+        {
+          "testCaseId": "secure-code-15",
+          "testCaseName": "Secure Code - Safe Redirect with Allowlist (No Vulnerability)",
+          "run": 1,
+          "success": true,
+          "responseTime": 271,
+          "detected": 0,
+          "expected": 0,
+          "parseSuccess": true,
+          "parseReason": "content_direct_array",
+          "parsedFrom": "content",
+          "detectedIssues": [],
+          "expectedVulnerabilities": [],
+          "expectedFix": "No fix required; code is secure as written.",
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 1,
+            "secureFalsePositiveCases": 0,
+            "secureTrueNegativeCases": 1,
+            "lineAccuracy": null
+          },
+          "ragEnabled": true
+        }
+      ]
+    }
+  ]
+}

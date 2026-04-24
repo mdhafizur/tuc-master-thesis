@@ -14,6 +14,7 @@ const os = require('os');
 const { execSync, execFile } = require('child_process');
 const { promisify } = require('util');
 const { fileURLToPath } = require('url');
+const taxonomy = require('./category-taxonomy');
 
 const execFileAsync = promisify(execFile);
 let ollamaClient = null;
@@ -55,6 +56,11 @@ const DISABLE_THINKING = !args.includes('--allow-thinking');
 const ENABLE_STRUCTURED_OUTPUT = !args.includes('--no-structured-output');
 const SAMPLE_LIMIT = parseIntFlag('--limit', 0); // 0 = no limit
 const MODEL_FILTER = getFlagValue('--model'); // e.g., --model qwen3:8b
+// Matching mode for type-level scoring. Default: emit BOTH legacy and canonical
+// metrics so the thesis can compare. --legacy-matching restricts emission to
+// legacy only (back-compat); --canonical-only restricts to canonical only.
+const LEGACY_MATCHING_ONLY = args.includes('--legacy-matching');
+const CANONICAL_MATCHING_ONLY = args.includes('--canonical-only');
 
 function getFlagValue(name) {
     const prefixed = `${name}=`;
@@ -309,6 +315,18 @@ function normalizeIssueObject(issue) {
 
     if (typeof suggestedFixRaw === 'string' && suggestedFixRaw.trim().length > 0) {
         normalized.suggestedFix = suggestedFixRaw.trim();
+    }
+
+    // Phase 1: preserve confidence and detectionSource if the producer emitted them.
+    // Phase 2 will populate these from the analyzer; for now we just propagate.
+    if (typeof issue.confidence === 'number' && Number.isFinite(issue.confidence)) {
+        normalized.confidence = Math.max(0, Math.min(1, issue.confidence));
+    }
+    if (typeof issue.detectionSource === 'string') {
+        const src = issue.detectionSource.toLowerCase();
+        if (src === 'llm' || src === 'sast' || src === 'hybrid') {
+            normalized.detectionSource = src;
+        }
     }
 
     return normalized;
@@ -880,7 +898,7 @@ function buildBaselineEvaluationResult({
 
     for (const testCase of testCases) {
         const detectedIssues = findingsByCase.get(testCase.id) || [];
-        const caseMetrics = calculateMetrics(
+        const caseMetrics = calculateMetricsBoth(
             detectedIssues,
             testCase.expectedVulnerabilities,
             testCase.code
@@ -1386,18 +1404,48 @@ async function analyzeWithModel(modelName, code, options) {
     }
 }
 
-// Calculate metrics for a test case (with line-number accuracy)
-function calculateMetrics(detected, expected, code) {
-    const detectedTypes = new Set(detected.map(d => d.type?.toLowerCase() || ''));
-    const expectedTypes = new Set(expected.map(e => e.type.toLowerCase()));
+/**
+ * Compute per-test-case metrics using the chosen matching mode.
+ *
+ * Modes:
+ *   - 'legacy'    : original bidirectional substring match on lowercased type strings
+ *                   (preserves the numbers reported in the thesis baseline).
+ *   - 'canonical' : both sides are first normalized to a canonical category via the
+ *                   shared taxonomy in src/categoryTaxonomy.json, then matched as sets.
+ *
+ * Line-accuracy and secure-sample bookkeeping are mode-independent and identical
+ * across both calls.
+ */
+function calculateMetrics(detected, expected, code, options) {
+    const mode = (options && options.matchingMode) || 'legacy';
     const isSecureSample = expected.length === 0;
 
-    const truePositives = [...detectedTypes].filter(d =>
-        [...expectedTypes].some(e => e.includes(d) || d.includes(e))
-    ).length;
+    let truePositives;
+    let falsePositives;
+    let falseNegatives;
 
-    const falsePositives = detectedTypes.size - truePositives;
-    const falseNegatives = expectedTypes.size - truePositives;
+    if (mode === 'canonical') {
+        const detectedCats = taxonomy.normalizeCategories(detected.map(d => d.type));
+        const expectedCats = taxonomy.normalizeCategories(expected.map(e => e.type));
+        // 'other' on the expected side would swallow false positives; treat the
+        // intersection of canonical categories as TPs.
+        const intersect = new Set();
+        for (const c of detectedCats) {
+            if (expectedCats.has(c)) intersect.add(c);
+        }
+        truePositives = intersect.size;
+        falsePositives = detectedCats.size - truePositives;
+        falseNegatives = expectedCats.size - truePositives;
+    } else {
+        const detectedTypes = new Set(detected.map(d => (d.type || '').toLowerCase()));
+        const expectedTypes = new Set(expected.map(e => e.type.toLowerCase()));
+        truePositives = [...detectedTypes].filter(d =>
+            [...expectedTypes].some(e => e.includes(d) || d.includes(e))
+        ).length;
+        falsePositives = detectedTypes.size - truePositives;
+        falseNegatives = expectedTypes.size - truePositives;
+    }
+
     const secureFalsePositiveCases = isSecureSample && detected.length > 0 ? 1 : 0;
     const secureTrueNegativeCases = isSecureSample && detected.length === 0 ? 1 : 0;
     const trueNegatives = secureTrueNegativeCases;
@@ -1424,8 +1472,33 @@ function calculateMetrics(detected, expected, code) {
         trueNegatives,
         secureFalsePositiveCases,
         secureTrueNegativeCases,
-        lineAccuracy: lineAccuracyTotal > 0 ? lineAccuracyCount / lineAccuracyTotal : null
+        lineAccuracy: lineAccuracyTotal > 0 ? lineAccuracyCount / lineAccuracyTotal : null,
+        matchingMode: mode
     };
+}
+
+/**
+ * Compute both legacy and canonical metrics in one call. Returns the legacy result
+ * as the primary (back-compat with all existing report consumers) and attaches the
+ * canonical result on `.canonical` so the run JSON carries both.
+ *
+ * Honors the CLI mode flags: --legacy-matching omits canonical, --canonical-only
+ * promotes canonical to primary.
+ */
+function calculateMetricsBoth(detected, expected, code) {
+    if (CANONICAL_MATCHING_ONLY) {
+        const canonical = calculateMetrics(detected, expected, code, { matchingMode: 'canonical' });
+        return Object.assign({}, canonical, { primaryMatchingMode: 'canonical' });
+    }
+    const legacy = calculateMetrics(detected, expected, code, { matchingMode: 'legacy' });
+    if (LEGACY_MATCHING_ONLY) {
+        return Object.assign({}, legacy, { primaryMatchingMode: 'legacy' });
+    }
+    const canonical = calculateMetrics(detected, expected, code, { matchingMode: 'canonical' });
+    return Object.assign({}, legacy, {
+        primaryMatchingMode: 'legacy',
+        canonical
+    });
 }
 
 function calculateAggregateMetrics(allMetrics) {
@@ -1449,7 +1522,7 @@ function calculateAggregateMetrics(allMetrics) {
         ? lineAccuracies.reduce((sum, a) => sum + a, 0) / lineAccuracies.length
         : null;
 
-    return {
+    const result = {
         precision: (precision * 100).toFixed(2),
         recall: (recall * 100).toFixed(2),
         f1Score: (f1Score * 100).toFixed(2),
@@ -1463,6 +1536,18 @@ function calculateAggregateMetrics(allMetrics) {
         secureFalsePositiveCases: secureFpCases,
         secureTrueNegativeCases: secureTnCases
     };
+
+    // If per-case metrics carry a canonical sub-object (from calculateMetricsBoth),
+    // aggregate those too and attach as result.canonical. This lets the run JSON
+    // report both legacy and canonical aggregates side-by-side.
+    const canonicalSubMetrics = allMetrics
+        .filter(m => m && m.canonical)
+        .map(m => m.canonical);
+    if (canonicalSubMetrics.length === allMetrics.length && canonicalSubMetrics.length > 0) {
+        result.canonical = calculateAggregateMetrics(canonicalSubMetrics);
+    }
+
+    return result;
 }
 
 function getRankingStrategy(testCases) {
@@ -1559,7 +1644,7 @@ async function evaluateModel(modelInfo, testCases, options) {
                     incrementCount(parseFailureReasonCounts, result.parseReason);
                 }
 
-                const caseMetrics = calculateMetrics(
+                const caseMetrics = calculateMetricsBoth(
                     result.issues,
                     testCase.expectedVulnerabilities,
                     testCase.code

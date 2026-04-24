@@ -1,7 +1,7 @@
 \section{Experimental Setup}
 \label{sec:eval-setup}
 
-All experiments are executed locally using the Code Guardian evaluation harness in \path{code-guardian-extension/evaluation/evaluate-models.js}. The harness iterates over the curated dataset described in Section~\ref{sec:eval-dataset} and invokes Ollama with a strict JSON-only system prompt. Model decoding is configured for deterministic inference (\texttt{temperature=0}, \texttt{seed=42}) to maximize reproducibility. JSON-mode decoding (\texttt{format: 'json'}) is enabled to enforce structured output at the decoding level, eliminating parse failures caused by malformed responses.
+All experiments are executed locally using the Code Guardian evaluation harness. The harness iterates over the curated dataset described in Section~\ref{sec:eval-dataset} and invokes Ollama with a strict JSON-only system prompt. Model decoding is configured for deterministic inference (\texttt{temperature=0}, \texttt{seed=42}) to maximize reproducibility. JSON-mode decoding (\texttt{format: 'json'}) is enabled to enforce structured output at the decoding level, eliminating parse failures caused by malformed responses.
 
 \subsection*{Response Schema for Scoring}
 

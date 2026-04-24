@@ -1,0 +1,968 @@
+{
+  "timestamp": "2026-02-27T10:44:16.490Z",
+  "config": {
+    "mode": "baselines-only",
+    "ragAblation": false,
+    "runLlm": false,
+    "runBaselines": true,
+    "llmUnavailableReason": "failed to connect to Ollama (fetch failed)",
+    "testCases": 15,
+    "secureCases": 15,
+    "vulnerableCases": 0,
+    "datasetPath": "/Users/hafiz/personal/repos/tuc-master-thesis/code-guardian-extension/evaluation/datasets/negatives-only.generated.json",
+    "runsPerSample": 1,
+    "promptModes": [
+      "LLM-only",
+      "LLM+RAG"
+    ],
+    "rag": {
+      "strategy": "none",
+      "k": 0
+    },
+    "baselines": {
+      "requestedTools": [
+        "codeql",
+        "semgrep",
+        "eslint-security"
+      ],
+      "completedTools": [
+        "codeql",
+        "eslint-security"
+      ],
+      "skippedTools": [
+        {
+          "tool": "semgrep",
+          "reason": "binary not available: semgrep"
+        }
+      ],
+      "timeoutMs": 180000
+    },
+    "modelGeneration": {
+      "temperature": 0.1,
+      "numPredict": 1000,
+      "timeoutMs": 30000,
+      "requestDelayMs": 500
+    },
+    "outputContract": {
+      "structuredOutput": true,
+      "disableThinking": true,
+      "schema": "MODEL_RESPONSE_SCHEMA"
+    },
+    "startedAt": "2026-02-27T10:44:00.809Z",
+    "finishedAt": "2026-02-27T10:44:16.490Z",
+    "totalDurationMs": 15681,
+    "runtimeConditions": {
+      "executionOrder": "sequential",
+      "retries": 0,
+      "warmup": "none"
+    }
+  },
+  "executionEnvironment": {
+    "os": {
+      "platform": "darwin",
+      "release": "25.3.0",
+      "arch": "arm64"
+    },
+    "nodeVersion": "v20.19.5",
+    "ollamaVersion": "Warning: could not connect to a running Ollama instance\nWarning: client version is 0.17.1",
+    "hardware": {
+      "cpuModel": "Apple M4 Max",
+      "cpuCores": 16,
+      "totalMemoryGB": 64,
+      "freeMemoryGB": 21.86,
+      "gpu": "not captured by this script (Ollama backend dependent)"
+    }
+  },
+  "modelsResolved": [],
+  "results": [
+    {
+      "requestedModel": "codeql",
+      "model": "codeql",
+      "modelVersion": {
+        "digest": null,
+        "sizeBytes": null,
+        "modifiedAt": null,
+        "details": {
+          "toolVersion": "CodeQL command-line toolchain release 2.24.2."
+        }
+      },
+      "promptMode": "SAST baseline",
+      "evaluationFamily": "baseline",
+      "ragEnabled": false,
+      "ragConfig": {
+        "retrievalMode": "none",
+        "k": 0
+      },
+      "runsPerSample": 1,
+      "testCases": 15,
+      "totalRequests": 15,
+      "successfulRequests": 15,
+      "meanLatencyMs": 992,
+      "medianLatencyMs": 992,
+      "parseSuccessRate": "100.00",
+      "parseDiagnostics": {
+        "reasons": {
+          "baseline_tool_output": 15
+        },
+        "failures": {}
+      },
+      "metrics": {
+        "precision": "0.00",
+        "recall": "0.00",
+        "f1Score": "0.00",
+        "accuracy": "46.67",
+        "falsePositiveRate": "53.33",
+        "lineAccuracy": "100.00",
+        "truePositives": 0,
+        "falsePositives": 8,
+        "falseNegatives": 0,
+        "trueNegatives": 7
+      },
+      "detailedResults": [
+        {
+          "testCaseId": "secure-code-1",
+          "testCaseName": "Secure Code - Parameterized Query (No Vulnerability)",
+          "run": 1,
+          "success": true,
+          "responseTime": 992,
+          "detected": 0,
+          "expected": 0,
+          "parseSuccess": true,
+          "parseReason": "baseline_tool_output",
+          "parsedFrom": "tool",
+          "detectedIssues": [],
+          "expectedVulnerabilities": [],
+          "expectedFix": null,
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 1,
+            "lineAccuracy": null
+          },
+          "ragEnabled": false
+        },
+        {
+          "testCaseId": "secure-code-2",
+          "testCaseName": "Secure Code - textContent Usage (No Vulnerability)",
+          "run": 1,
+          "success": true,
+          "responseTime": 992,
+          "detected": 0,
+          "expected": 0,
+          "parseSuccess": true,
+          "parseReason": "baseline_tool_output",
+          "parsedFrom": "tool",
+          "detectedIssues": [],
+          "expectedVulnerabilities": [],
+          "expectedFix": null,
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 1,
+            "lineAccuracy": null
+          },
+          "ragEnabled": false
+        },
+        {
+          "testCaseId": "secure-code-3",
+          "testCaseName": "Secure Code - execFile with Array Arguments (No Vulnerability)",
+          "run": 1,
+          "success": true,
+          "responseTime": 992,
+          "detected": 1,
+          "expected": 0,
+          "parseSuccess": true,
+          "parseReason": "baseline_tool_output",
+          "parsedFrom": "tool",
+          "detectedIssues": [
+            {
+              "message": "Unused function listDir.",
+              "type": "Security Issue",
+              "startLine": 2,
+              "endLine": 2,
+              "severity": "medium",
+              "ruleId": "js/unused-local-variable",
+              "tool": "codeql"
+            }
+          ],
+          "expectedVulnerabilities": [],
+          "expectedFix": null,
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 1,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": false
+        },
+        {
+          "testCaseId": "secure-code-4",
+          "testCaseName": "Secure Code - bcrypt Password Hashing (No Vulnerability)",
+          "run": 1,
+          "success": true,
+          "responseTime": 992,
+          "detected": 2,
+          "expected": 0,
+          "parseSuccess": true,
+          "parseReason": "baseline_tool_output",
+          "parsedFrom": "tool",
+          "detectedIssues": [
+            {
+              "message": "Unused function hashPassword.",
+              "type": "Security Issue",
+              "startLine": 2,
+              "endLine": 2,
+              "severity": "medium",
+              "ruleId": "js/unused-local-variable",
+              "tool": "codeql"
+            },
+            {
+              "message": "Unused function verifyPassword.",
+              "type": "Security Issue",
+              "startLine": 6,
+              "endLine": 6,
+              "severity": "medium",
+              "ruleId": "js/unused-local-variable",
+              "tool": "codeql"
+            }
+          ],
+          "expectedVulnerabilities": [],
+          "expectedFix": null,
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 1,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": false
+        },
+        {
+          "testCaseId": "secure-code-5",
+          "testCaseName": "Secure Code - Path Traversal Prevention (No Vulnerability)",
+          "run": 1,
+          "success": true,
+          "responseTime": 992,
+          "detected": 1,
+          "expected": 0,
+          "parseSuccess": true,
+          "parseReason": "baseline_tool_output",
+          "parsedFrom": "tool",
+          "detectedIssues": [
+            {
+              "message": "Unused function readUserFile.",
+              "type": "Security Issue",
+              "startLine": 3,
+              "endLine": 3,
+              "severity": "medium",
+              "ruleId": "js/unused-local-variable",
+              "tool": "codeql"
+            }
+          ],
+          "expectedVulnerabilities": [],
+          "expectedFix": null,
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 1,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": false
+        },
+        {
+          "testCaseId": "secure-code-6",
+          "testCaseName": "Secure Code - CSRF Token Validation (No Vulnerability)",
+          "run": 1,
+          "success": true,
+          "responseTime": 992,
+          "detected": 2,
+          "expected": 0,
+          "parseSuccess": true,
+          "parseReason": "baseline_tool_output",
+          "parsedFrom": "tool",
+          "detectedIssues": [
+            {
+              "message": "Unused function generateCsrfToken.",
+              "type": "Security Issue",
+              "startLine": 2,
+              "endLine": 2,
+              "severity": "medium",
+              "ruleId": "js/unused-local-variable",
+              "tool": "codeql"
+            },
+            {
+              "message": "Unused function validateCsrfToken.",
+              "type": "Security Issue",
+              "startLine": 7,
+              "endLine": 7,
+              "severity": "medium",
+              "ruleId": "js/unused-local-variable",
+              "tool": "codeql"
+            }
+          ],
+          "expectedVulnerabilities": [],
+          "expectedFix": null,
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 1,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": false
+        },
+        {
+          "testCaseId": "secure-code-7",
+          "testCaseName": "Secure Code - Input Validation with Joi (No Vulnerability)",
+          "run": 1,
+          "success": true,
+          "responseTime": 992,
+          "detected": 1,
+          "expected": 0,
+          "parseSuccess": true,
+          "parseReason": "baseline_tool_output",
+          "parsedFrom": "tool",
+          "detectedIssues": [
+            {
+              "message": "Unused function validateInput.",
+              "type": "Security Issue",
+              "startLine": 7,
+              "endLine": 7,
+              "severity": "medium",
+              "ruleId": "js/unused-local-variable",
+              "tool": "codeql"
+            }
+          ],
+          "expectedVulnerabilities": [],
+          "expectedFix": null,
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 1,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": false
+        },
+        {
+          "testCaseId": "secure-code-8",
+          "testCaseName": "Secure Code - Helmet Security Headers (No Vulnerability)",
+          "run": 1,
+          "success": true,
+          "responseTime": 992,
+          "detected": 0,
+          "expected": 0,
+          "parseSuccess": true,
+          "parseReason": "baseline_tool_output",
+          "parsedFrom": "tool",
+          "detectedIssues": [],
+          "expectedVulnerabilities": [],
+          "expectedFix": null,
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 1,
+            "lineAccuracy": null
+          },
+          "ragEnabled": false
+        },
+        {
+          "testCaseId": "secure-code-9",
+          "testCaseName": "Secure Code - Rate Limiting (No Vulnerability)",
+          "run": 1,
+          "success": true,
+          "responseTime": 992,
+          "detected": 0,
+          "expected": 0,
+          "parseSuccess": true,
+          "parseReason": "baseline_tool_output",
+          "parsedFrom": "tool",
+          "detectedIssues": [],
+          "expectedVulnerabilities": [],
+          "expectedFix": null,
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 1,
+            "lineAccuracy": null
+          },
+          "ragEnabled": false
+        },
+        {
+          "testCaseId": "secure-code-10",
+          "testCaseName": "Secure Code - JWT with Proper Verification (No Vulnerability)",
+          "run": 1,
+          "success": true,
+          "responseTime": 992,
+          "detected": 1,
+          "expected": 0,
+          "parseSuccess": true,
+          "parseReason": "baseline_tool_output",
+          "parsedFrom": "tool",
+          "detectedIssues": [
+            {
+              "message": "Unused function verifyToken.",
+              "type": "Security Issue",
+              "startLine": 3,
+              "endLine": 3,
+              "severity": "medium",
+              "ruleId": "js/unused-local-variable",
+              "tool": "codeql"
+            }
+          ],
+          "expectedVulnerabilities": [],
+          "expectedFix": null,
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 1,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": false
+        },
+        {
+          "testCaseId": "secure-code-11",
+          "testCaseName": "Secure Code - DOMPurify Sanitization (No Vulnerability)",
+          "run": 1,
+          "success": true,
+          "responseTime": 992,
+          "detected": 1,
+          "expected": 0,
+          "parseSuccess": true,
+          "parseReason": "baseline_tool_output",
+          "parsedFrom": "tool",
+          "detectedIssues": [
+            {
+              "message": "Unused function renderUserContent.",
+              "type": "Security Issue",
+              "startLine": 2,
+              "endLine": 2,
+              "severity": "medium",
+              "ruleId": "js/unused-local-variable",
+              "tool": "codeql"
+            }
+          ],
+          "expectedVulnerabilities": [],
+          "expectedFix": null,
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 1,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": false
+        },
+        {
+          "testCaseId": "secure-code-12",
+          "testCaseName": "Secure Code - Prototype Pollution Prevention (No Vulnerability)",
+          "run": 1,
+          "success": true,
+          "responseTime": 992,
+          "detected": 0,
+          "expected": 0,
+          "parseSuccess": true,
+          "parseReason": "baseline_tool_output",
+          "parsedFrom": "tool",
+          "detectedIssues": [],
+          "expectedVulnerabilities": [],
+          "expectedFix": null,
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 1,
+            "lineAccuracy": null
+          },
+          "ragEnabled": false
+        },
+        {
+          "testCaseId": "secure-code-13",
+          "testCaseName": "Secure Code - Crypto Random Values (No Vulnerability)",
+          "run": 1,
+          "success": true,
+          "responseTime": 992,
+          "detected": 2,
+          "expected": 0,
+          "parseSuccess": true,
+          "parseReason": "baseline_tool_output",
+          "parsedFrom": "tool",
+          "detectedIssues": [
+            {
+              "message": "Unused function generateSecureToken.",
+              "type": "Security Issue",
+              "startLine": 2,
+              "endLine": 2,
+              "severity": "medium",
+              "ruleId": "js/unused-local-variable",
+              "tool": "codeql"
+            },
+            {
+              "message": "Unused function generateSecureOTP.",
+              "type": "Security Issue",
+              "startLine": 5,
+              "endLine": 5,
+              "severity": "medium",
+              "ruleId": "js/unused-local-variable",
+              "tool": "codeql"
+            }
+          ],
+          "expectedVulnerabilities": [],
+          "expectedFix": null,
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 1,
+            "falseNegatives": 0,
+            "trueNegatives": 0,
+            "lineAccuracy": 1
+          },
+          "ragEnabled": false
+        },
+        {
+          "testCaseId": "secure-code-14",
+          "testCaseName": "Secure Code - Environment Variable Config (No Vulnerability)",
+          "run": 1,
+          "success": true,
+          "responseTime": 992,
+          "detected": 0,
+          "expected": 0,
+          "parseSuccess": true,
+          "parseReason": "baseline_tool_output",
+          "parsedFrom": "tool",
+          "detectedIssues": [],
+          "expectedVulnerabilities": [],
+          "expectedFix": null,
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 1,
+            "lineAccuracy": null
+          },
+          "ragEnabled": false
+        },
+        {
+          "testCaseId": "secure-code-15",
+          "testCaseName": "Secure Code - Safe Redirect with Allowlist (No Vulnerability)",
+          "run": 1,
+          "success": true,
+          "responseTime": 992,
+          "detected": 0,
+          "expected": 0,
+          "parseSuccess": true,
+          "parseReason": "baseline_tool_output",
+          "parsedFrom": "tool",
+          "detectedIssues": [],
+          "expectedVulnerabilities": [],
+          "expectedFix": null,
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 1,
+            "lineAccuracy": null
+          },
+          "ragEnabled": false
+        }
+      ]
+    },
+    {
+      "requestedModel": "eslint-security",
+      "model": "eslint-security",
+      "modelVersion": {
+        "digest": null,
+        "sizeBytes": null,
+        "modifiedAt": null,
+        "details": {
+          "toolVersion": "v9.39.2"
+        }
+      },
+      "promptMode": "SAST baseline",
+      "evaluationFamily": "baseline",
+      "ragEnabled": false,
+      "ragConfig": {
+        "retrievalMode": "none",
+        "k": 0
+      },
+      "runsPerSample": 1,
+      "testCases": 15,
+      "totalRequests": 15,
+      "successfulRequests": 15,
+      "meanLatencyMs": 7,
+      "medianLatencyMs": 7,
+      "parseSuccessRate": "100.00",
+      "parseDiagnostics": {
+        "reasons": {
+          "baseline_tool_output": 15
+        },
+        "failures": {}
+      },
+      "metrics": {
+        "precision": "0.00",
+        "recall": "0.00",
+        "f1Score": "0.00",
+        "accuracy": "100.00",
+        "falsePositiveRate": "0.00",
+        "lineAccuracy": "N/A",
+        "truePositives": 0,
+        "falsePositives": 0,
+        "falseNegatives": 0,
+        "trueNegatives": 15
+      },
+      "detailedResults": [
+        {
+          "testCaseId": "secure-code-1",
+          "testCaseName": "Secure Code - Parameterized Query (No Vulnerability)",
+          "run": 1,
+          "success": true,
+          "responseTime": 7,
+          "detected": 0,
+          "expected": 0,
+          "parseSuccess": true,
+          "parseReason": "baseline_tool_output",
+          "parsedFrom": "tool",
+          "detectedIssues": [],
+          "expectedVulnerabilities": [],
+          "expectedFix": null,
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 1,
+            "lineAccuracy": null
+          },
+          "ragEnabled": false
+        },
+        {
+          "testCaseId": "secure-code-2",
+          "testCaseName": "Secure Code - textContent Usage (No Vulnerability)",
+          "run": 1,
+          "success": true,
+          "responseTime": 7,
+          "detected": 0,
+          "expected": 0,
+          "parseSuccess": true,
+          "parseReason": "baseline_tool_output",
+          "parsedFrom": "tool",
+          "detectedIssues": [],
+          "expectedVulnerabilities": [],
+          "expectedFix": null,
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 1,
+            "lineAccuracy": null
+          },
+          "ragEnabled": false
+        },
+        {
+          "testCaseId": "secure-code-3",
+          "testCaseName": "Secure Code - execFile with Array Arguments (No Vulnerability)",
+          "run": 1,
+          "success": true,
+          "responseTime": 7,
+          "detected": 0,
+          "expected": 0,
+          "parseSuccess": true,
+          "parseReason": "baseline_tool_output",
+          "parsedFrom": "tool",
+          "detectedIssues": [],
+          "expectedVulnerabilities": [],
+          "expectedFix": null,
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 1,
+            "lineAccuracy": null
+          },
+          "ragEnabled": false
+        },
+        {
+          "testCaseId": "secure-code-4",
+          "testCaseName": "Secure Code - bcrypt Password Hashing (No Vulnerability)",
+          "run": 1,
+          "success": true,
+          "responseTime": 7,
+          "detected": 0,
+          "expected": 0,
+          "parseSuccess": true,
+          "parseReason": "baseline_tool_output",
+          "parsedFrom": "tool",
+          "detectedIssues": [],
+          "expectedVulnerabilities": [],
+          "expectedFix": null,
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 1,
+            "lineAccuracy": null
+          },
+          "ragEnabled": false
+        },
+        {
+          "testCaseId": "secure-code-5",
+          "testCaseName": "Secure Code - Path Traversal Prevention (No Vulnerability)",
+          "run": 1,
+          "success": true,
+          "responseTime": 7,
+          "detected": 0,
+          "expected": 0,
+          "parseSuccess": true,
+          "parseReason": "baseline_tool_output",
+          "parsedFrom": "tool",
+          "detectedIssues": [],
+          "expectedVulnerabilities": [],
+          "expectedFix": null,
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 1,
+            "lineAccuracy": null
+          },
+          "ragEnabled": false
+        },
+        {
+          "testCaseId": "secure-code-6",
+          "testCaseName": "Secure Code - CSRF Token Validation (No Vulnerability)",
+          "run": 1,
+          "success": true,
+          "responseTime": 7,
+          "detected": 0,
+          "expected": 0,
+          "parseSuccess": true,
+          "parseReason": "baseline_tool_output",
+          "parsedFrom": "tool",
+          "detectedIssues": [],
+          "expectedVulnerabilities": [],
+          "expectedFix": null,
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 1,
+            "lineAccuracy": null
+          },
+          "ragEnabled": false
+        },
+        {
+          "testCaseId": "secure-code-7",
+          "testCaseName": "Secure Code - Input Validation with Joi (No Vulnerability)",
+          "run": 1,
+          "success": true,
+          "responseTime": 7,
+          "detected": 0,
+          "expected": 0,
+          "parseSuccess": true,
+          "parseReason": "baseline_tool_output",
+          "parsedFrom": "tool",
+          "detectedIssues": [],
+          "expectedVulnerabilities": [],
+          "expectedFix": null,
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 1,
+            "lineAccuracy": null
+          },
+          "ragEnabled": false
+        },
+        {
+          "testCaseId": "secure-code-8",
+          "testCaseName": "Secure Code - Helmet Security Headers (No Vulnerability)",
+          "run": 1,
+          "success": true,
+          "responseTime": 7,
+          "detected": 0,
+          "expected": 0,
+          "parseSuccess": true,
+          "parseReason": "baseline_tool_output",
+          "parsedFrom": "tool",
+          "detectedIssues": [],
+          "expectedVulnerabilities": [],
+          "expectedFix": null,
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 1,
+            "lineAccuracy": null
+          },
+          "ragEnabled": false
+        },
+        {
+          "testCaseId": "secure-code-9",
+          "testCaseName": "Secure Code - Rate Limiting (No Vulnerability)",
+          "run": 1,
+          "success": true,
+          "responseTime": 7,
+          "detected": 0,
+          "expected": 0,
+          "parseSuccess": true,
+          "parseReason": "baseline_tool_output",
+          "parsedFrom": "tool",
+          "detectedIssues": [],
+          "expectedVulnerabilities": [],
+          "expectedFix": null,
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 1,
+            "lineAccuracy": null
+          },
+          "ragEnabled": false
+        },
+        {
+          "testCaseId": "secure-code-10",
+          "testCaseName": "Secure Code - JWT with Proper Verification (No Vulnerability)",
+          "run": 1,
+          "success": true,
+          "responseTime": 7,
+          "detected": 0,
+          "expected": 0,
+          "parseSuccess": true,
+          "parseReason": "baseline_tool_output",
+          "parsedFrom": "tool",
+          "detectedIssues": [],
+          "expectedVulnerabilities": [],
+          "expectedFix": null,
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 1,
+            "lineAccuracy": null
+          },
+          "ragEnabled": false
+        },
+        {
+          "testCaseId": "secure-code-11",
+          "testCaseName": "Secure Code - DOMPurify Sanitization (No Vulnerability)",
+          "run": 1,
+          "success": true,
+          "responseTime": 7,
+          "detected": 0,
+          "expected": 0,
+          "parseSuccess": true,
+          "parseReason": "baseline_tool_output",
+          "parsedFrom": "tool",
+          "detectedIssues": [],
+          "expectedVulnerabilities": [],
+          "expectedFix": null,
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 1,
+            "lineAccuracy": null
+          },
+          "ragEnabled": false
+        },
+        {
+          "testCaseId": "secure-code-12",
+          "testCaseName": "Secure Code - Prototype Pollution Prevention (No Vulnerability)",
+          "run": 1,
+          "success": true,
+          "responseTime": 7,
+          "detected": 0,
+          "expected": 0,
+          "parseSuccess": true,
+          "parseReason": "baseline_tool_output",
+          "parsedFrom": "tool",
+          "detectedIssues": [],
+          "expectedVulnerabilities": [],
+          "expectedFix": null,
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 1,
+            "lineAccuracy": null
+          },
+          "ragEnabled": false
+        },
+        {
+          "testCaseId": "secure-code-13",
+          "testCaseName": "Secure Code - Crypto Random Values (No Vulnerability)",
+          "run": 1,
+          "success": true,
+          "responseTime": 7,
+          "detected": 0,
+          "expected": 0,
+          "parseSuccess": true,
+          "parseReason": "baseline_tool_output",
+          "parsedFrom": "tool",
+          "detectedIssues": [],
+          "expectedVulnerabilities": [],
+          "expectedFix": null,
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 1,
+            "lineAccuracy": null
+          },
+          "ragEnabled": false
+        },
+        {
+          "testCaseId": "secure-code-14",
+          "testCaseName": "Secure Code - Environment Variable Config (No Vulnerability)",
+          "run": 1,
+          "success": true,
+          "responseTime": 7,
+          "detected": 0,
+          "expected": 0,
+          "parseSuccess": true,
+          "parseReason": "baseline_tool_output",
+          "parsedFrom": "tool",
+          "detectedIssues": [],
+          "expectedVulnerabilities": [],
+          "expectedFix": null,
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 1,
+            "lineAccuracy": null
+          },
+          "ragEnabled": false
+        },
+        {
+          "testCaseId": "secure-code-15",
+          "testCaseName": "Secure Code - Safe Redirect with Allowlist (No Vulnerability)",
+          "run": 1,
+          "success": true,
+          "responseTime": 7,
+          "detected": 0,
+          "expected": 0,
+          "parseSuccess": true,
+          "parseReason": "baseline_tool_output",
+          "parsedFrom": "tool",
+          "detectedIssues": [],
+          "expectedVulnerabilities": [],
+          "expectedFix": null,
+          "metrics": {
+            "truePositives": 0,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "trueNegatives": 1,
+            "lineAccuracy": null
+          },
+          "ragEnabled": false
+        }
+      ]
+    }
+  ]
+}
