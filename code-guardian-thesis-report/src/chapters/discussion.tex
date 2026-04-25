@@ -1,0 +1,63 @@
+This chapter synthesises the per-requirement evaluation results from Chapter~\ref{chap:evaluation} into a cross-cutting analysis, positions the measured outcomes against the related work surveyed in Chapter~\ref{chap:analysis}, and discusses the limitations that constrain the current findings. The goal is not to repeat the per-requirement numbers but to interpret them.
+
+\section{Result Analysis}
+
+The strongest signal across the evaluated configurations is the gap between an obvious-sink category and a semantic category. Code Guardian's headline configuration (\texttt{qwen3:8b+RAG}) achieves 100\% canonical recall on command injection, hardcoded credentials, header injection, information exposure, LDAP injection, path traversal, prototype pollution, SSRF, weak cryptography, and XSS, and 90\% on SQL injection. The same configuration achieves 0\% recall on improper authentication, input validation, and weak encryption. The qualitative analysis in Section~\ref{sec:eval-error-analysis} shows that the improper-auth and weak-encryption gaps are taxonomy artefacts (the model emits sibling canonical categories for the same code), while input-validation is a genuine reasoning gap on real-world library code. This split is the operational story of the thesis: contextual reasoning about lexically-explicit sinks works very well; reasoning about the absence of validation does not.
+
+False-positive control improved decisively. The previously-published 20\% sample-level FPR on \texttt{qwen3:8b+RAG} drops to 10\% under the rerun's symmetric three-runs-per-secure-sample configuration, and the inter-run confidence gate at $\geq 0.67$ keeps that 10\% while pushing precision from 73.53\% to 77.78\%. Most other LLM configurations still flag every secure case at least once, even with the gate, which means the control is not a generic property of multi-pass consensus --- it is specific to the strongest model in the set. This is consistent with the broader observation in the literature that small models trade calibration for speed.
+
+Latency results validate the design hypothesis that prefill-token cost dominates inference on local hardware. The tightened system prompt cut median latency on \texttt{qwen3:8b+RAG} from 2\,721\,ms to 1\,573\,ms ($-42\%$) without changing the model, hardware, or generation parameters. Stage-split telemetry confirms inference is more than 99\% of the total response time; there is no realistic gain to be made on the parsing side. The remaining latency budget is therefore best spent on either smaller models (with a quality cost) or on architectural changes such as streaming partial JSON output (deferred to future work).
+
+The repair-quality result is the most surprising negative finding. Across all 297 generated repair attempts in the \texttt{qwen3:8b+RAG} configuration, zero passed the syntactic auto-applicability check. The model fills the \texttt{suggestedFix} string with prose openings (``Use parameterized queries\ldots'', ``Avoid string concatenation\ldots'') even though the JSON response schema constrains the field type to a string. The schema constrains the field type, not the content language. This is a contract-design problem rather than a model-quality problem.
+
+\section{Comparison with Related Work}
+
+Three benchmarks anchor the comparison. IRIS~\cite{li2025iris} reports a false discovery rate of 84.82\% (precision approximately 15\%) for GPT-4 on whole-repository Java analysis, with 55 of 120 vulnerabilities detected. CWEval~\cite{peng2025cweval} establishes outcome-driven evaluation as a methodological benchmark and reports that LLMs achieve more than 70\% F1 with about 80\% precision when given context-rich prompts. SecRepair~\cite{islam2024secrepair} reports a 12\% improvement on automated similarity-based repair-quality metrics but explicitly admits in its own analysis that those metrics are ``fundamentally inadequate'' for security correctness assessment.
+
+Code Guardian's measured 73.53\% precision on a local 8B-parameter model lands in the same precision class as the cloud-LLM systems cited above. This is not a head-to-head dominance claim --- the datasets and analysis scopes differ --- but it is a defensible counterpoint to the assumption that local models cannot reach cloud-class precision on focused vulnerability detection. The path that gets there is the explicit pipeline of canonical type matching, multi-pass consensus, inter-run confidence gating, and a tightened structured-output contract, rather than raw model scale.
+
+The honest negative result on RAG also aligns with the literature. RESCUE~\cite{shi2025rescue} reports that conventional retrieval augmentation (SecCoder, the closest baseline in their study) does not significantly improve secure code generation, and proposes a more sophisticated multi-faceted retrieval to close the gap. The thesis's RAG ablation results show \texttt{qwen3:8b} benefitting (+4.42 F1 with the canonical matcher) while \texttt{codellama} collapses ($-29.89$ F1 with RAG enabled). The collapse is driven by the additional retrieval context interfering with \texttt{codellama}'s output structure: latency nearly doubles, recall drops by twenty points, and parse failures increase. The conclusion that RAG must be calibrated per model rather than enabled by default is therefore strongly supported, both by the rerun data and by the related literature.
+
+The 0\% auto-applicable repair rate is consistent with SecRepair's own characterisation of automated repair-quality metrics. Where SecRepair concludes that those metrics are inadequate without quantifying the inadequacy, this thesis quantifies it: zero of 297 generated repairs satisfy a strict syntactic-applicability bar, even with a JSON schema in place. The auto-applicable rate is therefore positioned as a deterministic, fleet-wide alternative to similarity-based repair metrics, addressing one specific axis of the inadequacy SecRepair identifies.
+
+\section{Deviations from the Approved Task}
+
+A subset of mechanisms named in the registered task description (Page~iv) was scoped down or replaced during execution; the deviations are recorded here to keep the delivered work and the approved task aligned.
+
+\paragraph{Datasets.}
+The approved task specified evaluation on the Juliet and OWASP Benchmark suites (40--50 CWE-mapped cases) plus one actively maintained real-world JavaScript/TypeScript project with verified patches. The delivered evaluation uses a project-curated 101-case JavaScript/TypeScript suite aligned to CWE/OWASP concepts (71 vulnerable + 30 secure). The change was made to enable rapid iteration on prompt design, retrieval, and structured-output validation: a smaller human-auditable suite supports per-case error analysis (Section~\ref{sec:eval-error-analysis}) that the larger benchmarks would not. CWEval~\cite{peng2025cweval} (119 curated tasks) and IRIS~\cite{li2025iris} (120 cases) followed the same trade-off in 2024--2025. Evaluation on Juliet and OWASP Benchmark is retained as the natural next step under future work (Chapter~\ref{chap:conclusion}).
+
+\paragraph{Privacy mechanisms.}
+The approved task named local embeddings, signed corpora, and network isolation as the privacy enforcement triad. The delivered system implements local embeddings (HNSWlib over locally-stored security knowledge) and a strict no-source-code-exfiltration boundary verified by network capture (Appendix~A). Signed corpora and explicit network-isolation containers were not implemented; the deployed boundary is enforced by configuration (the extension only contacts \texttt{localhost:11434}) and audited by network-traffic inspection rather than by cryptographic provenance. This is the largest single scope reduction relative to the approved task and is also reflected in the threat-model handling of retrieval poisoning, which is treated as future work in the thesis introduction.
+
+\paragraph{Reproducibility.}
+Deterministic decoding (\texttt{temperature=0}, \texttt{seed=42}) and version-pinned dependencies are delivered. Containerised execution was not implemented; reproducibility is instead supported by an explicit reproducibility snapshot (Section~\ref{sec:eval-setup}) recording model digests, software versions, and runtime parameters, which together permit re-execution on a comparably-configured developer machine.
+
+\paragraph{Metrics.}
+Precision, recall, F1-score, and latency are delivered as specified. Resource usage (CPU, memory, energy) was not reported; the evaluation focuses on response-time as the user-facing usability metric. Privacy validation is delivered as an architectural and network-traffic checklist (Section~\ref{sec:eval-r5}, Appendix~A) rather than as a quantitative metric. The harness additionally reports JSON-parse success rate, secure-sample false-positive rate at sample level, and the auto-applicable repair rate; these were added during execution to give a fuller picture of structured-output reliability and repair quality.
+
+These deviations were discussed with the supervisor during the implementation phase. Where a deviation removes a planned guarantee (e.g., signed corpora), the underlying risk it was meant to address (retrieval poisoning) is acknowledged in the threat model and named as future work.
+
+\section{Limitations}
+
+\paragraph{Scope and context depth.}
+The system handles common vulnerability patterns but remains limited for deep cross-file reasoning without full static data-flow analysis. A regex-based import / sink resolver (Section~\ref{sec:impl-tech-stack}) provides lightweight cross-snippet hints, but its empirical effect on the four semantic categories that previously scored zero recall was marginal --- the canonical taxonomy recovers most of the apparent gap by re-binning labels rather than by detecting new instances.
+
+\paragraph{Evaluation representativeness.}
+The curated dataset is intentionally small and human-auditable. The 101 cases align with the scale of contemporary curated benchmarks (CWEval at 119 tasks, IRIS at 120 vulnerabilities) but do not generalise to production repository scale; results are indicative, not definitive.
+
+\paragraph{Repair correctness bar.}
+Repairs are model-generated and may change behaviour. Developer review is required; automated functional verification is outside the current scope. The pipeline includes a syntactic auto-applicability check (Section~\ref{sec:eval-r3-auto-applicable}) that scales to the full evaluation set, but this is a strictly weaker signal than functional verification: a parse-clean fix can still be semantically wrong, and a parse-failing fix may still be informative as decision support.
+
+\paragraph{Hardware and run-to-run variance.}
+All measurements are from a single Apple M4 Max profile (16 cores, 64\,GB RAM) with deterministic decoding (\texttt{temperature=0}, fixed seed). Local inference on GPU hardware can introduce minor non-determinism from floating-point scheduling. The 3-run design partially mitigates this for vulnerable cases, but performance on lower-end hardware may differ. Reported values are descriptive measurements under a documented environment, not hardware-independent constants.
+
+\paragraph{Single-rater R3 manual review.}
+The 25-sample manual review of repair quality (Section~\ref{sec:eval-r3}) was performed by a single reviewer; no inter-rater reliability was measured. The deterministic auto-applicable rate complements this on the full $n=297$ sample but is a stricter and narrower bar.
+
+\paragraph{No user study for R4.}
+Usability is measured by latency only. Developer satisfaction, trust, and adoption were not evaluated. The R4 thresholds reflect HCI response-time guidelines rather than empirical usability data on this specific tool.
+
+\section{Summary}
+
+The cross-requirement analysis shows a coherent picture: local 8B-parameter models reach cloud-LLM-class precision on focused vulnerability detection when paired with explicit pipeline mechanisms (canonical type matching, multi-pass consensus, inter-run confidence gating, tight structured-output contract); they remain weaker on semantic categories that require reasoning about absent code; and the schema-only repair contract caps the achievable auto-applicable repair rate. The next chapter draws these threads together into a final summary and outlook.

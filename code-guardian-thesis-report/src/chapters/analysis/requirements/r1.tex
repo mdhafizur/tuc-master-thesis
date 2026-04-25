@@ -8,7 +8,7 @@ For this thesis, R1 means detection quality must be good enough to deserve devel
 
 Accuracy has four key parts. Precision measures how many reported issues are real, since too many false alarms cause developers to ignore the tool. Recall measures how many real vulnerabilities the system finds, including those that depend on data flow and surrounding context. F1 balances both into a single score. The secure-sample FPR tracks how often the system flags safe code as vulnerable, which is the best predictor of whether developers will accept the tool \cite{johnson2013don}.
 
-To allow comparison with other tools and across Code Guardian's own settings, we define a four-level scoring scale. The thresholds follow standard conventions from information retrieval and software engineering \cite{johnson2013don,ji2023hallucination}. Table~\ref{tab:r1-accuracy-thresholds} shows this scale.
+To allow comparison with other tools and across Code Guardian's own settings, the thesis defines a four-level scoring scale. The thresholds follow standard conventions from information retrieval and software engineering \cite{johnson2013don,ji2023hallucination}. Table~\ref{tab:r1-accuracy-thresholds} shows this scale.
 
 \begin{table}[H]
   \centering

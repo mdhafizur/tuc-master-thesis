@@ -65,7 +65,7 @@ All \texttt{qwen3} models achieve $\geq 98.8\%$ parse success, with \texttt{qwen
 
 \subsection{Inter-Run Detection Agreement}
 
-Because each vulnerable sample was evaluated 3 times, we can measure how often the same sample produces the same binary detection outcome across runs. Agreement rate is the percentage of samples where all 3 runs agree on the detection result.
+Because each vulnerable sample was evaluated 3 times, the harness can measure how often the same sample produces the same binary detection outcome across runs. Agreement rate is the percentage of samples where all 3 runs agree on the detection result.
 
 \begin{table}[H]
 \centering
@@ -94,7 +94,7 @@ Because each vulnerable sample was evaluated 3 times, we can measure how often t
 
 \subsection{Label and Severity Stability}
 
-Beyond binary detection, we examine whether the reported vulnerability type and severity remain stable across runs. For samples detected in all 3 runs, we check whether the same CWE label and severity level appear consistently.
+Beyond binary detection, the harness examines whether the reported vulnerability type and severity remain stable across runs. For samples detected in all 3 runs, the same CWE label and severity level should appear consistently.
 
 Table~\ref{tab:r2-label-stability} shows label and severity agreement rates for each model among samples where all 3 runs detected a vulnerability.
 
