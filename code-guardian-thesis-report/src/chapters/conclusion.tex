@@ -57,17 +57,6 @@ Table~\ref{tab:conclusion-deployment-profiles} summarizes practical deployment p
   \end{tabularx}
 \end{table}
 
-\section{Limitations}
-
-\textbf{Scope and context depth.}
-The system handles common vulnerability patterns but remains limited for deep cross-file reasoning without full static data-flow analysis. A regex-based import / sink resolver (Section~\ref{sec:impl-tech-stack}) provides lightweight cross-snippet hints, but its empirical effect on the four semantic categories that previously scored zero recall was marginal --- the canonical taxonomy recovers most of the apparent gap by re-binning labels rather than detecting new instances.
-
-\textbf{Evaluation representativeness.}
-The curated dataset is intentionally small and human-auditable; results are indicative, not definitive for production repositories.
-
-\textbf{Repair correctness.}
-Repairs are model-generated and may change behavior. Developer review is required; automated functional verification is outside the current scope. The pipeline includes a syntactic auto-applicability check (Section~\ref{sec:eval-r3-auto-applicable}) that scales to the full evaluation set, but this is a strictly weaker signal than functional verification: a parse-clean fix can still be semantically wrong.
-
 \section{Responsible Use}
 
 Code Guardian is a decision-support tool, not an autonomous security verifier. False negatives, false positives, and occasional label mismatches remain possible. Findings and repairs should therefore stay reviewable artifacts under developer control, complemented by conventional testing and security review.

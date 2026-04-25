@@ -1,11 +1,11 @@
 \section{Evaluation Metrics}
 \label{sec:eval-metrics}
 
-We evaluate Code Guardian along complementary axes aligned with Chapter~\ref{chap:analysis}: detection quality (R1), detection consistency and structured-output robustness (R2), repair quality (R3), usability and responsiveness (R4), and privacy (R5). Unless explicitly stated otherwise, quantitative values are reported as descriptive point estimates for this run configuration, with uncertainty intervals added for key decision metrics in Section~\ref{sec:eval-summary}.
+Code Guardian is evaluated along complementary axes aligned with Chapter~\ref{chap:analysis}: detection quality (R1), detection consistency and structured-output robustness (R2), repair quality (R3), usability and responsiveness (R4), and privacy (R5). Unless explicitly stated otherwise, quantitative values are reported as descriptive point estimates for this run configuration, with uncertainty intervals added for key decision metrics in Section~\ref{sec:eval-summary}.
 
 \subsection*{Detection Quality}
 
-Given an expected set of vulnerability types per test case and a detected set of vulnerability types returned by the model, we compute:
+Given an expected set of vulnerability types per test case and a detected set of vulnerability types returned by the model, the harness computes:
 \begin{itemize}
   \item \textbf{Precision:} $\mathrm{TP}/(\mathrm{TP}+\mathrm{FP})$
   \item \textbf{Recall:} $\mathrm{TP}/(\mathrm{TP}+\mathrm{FN})$
@@ -44,7 +44,7 @@ The thesis presents results both un-gated and at the operationally meaningful th
 
 \subsection*{Structured Output Robustness}
 
-Because Code Guardian integrates findings into IDE diagnostics, structured output is essential. We therefore report:
+Because Code Guardian integrates findings into IDE diagnostics, structured output is essential. The thesis therefore reports:
 \begin{itemize}
   \item \textbf{JSON parse success rate:} percentage of responses that parse into a JSON array of issues.
 \end{itemize}
@@ -57,7 +57,7 @@ For editor automation, parse reliability is not optional. A model with strong se
 
 \subsection*{Responsiveness}
 
-We measure:
+The harness measures:
 \begin{itemize}
   \item \textbf{Response time:} wall-clock time per analysis call (milliseconds), summarized by mean and median.
 \end{itemize}

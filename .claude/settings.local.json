@@ -10,7 +10,9 @@
       "Bash(npm run *)",
       "Bash(node evaluation/evaluate-models.js --model qwen3:8b --no-rag-only --runs 1 --limit 8 --tight-prompt)",
       "Bash(node -e \"try { const p = require\\('@babel/parser'\\); console.log\\('@babel/parser available:', p.version || 'yes'\\); } catch\\(e\\) { console.log\\('NOT installed:', e.message\\); }\")",
-      "Bash(node evaluation/evaluate-models.js --model qwen3:8b --no-rag-only --runs 1 --limit 6 --tight-prompt)"
+      "Bash(node evaluation/evaluate-models.js --model qwen3:8b --no-rag-only --runs 1 --limit 6 --tight-prompt)",
+      "Bash(pdflatex -interaction=nonstopmode -halt-on-error Template.tex)",
+      "Bash(pdftotext -layout docs/thesis_task_description.pdf /tmp/task.txt)"
     ]
   }
 }
