@@ -1,17 +1,17 @@
 The evaluation results suggest clear priorities for improving Code Guardian’s practical reliability and external validity.
 
-\noindent\textbf{1) False-positive control as the first priority.}
-Most configurations still over-warn on secure code. Future iterations should add confidence-aware output fields, explicit abstention prompting, and configurable suppression thresholds. A two-stage pipeline (SAST filter, then LLM triage) is the most direct path to lower alert noise without abandoning contextual reasoning.
+\noindent\textbf{1) False-positive control beyond inter-run agreement.}
+The pipeline already includes a per-finding confidence score from inter-run agreement, a configurable confidence gate, and an opt-in hybrid SAST-fusion step that promotes LLM findings corroborated by Semgrep (Section~\ref{subsec:confidence-abstention}). The remaining work is to extend the gate beyond agreement: explicit abstention prompting (asking the model to declare uncertainty), calibrated confidence rather than the current agreement-as-confidence proxy, and a confidence-aware ranking surface in the IDE so high-confidence findings are visually distinct from low-confidence ones.
 
 \medskip
 
 \noindent\textbf{2) Stronger context modeling across files.}
-Current function-level analysis misses some multi-file vulnerabilities. Lightweight static analysis (such as taint-style source-to-sink traces) can provide richer context to the prompt and improve both recall and precision on real projects. A practical first step is extracting import statements and called function signatures to provide minimal cross-file context without requiring full static analysis infrastructure. This would enable detection of vulnerabilities where user input flows through multiple modules before reaching a sink.
+Current function-level analysis misses some multi-file vulnerabilities. A regex-based import / sink resolver surfaces validator-package presence and category-tagged sinks (Section~\ref{sec:impl-tech-stack}); its empirical lift on the four zero-recall categories proved marginal. The natural next step is to replace the regex resolver with lightweight static analysis (taint-style source-to-sink traces using a TypeScript-aware parser), which would provide structurally grounded cross-function context rather than lexical hints.
 
 \medskip
 
-\noindent\textbf{3) Safer repair generation.}
-Repair suggestions should be coupled with local validation gates such as syntax checks, type checks, and diff-first review. Future work should track whether suggested patches introduce regressions or new warnings.
+\noindent\textbf{3) Safer repair generation beyond syntax validation.}
+The pipeline includes a syntax check (\texttt{@babel/parser}) on every \texttt{suggestedFix} and reports the auto-applicable rate alongside the manual review (Section~\ref{sec:eval-r3-auto-applicable}). Remaining work is to layer a TypeScript type-check pass on top of the syntax check, run the local test suite (when present) on the patched buffer before offering a one-click apply, and re-run the analyser on the patched code to verify the original finding is gone and no new finding was introduced.
 
 \medskip
 

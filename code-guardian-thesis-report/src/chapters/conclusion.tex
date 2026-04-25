@@ -49,10 +49,10 @@ Table~\ref{tab:conclusion-deployment-profiles} summarizes practical deployment p
     \toprule
     Use case & Config & Advantage & Main risk & Alert noise management \\
     \midrule
-    Fast inline & \texttt{gemma3:1b} (LLM-only) & Very low median latency (\textasciitilde333 ms) & Low recall and FPR 100\% & Suitable only for optional lightweight hints \\
-    Audit-focused & \texttt{qwen3:4b} (LLM+RAG) & Higher recall (64.90\%); moderate latency (\textasciitilde1.1 s) & FPR 100\% & Use in explicit scan mode with manual triage \\
-    Best overall local run & \texttt{qwen3:8b} (LLM+RAG) & Best F1 (65.31\%); lower LLM FPR (20.00\%) & Higher latency (\textasciitilde2.7 s) & Recommended default for quality-oriented local analysis \\
-    Proposed hybrid low-noise & Semgrep + \texttt{qwen3:8b} (not directly benchmarked) & Deterministic low-noise anchors plus contextual reasoning & Combined performance not measured in this thesis; recall remains bounded by SAST coverage unless LLM-only findings are also surfaced & Use SAST as filter and LLM as targeted triage/repair layer \\
+    Fast inline & \texttt{gemma3:1b+RAG} & Lowest LLM FPR among small models (23.33\%); fastest median (\textasciitilde1\,019\,ms) & Low recall (40.85\%) & Optional lightweight hints with light triage \\
+    Audit-focused & \texttt{qwen3:4b} (LLM-only) & Highest LLM recall (78.87\%); F1 66.14\%; \textasciitilde1.3\,s median & FPR 90\% & Use in explicit scan mode with manual triage \\
+    Best overall local run & \texttt{qwen3:8b+RAG} & F1 71.94\%, precision 73.53\%, FPR 10.00\%, median 1\,573\,ms; with confidence gate $\geq 0.67$ precision rises to 77.78\% & Inference cost dominates 99\% of latency & Recommended default for quality-oriented local analysis \\
+    Hybrid low-noise & Semgrep + \texttt{qwen3:8b+RAG} (opt-in fusion) & Promotes corroborated findings to confidence~1.0 / \texttt{hybrid} source; uses Semgrep's 6.67\% FPR as a high-precision overlay & Fusion only fires for the small share of cases Semgrep itself flags (Semgrep recall 12.68\%) & Use SAST corroboration as visible-confidence overlay; LLM-only findings remain surfaced \\
     \bottomrule
   \end{tabularx}
 \end{table}
@@ -60,13 +60,13 @@ Table~\ref{tab:conclusion-deployment-profiles} summarizes practical deployment p
 \section{Limitations}
 
 \textbf{Scope and context depth.}
-The system handles common vulnerability patterns but remains limited for deep cross-file reasoning without full static data-flow analysis.
+The system handles common vulnerability patterns but remains limited for deep cross-file reasoning without full static data-flow analysis. A regex-based import / sink resolver (Section~\ref{sec:impl-tech-stack}) provides lightweight cross-snippet hints, but its empirical effect on the four semantic categories that previously scored zero recall was marginal --- the canonical taxonomy recovers most of the apparent gap by re-binning labels rather than detecting new instances.
 
 \textbf{Evaluation representativeness.}
 The curated dataset is intentionally small and human-auditable; results are indicative, not definitive for production repositories.
 
 \textbf{Repair correctness.}
-Repairs are model-generated and may change behavior. Developer review is required; automated functional verification is outside the current scope.
+Repairs are model-generated and may change behavior. Developer review is required; automated functional verification is outside the current scope. The pipeline includes a syntactic auto-applicability check (Section~\ref{sec:eval-r3-auto-applicable}) that scales to the full evaluation set, but this is a strictly weaker signal than functional verification: a parse-clean fix can still be semantically wrong.
 
 \section{Responsible Use}
 

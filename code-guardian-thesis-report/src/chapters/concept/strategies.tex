@@ -54,6 +54,17 @@ The workspace workflow supports periodic audits and prioritization across a repo
 
 After consensus-filtered detection (Stage~1), the system generates targeted repairs for each confirmed vulnerability using a dedicated repair prompt (Stage~2). Repairs are exposed as VS Code quick fixes. Applying repairs is always user-initiated and integrates with the undo stack. This preserves developer control (R3) and reduces the risk of unintended behavioral changes from automatically applied patches.
 
+\subsection{Confidence Abstention and Hybrid Gating}
+\label{subsec:confidence-abstention}
+
+Two design decisions complement consensus filtering to address the false-positive problem identified in the analysis chapter (R1) without re-introducing the deterministic-rule rigidity that motivated using LLMs in the first place.
+
+\textbf{Confidence as a first-class signal.} Multi-pass consensus is itself an empirical signal: if two seeded passes report the same finding, the model agrees with itself; if only one pass reports it, the finding is noisier. The refined design promotes that signal from a binary keep-or-drop decision to an explicit per-finding confidence value, computable as the fraction of passes that produced a matching finding. A configurable threshold then decides which findings reach the diagnostic stream. The default behaviour is unchanged (no gating), but operators who care more about precision than recall can lift the threshold to suppress single-pass noise. This makes the precision/recall trade-off a configuration choice rather than a design constant.
+
+\textbf{Hybrid SAST agreement as a confirmation signal.} A second source of corroboration is the established SAST tooling. When a deterministic baseline (Semgrep) flags a finding on overlapping lines and a matching canonical category, the LLM finding is promoted to maximum confidence and labelled as hybrid-source. The hybrid label is reported back to the IDE so the developer can see which findings have independent corroboration. This re-uses Semgrep's strengths (low false-positive rate on known patterns) without adopting its weaknesses (very narrow coverage), and it does so transparently --- the LLM's own findings remain visible at their original confidence even when Semgrep is silent.
+
+Both mechanisms are conservative: they extend the existing pipeline with optional gates rather than replacing the un-gated path. The chapter's evaluation reports both with-gate and without-gate metrics so the contribution of each gate is attributable.
+
 \subsection{Workflow Selection in Practice}
 \label{subsec:workflow-integration}
 

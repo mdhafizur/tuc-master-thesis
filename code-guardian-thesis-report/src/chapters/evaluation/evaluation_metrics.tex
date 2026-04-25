@@ -16,6 +16,15 @@ Given an expected set of vulnerability types per test case and a detected set of
 
 Matching is performed at the vulnerability-type level. To account for naming variation (e.g., ``Cross-Site Scripting'' vs.\ ``XSS''), the evaluation script applies case-insensitive substring matching between expected and detected type strings.
 
+\paragraph{Canonical category matching.}
+Substring matching is sensitive to label variation, as the qualitative error analysis later in this chapter confirms (Section~\ref{sec:eval-error-analysis}: 11 of 19 zero-recall cases are label-mismatch artefacts). The harness therefore normalises both expected and detected type strings to a fixed canonical taxonomy of 23 vulnerability classes (e.g., \texttt{sql-injection}, \texttt{xss}, \texttt{deserialization}, \texttt{auth-bypass}, \texttt{weak-crypto}, \texttt{input-validation}, \texttt{prototype-pollution}, \texttt{ssrf}, \texttt{xxe}, \texttt{path-traversal}, \texttt{ldap-injection}, \texttt{header-injection}, \texttt{code-injection}, \texttt{redos}, \texttt{race-condition}, \texttt{information-exposure}, \texttt{crypto-verification}, \texttt{weak-encryption}, \texttt{hardcoded-credential}, \texttt{nosql-injection}, \texttt{improper-auth}, plus a fall-through \texttt{other} bucket). The taxonomy is stored as a single shared JSON catalogue used by both the extension and the harness; a snapshot test pins regression-tested behaviour across 34 fixture inputs. Scoring is then performed as canonical-set intersection.
+
+\paragraph{Per-canonical-category metrics.}
+The aggregator additionally emits per-category TP/FP/FN/precision/recall/F1 over the canonical taxonomy. This makes the per-category recall picture (Section~\ref{sec:eval-r1}) reproducible from the run JSON without manual re-binning.
+
+\paragraph{Reporting note.}
+Type-level scoring throughout this chapter uses the canonical matcher described above. Where this chapter cites historical figures from the previously-published evaluation log (which used a substring-based matcher), the original figures are reproduced verbatim and clearly attributed; they are not blended with current canonical-matched values.
+
 \paragraph{Interpretation of precision and recall in this setup.}
 In this thesis, precision primarily reflects \emph{alert quality} under the chosen ontology and matching rule, while recall reflects \emph{coverage} of expected vulnerability classes. Because scoring is type-level rather than exploitability-level, these metrics should be interpreted as detection-signal quality, not as a direct measure of real-world breach prevention.
 
@@ -27,6 +36,11 @@ The scored dataset used in this chapter includes \textbf{30} intentionally secur
 
 \paragraph{Why sample-level FPR matters operationally.}
 In IDE workflows, a secure snippet that triggers \emph{any} warning still creates developer triage overhead. Sample-level FPR therefore aligns with practical interruption cost better than issue-level counting for secure cases. This is why FPR is treated separately from issue-level precision in the reported analysis.
+
+\paragraph{Inter-run confidence and confidence-gated precision.}
+Because the main ablation evaluates each vulnerable sample under \texttt{runsPerSample$\geq$2}, the harness derives a per-finding \emph{confidence} score from inter-run agreement: a finding's confidence is the fraction of runs in which a matching finding (overlapping line range and agreeing canonical category) appears, including the run that produced it. A \emph{confidence gate} then drops findings whose confidence is below a configurable threshold. Threshold $\geq 0.67$ on a 3-run configuration keeps only findings agreed by at least two of three passes. The gate is applied to the harness output post hoc by a deterministic re-scoring utility, so threshold sweeps do not require re-invoking the model.
+
+The thesis presents results both un-gated and at the operationally meaningful threshold ($\geq 0.67$ on 3-run configurations). This separates two questions cleanly: how often the model is right (un-gated precision/recall) and how reliable each individual finding is (gated precision/recall).
 
 \subsection*{Structured Output Robustness}
 
@@ -55,3 +69,19 @@ Interactive usability is often degraded by slow-tail behavior rather than averag
 
 \paragraph{Limits of the scoring setup.}
 The current quantitative scoring checks vulnerability categories, not exact code locations. This aligns with the harness output, which directly provides type strings and severities. Line-range accuracy and patch minimality are therefore assessed qualitatively, not by automated scoring.
+
+\subsection*{Repair Quality (Auto-Applicable Rate)}
+
+In addition to the manual review of repair quality reported in Section~\ref{sec:eval-r3}, the harness emits a deterministic, fleet-wide repair-quality signal:
+
+\begin{itemize}
+  \item \textbf{Auto-applicable rate:} the fraction of generated \texttt{suggestedFix} strings that syntactically parse as JavaScript or TypeScript (module, script, or wrapped-expression mode) without errors. Markdown code fences are stripped before parsing; obviously prose-style outputs (sentences starting with ``You should...'', ``To fix...'', etc.) are pre-rejected so the parse-error bucket is not inflated by un-code-like text.
+\end{itemize}
+
+The check uses \texttt{@babel/parser} with TypeScript, JSX, async, optional-chaining and similar plugins enabled. Passing parsing does not guarantee that the fix is semantically correct or that it actually closes the vulnerability; it only guarantees that the fix could be applied to a file without breaking the build. This is exactly the bar the \emph{auto-applicable} label is meant to capture, and what the thesis can defensibly report alongside the manual review.
+
+The auto-applicable rate is reported per model and prompt mode, alongside a \texttt{byReason} breakdown of the rejection categories (e.g.\ \texttt{prose\_not\_code}, \texttt{parse\_error}, \texttt{empty}). The metric scales to the full evaluation set without manual review and provides a stricter alternative to similarity-based repair metrics (cosine similarity, BLEU, CodeBERTScore), which the SecRepair authors explicitly characterise as ``fundamentally inadequate'' for security correctness assessment~\cite{islam2024secrepair}.
+
+\subsection*{Stage-Split Latency}
+
+Within the per-call latency, the harness records \texttt{inferenceTimeMs} (the duration of the Ollama call) and \texttt{parseTimeMs} (the duration of the response parser) separately, in addition to the total \texttt{responseTime}. This is reported to attribute the source of any observed latency change unambiguously: prompt and decoding changes affect inference time, while output-shape changes affect parse time.

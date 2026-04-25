@@ -5,7 +5,12 @@
       "Bash(git -C /Users/hafiz/personal/repos/tuc-master-thesis stash pop)",
       "Bash(npm install *)",
       "Bash(timeout 10 node evaluation/evaluate-models.js --baselines-only --baseline-tools=eslint-security --limit 2 --keep-baseline-workdir)",
-      "Bash(node evaluation/evaluate-models.js --baselines-only --baseline-tools=eslint-security --limit 2)"
+      "Bash(node evaluation/evaluate-models.js --baselines-only --baseline-tools=eslint-security --limit 2)",
+      "Bash(brew install *)",
+      "Bash(npm run *)",
+      "Bash(node evaluation/evaluate-models.js --model qwen3:8b --no-rag-only --runs 1 --limit 8 --tight-prompt)",
+      "Bash(node -e \"try { const p = require\\('@babel/parser'\\); console.log\\('@babel/parser available:', p.version || 'yes'\\); } catch\\(e\\) { console.log\\('NOT installed:', e.message\\); }\")",
+      "Bash(node evaluation/evaluate-models.js --model qwen3:8b --no-rag-only --runs 1 --limit 6 --tight-prompt)"
     ]
   }
 }

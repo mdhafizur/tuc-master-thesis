@@ -20,7 +20,7 @@ Table~\ref{tab:eval-compliance} maps the best configuration (\texttt{qwen3:8b+RA
     R1 &
     \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-150:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
     Medium &
-    F1 = 65.31\%, FPR = 20.00\%. Outperforms SAST on recall; FPR at the High-level boundary. \\
+    Canonical F1 71.94\% / precision 73.53\% / recall 70.42\% / FPR 10.00\%. With confidence gate $\geq 0.67$: F1 73.13\%, precision 77.78\%. Three of four sub-metrics meet the High threshold; F1 sits just below it. \\
     \midrule
     R2 &
     \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-150:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
@@ -28,14 +28,14 @@ Table~\ref{tab:eval-compliance} maps the best configuration (\texttt{qwen3:8b+RA
     JSON parse 100\%, detection agreement 87.6\%. Structured output fully stable; detection mostly stable. \\
     \midrule
     R3 &
-    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-90:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
-    Medium &
-    68\% of samples receive a correct repair. Injection fixes are strong; niche categories lack coverage. \\
+    \raisebox{-0.3cm}{\tikz{\draw (0,0) circle (0.35cm);}} &
+    Low (automated) / Medium (manual) &
+    Manual review of 25 samples: 68\% correct repairs. Auto-applicable rate (full $n=297$): 0\%; the model emits prose into the \texttt{suggestedFix} field rather than executable code, consistent with the field-wide observation in SecRepair~\cite{islam2024secrepair}. \\
     \midrule
     R4 &
     \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} &
     High (inline) &
-    Median 2.7\,s per function. Within interactive thresholds; full-file scans are medium. \\
+    Median 1\,573\,ms per function (p95 4\,214\,ms), $-42\%$ vs.\ the previously-published median. Inference dominates total latency by $>99\%$. Full-file scans are Medium. \\
     \midrule
     R5 &
     \cmark &
@@ -48,12 +48,18 @@ Table~\ref{tab:eval-compliance} maps the best configuration (\texttt{qwen3:8b+RA
 \subsection{Key Findings}
 
 \begin{enumerate}
-  \item \textbf{Best configuration:} \texttt{qwen3:8b+RAG} achieves the highest F1 (65.31\%) with controlled FPR (20.00\%) and interactive latency (2.7\,s median).
-  \item \textbf{RAG is model-dependent:} Retrieval augmentation improves \texttt{qwen3} models (+3.8 to +5.4 F1 points) but degrades \texttt{gemma3} and \texttt{codellama} ($-2.9$ to $-3.3$ points). However, exploratory McNemar tests on matched sample-level outcomes did not reach statistical significance for the \texttt{qwen3} improvements in this dataset ($n=71$), so the observed gains should be interpreted as indicative rather than confirmed.
-  \item \textbf{False-positive control improved but remains a challenge:} JSON-mode decoding and deterministic inference (temperature~0, fixed seed) reduced FPR from 26.67\% to 20.00\% for the best configuration. Most other LLM configurations still show high FPR.
-  \item \textbf{SAST complements LLM analysis:} Semgrep provides very low FPR (6.67\%) with fast execution (52\,ms) but poor recall (9.73\%). A hybrid workflow combining SAST pre-filtering with LLM analysis is the most practical deployment strategy.
-  \item \textbf{Privacy is fully preserved:} All analysis runs locally with no source code transmission.
+  \item \textbf{Best configuration:} \texttt{qwen3:8b+RAG} reaches canonical F1 71.94\% / precision 73.53\% / recall 70.42\% / FPR 10.00\% / median 1\,573\,ms; with the inter-run confidence gate at $\geq 0.67$: F1 73.13\% / precision 77.78\%. Compared to the previously-published headline (F1 65.31\%, FPR 20.00\%, median 2.7\,s), this is a +6.6-point F1 lift, halved FPR, and $-42\%$ latency, with no model or hardware change.
+  \item \textbf{RAG is sharply model-dependent.} \texttt{qwen3:8b} is the clearest beneficiary: F1 67.52\% $\to$ 71.94\% with RAG, precision 61.63\% $\to$ 73.53\%, FPR 50\% $\to$ 10\%. \texttt{gemma3} models are roughly neutral. \texttt{codellama} is severely degraded by RAG: F1 53.06\% $\to$ 23.17\% ($-29.89$), recall 73.24\% $\to$ 53.52\%, latency 2\,024\,ms $\to$ 3\,529\,ms. RAG must be calibrated per model rather than enabled by default.
+  \item \textbf{False-positive control:} The \texttt{qwen3:8b+RAG} secure-sample FPR is 10.00\% (3 of 30 cases flagged in any of 3 runs), down from 20.00\% in the previously-published configuration. The inter-run confidence gate at threshold $\geq 0.67$ further lifts precision from 73.53\% to 77.78\% while costing only 1.4 recall points. The remaining LLM configurations still flag every secure case at least once, so the gate alone is insufficient for them.
+  \item \textbf{SAST complements LLM analysis.} Semgrep provides very low FPR (6.67\%) with fast execution (63\,ms median) but low recall (12.68\% canonical). The hybrid SAST-fusion option promotes LLM findings corroborated by Semgrep on overlapping line range and matching canonical category to confidence~$1.0$ and \texttt{detectionSource: 'hybrid'}.
+  \item \textbf{Repair quality has a hard upper bound under the current contract.} The auto-applicable rate is 0\% across all 297 generated repairs for the headline configuration: the model writes prose into \texttt{suggestedFix} rather than syntactically applicable code. The manual review of 25 samples (68\% correct repairs) and the automated 0\% measure capture different bars; both are reported.
+  \item \textbf{Privacy is fully preserved:} all analysis runs locally with no source code transmission.
 \end{enumerate}
+
+\subsection{Headline Numbers}
+\label{sec:eval-summary-refined}
+
+The full evaluation (\texttt{--ablation --include-baselines --runs 3}) writes its complete per-model metrics into the run JSON. Specific point estimates --- detection metrics (Sections~\ref{sec:eval-r1}, \ref{sec:eval-r1-canonical}, \ref{sec:eval-r1-confidence}), auto-applicable repair rate (Section~\ref{sec:eval-r3-auto-applicable}), and stage-split latency (Section~\ref{sec:eval-metrics}) --- are presented in the corresponding R1, R3, and R4 sections rather than duplicated here.
 
 \subsection{Limitations}
 

@@ -29,6 +29,34 @@ Based on the problem statement and related work, five requirements define the ev
 
 The following subsections define these requirements in detail and map them to measurable criteria.
 
+\paragraph{Requirements-to-measures traceability.}
+Table~\ref{tab:requirements-measures-trace} summarises the concrete measure(s) computed by the evaluation harness for each requirement. The detailed definitions, threshold scales, and per-configuration values are presented in the corresponding subsections (R1--R5) and in Chapter~\ref{chap:evaluation}.
+
+\begin{table}[H]
+  \centering
+  \caption{Traceability from requirements to harness measures.}
+  \label{tab:requirements-measures-trace}
+  \footnotesize
+  \renewcommand{\arraystretch}{1.2}
+  \begin{tabularx}{\textwidth}{p{0.07\textwidth}p{0.15\textwidth}X}
+    \toprule
+    ID & Requirement & Harness measures \\
+    \midrule
+    R1 & Accuracy & Precision, recall, F1, sample-level secure FPR (Section~\ref{sec:eval-r1}); canonical-taxonomy type matching with per-canonical-category P / R / F1; inter-run confidence and confidence-gated metrics (Sections~\ref{sec:eval-r1-canonical}, \ref{sec:eval-r1-confidence}). \\
+    \midrule
+    R2 & Consistency & JSON parse success rate; inter-run detection agreement (\%); label and severity agreement (\%) over 3-run subsamples (Section~\ref{sec:eval-r2}). \\
+    \midrule
+    R3 & Repair quality & Manual review of repair fix rate, semantic correctness, strategy alignment, executable-code share on a 25-sample subset (Section~\ref{sec:eval-r3}); auto-applicable rate (\texttt{@babel/parser} syntax check on every \texttt{suggestedFix}) plus \texttt{byReason} breakdown over the full set (Section~\ref{sec:eval-r3-auto-applicable}). \\
+    \midrule
+    R4 & Usability & End-to-end latency (mean and median, ms) per configuration (Section~\ref{sec:eval-r4}); stage-split components \texttt{inferenceTimeMs} and \texttt{parseTimeMs} recorded per call. \\
+    \midrule
+    R5 & Privacy & Five-item architectural verification checklist (Section~\ref{sec:eval-r5}). \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+Every measure in this table is computed by the evaluation harness from per-case detection logs, with no manual aggregation step except the explicitly-marked manual review portion of R3.
+
 \subsection{R1: Accuracy}\vspace{-2mm}
 \input{src/chapters/analysis/requirements/r1}
 

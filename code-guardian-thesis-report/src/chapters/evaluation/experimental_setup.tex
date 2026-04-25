@@ -17,6 +17,12 @@ Two configurations are evaluated quantitatively:
 
 Where relevant, results can also be stratified by model size or model family to study the trade-off between accuracy and latency.
 
+\paragraph{System prompt.}
+The system prompt is a tight ${\sim}80$-token instruction that names the output schema and the four scoring rules. Because JSON-mode decoding plus the response schema enforce output shape, no verbose response-format example block is needed. Section~\ref{sec:eval-r4} reports the latency this prompt produces; the historical run that used a longer prompt is referenced where relevant for context only.
+
+\paragraph{Hybrid SAST gating (opt-in).}
+The harness optionally runs Semgrep once over a temporary baseline workspace at the start of a run and fuses each LLM finding whose line range overlaps a Semgrep finding (and whose canonical category agrees) by promoting the finding's confidence to $1.0$ and its detection source to \texttt{hybrid}. LLM-only findings keep their inter-run confidence. The fusion fires for the small share of cases where Semgrep itself produces a finding (a low fraction of the dataset, consistent with the published Semgrep recall of $9.73\%$); for the rest, the LLM output passes through untouched.
+
 \subsection*{Models and Hardware}
 
 The reported run evaluated five local Ollama models: \texttt{gemma3:1b}, \texttt{gemma3:4b}, \texttt{qwen3:4b}, \texttt{qwen3:8b}, and \texttt{CodeLlama:latest}. The execution environment was macOS (Darwin 25.3.0, arm64) on Apple M4 Max (16 CPU cores, 64\,GB RAM), Node.js v20.19.5, and Ollama 0.17.1.
@@ -57,7 +63,7 @@ These controls reduce avoidable variance, but they do not remove all confounders
     Item & Value \\
     \midrule
     Dataset files & \texttt{vulnerability-test-cases.generated.json} (71 vulnerable) + \texttt{negatives-only.generated.json} (30 secure) \\
-    Runs per sample & 3 (main ablation run) + 1 (negatives-only overlay) \\
+    Runs per sample & 3 (vulnerable and secure, symmetric) \\
     Prompt modes & LLM-only, LLM+RAG \\
     RAG settings & static security snippets, \texttt{k=5} \\
     Generation settings & \texttt{temperature=0}, \texttt{seed=42}, \texttt{format='json'}, \texttt{num\_predict=1000} \\
@@ -71,19 +77,42 @@ These controls reduce avoidable variance, but they do not remove all confounders
   \end{tabular}
 \end{table}
 
-\subsection{Data Merging and Run-to-Run Variability}
+\subsection{Run-to-Run Variability}
 \label{sec:eval-run-merging}
 
-The evaluation uses a \textbf{two-run merged configuration}. The main ablation run evaluates 71 vulnerable samples with \texttt{runsPerSample=3} (213 evaluations) to assess detection stability. A separate negatives-only overlay adds 30 secure samples with \texttt{runsPerSample=1} (30 evaluations) for FPR estimation. Re-running the full ablation with both sets at 3 runs would have required 7+ additional hours of compute.
+The evaluation uses \texttt{runsPerSample=3} symmetrically for both the 71 vulnerable and 30 secure samples (213 vulnerable evaluations + 90 secure evaluations = 303 model invocations per model$\times$mode). The symmetric 3-run design supports inter-run confidence computation on every sample, including secure ones, so the confidence gate (Section~\ref{sec:eval-metrics}) applies uniformly across the dataset.
 
 Per-model metrics are computed as follows:
 \begin{itemize}
-  \item \textbf{Precision \& Recall:} Over 213 vulnerable evaluations using type-level matching.
-  \item \textbf{FPR:} Over 30 secure evaluations at sample level (FP if \emph{any} issue is emitted).
-  \item \textbf{Latency and parse success:} Pooled across all 243 evaluations.
+  \item \textbf{Precision \& Recall:} Over 213 vulnerable evaluations using canonical type-level matching.
+  \item \textbf{FPR:} Over 90 secure evaluations at sample level (FP if \emph{any} issue is emitted in any run).
+  \item \textbf{Latency and parse success:} Pooled across all 303 evaluations.
 \end{itemize}
 
-This creates an asymmetry: vulnerable-case metrics benefit from triple-sampling, while FPR is single-pass. Recall and precision estimates are therefore more stable than FPR. All metrics are interpreted as descriptive measurements for this specific run configuration, not population generalizations. Limitations are discussed in Section~\ref{sec:eval-summary}.
+All metrics are interpreted as descriptive measurements for this run configuration on this dataset, not population generalisations. Limitations are discussed in Section~\ref{sec:eval-summary}.
 
 \paragraph{Response parsing.}
 The harness strips Markdown code fences if present and then attempts JSON parsing. Parse failures are scored as producing no issues, which impacts recall on vulnerable samples.
+
+\subsection{Run Configuration}
+\label{sec:eval-refined-config}
+
+\begin{table}[H]
+  \centering
+  \caption{Evaluation run configuration.}
+  \label{tab:eval-refined-config}
+  \small
+  \begin{tabular}{p{0.32\textwidth}p{0.61\textwidth}}
+    \toprule
+    Item & Value \\
+    \midrule
+    System prompt & ${\sim}80$-token instruction with the four scoring rules \\
+    Runs per vulnerable / secure sample & \texttt{3} / \texttt{3} (so inter-run confidence is computable on both groups) \\
+    Type-level scoring & canonical taxonomy of 23 vulnerability classes (Section~\ref{sec:eval-metrics}) \\
+    Per-finding confidence & inter-run agreement fraction; reported un-gated and at $\geq 0.67$ \\
+    Auto-applicable repair rate & \texttt{@babel/parser} syntax check on every \texttt{suggestedFix}, with \texttt{byReason} breakdown \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+The run is invoked with \texttt{--ablation --include-baselines --runs 3} on the 101-case dataset and the hardware profile in Table~\ref{tab:eval-reproducibility}. The canonical-matching metrics and the confidence gate are post-hoc transformations of the recorded per-finding outputs; threshold sweeps therefore do not require re-invoking the model.

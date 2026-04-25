@@ -1,0 +1,42 @@
+{
+  "version": "1.0.0",
+  "description": "Shared import / sink / validator pattern catalog. Loaded by both src/importResolver.ts and evaluation/import-resolver.js. Pattern order in `sinks` matters: more specific patterns first.",
+  "validatorModules": [
+    "sanitize-html",
+    "dompurify",
+    "xss",
+    "xss-filters",
+    "validator",
+    "express-validator",
+    "joi",
+    "yup",
+    "zod",
+    "ajv",
+    "class-validator",
+    "isomorphic-dompurify",
+    "he"
+  ],
+  "sinkPatterns": [
+    { "regex": "child_process\\.(exec|execSync|spawn|spawnSync|execFile)\\s*\\(", "category": "command-injection", "description": "child_process.exec*" },
+    { "regex": "\\beval\\s*\\(", "category": "code-injection", "description": "eval()" },
+    { "regex": "new\\s+Function\\s*\\(", "category": "code-injection", "description": "new Function()" },
+    { "regex": "vm\\.run(InNewContext|InThisContext|InContext)\\s*\\(", "category": "code-injection", "description": "vm.run*" },
+    { "regex": "yaml\\.(load|unserialize)\\s*\\(", "category": "deserialization", "description": "yaml.load (non-safe)" },
+    { "regex": "JSON\\.parse\\s*\\(\\s*(req\\.|request\\.|userInput|input)", "category": "deserialization", "description": "JSON.parse on user input" },
+    { "regex": "(deserialize|unserialize|node-serialize)\\s*\\(", "category": "deserialization", "description": "deserialize call" },
+    { "regex": "crypto\\.createHash\\s*\\(\\s*['\"]?(md5|sha1)['\"]?\\s*\\)", "category": "weak-crypto", "description": "weak hash (md5/sha1)" },
+    { "regex": "crypto\\.createCipher\\s*\\(", "category": "weak-crypto", "description": "createCipher (deprecated)" },
+    { "regex": "\\bDES\\b|crypto\\.createCipheriv\\s*\\(\\s*['\"]?des-?", "category": "weak-crypto", "description": "DES cipher" },
+    { "regex": "Math\\.random\\s*\\(\\)", "category": "weak-crypto", "description": "Math.random for security context" },
+    { "regex": "jsonwebtoken[\\s\\S]{0,80}verify\\s*\\(", "category": "auth-bypass", "description": "jwt.verify" },
+    { "regex": "['\"]none['\"]\\s*[,}\\]]", "category": "auth-bypass", "description": "JWT 'none' algorithm marker" },
+    { "regex": "(?:^|\\s|\\.)innerHTML\\s*=", "category": "xss", "description": "innerHTML assignment" },
+    { "regex": "document\\.write\\s*\\(", "category": "xss", "description": "document.write" },
+    { "regex": "(res\\.|response\\.)redirect\\s*\\(\\s*req\\.", "category": "ssrf", "description": "redirect to user-controlled URL" },
+    { "regex": "(http|https|axios|fetch|got|request)\\.(get|post|request)\\s*\\(\\s*req\\.", "category": "ssrf", "description": "outbound HTTP to user-controlled URL" },
+    { "regex": "(fs\\.(read|write)File(Sync)?|require)\\s*\\(\\s*(?:[^,)]*req\\.|[^,)]*request\\.|[^,)]*params|[^,)]*query|[^,)]*body)", "category": "path-traversal", "description": "fs op on user-controlled path" },
+    { "regex": "Object\\.assign\\s*\\(\\s*\\{\\}\\s*,\\s*req\\.", "category": "prototype-pollution", "description": "Object.assign with user-controlled source" },
+    { "regex": "\\.query\\s*\\(\\s*['\"`].*\\$\\{|\\.query\\s*\\(\\s*['\"`].*\\+", "category": "sql-injection", "description": "SQL query with concat/template" },
+    { "regex": "\\b(mysql|pg|sqlite3|mariadb)\\b", "category": "sql-injection", "description": "SQL driver imported (heuristic)" }
+  ]
+}
