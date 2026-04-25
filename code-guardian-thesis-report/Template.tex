@@ -16,7 +16,7 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{subfigure}
-\usepackage{acronym}
+\usepackage[nohyperlinks]{acronym} % nohyperlinks: silences ~27 cosmetic acro:* hyperref warnings caused by multicols + acronym + hyperref interaction; the abbreviations list is rendered identically, only the (unused) intra-doc \ac{X} hyperlinks are disabled
 \usepackage{multicol}
 \KOMAoptions{parskip=half}
 \usepackage[T1]{fontenc}
@@ -197,19 +197,23 @@
 \label{chap:conclusion}
 \input{src/chapters/conclusion}
 
+% =====================================================
+% REFERENCES / BIBLIOGRAPHY
+% (placed before the appendices per thesis ordering preference)
+% =====================================================
+\bibliographystyle{IEEEtran}
+\bibliography{bibliography}
+
 % =======================
-% APPENDICES
+% APPENDICES (after references)
 % =======================
 \appendix
 \input{src/chapters/appendices/privacy-verification}
 
 % =====================================================
-% BACKMATTER: Bibliography, Index, etc.
+% BACKMATTER: Declaration, Index, etc.
 % =====================================================
 \backmatter
-
-\bibliographystyle{IEEEtran}
-\bibliography{bibliography}
 
 % -------- Declaration of Originality --------
 \input{src/declaration}

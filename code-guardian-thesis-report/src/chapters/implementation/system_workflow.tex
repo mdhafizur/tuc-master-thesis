@@ -43,3 +43,18 @@ To prevent analysis on every keystroke, Code Guardian implements a debouncing me
 The 2{,}000-character function threshold (~400--500 tokens) keeps inference latency under acceptable inline feedback bounds on consumer hardware. The 20{,}000-character file threshold (~4{,}000--5{,}000 tokens) ensures prompts fit within the effective context window of smaller local models (8K--16K tokens) with headroom for RAG context and response generation. The 500\,KB workspace scan limit prevents memory exhaustion when scanning large monorepos.
 
 \textbf{Workspace workflow (dashboard scan).} The workspace scanner iterates through JavaScript/TypeScript files (excluding \texttt{node\_modules}) and aggregates findings into a dashboard. Very large files are skipped (500\,KB) to keep scans bounded. This supports risk overview and prioritization by surfacing the most affected files and a coarse severity distribution.
+
+\subsection*{Pipeline Gates}
+
+The pipeline adds four gates between the consensus filter and the diagnostic emission step. Each gate is configurable through the extension settings so a user can disable any of them without rebuilding.
+
+\begin{enumerate}
+  \item \textbf{Confidence assignment.} The consensus filter at the end of stage~1 stamps every finding with a \texttt{confidence} score and a \texttt{detectionSource} provenance tag. Both-pass agreement maps to confidence~$1.0$; the single-pass fallback path that would otherwise drop findings silently keeps them at confidence~$0.3$ so they are visible to a downstream gate rather than disappearing.
+  \item \textbf{Confidence gate (opt-in).} A configurable threshold in $[0,1]$ is applied before stage~2. Defaults to $0$ (no gating). At threshold $\geq 0.67$ on a 3-pass configuration, only findings agreed by at least two passes survive into the diagnostic stream.
+  \item \textbf{Hybrid SAST fusion (opt-in).} When enabled in the harness, Semgrep is run once over the analysed snippet and any LLM finding overlapping a Semgrep finding on line range plus canonical category is promoted to \texttt{detectionSource: 'hybrid'} with confidence $1.0$. LLM-only findings keep their inter-run confidence.
+  \item \textbf{Repair syntax validation.} After stage~2, every \texttt{suggestedFix} is parsed by the repair validator. Findings receive an \texttt{autoApplicable} boolean and (on rejection) a short reason such as \texttt{prose\_not\_code} or a parser error message. The diagnostic itself is unaffected; the IDE quick-fix surface uses the boolean to decide whether to offer a one-click apply or a preview-first action.
+\end{enumerate}
+
+\subsection*{System Prompt and Latency Telemetry}
+
+The stage-1 system prompt is a tight ${\sim}80$-token instruction; JSON-mode decoding plus the response schema enforce output shape, so a verbose response-format example block is unnecessary. Per-call latency is reported as the sum of two recorded components, \texttt{inferenceTimeMs} and \texttt{parseTimeMs}, so the source of any latency change can be attributed unambiguously. Inference dominates total latency by more than $99\%$ in measured micro-evaluation; the prompt size is therefore the dominant prefill-token cost lever.

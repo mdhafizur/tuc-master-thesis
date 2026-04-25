@@ -5,6 +5,8 @@ import { getCurrentModel, getAvailableModels } from './modelManager';
 import { RAGManager } from './ragManager';
 import { getAnalysisCache } from './analysisCache';
 import { getLogger } from './logger';
+import { resolveImportContext, formatImportContext } from './importResolver';
+import { validateRepair } from './repairValidator';
 
 /**
  * Provenance of a finding. `llm` = produced by the model only; `sast` = produced by a
@@ -30,6 +32,14 @@ export interface SecurityIssue {
 	suggestedFix?: string;          // Optional secure version or remediation advice
 	confidence?: number;            // [0,1] — see comment above
 	detectionSource?: DetectionSource;
+	/**
+	 * Phase 5: true if the suggested fix syntactically parses as JS/TS code (not
+	 * prose, not markdown, no parse errors). Set by the analyzer after stage-2
+	 * repair generation and by the harness during scoring. Drives the
+	 * `autoApplicableRate` metric reported alongside R3 manual review.
+	 */
+	autoApplicable?: boolean;
+	autoApplicableReason?: string;
 }
 
 /**
@@ -77,13 +87,79 @@ async function delay(ms: number): Promise<void> {
 }
 
 /**
- * Consensus configuration for multi-pass analysis
+ * Consensus configuration for multi-pass analysis.
+ *
+ * Defaults are calibrated for the thesis's local-LLM target hardware: two passes
+ * with fixed seeds {42, 137}, requiring agreement on both. Increasing `passes`
+ * linearly scales stage-1 latency, so the default is kept at 2.
  */
-const CONSENSUS_CONFIG = {
-	passes: 2,           // Number of analysis passes
-	seeds: [42, 137],    // Different seeds for each pass to introduce variation
-	minAgreement: 2      // Minimum passes that must agree for a finding to be kept
+const CONSENSUS_DEFAULTS = {
+	passes: 2,
+	seeds: [42, 137, 211, 317, 421],
+	minAgreement: 2
 };
+
+interface ConsensusRuntimeConfig {
+	passes: number;
+	seeds: number[];
+	minAgreement: number;
+}
+
+/**
+ * Resolve the active consensus configuration from VS Code settings. Harness and
+ * test callers bypass this by passing an explicit config to `analyzeCodeWithLLM`
+ * (the signature accepts an optional overrides object).
+ */
+function getConsensusConfig(): ConsensusRuntimeConfig {
+	try {
+		const cfg = vscode.workspace.getConfiguration('codeGuardian');
+		const passes = Math.max(1, Math.min(CONSENSUS_DEFAULTS.seeds.length,
+			cfg.get<number>('consensusPasses', CONSENSUS_DEFAULTS.passes)));
+		const minAgreement = Math.max(1, Math.min(passes,
+			cfg.get<number>('consensusMinAgreement', Math.min(CONSENSUS_DEFAULTS.minAgreement, passes))));
+		return {
+			passes,
+			seeds: CONSENSUS_DEFAULTS.seeds.slice(0, passes),
+			minAgreement
+		};
+	} catch {
+		// Outside an extension host (e.g. unit tests), fall back to defaults.
+		return {
+			passes: CONSENSUS_DEFAULTS.passes,
+			seeds: CONSENSUS_DEFAULTS.seeds.slice(0, CONSENSUS_DEFAULTS.passes),
+			minAgreement: CONSENSUS_DEFAULTS.minAgreement
+		};
+	}
+}
+
+/**
+ * Resolve the confidence gate threshold. Findings with `confidence < threshold`
+ * are suppressed from diagnostics. Default is 0 — no gating, preserving legacy
+ * behavior for the thesis baseline rerun.
+ */
+function getMinConfidence(): number {
+	try {
+		const cfg = vscode.workspace.getConfiguration('codeGuardian');
+		const raw = cfg.get<number>('minConfidence', 0);
+		return Math.max(0, Math.min(1, raw));
+	} catch {
+		return 0;
+	}
+}
+
+/**
+ * Whether to enrich prompts with regex-extracted import / sink context.
+ * Off by default; opt-in via the `codeGuardian.importContext` setting.
+ */
+function getImportContextEnabled(): boolean {
+	try {
+		const cfg = vscode.workspace.getConfiguration('codeGuardian');
+		return cfg.get<boolean>('importContext', false);
+	} catch {
+		return false;
+	}
+}
+
 
 /**
  * Checks whether two security issues refer to the same finding by comparing
@@ -130,6 +206,8 @@ function issuesMatch(a: SecurityIssue, b: SecurityIssue): boolean {
 
 /**
  * Performs a single LLM analysis pass and returns parsed security issues.
+ * Uses Ollama's `format: 'json'` decoding so the model terminates at the closing
+ * bracket instead of running to num_predict.
  */
 async function singleAnalysisPass(
 	model: string,
@@ -141,7 +219,12 @@ async function singleAnalysisPass(
 	for (let attempt = 1; attempt <= RETRY_CONFIG.maxAttempts; attempt++) {
 		try {
 			const res = await Promise.race([
-				ollama.chat({ model, messages, options: { temperature: 0, seed } }),
+				ollama.chat({
+					model,
+					messages,
+					format: 'json',
+					options: { temperature: 0, seed }
+				}),
 				new Promise<never>((_, reject) =>
 					setTimeout(() => reject(new AnalysisError(
 						AnalysisErrorType.TIMEOUT_ERROR,
@@ -298,14 +381,21 @@ async function singleAnalysisPass(
 }
 
 /**
- * Filters issues to only those confirmed by multiple analysis passes.
- * An issue from pass 1 is kept only if a matching issue exists in pass 2.
- * Falls back to primary results if consensus yields nothing but both passes found issues.
+ * Filters issues to those confirmed by at least `minAgreement` passes.
+ *
+ * Confidence assignment:
+ *   agreed/passes == 1   → 1.0 (unanimous)
+ *   otherwise            → agreed/passes (fraction of passes that saw this finding)
+ *   fallback path        → 0.3 (primary-only, other pass(es) also non-empty)
+ *
+ * An issue from the primary pass is considered "agreed by k" if it matches
+ * `issuesMatch` against an item in k-1 other passes (plus itself).
  */
-function applyConsensusFilter(passResults: SecurityIssue[][]): SecurityIssue[] {
+function applyConsensusFilter(passResults: SecurityIssue[][], minAgreement: number): SecurityIssue[] {
 	const logger = getLogger();
+	const passCount = passResults.length;
 
-	if (passResults.length < 2) {
+	if (passCount < 2) {
 		return (passResults[0] || []).map(issue => ({
 			...issue,
 			confidence: issue.confidence ?? 0.5,
@@ -314,24 +404,30 @@ function applyConsensusFilter(passResults: SecurityIssue[][]): SecurityIssue[] {
 	}
 
 	const primary = passResults[0];
-	const secondary = passResults[1];
+	const otherPasses = passResults.slice(1);
+	logger.debug(`Consensus filter: ${passCount} passes, minAgreement=${minAgreement}, pass sizes=[${passResults.map(p => p.length).join(',')}]`);
 
-	logger.debug(`Consensus filter: Pass 1 has ${primary.length} issues, Pass 2 has ${secondary.length} issues`);
-
-	// Keep issues from the primary pass that have a match in the secondary pass.
-	// Both-pass agreement is the strongest LLM signal we can produce locally → confidence 1.0.
+	// For each primary-pass issue, count how many OTHER passes contain a matching issue.
+	// Agreement count is 1 (self) plus the number of other passes that match.
 	const agreed = primary
-		.filter(issue => secondary.some(other => issuesMatch(issue, other)))
-		.map(issue => ({
+		.map(issue => {
+			const matchingOtherPasses = otherPasses.filter(otherPass =>
+				otherPass.some(other => issuesMatch(issue, other))
+			).length;
+			const agreementCount = 1 + matchingOtherPasses;
+			return { issue, agreementCount };
+		})
+		.filter(({ agreementCount }) => agreementCount >= minAgreement)
+		.map(({ issue, agreementCount }) => ({
 			...issue,
-			confidence: 1.0,
+			confidence: agreementCount / passCount,
 			detectionSource: 'llm' as DetectionSource
 		}));
 
-	// If consensus is empty but both passes found issues, fall back to primary results
-	// at low confidence. This preserves recall but lets downstream confidence gates
-	// (Phase 2) suppress these findings if the user opts into stricter filtering.
-	if (agreed.length === 0 && primary.length > 0 && secondary.length > 0) {
+	// If consensus is empty but every pass found issues, fall back to primary at low confidence.
+	// This preserves recall while letting a downstream confidence gate suppress the noise.
+	const everyPassFoundSomething = passResults.every(p => p.length > 0);
+	if (agreed.length === 0 && everyPassFoundSomething) {
 		logger.warn(`Consensus filter dropped all issues — falling back to Pass 1 results at confidence 0.3 (${primary.length} issues)`);
 		return primary.map(issue => ({
 			...issue,
@@ -341,6 +437,18 @@ function applyConsensusFilter(passResults: SecurityIssue[][]): SecurityIssue[] {
 	}
 
 	return agreed;
+}
+
+/**
+ * Suppress findings with confidence below the threshold. Pure, deterministic; safe
+ * to apply at any point after consensus filtering. Issues without an explicit
+ * confidence value are treated as 0.5 (the single-pass default).
+ */
+export function applyConfidenceGate(issues: SecurityIssue[], threshold: number): SecurityIssue[] {
+	if (threshold <= 0) {
+		return issues;
+	}
+	return issues.filter(issue => (issue.confidence ?? 0.5) >= threshold);
 }
 
 /**
@@ -356,28 +464,40 @@ async function generateRepair(
 ): Promise<string | undefined> {
 	const logger = getLogger();
 
-	const vulnerableLines = code.split('\n')
+	const allLines = code.split('\n');
+	const vulnerableLines = allLines
 		.slice(Math.max(0, issue.startLine - 1), issue.endLine)
 		.join('\n');
 
-	let repairSystemPrompt = `You are a secure code repair specialist. You are given a code snippet and a specific vulnerability found in it. Your ONLY job is to produce a fixed version of the vulnerable lines.
+	// Phase 4 refinement: send a windowed context (±5 lines around the issue)
+	// rather than duplicating the full file. The repair prompt previously
+	// included BOTH the vulnerable slice AND the entire `code` block — for any
+	// non-tiny file this doubled the prompt size and dominated stage-2 latency.
+	// Guard: if the issue spans more than 10 lines, fall back to full code so
+	// cross-function repairs still see all the context they need.
+	const issueSpan = issue.endLine - issue.startLine + 1;
+	const useWindow = issueSpan <= 10;
+	const windowStart = Math.max(0, issue.startLine - 1 - 5);
+	const windowEnd = Math.min(allLines.length, issue.endLine + 5);
+	const windowedContext = useWindow
+		? allLines.slice(windowStart, windowEnd).join('\n')
+		: code;
+	const contextLabel = useWindow ? `Surrounding context (lines ${windowStart + 1}-${windowEnd})` : 'Full code context';
 
-RULES:
-1. Return ONLY a JSON object with a single "fix" field containing the corrected code.
-2. The fix must directly address the reported vulnerability type.
-3. The fix must be executable code, not prose or explanation.
-4. Preserve the original code's functionality while eliminating the vulnerability.
-5. Use established secure coding patterns (parameterized queries, input validation, safe APIs).
+	let repairSystemPrompt = `Secure code repair. Output ONLY a JSON object {"fix": "..."}.
 
-Response format:
-{"fix": "the corrected code here"}`;
+Rules:
+- Address the reported vulnerability type directly
+- Executable code only, no prose or explanation
+- Preserve the original functionality
+- Use established secure patterns (parameterized queries, input validation, safe APIs)`;
 
 	let repairUserPrompt = `Vulnerability: ${issue.message}
 Vulnerable lines (${issue.startLine}-${issue.endLine}):
 ${vulnerableLines}
 
-Full code context:
-${code}
+${contextLabel}:
+${windowedContext}
 
 Return ONLY the JSON object with the fix.`;
 
@@ -460,28 +580,26 @@ export async function analyzeCodeWithLLM(code: string, modelName?: string, ragMa
 
 	// ========== STAGE 1: Detection with consensus filtering ==========
 
-	let systemPrompt = `You are a precise secure code analyzer. Detect REAL security vulnerabilities in code and return ONLY a valid JSON array.
+	let systemPrompt = `Detect exploitable security vulnerabilities in code. Return ONLY a JSON array. Each issue: {message, startLine, endLine}.
 
-IMPORTANT RULES:
-1. Only report issues that are genuinely exploitable. Do NOT flag safe patterns, hardcoded values, or properly sanitized inputs.
-2. If the code is secure and has no vulnerabilities, you MUST return an empty array: []
-3. Be specific: name the exact vulnerability type (e.g., "SQL Injection", "XSS", "Command Injection") and explain WHY it is exploitable.
-4. Do NOT report theoretical risks, best-practice suggestions, or style issues. Only report actual security vulnerabilities.
-
-CRITICAL: Your response MUST be ONLY a valid JSON array. No explanatory text, no markdown formatting, no comments.
-
-Response format:
-[
-	{
-		"message": "Description of the vulnerability and why it is exploitable",
-		"startLine": 1,
-		"endLine": 3
-	}
-]
-
-If no vulnerabilities are found, return: []`;
+Rules:
+- Only actually exploitable issues, not theoretical risks or style issues
+- Use specific names ("SQL Injection", "XSS", "Command Injection", etc.)
+- Return [] if the code is secure
+- JSON only, no prose`;
 
 	let userPrompt = `Analyze the following code for security vulnerabilities and return ONLY a JSON array:\n\n${code}`;
+
+	// Phase 3 refinement: optionally append a deterministic import/sink context line.
+	// Helps the model surface categories (input-validation, auth, crypto, deserialization)
+	// where the dangerous API isn't lexically obvious in the snippet.
+	if (getImportContextEnabled()) {
+		const ctx = resolveImportContext(code);
+		const formatted = formatImportContext(ctx);
+		if (formatted) {
+			userPrompt += `\n\n[Static context — use to inform analysis, do not echo back]\n${formatted}`;
+		}
+	}
 
 	// Enhance prompts with RAG if available
 	if (ragManager) {
@@ -506,9 +624,9 @@ If no vulnerabilities are found, return: []`;
 	];
 
 	// Run multiple analysis passes in parallel with different seeds
-	logger.info(`Running ${CONSENSUS_CONFIG.passes} consensus passes...`);
-	const passPromises = CONSENSUS_CONFIG.seeds
-		.slice(0, CONSENSUS_CONFIG.passes)
+	const consensusConfig = getConsensusConfig();
+	logger.info(`Running ${consensusConfig.passes} consensus passes (minAgreement=${consensusConfig.minAgreement})...`);
+	const passPromises = consensusConfig.seeds
 		.map((seed, i) => {
 			logger.debug(`Starting analysis pass ${i + 1} with seed ${seed}`);
 			return singleAnalysisPass(model, messages, seed);
@@ -520,31 +638,51 @@ If no vulnerabilities are found, return: []`;
 		logger.info(`Pass ${i + 1}: found ${results.length} issues`);
 	});
 
-	const consensus = applyConsensusFilter(passResults);
+	const consensus = applyConsensusFilter(passResults, consensusConfig.minAgreement);
 	logger.info(`Consensus: ${consensus.length} issues confirmed across passes`);
 
-	if (consensus.length === 0) {
-		cache.set(code, model, consensus, ragEnabled);
-		return consensus;
+	// Apply confidence gate: drop issues below the configured minConfidence threshold.
+	// Default threshold is 0, so this is a no-op for the baseline rerun.
+	const minConfidence = getMinConfidence();
+	const gated = minConfidence > 0
+		? applyConfidenceGate(consensus, minConfidence)
+		: consensus;
+	if (minConfidence > 0) {
+		logger.info(`Confidence gate (≥${minConfidence}): ${gated.length}/${consensus.length} issues retained`);
+	}
+
+	if (gated.length === 0) {
+		cache.set(code, model, gated, ragEnabled);
+		return gated;
 	}
 
 	// ========== STAGE 2: Targeted repair generation ==========
 
-	logger.info(`Generating targeted repairs for ${consensus.length} confirmed issues...`);
+	logger.info(`Generating targeted repairs for ${gated.length} confirmed issues...`);
 
-	const repairPromises = consensus.map(issue =>
+	const repairPromises = gated.map(issue =>
 		generateRepair(model, code, issue, ragManager)
 	);
 
 	const repairs = await Promise.all(repairPromises);
 
-	// Merge repairs into issues
-	const finalResults = consensus.map((issue, i) => ({
-		...issue,
-		suggestedFix: repairs[i] || issue.suggestedFix
-	}));
+	// Merge repairs into issues, with Phase 5 syntax validation tagging.
+	const finalResults: SecurityIssue[] = gated.map((issue, i) => {
+		const fix = repairs[i] || issue.suggestedFix;
+		const merged: SecurityIssue = { ...issue, suggestedFix: fix };
+		if (fix) {
+			const validation = validateRepair(fix);
+			merged.autoApplicable = validation.valid;
+			if (!validation.valid && validation.reason) {
+				merged.autoApplicableReason = validation.reason;
+			}
+		}
+		return merged;
+	});
 
 	const repairCount = repairs.filter(r => r !== undefined).length;
+	const autoApplicableCount = finalResults.filter(r => r.autoApplicable === true).length;
+	logger.info(`Auto-applicable repairs: ${autoApplicableCount}/${repairCount}`);
 	logger.info(`Repairs generated: ${repairCount}/${consensus.length}`);
 
 	// Cache the final result

@@ -35,15 +35,18 @@ Given these challenges and the thesis scope (demonstrating feasibility of privac
 Code Guardian implements several guardrails to mitigate repair risks:
 
 \paragraph{Diff-first presentation (VS Code Quick Fix).}
-Repairs are surfaced as IDE Quick Fixes, not automatically applied. When a developer selects a suggested repair:
+Repairs are surfaced as IDE Quick Fixes, not automatically applied. The extension surfaces \emph{two} actions per applicable diagnostic:
 \begin{enumerate}
-  \item VS Code displays a \textbf{diff preview} showing original vs.\ repaired code side-by-side.
-  \item Developer reviews the change before accepting.
-  \item If accepted, the edit is applied and added to undo history (reversible with Ctrl+Z).
-  \item Developer can modify the repair before saving (e.g., adjust variable names, add comments).
+  \item \textbf{Apply Secure Fix} --- one-click apply of the suggested replacement (the original behaviour). The edit is added to VS Code's undo history (reversible with Ctrl+Z) so the developer can revert any unwanted change.
+  \item \textbf{Preview Secure Fix (diff)} --- opens VS Code's built-in side-by-side diff editor between the original code slice and the proposed fix. The diff is backed by an in-memory text-document content provider on a custom scheme (\texttt{code-guardian-diff:}) so no temporary files are written to disk; the user's source file is unchanged unless they then explicitly invoke the apply action.
 \end{enumerate}
 
-This design ensures \textbf{human-in-the-loop control}: no code is modified without explicit developer approval.
+This two-action surface preserves the original one-click ergonomics for developers who already trust the model and adds an explicit review path for those who do not.
+
+\paragraph{Syntactic auto-applicability check.}
+Before either action is offered, the pipeline parses the suggested fix string with \texttt{@babel/parser} (TypeScript / JSX / async plugins enabled). Markdown fences and single-backtick wrappers are stripped first; obvious prose openings (``You should...'', ``To fix...'') are pre-rejected. The result is recorded on the finding as an \texttt{autoApplicable} boolean and (on rejection) a short reason. The aggregate \emph{auto-applicable rate} reported in Section~\ref{sec:eval-r3} is computed directly from this signal across the full evaluation set, scaling the R3 quality assessment beyond the smaller set of manually reviewed samples. Passing the parse check does not guarantee semantic correctness, but it does guarantee that the fix could be applied to a file without breaking the build --- which is exactly the bar the boolean is meant to capture.
+
+This design ensures \textbf{human-in-the-loop control}: no code is modified without explicit developer approval, and the developer is alerted when the model has produced something that could not be applied even mechanically.
 
 \paragraph{Minimal edit scope.}
 Repair suggestions target the smallest code region necessary to address the vulnerability:

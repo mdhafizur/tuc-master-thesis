@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { analyzeAndReportDiagnosticsFromText } from './diagnostic';
-import { provideFixes } from './actions';
+import { provideFixes, registerSecureFixPreviewCommand } from './actions';
 import { getEnclosingFunction } from './functionExtractor';
 import { analyzeCode } from './analyzer';
 import { showModelSelector, setSelectedModel, getCurrentModel, getAvailableModels } from './modelManager';
@@ -155,6 +155,9 @@ export function activate(context: vscode.ExtensionContext) {
             { providedCodeActionKinds: [vscode.CodeActionKind.QuickFix] }
         )
     );
+
+    // Phase 5: Register the secure-fix preview command + ephemeral diff content provider.
+    registerSecureFixPreviewCommand(context);
 
     /**
      * Manual command: Analyze selected text or current line using LLM (AI).

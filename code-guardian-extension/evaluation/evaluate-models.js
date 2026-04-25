@@ -15,6 +15,9 @@ const { execSync, execFile } = require('child_process');
 const { promisify } = require('util');
 const { fileURLToPath } = require('url');
 const taxonomy = require('./category-taxonomy');
+const sastFusion = require('./sast-fusion');
+const importResolver = require('./import-resolver');
+const repairValidator = require('./repair-validator');
 
 const execFileAsync = promisify(execFile);
 let ollamaClient = null;
@@ -56,11 +59,16 @@ const DISABLE_THINKING = !args.includes('--allow-thinking');
 const ENABLE_STRUCTURED_OUTPUT = !args.includes('--no-structured-output');
 const SAMPLE_LIMIT = parseIntFlag('--limit', 0); // 0 = no limit
 const MODEL_FILTER = getFlagValue('--model'); // e.g., --model qwen3:8b
-// Matching mode for type-level scoring. Default: emit BOTH legacy and canonical
-// metrics so the thesis can compare. --legacy-matching restricts emission to
-// legacy only (back-compat); --canonical-only restricts to canonical only.
-const LEGACY_MATCHING_ONLY = args.includes('--legacy-matching');
-const CANONICAL_MATCHING_ONLY = args.includes('--canonical-only');
+// Hybrid SAST+LLM gating. When enabled, Semgrep is run once over the baseline
+// workspace, and each LLM finding overlapping a SAST finding on line range +
+// canonical category is promoted to confidence 1.0 / hybrid.
+const SAST_FUSION_ENABLED = args.includes('--sast-fusion');
+// Apply a runtime confidence gate: drop findings below this threshold after fusion.
+// Complements the post-hoc rescoring script at evaluation/rescore-metrics.js.
+const CONFIDENCE_THRESHOLD = parseFloatFlag('--confidence-threshold', 0);
+// Enrich the user prompt with regex-extracted import / sink context. Off by
+// default; opt-in via --import-context to evaluate the lift on semantic categories.
+const IMPORT_CONTEXT_ENABLED = args.includes('--import-context');
 
 function getFlagValue(name) {
     const prefixed = `${name}=`;
@@ -185,28 +193,21 @@ async function loadTestDataset(datasetArg = DATASET_FLAG) {
 }
 
 // System prompt for security analysis
-const SYSTEM_PROMPT = `You are a precise secure code analyzer. Detect REAL security vulnerabilities in code and return them in JSON format.
+// JSON-mode + MODEL_RESPONSE_SCHEMA enforce output shape, so the prompt is a
+// tight ~80-token instruction with the four scoring rules; no verbose example
+// block is needed.
+const SYSTEM_PROMPT = `Detect exploitable security vulnerabilities in code. Return a JSON array. Each issue needs:
+- message: why this is exploitable
+- type: specific vulnerability name (e.g. SQL Injection, XSS, Command Injection, Path Traversal, Weak Cryptography)
+- startLine, endLine: 1-based line range
+- severity: high | medium | low
+- suggestedFix: secure code replacement
 
-IMPORTANT RULES:
-1. Only report issues that are genuinely exploitable. Do NOT flag safe patterns, hardcoded values, or properly sanitized inputs.
-2. If the code is secure and has no vulnerabilities, you MUST return an empty array: []
-3. Each issue must include a concrete suggestedFix with executable code showing the secure alternative.
-4. Be specific: name the exact vulnerability type and explain WHY it is exploitable.
-5. Do NOT report theoretical risks, best-practice suggestions, or style issues.
-
-Response format:
-[
-  {
-    "message": "Description of the vulnerability and why it is exploitable",
-    "type": "Vulnerability type (e.g., SQL Injection, XSS)",
-    "startLine": 1,
-    "endLine": 3,
-    "severity": "high|medium|low",
-    "suggestedFix": "Secure code replacement that fixes the vulnerability"
-  }
-]
-
-Return an empty array [] if no vulnerabilities are found. Only return valid JSON, no explanations.`;
+Rules:
+- Report only actually exploitable issues, not theoretical risks or style issues
+- Skip hardcoded test values and properly sanitized inputs
+- Return [] if the code is secure
+- JSON only, no prose`;
 
 const RAG_KNOWLEDGE_SNIPPETS = [
     // Core injection vulnerabilities
@@ -898,7 +899,7 @@ function buildBaselineEvaluationResult({
 
     for (const testCase of testCases) {
         const detectedIssues = findingsByCase.get(testCase.id) || [];
-        const caseMetrics = calculateMetricsBoth(
+        const caseMetrics = calculateMetrics(
             detectedIssues,
             testCase.expectedVulnerabilities,
             testCase.code
@@ -927,6 +928,7 @@ function buildBaselineEvaluationResult({
     }
 
     const aggregateMetrics = calculateAggregateMetrics(metrics);
+    const perCategoryMetrics = calculatePerCategoryMetrics(details);
     const meanLatencyMs = latencySamples.length > 0 ? Math.round(mean(latencySamples)) : 0;
     const medianLatencyMs = latencySamples.length > 0 ? Math.round(median(latencySamples)) : 0;
 
@@ -962,6 +964,7 @@ function buildBaselineEvaluationResult({
             failures: {}
         },
         metrics: aggregateMetrics,
+        perCategoryMetrics,
         detailedResults: details
     };
 }
@@ -1039,6 +1042,77 @@ async function runSemgrepBaseline(testCases, workspace, options) {
             totalDurationMs: outcome.durationMs
         })
     };
+}
+
+/**
+ * Phase 2 refinement helper. Runs Semgrep ONCE over a temporary baseline
+ * workspace and returns a Map<testCaseId, SastFinding[]> suitable for SAST×LLM
+ * fusion. This deliberately duplicates the rule set of runSemgrepBaseline so
+ * LLM fusion sees exactly the same signal the SAST baseline would score.
+ *
+ * Returns `{ findingsByCase, workspace }`. Caller is responsible for calling
+ * `await fs.rm(workspace.workspaceDir, { recursive: true, force: true })` when
+ * done (or for leaving it behind when --keep-baseline-workdir is set).
+ */
+async function collectSastFindingsForFusion(testCases, { semgrepBin, timeoutMs }) {
+    const findingsByCase = createFindingsMap(testCases);
+    const workspace = await createBaselineWorkspace(testCases);
+
+    const version = await readToolVersion(semgrepBin);
+    if (!version) {
+        console.log(`⚠️  SAST fusion requested but Semgrep binary unavailable (${semgrepBin}); proceeding without fusion.`);
+        return { findingsByCase, workspace, skipped: true };
+    }
+
+    const semgrepArgs = [
+        '--config=p/security-audit',
+        '--config=p/javascript',
+        '--config=p/typescript',
+        '--config=p/owasp-top-ten',
+        '--json',
+        '--metrics=off',
+        '--quiet',
+        workspace.workspaceDir
+    ];
+
+    const outcome = await runExecFileCommand(semgrepBin, semgrepArgs, { timeoutMs });
+    if (outcome.executionError || ![0, 1].includes(outcome.exitCode)) {
+        console.log(`⚠️  SAST fusion Semgrep failed (exit=${outcome.exitCode}); proceeding without fusion.`);
+        return { findingsByCase, workspace, skipped: true };
+    }
+
+    let parsed;
+    try {
+        parsed = JSON.parse(outcome.stdout || '{"results": []}');
+    } catch (_error) {
+        console.log('⚠️  SAST fusion Semgrep output parse failure; proceeding without fusion.');
+        return { findingsByCase, workspace, skipped: true };
+    }
+
+    for (const finding of parsed.results || []) {
+        const testCase = resolveTestCaseFromResultPath(finding.path, workspace);
+        if (!testCase) continue;
+
+        const message = String(finding.extra?.message || '').trim();
+        const ruleId = String(finding.check_id || '');
+        const cwe = Array.isArray(finding.extra?.metadata?.cwe)
+            ? finding.extra.metadata.cwe.join(' ')
+            : String(finding.extra?.metadata?.cwe || '');
+
+        appendFinding(findingsByCase, testCase, {
+            message: message || 'Semgrep finding',
+            type: inferVulnerabilityType(`${ruleId} ${message} ${cwe}`),
+            startLine: finding.start?.line || 1,
+            endLine: finding.end?.line || finding.start?.line || 1,
+            severity: normalizeToolSeverity(finding.extra?.severity || 'warning'),
+            ruleId,
+            tool: 'semgrep'
+        });
+    }
+
+    const totalFindings = [...findingsByCase.values()].reduce((sum, v) => sum + v.length, 0);
+    console.log(`🔗 SAST fusion corpus: ${totalFindings} Semgrep findings across ${findingsByCase.size} test cases (Semgrep ${version})`);
+    return { findingsByCase, workspace, skipped: false };
 }
 
 async function runCodeqlBaseline(testCases, workspace, options) {
@@ -1342,12 +1416,28 @@ async function analyzeWithModel(modelName, code, options) {
 
     try {
         const startTime = Date.now();
-        const systemPrompt = useRAG ? buildRAGPrompt(ragK) : SYSTEM_PROMPT;
+        const systemPrompt = useRAG
+            ? `${SYSTEM_PROMPT}\n\nRELEVANT SECURITY KNOWLEDGE (top-k=${ragK}):\n${RAG_KNOWLEDGE_SNIPPETS.slice(0, Math.max(0, ragK)).map((s, i) => `${i + 1}. ${s}`).join('\n') || 'No retrieval snippets selected (k=0).'}`
+            : SYSTEM_PROMPT;
+
+        // Phase 3: optionally inject deterministic import / sink context.
+        // The context is appended AFTER the code so it cannot be confused for
+        // code by the model, and so the leading code position stays identical
+        // to the baseline prompt for cache-friendly comparisons.
+        let userContent = `Analyze the following code for security vulnerabilities:\n\n${code}`;
+        if (IMPORT_CONTEXT_ENABLED) {
+            const ctx = importResolver.resolveImportContext(code);
+            const formatted = importResolver.formatImportContext(ctx);
+            if (formatted) {
+                userContent += `\n\n[Static context — use to inform analysis, do not echo back]\n${formatted}`;
+            }
+        }
+
         const requestPayload = {
             model: modelName,
             messages: [
                 { role: 'system', content: systemPrompt },
-                { role: 'user', content: `Analyze the following code for security vulnerabilities:\n\n${code}` }
+                { role: 'user', content: userContent }
             ],
             format: 'json',
             options: {
@@ -1371,9 +1461,12 @@ async function analyzeWithModel(modelName, code, options) {
             )
         ]);
 
-        const endTime = Date.now();
-        const responseTime = endTime - startTime;
+        const inferenceEndTime = Date.now();
+        const inferenceTimeMs = inferenceEndTime - startTime;
         const parsed = parseModelIssues(response.message);
+        const parseEndTime = Date.now();
+        const parseTimeMs = parseEndTime - inferenceEndTime;
+        const responseTime = parseEndTime - startTime;
 
         if (!parsed.parseSuccess) {
             console.log(`   ⚠️  JSON parsing failed for ${modelName} (${parsed.parseReason})`);
@@ -1382,6 +1475,8 @@ async function analyzeWithModel(modelName, code, options) {
         return {
             success: true,
             responseTime,
+            inferenceTimeMs,
+            parseTimeMs,
             issues: parsed.issues,
             parseSuccess: parsed.parseSuccess,
             parseReason: parsed.parseReason,
@@ -1405,46 +1500,22 @@ async function analyzeWithModel(modelName, code, options) {
 }
 
 /**
- * Compute per-test-case metrics using the chosen matching mode.
- *
- * Modes:
- *   - 'legacy'    : original bidirectional substring match on lowercased type strings
- *                   (preserves the numbers reported in the thesis baseline).
- *   - 'canonical' : both sides are first normalized to a canonical category via the
- *                   shared taxonomy in src/categoryTaxonomy.json, then matched as sets.
- *
- * Line-accuracy and secure-sample bookkeeping are mode-independent and identical
- * across both calls.
+ * Compute per-test-case metrics using the canonical taxonomy matcher
+ * (src/categoryTaxonomy.json). Both sides are first normalized to a canonical
+ * category, then matched as sets.
  */
-function calculateMetrics(detected, expected, code, options) {
-    const mode = (options && options.matchingMode) || 'legacy';
+function calculateMetrics(detected, expected, code) {
     const isSecureSample = expected.length === 0;
 
-    let truePositives;
-    let falsePositives;
-    let falseNegatives;
-
-    if (mode === 'canonical') {
-        const detectedCats = taxonomy.normalizeCategories(detected.map(d => d.type));
-        const expectedCats = taxonomy.normalizeCategories(expected.map(e => e.type));
-        // 'other' on the expected side would swallow false positives; treat the
-        // intersection of canonical categories as TPs.
-        const intersect = new Set();
-        for (const c of detectedCats) {
-            if (expectedCats.has(c)) intersect.add(c);
-        }
-        truePositives = intersect.size;
-        falsePositives = detectedCats.size - truePositives;
-        falseNegatives = expectedCats.size - truePositives;
-    } else {
-        const detectedTypes = new Set(detected.map(d => (d.type || '').toLowerCase()));
-        const expectedTypes = new Set(expected.map(e => e.type.toLowerCase()));
-        truePositives = [...detectedTypes].filter(d =>
-            [...expectedTypes].some(e => e.includes(d) || d.includes(e))
-        ).length;
-        falsePositives = detectedTypes.size - truePositives;
-        falseNegatives = expectedTypes.size - truePositives;
+    const detectedCats = taxonomy.normalizeCategories(detected.map(d => d.type));
+    const expectedCats = taxonomy.normalizeCategories(expected.map(e => e.type));
+    const intersect = new Set();
+    for (const c of detectedCats) {
+        if (expectedCats.has(c)) intersect.add(c);
     }
+    const truePositives = intersect.size;
+    const falsePositives = detectedCats.size - truePositives;
+    const falseNegatives = expectedCats.size - truePositives;
 
     const secureFalsePositiveCases = isSecureSample && detected.length > 0 ? 1 : 0;
     const secureTrueNegativeCases = isSecureSample && detected.length === 0 ? 1 : 0;
@@ -1472,33 +1543,8 @@ function calculateMetrics(detected, expected, code, options) {
         trueNegatives,
         secureFalsePositiveCases,
         secureTrueNegativeCases,
-        lineAccuracy: lineAccuracyTotal > 0 ? lineAccuracyCount / lineAccuracyTotal : null,
-        matchingMode: mode
+        lineAccuracy: lineAccuracyTotal > 0 ? lineAccuracyCount / lineAccuracyTotal : null
     };
-}
-
-/**
- * Compute both legacy and canonical metrics in one call. Returns the legacy result
- * as the primary (back-compat with all existing report consumers) and attaches the
- * canonical result on `.canonical` so the run JSON carries both.
- *
- * Honors the CLI mode flags: --legacy-matching omits canonical, --canonical-only
- * promotes canonical to primary.
- */
-function calculateMetricsBoth(detected, expected, code) {
-    if (CANONICAL_MATCHING_ONLY) {
-        const canonical = calculateMetrics(detected, expected, code, { matchingMode: 'canonical' });
-        return Object.assign({}, canonical, { primaryMatchingMode: 'canonical' });
-    }
-    const legacy = calculateMetrics(detected, expected, code, { matchingMode: 'legacy' });
-    if (LEGACY_MATCHING_ONLY) {
-        return Object.assign({}, legacy, { primaryMatchingMode: 'legacy' });
-    }
-    const canonical = calculateMetrics(detected, expected, code, { matchingMode: 'canonical' });
-    return Object.assign({}, legacy, {
-        primaryMatchingMode: 'legacy',
-        canonical
-    });
 }
 
 function calculateAggregateMetrics(allMetrics) {
@@ -1537,17 +1583,70 @@ function calculateAggregateMetrics(allMetrics) {
         secureTrueNegativeCases: secureTnCases
     };
 
-    // If per-case metrics carry a canonical sub-object (from calculateMetricsBoth),
-    // aggregate those too and attach as result.canonical. This lets the run JSON
-    // report both legacy and canonical aggregates side-by-side.
-    const canonicalSubMetrics = allMetrics
-        .filter(m => m && m.canonical)
-        .map(m => m.canonical);
-    if (canonicalSubMetrics.length === allMetrics.length && canonicalSubMetrics.length > 0) {
-        result.canonical = calculateAggregateMetrics(canonicalSubMetrics);
+    return result;
+}
+
+/**
+ * Phase 3 refinement: per-canonical-category metrics aggregator.
+ *
+ * Walks the run's detailedResults, normalizes detected and expected types via
+ * the canonical taxonomy, and reports per-category TP/FP/FN/precision/recall/F1.
+ * The "FN" count for a category is incremented for every case whose expected
+ * set contains the category but whose detected set does not. The "FP" count is
+ * incremented for every case whose detected set contains the category but
+ * whose expected set does not (or whose expected set is empty — i.e. secure
+ * samples). This aligns with how the thesis reports per-category recall.
+ */
+function calculatePerCategoryMetrics(detailedResults) {
+    if (!Array.isArray(detailedResults) || detailedResults.length === 0) {
+        return null;
     }
 
-    return result;
+    const buckets = new Map(); // category → { tp, fp, fn, casesWithCategoryExpected, casesWithCategoryDetected }
+
+    function bumpBucket(cat, key) {
+        if (!buckets.has(cat)) {
+            buckets.set(cat, { tp: 0, fp: 0, fn: 0, casesWithCategoryExpected: 0, casesWithCategoryDetected: 0 });
+        }
+        buckets.get(cat)[key]++;
+    }
+
+    for (const dr of detailedResults) {
+        const detectedCats = taxonomy.normalizeCategories(
+            (dr.detectedIssues || []).map(d => d.type)
+        );
+        const expectedCats = taxonomy.normalizeCategories(
+            (dr.expectedVulnerabilities || []).map(e => e.type)
+        );
+
+        for (const cat of expectedCats) {
+            bumpBucket(cat, 'casesWithCategoryExpected');
+            if (detectedCats.has(cat)) bumpBucket(cat, 'tp');
+            else bumpBucket(cat, 'fn');
+        }
+        for (const cat of detectedCats) {
+            bumpBucket(cat, 'casesWithCategoryDetected');
+            if (!expectedCats.has(cat)) bumpBucket(cat, 'fp');
+        }
+    }
+
+    const out = {};
+    for (const [cat, b] of buckets) {
+        const precision = b.tp + b.fp > 0 ? b.tp / (b.tp + b.fp) : 0;
+        const recall = b.tp + b.fn > 0 ? b.tp / (b.tp + b.fn) : 0;
+        const f1 = precision + recall > 0 ? 2 * precision * recall / (precision + recall) : 0;
+        out[cat] = {
+            truePositives: b.tp,
+            falsePositives: b.fp,
+            falseNegatives: b.fn,
+            casesExpected: b.casesWithCategoryExpected,
+            casesDetected: b.casesWithCategoryDetected,
+            precision: (precision * 100).toFixed(2),
+            recall: (recall * 100).toFixed(2),
+            f1Score: (f1 * 100).toFixed(2)
+        };
+    }
+    return out;
 }
 
 function getRankingStrategy(testCases) {
@@ -1599,7 +1698,9 @@ async function evaluateModel(modelInfo, testCases, options) {
         delayMs,
         ragK,
         temperature,
-        numPredict
+        numPredict,
+        sastFindingsByCase, // optional Map<testCaseId, SastFinding[]> for --sast-fusion
+        confidenceThreshold // optional [0,1] runtime confidence gate
     } = options;
 
     const modeLabel = useRAG ? '(RAG)' : '(Base)';
@@ -1644,15 +1745,50 @@ async function evaluateModel(modelInfo, testCases, options) {
                     incrementCount(parseFailureReasonCounts, result.parseReason);
                 }
 
-                const caseMetrics = calculateMetricsBoth(
-                    result.issues,
+                // Phase 2: optional SAST×LLM fusion (promotes LLM findings that Semgrep also flags).
+                let fusedIssues = result.issues;
+                let fusionStats = null;
+                if (sastFindingsByCase) {
+                    const sastForCase = sastFindingsByCase.get(testCase.id) || [];
+                    fusedIssues = sastFusion.fuseSastWithLlm(result.issues, sastForCase);
+                    fusionStats = sastFusion.fusionSummary(fusedIssues);
+                }
+
+                // Phase 2: optional runtime confidence gate.
+                let gatedIssues = fusedIssues;
+                if (confidenceThreshold && confidenceThreshold > 0) {
+                    gatedIssues = fusedIssues.filter(issue => {
+                        const c = typeof issue.confidence === 'number' ? issue.confidence : 0.5;
+                        return c >= confidenceThreshold;
+                    });
+                }
+
+                // Phase 5: tag each issue with autoApplicable based on syntax validation.
+                gatedIssues = gatedIssues.map(issue => {
+                    if (issue && typeof issue.suggestedFix === 'string' && issue.suggestedFix.length > 0) {
+                        const v = repairValidator.validateRepair(issue.suggestedFix);
+                        return {
+                            ...issue,
+                            autoApplicable: v.valid,
+                            autoApplicableReason: v.valid ? undefined : v.reason
+                        };
+                    }
+                    return issue;
+                });
+
+                const caseMetrics = calculateMetrics(
+                    gatedIssues,
                     testCase.expectedVulnerabilities,
                     testCase.code
                 );
 
                 metrics.push(caseMetrics);
 
-                console.log(`   ✅ Completed in ${result.responseTime}ms`);
+                const fusionLog = fusionStats ? ` | hybrid:${fusionStats.hybrid}, llm-only:${fusionStats.llmOnly}` : '';
+                const gateLog = (confidenceThreshold && confidenceThreshold > 0)
+                    ? ` | gated:${fusedIssues.length - gatedIssues.length}@≥${confidenceThreshold}`
+                    : '';
+                console.log(`   ✅ Completed in ${result.responseTime}ms${fusionLog}${gateLog}`);
                 console.log(`   📊 TP: ${caseMetrics.truePositives}, FP: ${caseMetrics.falsePositives}, FN: ${caseMetrics.falseNegatives}${caseMetrics.lineAccuracy !== null ? `, Line Acc: ${(caseMetrics.lineAccuracy * 100).toFixed(0)}%` : ''}`);
 
                 results.push({
@@ -1661,12 +1797,17 @@ async function evaluateModel(modelInfo, testCases, options) {
                     run,
                     success: true,
                     responseTime: result.responseTime,
-                    detected: result.issues.length,
+                    inferenceTimeMs: result.inferenceTimeMs,
+                    parseTimeMs: result.parseTimeMs,
+                    detected: gatedIssues.length,
+                    detectedRaw: result.issues.length,
                     expected: testCase.expectedVulnerabilities.length,
                     parseSuccess: result.parseSuccess,
                     parseReason: result.parseReason,
                     parsedFrom: result.parsedFrom,
-                    detectedIssues: result.issues,
+                    detectedIssues: gatedIssues,
+                    detectedIssuesRaw: result.issues,
+                    fusionStats,
                     expectedVulnerabilities: testCase.expectedVulnerabilities,
                     expectedFix: testCase.expectedFix || null,
                     metrics: caseMetrics,
@@ -1697,8 +1838,21 @@ async function evaluateModel(modelInfo, testCases, options) {
     }
 
     const aggregateMetrics = calculateAggregateMetrics(metrics);
+    const perCategoryMetrics = calculatePerCategoryMetrics(results);
+    // Phase 5: auto-applicable repair rate across all detected (non-empty) fixes
+    // produced in the run. Walks results' detected (non-raw) issues so the rate
+    // reflects what the user would actually see post-fusion + post-gate.
+    const repairAggregate = repairValidator.aggregateAutoApplicable(
+        results.filter(r => r.success).map(r => r.detectedIssues || [])
+    );
     const meanLatencyMs = latencies.length > 0 ? Math.round(mean(latencies)) : 0;
     const medianLatencyMs = latencies.length > 0 ? Math.round(median(latencies)) : 0;
+    const inferenceLatencies = results.filter(r => r.success && Number.isFinite(r.inferenceTimeMs)).map(r => r.inferenceTimeMs);
+    const parseLatencies = results.filter(r => r.success && Number.isFinite(r.parseTimeMs)).map(r => r.parseTimeMs);
+    const meanInferenceMs = inferenceLatencies.length > 0 ? Math.round(mean(inferenceLatencies)) : null;
+    const medianInferenceMs = inferenceLatencies.length > 0 ? Math.round(median(inferenceLatencies)) : null;
+    const meanParseMs = parseLatencies.length > 0 ? Math.round(mean(parseLatencies)) : null;
+    const medianParseMs = parseLatencies.length > 0 ? Math.round(median(parseLatencies)) : null;
     const parseSuccessRate = (successfulParses / totalRequests * 100).toFixed(2);
 
     return {
@@ -1723,12 +1877,24 @@ async function evaluateModel(modelInfo, testCases, options) {
         successfulRequests,
         meanLatencyMs,
         medianLatencyMs,
+        meanInferenceMs,
+        medianInferenceMs,
+        meanParseMs,
+        medianParseMs,
         parseSuccessRate,
         parseDiagnostics: {
             reasons: parseReasonCounts,
             failures: parseFailureReasonCounts
         },
         metrics: aggregateMetrics,
+        perCategoryMetrics,
+        repairQuality: {
+            totalRepairs: repairAggregate.totalRepairs,
+            autoApplicable: repairAggregate.autoApplicable,
+            autoApplicableRate: Number((repairAggregate.autoApplicableRate * 100).toFixed(2)),
+            byReason: repairAggregate.byReason
+        },
+        importContextEnabled: IMPORT_CONTEXT_ENABLED,
         detailedResults: results
     };
 }
@@ -1871,6 +2037,22 @@ async function runEvaluation() {
         delayMs: REQUEST_DELAY_MS
     });
 
+    // Phase 2: SAST×LLM fusion prep. Run Semgrep once if --sast-fusion is set.
+    let sastFusionCorpus = null;
+    if (SAST_FUSION_ENABLED && shouldRunLlm) {
+        console.log(`\n🔗 Preparing SAST fusion corpus (--sast-fusion)...`);
+        sastFusionCorpus = await collectSastFindingsForFusion(testCases, {
+            semgrepBin: SEMGREP_BIN,
+            timeoutMs: BASELINE_TIMEOUT_MS
+        });
+        if (sastFusionCorpus.skipped) {
+            sastFusionCorpus = null;
+        }
+    }
+    if (CONFIDENCE_THRESHOLD > 0) {
+        console.log(`🎚️  Runtime confidence gate active: issues below ${CONFIDENCE_THRESHOLD} will be dropped.`);
+    }
+
     const evaluationResults = [];
     if (shouldRunLlm) {
         for (const modelInfo of modelsToTest) {
@@ -1882,11 +2064,27 @@ async function runEvaluation() {
                     delayMs: REQUEST_DELAY_MS,
                     ragK: RAG_K,
                     temperature: TEMPERATURE,
-                    numPredict: NUM_PREDICT
+                    numPredict: NUM_PREDICT,
+                    sastFindingsByCase: sastFusionCorpus ? sastFusionCorpus.findingsByCase : null,
+                    confidenceThreshold: CONFIDENCE_THRESHOLD
                 });
+                if (sastFusionCorpus) {
+                    result.sastFusionEnabled = true;
+                }
+                if (CONFIDENCE_THRESHOLD > 0) {
+                    result.confidenceThreshold = CONFIDENCE_THRESHOLD;
+                }
                 evaluationResults.push(result);
             }
         }
+    }
+
+    // Cleanup fusion workspace unless baselines are also running (in which case it
+    // would create/clean its own workspace) or user passed --keep-baseline-workdir.
+    if (sastFusionCorpus && !KEEP_BASELINE_WORKDIR) {
+        try {
+            await fs.rm(sastFusionCorpus.workspace.workspaceDir, { recursive: true, force: true });
+        } catch (_err) { /* best effort */ }
     }
 
     let baselineStatus = {

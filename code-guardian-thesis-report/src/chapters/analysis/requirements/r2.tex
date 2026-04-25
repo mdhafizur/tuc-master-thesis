@@ -8,7 +8,7 @@ Consistency has four key parts. First, structured output: the system must return
 
 For this thesis, R2 means stable JSON output, stable findings across repeated runs, and repeatable labels and locations. The design uses a strict JSON contract, defensive parsing, scoped prompts, caching, and optional retrieval grounding to reduce random variation.
 
-We define a four-level scale for R2. Output stability is measured by JSON parse success rate. Detection agreement is measured by inter-run agreement rate or Cohen's kappa. Table~\ref{tab:r2-consistency-thresholds} shows this scale.
+We define a four-level scale for R2. Output stability is measured by JSON parse success rate. Detection agreement is measured by inter-run agreement rate (the fraction of vulnerable samples for which all $N$ repeated runs agree on the binary detection outcome). Label and severity stability are measured as raw agreement percentages over samples that were detected in all runs. Cohen's $\kappa$ is not computed because it requires a baseline-rate adjustment that varies across the unbalanced per-category sub-populations in the dataset; the raw agreement percentages reported here are interpretable directly and align with how the harness computes them. Table~\ref{tab:r2-consistency-thresholds} shows this scale.
 
 \begin{table}[H]
   \centering
@@ -21,16 +21,16 @@ We define a four-level scale for R2. Output stability is measured by JSON parse 
     \textbf{Visual Score} & \textbf{Interpretation (with thresholds)} \\
     \midrule
     \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}}
-    & \textbf{High consistency.} JSON parse rate $\geq 99\%$, detection agreement $\geq 0.90$, and label/severity $\kappa \geq 0.80$. Output is stable and reliable. Suitable for always-on IDE use. \\
+    & \textbf{High consistency.} JSON parse rate $\geq 99\%$, detection agreement $\geq 90\%$, label / severity agreement $\geq 90\%$. Output is stable and reliable. Suitable for always-on IDE use. \\
     \midrule
     \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-150:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}}
-    & \textbf{Medium consistency.} JSON parse rate in $[95\%, 99\%)$, detection agreement in $[0.75, 0.90)$, or $\kappa$ in $[0.60, 0.80)$. Mostly stable with occasional changes. Suitable for on-demand or audit-mode use. \\
+    & \textbf{Medium consistency.} JSON parse rate in $[95\%, 99\%)$, detection agreement in $[75\%, 90\%)$, or label / severity agreement in $[75\%, 90\%)$. Mostly stable with occasional changes. Suitable for on-demand or audit-mode use. \\
     \midrule
     \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-30:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}}
-    & \textbf{Low consistency.} JSON parse rate in $[85\%, 95\%)$, detection agreement in $[0.60, 0.75)$, or $\kappa$ in $[0.40, 0.60)$. Frequent variation. Findings need repeated confirmation before acting. \\
+    & \textbf{Low consistency.} JSON parse rate in $[85\%, 95\%)$, detection agreement in $[60\%, 75\%)$, or label / severity agreement in $[60\%, 75\%)$. Frequent variation. Findings need repeated confirmation before acting. \\
     \midrule
     \raisebox{-0.3cm}{\tikz{\draw (0,0) circle (0.35cm);}}
-    & \textbf{No consistency.} JSON parse rate $< 85\%$, detection agreement $< 0.60$, or $\kappa < 0.40$. Output is unreliable. The system cannot produce repeatable findings. \\
+    & \textbf{No consistency.} JSON parse rate $< 85\%$, detection agreement $< 60\%$, or label / severity agreement $< 60\%$. Output is unreliable. The system cannot produce repeatable findings. \\
     \bottomrule
   \end{tabularx}
 \end{table}

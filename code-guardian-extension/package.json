@@ -157,6 +157,32 @@
           "type": "boolean",
           "default": true,
           "description": "Enable Retrieval-Augmented Generation (RAG) for enhanced security analysis with relevant knowledge retrieval"
+        },
+        "codeGuardian.consensusPasses": {
+          "type": "number",
+          "default": 2,
+          "minimum": 1,
+          "maximum": 5,
+          "description": "Number of parallel analysis passes for multi-pass consensus filtering. Each additional pass linearly scales stage-1 latency."
+        },
+        "codeGuardian.consensusMinAgreement": {
+          "type": "number",
+          "default": 2,
+          "minimum": 1,
+          "maximum": 5,
+          "description": "Minimum number of passes that must agree for a finding to be kept. Must be ≤ consensusPasses."
+        },
+        "codeGuardian.minConfidence": {
+          "type": "number",
+          "default": 0,
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Minimum confidence score (0–1) for a finding to appear as a diagnostic. 0 disables the gate; 0.5 suppresses single-pass fallback findings; 1.0 keeps only unanimous consensus findings."
+        },
+        "codeGuardian.importContext": {
+          "type": "boolean",
+          "default": false,
+          "description": "Append a deterministic import/sink context summary to the analysis prompt. Helps the model surface categories (input-validation, auth, crypto, deserialization) where the dangerous API is not lexically obvious in the snippet."
         }
       }
     }
