@@ -1,115 +1,33 @@
 \section{Concept Derivation from Analysis Results}
 \label{sec:concept-derivation}
 
-The previous chapter identified five requirements and showed that no existing tool satisfies all of them simultaneously. This section works through the main architectural decisions of Code Guardian and explains why each one was chosen, starting from the privacy boundary and moving inward through retrieval, detection strategy, and IDE integration.
+The previous chapter identified five requirements that no existing tool satisfies simultaneously. This section walks through the main architectural decisions of Code Guardian and explains why each one was chosen, starting from the privacy boundary and moving inward through retrieval, detection strategy, and IDE integration.
 
 \subsection{From Cloud-Based to Privacy-Preserving Local Deployment}
 \label{subsec:cloud-to-local}
 
-Most LLM-based vulnerability detection systems assume access to cloud-hosted models, which means source code must leave the developer's machine. This is not just a preference issue. Regulatory frameworks such as GDPR restrict transmitting source code to external services, the OWASP LLM Top~10 lists sensitive information disclosure as a key risk \cite{gdpr2016,owaspLLMTop10_2023}, and research has shown that code generation models can leak training data --- including proprietary code submitted through cloud assistants \cite{carlini2021extracting,niu2023codexleaks}. Even without direct leakage, membership inference attacks can reveal whether specific code fragments were part of a model's training set \cite{shokri2017membership}.
-
-Local deployment is therefore the starting design constraint, not an optimization. By running LLMs, retrieval systems, and analysis components entirely on local hardware, the design aims to keep source code, intermediate representations, and analysis results on-device and to avoid external inference services. This local-first architecture supports R5 (privacy) and enables offline operation when knowledge refresh is disabled, making the system suitable for security-sensitive development environments.
-
-In the Code Guardian prototype, the privacy boundary is defined around \emph{source code}: analyzed code and IDE-derived context are sent only to a local LLM backend. The system may optionally refresh its \emph{security knowledge base} from public vulnerability metadata sources (e.g., CVE/NVD descriptions and references). Such refresh operations do not transmit user source code and can be disabled to operate fully offline with cached or baseline knowledge.
-
-The trade-off for local deployment is increased latency compared to cloud-based systems with dedicated accelerators. However, by carefully optimizing model selection, retrieval strategies, and context management, the system can achieve acceptable response times on standard developer hardware, addressing R4 (usability).
+Local deployment is the starting design constraint, not an optimisation. Cloud LLM assistants transmit source code to external services, which conflicts with GDPR \cite{gdpr2016}, the OWASP LLM Top~10 sensitive-information-disclosure risk \cite{owaspLLMTop10_2023}, and documented training-data leakage from code-generation models \cite{carlini2021extracting,niu2023codexleaks}. Membership-inference attacks can also reveal whether specific fragments were in a model's training set \cite{shokri2017membership}. Running the LLM, retrieval pipeline, and analysis components entirely on local hardware keeps source code, intermediate representations, and analysis results on-device, supports R5, and enables fully offline operation when knowledge refresh is disabled. The privacy boundary is defined around \emph{source code}: analysed code and IDE-derived context are sent only to a local LLM backend; the optional knowledge-base refresh fetches public CVE/CWE/OWASP metadata only and can be disabled. The trade-off is increased latency relative to cloud accelerators, addressed by careful model selection, retrieval design, and prompt scoping (R4).
 
 \subsection{Retrieval-Augmented Generation for Security Knowledge Grounding}
 \label{subsec:rag-security}
 
-A standalone LLM can hallucinate vulnerability types, misclassify severity, and produce inconsistent results across repeated analyses of the same code \cite{ji2023hallucination}. Grounding model reasoning in external security knowledge --- rather than relying on whatever the model internalized during training --- is one way to mitigate this.
+A standalone LLM can hallucinate vulnerability types, misclassify severity, and produce inconsistent results across repeated analyses \cite{ji2023hallucination}. Retrieval-augmented generation grounds reasoning in external knowledge that evolves independently of model parameters \cite{lewis2020rag,karpukhin2020dpr}. The local knowledge base aggregates CWE-aligned vulnerability patterns and mitigations \cite{mitreCWE}, OWASP guidance \cite{owaspTop10_2021,owaspCheatSheets}, public CVE/NVD summaries \cite{mitreCVE,nistNVD}, and curated JS/TS notes (prototype pollution, unsafe deserialisation, etc.). During analysis, semantically-similar entries are retrieved and provided as context. Retrieval is not universally beneficial: the evaluation (Chapter~\ref{chap:evaluation}) shows it improves quality on some model families and degrades it on others, so it is treated as a configurable option rather than a default.
 
-The system uses Retrieval-Augmented Generation (RAG) for this purpose, maintaining a local knowledge base of security information \cite{lewis2020rag,karpukhin2020dpr}. This knowledge base includes:
-\begin{itemize}
-\item \textbf{CWE-aligned vulnerability patterns} and mitigation summaries \cite{mitreCWE}
-\item \textbf{OWASP guidance} for recurring web vulnerability categories \cite{owaspTop10_2021,owaspCheatSheets}
-\item \textbf{CVE/NVD summaries} (public descriptions and references) to keep the knowledge base current \cite{mitreCVE,nistNVD}
-\item \textbf{Curated JavaScript/TypeScript security notes} (e.g., prototype pollution, unsafe deserialization patterns)
-\end{itemize}
-During analysis, relevant security knowledge is retrieved based on semantic similarity to the code under examination and provided as context to the LLM. This design reduces reliance on purely generative reasoning and enables the knowledge base to evolve independently of model parameters. By decoupling security knowledge from the model, the system supports continuous updates to vulnerability information without requiring model retraining.
+\subsection{IDE Integration, Modular Components, and Two-Stage Pipeline}
+\label{subsec:ide-modular-pipeline}
 
-However, retrieval augmentation is not universally beneficial. As demonstrated in the evaluation (Chapter~\ref{chap:evaluation}), RAG improves detection quality for some model families but degrades it for others. This model-dependent effect means RAG should be treated as a configurable option rather than a default assumption.
+Traditional SAST tools sit downstream in CI/CD; their delayed feedback loop increases cognitive load and reduces remediation rates \cite{johnson2013don,christakis2016developers}. Code Guardian integrates directly into Visual Studio Code, providing inline debounced detection during active development and on-demand audit commands for selections, files, and workspaces. IDE integration addresses R4 (interactive presentation of findings, explanations, and quick-fix repairs) and R3 (preview-and-apply remediation with minimal friction).
 
-\subsection{IDE Integration for In-Context Security Assistance}
-\label{subsec:ide-integration-derivation}
+Internally the system decomposes into four components --- context extraction (scope selection plus localisation metadata), knowledge retrieval (vector search over the local corpus), vulnerability detection (LLM analysis grounded in retrieved context), and repair generation (developer-controlled patches as quick fixes). Each is independently testable and replaceable; intermediate outputs remain inspectable for debugging and reproducibility. Detection and repair are deliberately split into two stages: Stage~1 asks only ``identify the vulnerabilities and return structured findings'' (type, severity, location, description); Stage~2 takes each confirmed finding and runs a dedicated repair prompt with the full snippet. Coupling both tasks into a single prompt biases the model toward generating a plausible fix rather than accurately classifying the issue; separating them improves R1 detection precision and R3 repair quality, and lets repairs run in parallel.
 
-Traditional SAST tools operate as separate processes in CI/CD pipelines, providing feedback only after code is committed. This delayed feedback loop increases cognitive load and reduces remediation rates, as developers must context-switch between writing code and reviewing security findings \cite{johnson2013don,christakis2016developers}.
+\subsection{Context-Aware Analysis and Structured Explainability}
+\label{subsec:context-explain}
 
-The proposed system integrates directly into Visual Studio Code as an extension, providing security analysis during active development. This design supports two interaction modes:
-\begin{itemize}
-\item \textbf{Inline detection}: Debounced vulnerability annotations triggered by document changes, providing IDE-native feedback during active development
-\item \textbf{On-demand analysis}: Explicit analysis commands for comprehensive security audits of selected code regions or entire files
-\end{itemize}
+R1 demands semantic and structural reasoning rather than syntactic pattern matching. The system addresses this through reliable scope selection (the enclosing function via TypeScript AST) plus prompt grounding (retrieved security guidance when RAG is enabled), and expects the model to reason about data flow, sources, sinks, and guards \emph{within the provided scope}. Evidence outside the snippet (validation in another file, framework-level middleware) is the principal limitation and is named as future work in Chapter~\ref{chap:conclusion}. R3 and R4 additionally require explainable output: the diagnostics pipeline emits structured reports with code localisation, a short risk-explanation message, and an optional quick-fix repair; interactive WebView modes can render longer Markdown explanations and incorporate retrieved CWE/OWASP knowledge to ground the reasoning \cite{mitreCWE,owaspCheatSheets}. The harness used in Chapter~\ref{chap:evaluation} additionally requests \texttt{type} and \texttt{severity} fields to support quantitative scoring.
 
-IDE integration directly addresses R4 (usability) by enabling rich, interactive presentation of vulnerability findings, explanations, and repair suggestions within the developer's familiar environment. It also supports R3 (repair quality) by allowing developers to preview, review, and apply suggested fixes with minimal friction.
-
-\subsection{Modular Component Architecture}
-\label{subsec:modular-architecture}
-
-When a monolithic detection system produces a wrong result, it is hard to tell what went wrong --- was the context extraction incomplete, the retrieval off-target, or the model reasoning flawed? Transparency requires decomposition.
-
-The proposed system decomposes vulnerability detection into four core components, each with clearly defined responsibilities:
-\begin{enumerate}
-\item \textbf{Context Extraction}: Determines analysis scope (enclosing function, selection, file) and produces snippet text plus localization metadata
-\item \textbf{Knowledge Retrieval}: Queries the local security knowledge base to retrieve relevant vulnerability information
-\item \textbf{Vulnerability Detection}: Analyzes code context using the LLM, grounded in retrieved security knowledge
-\item \textbf{Repair Generation}: Produces developer-controlled repair suggestions as optional patches (quick fixes)
-\end{enumerate}
-
-This modular design enables component-level analysis, isolated improvement, and transparent error diagnosis. Each component can be tested, optimized, and replaced independently without destabilizing the overall architecture. Intermediate outputs (extracted context, retrieved knowledge, detection reasoning) remain visible for debugging and validation, supporting transparency and reproducibility.
-
-\subsection{Context-Aware Analysis with Code Understanding}
-\label{subsec:context-aware-analysis}
-
-Requirement R1 demands that the system correctly identify vulnerabilities based on semantic and structural context rather than syntactic patterns alone. Surface-level pattern matching produces false positives when secure code resembles vulnerable patterns, and false negatives when vulnerabilities depend on data flow or control flow relationships.
-
-The system addresses this requirement primarily through \emph{scope selection} and \emph{prompt grounding}. In the current prototype, context extraction focuses on reliably selecting a coherent code region (e.g., the enclosing function) and mapping findings back to the editor. The LLM is then expected to reason about data flow and control flow \emph{within the provided scope}, optionally grounded by retrieved security guidance.
-
-Conceptually, context-aware reasoning benefits from multiple kinds of context, including:
-\begin{itemize}
-\item \textbf{Syntactic context}: function boundaries and code structure derived from AST parsing (used for scoping)
-\item \textbf{Local semantic context}: identifiers, API calls, and validation logic present in the analyzed region
-\item \textbf{Inferred data/control flow}: reasoning about sources, sinks, and guards within the snippet
-\end{itemize}
-
-This approach supports R1 for many localized vulnerability patterns, but it has inherent limitations when required evidence lies outside the analyzed scope (e.g., validation in a different file). Chapter~\ref{chap:conclusion} outlines extensions such as explicit taint-style traces and cross-file context extraction to address these cases.
-
-\subsection{Explainability Through Structured Reasoning}
-\label{subsec:explainability-design}
-
-Transparent explanations that link detected vulnerabilities to concrete code regions and recognized security principles are essential for usability (R4) and repair quality (R3). Opaque "black box" detection undermines developer trust and makes it difficult to validate findings or apply fixes correctly \cite{johnson2013don,christakis2016developers}.
-
-The system enforces explainability through structured reporting and IDE-native presentation. In the diagnostics pipeline, vulnerability reports include:
-\begin{itemize}
-\item \textbf{Code localization}: Specific lines or code fragments contributing to the vulnerability
-\item \textbf{Issue explanation}: A short message describing why the code is risky and what pattern is being flagged
-\item \textbf{Optional repair}: A suggested patch presented as a quick fix (developer-controlled)
-\end{itemize}
-
-In interactive webview modes, the system can provide longer, Markdown-formatted explanations, and (when enabled) can incorporate retrieved security knowledge from sources such as CWE and OWASP into the prompt to ground the reasoning \cite{mitreCWE,owaspCheatSheets}. The evaluation harness used in Chapter~\ref{chap:evaluation} additionally requests explicit \texttt{type} and \texttt{severity} fields to support quantitative scoring.
-
-By grounding explanations in retrieved security knowledge (when used) and enforcing structured output formats where needed, the system produces actionable vulnerability reports that are auditable at the IDE level. This design improves developer trust by making detection outputs inspectable and reviewable, supporting both usability (R4) and repair quality (R3).
-
-\subsection{Deterministic Inference and Consensus-Based Detection}
+\subsection{Deterministic Inference and Consensus Filtering}
 \label{subsec:deterministic-consensus}
 
-A key challenge for LLM-based detection is output instability: the same code analyzed twice may yield different findings, undermining developer trust and complicating evaluation (R2). Two complementary mechanisms address this.
+Output instability --- the same code yielding different findings across runs --- undermines developer trust and complicates evaluation (R2). Two mechanisms address this. \emph{Deterministic inference}: the harness fixes \texttt{temperature=0} and a seed, and enables JSON-mode decoding (\texttt{format='json'}) at the Ollama API level so the sampler can only emit valid JSON tokens; this eliminates parse failures from malformed output and makes the response machine-readable without post-hoc repair. \emph{Multi-pass consensus}: the detection prompt is run twice with different seeds (42 and 137); only findings confirmed by both passes are retained, filtering out sampling-variance noise without sacrificing recall on consistently-detected weaknesses. If consensus removes everything, the system falls back to the first pass to avoid silent suppression.
 
-\textbf{Deterministic inference controls.} The system configures the LLM backend with temperature~0 and a fixed random seed to maximize reproducibility across runs. Additionally, JSON-mode decoding (\texttt{format: 'json'}) is enabled at the Ollama API level, which constrains the model's token sampling to produce only valid JSON tokens. This eliminates parse failures caused by malformed output and ensures that every response is machine-readable without post-hoc repair.
-
-\textbf{Multi-pass consensus filtering.} To reduce false positives (R1), the system runs the detection prompt twice with different random seeds (e.g., seed 42 and seed 137). Findings are compared across passes using vulnerability-type and line-range matching. Only issues confirmed by both passes are retained in the final result. This consensus mechanism filters out spurious detections that arise from sampling variance, improving precision without sacrificing recall on consistently detected vulnerabilities. If consensus filtering removes all findings, the system falls back to the first pass result to avoid silent suppression.
-
-\subsection{Two-Stage Detection and Repair Pipeline}
-\label{subsec:two-stage-pipeline}
-
-Existing approaches typically generate detection findings and repair suggestions in a single prompt, which forces the model to reason about both tasks simultaneously. This coupling can degrade both detection precision and repair quality, because the model may anchor on generating a plausible fix rather than accurately classifying the vulnerability.
-
-Code Guardian separates these concerns into two stages:
-\begin{enumerate}
-    \item \textbf{Stage 1 --- Detection:} The detection prompt asks the model to identify vulnerabilities and return structured findings (type, severity, location, description). No repair is requested at this stage.
-    \item \textbf{Stage 2 --- Repair:} For each confirmed vulnerability from Stage 1 (after consensus filtering), a dedicated repair prompt provides the vulnerability type, affected lines, and full code context. The model generates a targeted fix for the specific issue.
-\end{enumerate}
-
-This separation allows each prompt to focus on a single task, improving both detection accuracy (R1) and repair quality (R3). The two-stage design also enables parallel repair generation when multiple vulnerabilities are detected, since each repair prompt is independent.
-
-The next section describes the core components that realize this design, including their inputs, outputs, and interactions.
+The next section describes the components that realise this design.

@@ -1,93 +1,33 @@
 \section{System Components}
 \label{sec:system-components}
 
-The Code Guardian prototype is organized into a small set of components that map directly to the requirements from Chapter~\ref{chap:analysis}. The system is implemented as a VS Code extension that (i) extracts an appropriate analysis scope from the editor, (ii) invokes a local LLM for vulnerability analysis, (iii) optionally augments prompts with locally retrieved security knowledge (RAG), and (iv) renders findings and fix suggestions using IDE-native UI elements.
+The Code Guardian prototype is organised into a small set of components that map directly to the requirements from Chapter~\ref{chap:analysis}. The system is implemented as a VS Code extension that (i) extracts an appropriate analysis scope from the editor, (ii) invokes a local LLM for vulnerability analysis, (iii) optionally augments prompts with locally retrieved security knowledge (RAG), and (iv) renders findings and fix suggestions through IDE-native UI elements.
 
-\subsection{Context Extraction Component}
+\subsection{Context Extraction}
 \label{subsec:context-extraction}
 
-The context extraction component determines \emph{which} code is analyzed for a given interaction mode and provides the analyzer with enough metadata to localize findings in the editor.
+Context extraction determines which code is analysed for a given interaction mode and provides the analyser with enough metadata to localise findings in the editor. Code Guardian supports four scopes with different latency/completeness trade-offs: \emph{function scope} (real-time, the innermost \texttt{FunctionLikeDeclaration} at the cursor) is the default for continuous feedback; \emph{file scope} (on-demand) analyses the full document and emits diagnostics; \emph{selection scope} (interactive) sends a region into a WebView analysis view that supports follow-up Q\&A; \emph{workspace scope} (batch) scans all JS/TS files and aggregates results into a security dashboard.
 
-\textbf{Scopes.} Code Guardian supports multiple scopes with different latency and completeness characteristics:
-\begin{itemize}
-    \item \textbf{Function scope (real-time)} extracts the innermost function-like block at the cursor position (function declarations, arrow functions, methods, constructors). This is the default for continuous feedback because it keeps the prompt small.
-    \item \textbf{File scope (on-demand)} analyzes the full current document and returns a comprehensive set of findings as diagnostics.
-    \item \textbf{Selection scope (interactive)} sends a selected region (or current line) into a webview-based analysis view that supports follow-up questions.
-    \item \textbf{Workspace scope (batch)} scans all JS/TS files and aggregates results into a security dashboard.
-\end{itemize}
+Function-scope extraction uses the TypeScript compiler API to find the smallest enclosing function-like block (function declarations, arrow functions, methods, constructors) around the cursor and returns both the snippet and its 0-based start-line offset, which lets model-reported line numbers map back to VS Code diagnostic ranges. Function scoping keeps prompt size predictable for real-time use (R4); deeper program context (imports, cross-file flows) is not extracted explicitly and is named as future work.
 
-\textbf{AST-based function extraction.} Function scope extraction is implemented by parsing the current document with the TypeScript compiler API and selecting the smallest enclosing \texttt{FunctionLikeDeclaration} around the cursor. The extractor returns both the extracted snippet and its start-line offset (0-based) in the original document. This offset enables precise mapping of model-reported line numbers back to VS Code diagnostic ranges.
-
-\textbf{Design rationale.} Function scoping is a practical mechanism to keep latency predictable for real-time use (R4), while the line-offset mapping improves usability by ensuring that findings point to the correct source locations. Deeper program context (imports, cross-file flows) is not extracted explicitly in the current prototype and is treated as a key future-work direction.
-
-\subsection{Knowledge Retrieval Component (RAG)}
+\subsection{Knowledge Retrieval (RAG)}
 \label{subsec:knowledge-retrieval}
 
-The retrieval component implements Retrieval-Augmented Generation (RAG) to ground LLM reasoning in local security knowledge \cite{lewis2020rag,karpukhin2020dpr}. In Code Guardian, retrieval is implemented by a dedicated \texttt{RAGManager} that maintains a local knowledge base and a persistent vector index.
+The retrieval component implements RAG \cite{lewis2020rag,karpukhin2020dpr}: a dedicated \texttt{RAGManager} maintains a local knowledge base populated from CWE-aligned weakness patterns and mitigations \cite{mitreCWE}, OWASP Top~10 guidance \cite{owaspTop10_2021}, CVE/NVD summaries from the NVD API \cite{nistNVD,mitreCVE}, and JS-ecosystem advisories. Knowledge artefacts are cached on disk and reused across sessions; if network access is unavailable the system falls back to a small baseline bundle so retrieval remains functional with reduced coverage. Entries are chunked recursively (chunk size 1000, overlap 200), embedded locally through an Ollama embedding model, and stored in an HNSW vector index \cite{malkov2018hnsw} via LangChain \cite{langchainDocs}. At query time the top-$k$ chunks are retrieved (runtime default $k=3$; the evaluation harness in Chapter~\ref{chap:evaluation} uses $k=5$) and injected into the prompt as a ``relevant security knowledge'' section. Retrieval and embeddings execute locally, and the optional knowledge refresh fetches only public metadata --- user source code is never transmitted (R5).
 
-\textbf{Knowledge base contents.} The knowledge base is populated from a mix of curated and fetched \emph{public} security metadata:
-\begin{itemize}
-    \item \textbf{CWE-aligned entries} describing common weakness patterns and mitigations \cite{mitreCWE}.
-    \item \textbf{OWASP Top 10 guidance} for recurring web vulnerability categories \cite{owaspTop10_2021}.
-    \item \textbf{CVE/NVD summaries} retrieved from the NVD API (descriptions and references) \cite{nistNVD,mitreCVE}.
-    \item \textbf{JavaScript ecosystem advisories} for dependency and platform-specific risks.
-\end{itemize}
-Knowledge artifacts are cached on disk and reused across sessions. When network access is unavailable, the system falls back to a small baseline knowledge bundle so retrieval remains functional (with reduced coverage).
-
-\textbf{Indexing and retrieval.} Knowledge entries are chunked using a recursive splitter (chunk size 1000, overlap 200) and embedded locally through an Ollama-served embedding model. Embeddings are stored in a local HNSW vector index \cite{malkov2018hnsw} via LangChain tooling \cite{langchainDocs}. At query time, the top-$k$ most similar chunks are retrieved (runtime default $k=3$; the evaluation harness in Chapter~\ref{chap:evaluation} uses $k=5$) and injected into the prompt as an explicit ``relevant security knowledge'' section.
-
-\textbf{Privacy boundary.} Retrieval and embeddings are executed locally. Optional knowledge refresh operations fetch only public vulnerability metadata; user source code is not transmitted to those endpoints (R5).
-
-\subsection{Vulnerability Detection Component}
+\subsection{Vulnerability Detection}
 \label{subsec:vulnerability-detection}
 
-The vulnerability detection component performs local LLM inference and returns findings in a format suitable for IDE integration.
+For inline diagnostics, the detection component enforces structured output through two mechanisms: a strict JSON-only output contract in the system prompt and JSON-mode decoding at the Ollama API level (\texttt{format: 'json'}) which constrains token sampling to valid JSON. Deterministic inference (\texttt{temperature=0}, fixed seed) further improves consistency (R2). Each finding carries a short \texttt{message} and 1-based \texttt{startLine}/\texttt{endLine} indices relative to the analysed snippet. Repair suggestions are not requested during detection --- they are generated separately in Stage~2 (Section~\ref{subsec:repair-generation}) and attached to confirmed findings before rendering. The analyser performs defensive parsing by stripping code fences and extracting the first JSON array substring if the model emits surrounding text. To reduce false positives (R1) the detection prompt runs twice with different seeds; only findings confirmed by both passes (matched by type and line range) are retained, filtering sampling-variance noise without additional model capacity. Transient failures are handled through retry with exponential backoff, and an LRU cache keyed by a hash of (code, model, prompt mode) avoids re-inference on unchanged code. A WebView-based analysis view supports the interactive selection mode with Markdown-formatted responses and follow-up Q\&A, optionally enriched by the RAG manager.
 
-\textbf{Structured-output analyzer for diagnostics.} For inline diagnostics, Code Guardian enforces structured output through two mechanisms: a strict JSON-only output contract in the system prompt, and JSON-mode decoding at the Ollama API level (\texttt{format: 'json'}), which constrains token sampling to valid JSON. Deterministic inference (temperature~0, fixed seed) further improves consistency (R2). Each finding includes:
-\begin{itemize}
-    \item \textbf{message}: a short description of the issue.
-    \item \textbf{startLine}/\textbf{endLine}: 1-based line indices relative to the analyzed snippet.
-\end{itemize}
-Repair suggestions are not requested during detection. They are generated separately in Stage~2 of the two-stage pipeline (Section~\ref{subsec:repair-generation}) and attached to confirmed findings before rendering.
-If no issues are found, the model must return an empty array \texttt{[]}. The analyzer performs defensive parsing by stripping code fences and extracting the first JSON array substring if the model emits additional text.
-
-\textbf{Multi-pass consensus filtering.} To reduce false positives (R1), the detection component runs the analysis prompt twice with different random seeds. Only findings confirmed by both passes---matched by vulnerability type and line range---are retained. This filters out spurious detections caused by sampling variance without requiring additional model capacity.
-
-\textbf{Failure handling and caching.} Transient inference failures (timeouts, local server warm-up) are handled through retry with exponential backoff. To reduce repeated inference on unchanged code, results are cached with an LRU-style strategy keyed by a hash of (code, model, prompt mode), improving responsiveness during iterative edits.
-
-\textbf{Interactive analysis mode.} In addition to the structured diagnostics flow, Code Guardian includes a webview-based analysis view for selected code. This mode uses Markdown-formatted responses and supports follow-up Q\&A. When enabled, the RAG manager can be used to enrich the system prompt and user prompt for this interactive workflow.
-
-\subsection{Repair Generation Component}
+\subsection{Repair Generation and IDE Integration}
 \label{subsec:repair-generation}
 
-Repair generation follows a \textbf{two-stage pipeline} that separates detection from repair. In Stage~1, the detection prompt identifies vulnerabilities without requesting fixes. In Stage~2, each confirmed vulnerability (after consensus filtering) is sent to a dedicated repair prompt that receives the vulnerability type, affected lines, and full code context. This separation allows the repair model to focus on generating a targeted fix for a specific, validated issue rather than simultaneously reasoning about detection and remediation.
+Repair generation follows a \textbf{two-stage pipeline}. Stage~1 identifies vulnerabilities without fixes; Stage~2 takes each confirmed vulnerability after consensus filtering and runs a dedicated repair prompt with the vulnerability type, affected lines, and full code context. Separating detection and repair lets each prompt focus on a single task. The repair prompt returns a JSON object with the suggested fix; the IDE integration layer exposes each repair as a Quick Fix action. Application is always user-initiated and reversible via the editor undo stack (R3). Functional correctness of repairs is not automatically validated and is named as future work.
 
-The repair prompt returns a JSON object containing the suggested fix code. The IDE integration layer exposes each repair as a quick fix action. Applying a fix is always user-initiated and can be reverted via the editor undo stack (R3). The system does not automatically validate functional correctness of repairs; this is treated as a future improvement area.
-
-\subsection{IDE Integration Layer}
-\label{subsec:ide-integration}
-
-The IDE integration layer connects the analysis pipeline to VS Code’s APIs \cite{vscodeExtensionApi} and determines when analyses run and how results are presented.
-
-\textbf{Triggers.} The extension supports both automatic and manual triggers:
-\begin{itemize}
-    \item \textbf{Debounced real-time analysis} on document changes (default debounce: 800\,ms) for JavaScript/TypeScript documents.
-    \item \textbf{Manual file analysis} via a command palette command, with a size guard to avoid excessively large prompts.
-    \item \textbf{Interactive selection analysis} and \textbf{contextual Q\&A} views implemented as WebViews.
-    \item \textbf{Workspace scanning} that aggregates results into a dashboard view.
-\end{itemize}
-
-\textbf{Presentation.} Findings are rendered as VS Code diagnostics (squiggles, Problems panel, hover tooltips). Suggested repairs are attached to diagnostics and exposed as a quick fix action.
+The IDE integration layer wires the analysis pipeline into the VS Code APIs \cite{vscodeExtensionApi}. Triggers include a debounced real-time analyser on document changes (800\,ms default), a manual file-analysis command with a size guard, interactive selection / contextual Q\&A WebViews, and a workspace scanner that aggregates results into a dashboard. Findings render as VS Code diagnostics (squiggles, Problems panel, hover tooltips) and repairs surface as Quick Fix actions.
 
 \subsection{Supporting Subsystems}
 \label{subsec:supporting-subsystems}
 
-Several additional subsystems are important for usability and reproducibility:
-\begin{itemize}
-    \item \textbf{Model management} queries available local Ollama models, filters for suitable code models, and supports runtime model switching.
-    \item \textbf{Analysis cache} is a bounded LRU cache (100 entries, 30-minute TTL) with user-visible hit/miss statistics.
-    \item \textbf{Workspace dashboard} computes a coarse security score using issue density and keyword-based severity heuristics and visualizes the distribution across files.
-    \item \textbf{Vulnerability data manager} caches public metadata (e.g., OWASP/CWE/CVE-derived entries) with a time-based expiry to support offline reuse after updates.
-\end{itemize}
-
-This section outlined the core components of Code Guardian. The next section explains how these components are orchestrated into workflows for real-time feedback, on-demand inspection, and batch scans.
+Model management queries available local Ollama models, filters suitable code models, and supports runtime model switching. The analysis cache is a bounded LRU (100 entries, 30-minute TTL) with user-visible hit/miss statistics. The workspace dashboard computes a coarse security score using issue density and keyword-based severity heuristics. The vulnerability-data manager caches public CVE/CWE/OWASP metadata with a time-based expiry to support offline reuse after refresh. The next section explains how these components are orchestrated into workflows for real-time feedback, on-demand inspection, and batch scans.

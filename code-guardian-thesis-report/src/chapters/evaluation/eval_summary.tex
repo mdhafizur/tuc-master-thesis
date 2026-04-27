@@ -1,11 +1,7 @@
 \section{Summary}
 \label{sec:eval-summary}
 
-This section brings together the per-requirement results into a single compliance overview.
-
-\subsection{Requirement Compliance}
-
-Table~\ref{tab:eval-compliance} maps the best configuration (\texttt{qwen3:8b+RAG}) to the evaluation levels defined in Chapter~\ref{chap:analysis}.
+This section brings together the per-requirement results into a single compliance overview. Table~\ref{tab:eval-compliance} maps the best configuration (\texttt{qwen3:8b+RAG}) to the evaluation levels defined in Chapter~\ref{chap:analysis}.
 
 \begin{table}[H]
   \centering
@@ -45,36 +41,7 @@ Table~\ref{tab:eval-compliance} maps the best configuration (\texttt{qwen3:8b+RA
   \end{tabularx}
 \end{table}
 
-\subsection{Key Findings}
+\paragraph{Key findings.}
+The headline configuration \texttt{qwen3:8b+RAG} reaches canonical F1 71.94\% / precision 73.53\% / recall 70.42\% / FPR 10.00\% / median 1\,573\,ms; with the inter-run confidence gate at $\geq 0.67$ precision rises to 77.78\% (F1 73.13\%). Compared to the previously-published headline (F1 65.31\%, FPR 20.00\%, median 2.7\,s) this is a +6.6-point F1 lift, halved FPR, and $-42\%$ latency, without changing model or hardware. RAG is sharply model-dependent: it lifts \texttt{qwen3:8b} (F1 $+4.42$, precision $+11.9$, FPR halved), is roughly neutral on \texttt{gemma3}, and severely degrades \texttt{codellama} ($-29.89$ F1, latency nearly doubles), so it must be calibrated per model rather than enabled by default. The remaining LLM configurations still flag every secure sample at least once, so the confidence gate alone is insufficient for them. Semgrep complements the LLM with very low FPR (6.67\%) and 63\,ms median latency at the cost of low recall (12.68\% canonical); the hybrid SAST-fusion option promotes LLM findings corroborated by Semgrep on overlapping line range and matching canonical category to confidence~$1.0$. The auto-applicable repair rate is 0\% across all 297 generated repairs --- the model writes prose into \texttt{suggestedFix} rather than syntactically applicable code, capturing a stricter bar than the 68\%-correct manual review of 25 samples; both are reported. Privacy is fully preserved: all analysis runs locally with no source-code transmission.
 
-\begin{enumerate}
-  \item \textbf{Best configuration:} \texttt{qwen3:8b+RAG} reaches canonical F1 71.94\% / precision 73.53\% / recall 70.42\% / FPR 10.00\% / median 1\,573\,ms; with the inter-run confidence gate at $\geq 0.67$: F1 73.13\% / precision 77.78\%. Compared to the previously-published headline (F1 65.31\%, FPR 20.00\%, median 2.7\,s), this is a +6.6-point F1 lift, halved FPR, and $-42\%$ latency, with no model or hardware change.
-  \item \textbf{RAG is sharply model-dependent.} \texttt{qwen3:8b} is the clearest beneficiary: F1 67.52\% $\to$ 71.94\% with RAG, precision 61.63\% $\to$ 73.53\%, FPR 50\% $\to$ 10\%. \texttt{gemma3} models are roughly neutral. \texttt{codellama} is severely degraded by RAG: F1 53.06\% $\to$ 23.17\% ($-29.89$), recall 73.24\% $\to$ 53.52\%, latency 2\,024\,ms $\to$ 3\,529\,ms. RAG must be calibrated per model rather than enabled by default.
-  \item \textbf{False-positive control:} The \texttt{qwen3:8b+RAG} secure-sample FPR is 10.00\% (3 of 30 cases flagged in any of 3 runs), down from 20.00\% in the previously-published configuration. The inter-run confidence gate at threshold $\geq 0.67$ further lifts precision from 73.53\% to 77.78\% while costing only 1.4 recall points. The remaining LLM configurations still flag every secure case at least once, so the gate alone is insufficient for them.
-  \item \textbf{SAST complements LLM analysis.} Semgrep provides very low FPR (6.67\%) with fast execution (63\,ms median) but low recall (12.68\% canonical). The hybrid SAST-fusion option promotes LLM findings corroborated by Semgrep on overlapping line range and matching canonical category to confidence~$1.0$ and \texttt{detectionSource: 'hybrid'}.
-  \item \textbf{Repair quality has a hard upper bound under the current contract.} The auto-applicable rate is 0\% across all 297 generated repairs for the headline configuration: the model writes prose into \texttt{suggestedFix} rather than syntactically applicable code. The manual review of 25 samples (68\% correct repairs) and the automated 0\% measure capture different bars; both are reported.
-  \item \textbf{Privacy is fully preserved:} all analysis runs locally with no source code transmission.
-\end{enumerate}
-
-\subsection{Headline Numbers}
-\label{sec:eval-summary-refined}
-
-The full evaluation (\texttt{--ablation --include-baselines --runs 3}) writes its complete per-model metrics into the run JSON. Specific point estimates --- detection metrics (Sections~\ref{sec:eval-r1}, \ref{sec:eval-r1-canonical}, \ref{sec:eval-r1-confidence}), auto-applicable repair rate (Section~\ref{sec:eval-r3-auto-applicable}), and stage-split latency (Section~\ref{sec:eval-metrics}) --- are presented in the corresponding R1, R3, and R4 sections rather than duplicated here.
-
-\subsection{Limitations}
-
-\begin{itemize}
-  \item \textbf{Small dataset:} 101 test cases (71 vulnerable, 30 secure) limit statistical power. The expanded secure-sample set ($n=30$, doubled from 15) improves FPR confidence intervals but remains modest.
-  \item \textbf{Snippet-centric evaluation:} Test cases are isolated code snippets, not full repository files. Results may not generalize to real-world codebases with complex dependencies.
-  \item \textbf{No user study:} Usability is measured by latency only. Developer satisfaction, trust, and adoption were not evaluated.
-  \item \textbf{Single hardware profile:} All results are from Apple M4 Max with 64\,GB RAM. Performance on lower-end hardware may differ.
-  \item \textbf{Repair evaluation is manual:} Only 25 samples were reviewed for repair quality by a single rater. Inter-rater reliability was not assessed. Automated functional verification of repairs was not performed.
-\end{itemize}
-
-\subsection{Threats to Validity}
-
-\paragraph{Internal validity.} Temperature is set to 0 with a fixed seed to maximize determinism. However, LLM inference on GPU hardware can still introduce minor nondeterminism from floating-point scheduling. The 3-run design for vulnerable samples partially mitigates this.
-
-\paragraph{External validity.} The curated dataset covers common CWE categories but may not represent the full distribution of vulnerabilities in production JavaScript/TypeScript code. Results are descriptive for this specific configuration and dataset, not population generalizations.
-
-\paragraph{Construct validity.} Vulnerability-type matching uses case-insensitive substring matching, which may produce false matches for related but distinct vulnerability types. The secure-sample set ($n=30$) is modest, though doubled from the initial 15 to reduce FPR estimation noise.
+Specific point estimates --- detection metrics (Sections~\ref{sec:eval-r1}, \ref{sec:eval-r1-canonical}, \ref{sec:eval-r1-confidence}), auto-applicable repair rate (Section~\ref{sec:eval-r3-auto-applicable}), stage-split latency (Section~\ref{sec:eval-metrics}), and reproducibility (Section~\ref{sec:eval-reproducibility-metric}) --- are presented in the corresponding requirement sections rather than duplicated here. Limitations and threats to validity are addressed in the Discussion chapter (Chapter~\ref{chap:discussion}).

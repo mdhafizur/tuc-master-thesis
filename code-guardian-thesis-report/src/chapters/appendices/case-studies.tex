@@ -1,186 +1,74 @@
 \chapter{Detailed Case Studies}
 \label{appendix:case-studies}
 
-This appendix documents five representative outcomes from the evaluation: true positive, false positive, false negative, partial repair, and multi-CWE detection. The cases explain how the measured metrics translate into practical IDE behavior.
+This appendix walks five representative outcomes from the evaluation --- true positive with effective repair, false positive on secure code, false negative on a context-dependent pattern, partial repair, and a multi-CWE finding --- and shows how the measured aggregate metrics translate into per-case IDE behaviour.
 
 \section{Case 1: True Positive with Effective Repair}
 \label{sec:case-tp-good}
-
-\subsection*{Scenario}
-SQL injection in an Express route detected by \texttt{qwen3:8b} with RAG.
-
-\subsection*{Original Vulnerable Code}
-\begin{lstlisting}[caption={SQL injection vulnerability (CWE-89)}]
+SQL injection in an Express route detected by \texttt{qwen3:8b+RAG}.
+\begin{lstlisting}[caption={SQL injection vulnerability (CWE-89) and the model's repair}]
+// Vulnerable
 app.get('/user/:id', (req, res) => {
   const userId = req.params.id;
   const query = `SELECT * FROM users WHERE id = ${userId}`;
-  db.query(query, (err, results) => {
-    if (err) return res.status(500).send('Error');
-    res.json(results[0]);
-  });
+  db.query(query, (err, results) => res.json(results[0]));
 });
+// Model output: {"cwe":"CWE-89","lineStart":3,"lineEnd":3,
+//   "fixedCode":"const query = 'SELECT * FROM users WHERE id = ?';\ndb.query(query, [userId], ...)"}
 \end{lstlisting}
-
-\subsection*{Model Output (JSON)}
-\begin{lstlisting}[caption={qwen3:8b + RAG output}]
-[
-  {
-    "message": "SQL injection via direct query concatenation",
-    "severity": "error",
-    "cwe": "CWE-89",
-    "lineStart": 3,
-    "lineEnd": 3,
-    "fixedCode": "const query = 'SELECT * FROM users WHERE id = ?';\ndb.query(query, [userId], ...)"
-  }
-]
-\end{lstlisting}
-
-\subsection*{Analysis}
-This is a clean true positive with correct location and CWE label. The repair is minimal, uses parameterization, and preserves intent. In practice, this is an example of low-friction remediation that developers can apply immediately.
+Clean true positive with correct location and CWE, minimal parameterised repair, intent preserved. Low-friction remediation that developers can apply immediately.
 
 \section{Case 2: False Positive (Over-Sensitivity)}
 \label{sec:case-fp}
-
-\subsection*{Scenario}
-Secure username sanitization flagged as vulnerable by \texttt{gemma3:4b} (LLM-only).
-
-\subsection*{Original Secure Code}
-\begin{lstlisting}[caption={Secure input validation (not vulnerable)}]
+Secure username sanitisation flagged by \texttt{gemma3:4b} (LLM-only).
+\begin{lstlisting}[caption={Secure input validation flagged as CWE-94}]
 function sanitizeUsername(username) {
   const sanitized = username.replace(/[^a-zA-Z0-9_]/g, '');
-  if (sanitized.length < 3 || sanitized.length > 20) {
-    throw new Error('Username must be 3-20 characters');
-  }
+  if (sanitized.length < 3 || sanitized.length > 20) throw new Error('...');
   return sanitized;
 }
+// Model output: {"cwe":"CWE-94","message":"Potential code injection in replace()"}
 \end{lstlisting}
+The whitelist regex and length checks are appropriate; the CWE label is mismatched. Illustrates the high-FPR behaviour of smaller configurations (Section~\ref{sec:eval-r1}) and the triage overhead it imposes on developers.
 
-\subsection*{Model Output (JSON)}
-\begin{lstlisting}[caption={False positive example}]
-[
-  {
-    "message": "Potential code injection in replace()",
-    "severity": "warning",
-    "cwe": "CWE-94",
-    "lineStart": 2,
-    "lineEnd": 2
-  }
-]
-\end{lstlisting}
-
-\subsection*{Analysis}
-This is a false positive: the whitelist regex and length checks are appropriate for the shown context. The CWE label is also mismatched. This case reflects the high-FPR behavior observed for several smaller configurations and illustrates triage overhead without security gain.
-
-\section{Case 3: False Negative (Missed Vulnerability)}
+\section{Case 3: False Negative}
 \label{sec:case-fn}
-
-\subsection*{Scenario}
-Prototype pollution missed by \texttt{CodeLlama:latest} (LLM-only).
-
-\subsection*{Original Vulnerable Code}
-\begin{lstlisting}[caption={Prototype pollution (CWE-1321)}]
+Prototype pollution missed by \texttt{CodeLlama} (LLM-only).
+\begin{lstlisting}[caption={Prototype pollution (CWE-1321) returning empty findings}]
 function mergeConfig(target, source) {
-  for (let key in source) {
-    target[key] = source[key];
-  }
+  for (let key in source) target[key] = source[key];
   return target;
 }
-
-const userConfig = JSON.parse(req.body.config);
-mergeConfig(globalConfig, userConfig);
+mergeConfig(globalConfig, JSON.parse(req.body.config));
+// Model output: []
 \end{lstlisting}
+Attacker-controlled \texttt{\_\_proto\_\_} keys are not flagged. A robust output would suggest guarded assignment (\texttt{Object.prototype.hasOwnProperty.call(source, key)}); demonstrates the recall limits of weaker model families.
 
-\subsection*{Model Output (JSON)}
-\begin{lstlisting}[caption={Missed detection}]
-[]
-\end{lstlisting}
-
-\subsection*{Analysis}
-This is a false negative. The loop allows attacker-controlled keys such as \texttt{\_\_proto\_\_}, enabling object-prototype mutation. A robust output would flag CWE-1321 and suggest guarded property assignment (for example, \texttt{Object.prototype.hasOwnProperty.call(source, key)}). The case demonstrates recall limits for some model families without stronger grounding.
-
-\section{Case 4: Correct Detection, Incomplete Repair}
+\section{Case 4: Detection with Partial Repair}
 \label{sec:case-repair-partial}
-
-\subsection*{Scenario}
-Path traversal is detected correctly, but the repair is only partial.
-
-\subsection*{Original Vulnerable Code}
-\begin{lstlisting}[caption={Path traversal (CWE-22)}]
+Path traversal detected; repair is only partial.
+\begin{lstlisting}[caption={Path traversal (CWE-22) with under-specified repair}]
 app.get('/download', (req, res) => {
-  const filename = req.query.file;
-  const filepath = path.join(__dirname, 'uploads', filename);
+  const filepath = path.join(__dirname, 'uploads', req.query.file);
   res.download(filepath);
 });
+// Model output: {"cwe":"CWE-22","fixedCode":"const filename = path.basename(req.query.file);"}
 \end{lstlisting}
+\texttt{path.basename()} reduces traversal but not authorisation; allowlist checks remain. Shows why repairs are advisory and require project-specific review (Section~\ref{sec:eval-r3}).
 
-\subsection*{Model Output (JSON)}
-\begin{lstlisting}[caption={Detection with partial fix}]
-[
-  {
-    "message": "Path traversal via user-controlled filename",
-    "severity": "error",
-    "cwe": "CWE-22",
-    "lineStart": 3,
-    "lineEnd": 3,
-    "fixedCode": "const filename = path.basename(req.query.file);"
-  }
-]
-\end{lstlisting}
-
-\subsection*{Analysis}
-Detection quality is good, but remediation is incomplete. Using \texttt{path.basename()} reduces traversal risk, yet authorization and allowlist checks are still needed to prevent unintended file access. This case shows why repairs remain advisory and require project-specific developer review.
-
-\section{Case 5: Complex Multi-CWE Case}
+\section{Case 5: Multi-CWE Detection}
 \label{sec:case-multi-cwe}
-
-\subsection*{Scenario}
-Two vulnerabilities in one endpoint: hard-coded admin token and command injection.
-
-\subsection*{Original Vulnerable Code}
-\begin{lstlisting}[caption={Multiple vulnerabilities in one handler}]
+Hard-coded admin token plus command injection in one endpoint, both detected by \texttt{qwen3:8b+RAG}.
+\begin{lstlisting}[caption={Two findings from one handler (CWE-798 + CWE-78)}]
 app.post('/admin/exec', (req, res) => {
-  const token = req.headers['x-auth-token'];
-  if (token === 'admin123') { // CWE-798
-    const cmd = req.body.command;
-    exec(cmd, (err, stdout) => { // CWE-78
-      if (err) return res.status(500).send(err.message);
-      res.send(stdout);
-    });
-  } else {
-    res.status(401).send('Unauthorized');
-  }
+  if (req.headers['x-auth-token'] === 'admin123') { // CWE-798
+    exec(req.body.command, (err, out) => res.send(out)); // CWE-78
+  } else res.status(401).send('Unauthorized');
 });
+// Model output: [{"cwe":"CWE-798","lineStart":3},{"cwe":"CWE-78","lineStart":4}]
 \end{lstlisting}
+Both issues are correctly separated, which matters for IDE diagnostics and prioritisation. The credential fix is straightforward; command-execution remediation is design-sensitive.
 
-\subsection*{Model Output (JSON)}
-\begin{lstlisting}[caption={Two findings from one function}]
-[
-  { "cwe": "CWE-798", "lineStart": 3, "lineEnd": 3, "severity": "error" },
-  { "cwe": "CWE-78",  "lineStart": 5, "lineEnd": 5, "severity": "error" }
-]
-\end{lstlisting}
+\medskip
 
-\subsection*{Analysis}
-Both issues are correctly identified and separated, which is useful for IDE diagnostics and prioritization. The credential fix is straightforward (move token to secure configuration). Command-execution repair remains design-sensitive and usually requires architectural change or strict command allowlists.
-
-\section{Summary of Case Studies}
-
-\begin{table}[htbp]
-\centering
-\caption{Case study summary and key insights.}
-\label{tab:case-studies-summary}
-\small
-\begin{tabular}{@{}llll@{}}
-\toprule
-\textbf{Case} & \textbf{Outcome} & \textbf{Model} & \textbf{Key Insight} \\
-\midrule
-1. SQL injection & TP & qwen3:8b+RAG & Accurate detection and minimal repair \\
-2. Input validation & FP & gemma3:4b & Over-warning on secure code \\
-3. Prototype pollution & FN & CodeLlama & Missed context-dependent security pattern \\
-4. Path traversal & TP + partial fix & qwen3:8b+RAG & Detection strong; repair needs app context \\
-5. Multi-CWE & 2 TP & qwen3:8b+RAG & Multiple findings can be separated correctly \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-These cases align with the quantitative results in Chapter~\ref{chap:evaluation}: strong model-dependent variation, persistent false-positive pressure in some modes, and consistent need for developer oversight when applying repairs.
+The five cases align with the quantitative results in Chapter~\ref{chap:evaluation}: strong model-dependent variation, persistent false-positive pressure in some modes, and a consistent need for developer oversight on repairs.
