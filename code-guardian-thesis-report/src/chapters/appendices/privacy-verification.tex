@@ -1,47 +1,31 @@
 \chapter{Privacy Verification Evidence}
 \label{app:privacy-verification}
 
-This appendix documents the evidence used to support Requirement R5 (privacy-preserving operation): network behavior, local boundary design, and configuration checks.
+This appendix records the privacy evidence behind R5: network-traffic observation, configuration, and the trust-boundary architecture.
 
 \section{Network Traffic Analysis}
 \label{sec:privacy-network-analysis}
 
-\subsection{Test Configuration}
-Traffic was monitored during representative inline and audit workflows on the evaluation environment from Section~\ref{sec:eval-setup}:
-\begin{itemize}
-  \item macOS (arm64), VS Code extension development build
-  \item Local backend (\texttt{localhost:3000})
-  \item Ollama runtime (\texttt{localhost:11434})
-  \item Curated vulnerable and secure samples
-\end{itemize}
-
-\subsection{Monitoring Method}
-\begin{lstlisting}[language=bash, caption={External-traffic capture command}]
-sudo tcpdump -i any -n 'not (host 127.0.0.1 or host ::1)' \
-  -w /tmp/code-guardian-traffic.pcap
+Outbound traffic was monitored during representative inline and audit workflows on the evaluation environment (Section~\ref{sec:eval-setup}) using
+\begin{lstlisting}[language=bash]
+sudo tcpdump -i any -n 'not (host 127.0.0.1 or host ::1)' -w /tmp/cg.pcap
 \end{lstlisting}
+Detection and repair workflows produced no outbound requests; communication stayed on localhost between the extension host, local backend (\texttt{localhost:3000}), and Ollama (\texttt{localhost:11434}). External requests appeared only when knowledge refresh was explicitly triggered, contacting public CVE/CWE/OWASP endpoints with no source code or project artefacts in the request bodies. The same observation is reproduced quantitatively by the automated egress harness and source-leak detector (Section~\ref{sec:eval-r5-egress}).
 
-\subsection{Results}
-\paragraph{Code analysis workflows.}
-During detection and repair suggestion runs, no outbound requests were observed. Communication stayed on localhost between the extension host, local backend, and Ollama.
-
-\paragraph{Knowledge refresh workflow.}
-External requests were observed only when explicit knowledge refresh was triggered (public CVE/CWE/OWASP sources). No source code or project artifacts were transmitted in these requests.
-
-\subsection{Configuration Validation}
 \begin{table}[H]
   \centering
-  \caption{Privacy-preserving configuration parameters.}
+  \caption{Privacy-relevant configuration parameters in the evaluated setup.}
   \label{tab:privacy-config}
   \small
   \begin{tabularx}{\textwidth}{lXl}
     \toprule
-    Parameter & Purpose & Value (evaluated config) \\
+    Parameter & Purpose & Value \\
     \midrule
     \texttt{ollama.baseUrl} & LLM inference endpoint & \texttt{http://localhost:11434} \\
     \texttt{backend.serverUrl} & Analysis backend endpoint & \texttt{http://localhost:3000} \\
-    \texttt{vectorStore.provider} & Retrieval backend & \texttt{local} (HNSW index) \\
-    \texttt{knowledgeBase.autoRefresh} & Auto-update behavior & \texttt{false} (manual) \\
+    \texttt{vectorStore.provider} & Retrieval backend & \texttt{local} (HNSW) \\
+    \texttt{codeGuardian.enableExternalDataFetch} & External metadata refresh & \texttt{false} \\
+    \texttt{codeGuardian.requireSignedCorpus} & Reject unsigned RAG corpus & \texttt{true} \\
     \texttt{telemetry.enabled} & Telemetry collection & \texttt{false} \\
     \bottomrule
   \end{tabularx}
@@ -56,50 +40,6 @@ External requests were observed only when explicit knowledge refresh was trigger
   \label{fig:privacy-boundary}
 \end{figure}
 
-\subsection{Trust Boundary Definitions}
-\begin{table}[H]
-  \centering
-  \caption{Trust boundaries and data residency guarantees.}
-  \label{tab:privacy-boundaries}
-  \small
-  \begin{tabularx}{\textwidth}{p{0.22\textwidth}Xp{0.25\textwidth}}
-    \toprule
-    Boundary & Data in scope & Residency guarantee \\
-    \midrule
-    IDE workspace & Source files, paths, project context & Stays on local disk \\
-    Extension process & Extracted snippets and context & In-memory; localhost transfer only \\
-    Local backend & Prompts, responses, parsed findings & Local process memory and localhost HTTP \\
-    Ollama runtime & Prompt context and generation output & Local inference only \\
-    Vector store & Security knowledge embeddings & Local database \\
-    External boundary & Public CVE/CWE/OWASP metadata & Outbound refresh only; no user code \\
-    \bottomrule
-  \end{tabularx}
-\end{table}
+The IDE workspace, extension process, local backend, Ollama runtime, and vector store all reside inside the local trust boundary; source files, extracted snippets, prompts, responses, and embeddings never cross it. The only outbound channel is the public-metadata refresh, which carries no user code and is gated by \texttt{enableExternalDataFetch} (default \texttt{false}). The boundary does not mitigate local host compromise, physical access, or malicious third-party software on the same machine; those risks require endpoint and operational controls beyond thesis scope.
 
-\subsection{Out-of-Scope Threats}
-The privacy boundary does not mitigate local host compromise, physical access attacks, or malicious third-party software on the same machine. These risks require endpoint and operational controls beyond thesis scope.
-
-\section{Offline Operation Mode}
-
-Fully offline operation is supported by disabling knowledge refresh, using pre-seeded local embeddings, and ensuring required local models are already available.
-
-\section{Privacy Compliance Summary}
-
-\begin{table}[H]
-  \centering
-  \caption{Privacy requirement compliance evidence summary.}
-  \label{tab:privacy-compliance-summary}
-  \small
-  \begin{tabularx}{\textwidth}{p{0.28\textwidth}Xp{0.22\textwidth}}
-    \toprule
-    Requirement & Evidence in this appendix & Status \\
-    \midrule
-    No source-code exfiltration & External-traffic capture (Section~\ref{sec:privacy-network-analysis}) + localhost configuration (Table~\ref{tab:privacy-config}) & Pass \\
-    Local analysis boundary & Architecture and trust boundaries (Figure~\ref{fig:privacy-boundary}, Table~\ref{tab:privacy-boundaries}) & Pass \\
-    Offline-capable execution & Local-only workflow with optional refresh disabled & Pass \\
-    Telemetry disabled & \texttt{telemetry.enabled=false} in evaluated config & Pass \\
-    \bottomrule
-  \end{tabularx}
-\end{table}
-
-Overall, the collected evidence supports the R5 claim for the evaluated setup: code analysis remains local and no source artifacts are transmitted externally during standard analysis workflows.
+Fully offline operation is supported by disabling external fetch, using the pre-seeded signed RAG corpus, and ensuring required local models are already pulled into Ollama.

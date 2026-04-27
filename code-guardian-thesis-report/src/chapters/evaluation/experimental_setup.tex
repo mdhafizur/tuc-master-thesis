@@ -1,179 +1,60 @@
 \section{Experimental Setup}
 \label{sec:eval-setup}
 
-All experiments are executed locally using the Code Guardian evaluation harness. The harness iterates over the curated dataset described in Section~\ref{sec:eval-dataset} and invokes Ollama with a strict JSON-only system prompt. Model decoding is configured for deterministic inference (\texttt{temperature=0}, \texttt{seed=42}) to maximize reproducibility. JSON-mode decoding (\texttt{format: 'json'}) is enabled to enforce structured output at the decoding level, eliminating parse failures caused by malformed responses.
+All experiments run locally through the Code Guardian evaluation harness, which iterates over the dataset of Section~\ref{sec:eval-dataset} and invokes Ollama with a strict JSON-only system prompt. Decoding is deterministic (\texttt{temperature=0}, \texttt{seed=42}); JSON-mode decoding (\texttt{format='json'}) plus the response schema enforce output shape and eliminate parse failures from malformed responses. The schema requested for scoring carries a vulnerability \texttt{type} string and a coarse \texttt{severity} level alongside the location and optional fix --- richer than the in-editor diagnostics flow but required for type-level precision/recall.
 
-\subsection*{Response Schema for Scoring}
-
-For evaluation purposes, the harness requests a richer structured output than the minimal in-editor diagnostics flow. In particular, each finding includes a vulnerability \texttt{type} string and a coarse \texttt{severity} level in addition to location and an optional fix. This enables type-level scoring (precision/recall) and per-category analysis. In the extension UI, vulnerability categories may appear within the message text and are used for downstream aggregation (e.g., in the workspace dashboard); a future refinement is to surface \texttt{type} and \texttt{severity} as first-class fields in diagnostics.
-
-\subsection*{Compared Configurations}
-
-Two configurations are evaluated quantitatively:
-\begin{itemize}
-  \item \textbf{LLM-only:} JSON-only analyzer without retrieval context.
-  \item \textbf{LLM+RAG:} retrieval-augmented prompting with static security snippets (\texttt{k=5}).
-\end{itemize}
-
-Where relevant, results can also be stratified by model size or model family to study the trade-off between accuracy and latency.
-
-\paragraph{System prompt.}
-The system prompt is a tight ${\sim}80$-token instruction that names the output schema and the four scoring rules. Because JSON-mode decoding plus the response schema enforce output shape, no verbose response-format example block is needed. Section~\ref{sec:eval-r4} reports the latency this prompt produces; the historical run that used a longer prompt is referenced where relevant for context only.
+Two configurations are evaluated quantitatively: \textbf{LLM-only} (analyser without retrieval) and \textbf{LLM+RAG} (retrieval-augmented prompting with static security snippets, \texttt{k=5}). The system prompt is a tight ${\sim}80$-token instruction listing the output schema and the four scoring rules; the historical longer prompt is referenced only for context (Section~\ref{sec:eval-r4}).
 
 \paragraph{Hybrid SAST gating (opt-in).}
-The harness optionally runs Semgrep once over a temporary baseline workspace at the start of a run and fuses each LLM finding whose line range overlaps a Semgrep finding (and whose canonical category agrees) by promoting the finding's confidence to $1.0$ and its detection source to \texttt{hybrid}. LLM-only findings keep their inter-run confidence. The fusion fires for the small share of cases where Semgrep itself produces a finding (a low fraction of the dataset, consistent with the published Semgrep recall of $9.73\%$); for the rest, the LLM output passes through untouched.
+The harness optionally runs Semgrep once over a temporary baseline workspace at the start of a run and fuses each LLM finding whose line range overlaps a Semgrep finding (and whose canonical category agrees) by promoting confidence to $1.0$ and the detection source to \texttt{hybrid}. LLM-only findings keep their inter-run confidence. The fusion fires on the small share of cases where Semgrep itself produces a finding (consistent with its $9.73\%$ recall); the remainder pass through untouched.
 
-\subsection*{Models and Hardware}
+\paragraph{Baselines.}
+Three SAST baselines run through the same harness against per-snippet temporary workspaces: Semgrep with the registry packs \texttt{p/security-audit}, \texttt{p/javascript}, \texttt{p/typescript}, and \texttt{p/owasp-top-ten}; CodeQL with the \texttt{javascript-security-and-quality} suite; and ESLint with \texttt{eslint-plugin-security}. Per-snippet workspaces keep baseline execution repeatable but omit broader project context. Outputs are normalised into the same per-finding schema; vulnerability \texttt{type} for baseline findings is inferred from rule identifiers, messages, and CWE metadata, which introduces a construct-validity limitation when metadata is missing or mismatched.
 
-The reported run evaluated five local Ollama models: \texttt{gemma3:1b}, \texttt{gemma3:4b}, \texttt{qwen3:4b}, \texttt{qwen3:8b}, and \texttt{CodeLlama:latest}. The execution environment was macOS (Darwin 25.3.0, arm64) on Apple M4 Max (16 CPU cores, 64\,GB RAM), Node.js v20.19.5, and Ollama 0.17.1.
-
-\subsection*{Runtime Parameters}
-
-The evaluation harness enforces a per-request timeout (\texttt{timeoutMs=30000}) and limits generation length (\texttt{num\_predict=1000}). A request delay of \texttt{500\,ms} is inserted between calls to reduce burstiness on developer hardware. Runs were executed sequentially with no warm-up and no retries.
-
-\subsection*{Baseline Tool Configuration}
-
-To contextualize LLM and LLM+RAG behavior, three SAST baselines are executed through the same harness: Semgrep, CodeQL, and ESLint with \texttt{eslint-plugin-security}. Each baseline tool runs on a temporary workspace created by the harness that contains one \texttt{.js} or \texttt{.ts} file per snippet. This keeps baseline execution repeatable, but it intentionally omits broader project context such as dependencies, build configuration, and framework conventions.
-
-Semgrep is run with the Semgrep Registry packs \texttt{p/security-audit}, \texttt{p/javascript}, \texttt{p/typescript}, and \texttt{p/owasp-top-ten} in JSON mode. CodeQL constructs a JavaScript database over the same workspace and analyzes it with the \texttt{javascript-security-and-quality} query suite (\texttt{codeql/javascript-queries}). ESLint uses the recommended rule set from \texttt{eslint-plugin-security} via a generated configuration file.
-
-Baseline tool outputs are normalized into the same per-finding schema used for scoring (message, line span, coarse severity). Because tools report heterogeneous taxonomies, the harness infers the vulnerability \texttt{type} for baseline findings from rule identifiers, messages, and (when available) CWE metadata. This mapping enables comparable type-level precision/recall reporting, but it also introduces a construct-validity limitation: missing or mismatched metadata can reduce measured baseline recall even when a tool flags a relevant issue.
-
-\subsection*{Comparability and Fairness Controls}
-
-To support fair comparison across models and modes, the harness keeps the following controls fixed unless explicitly varied in the experiment:
-\begin{itemize}
-  \item identical dataset artifacts per run stage (vulnerable main set and secure overlay set),
-  \item identical decoding/runtime limits (temperature, token budget, timeout, request delay),
-  \item identical scoring logic for matching, parsing, and metric aggregation,
-  \item identical execution order policy (sequential calls, no warm-up).
-\end{itemize}
-
-These controls reduce avoidable variance, but they do not remove all confounders. Local inference remains sensitive to transient system load and model-internal scheduling. For this reason, reported values are interpreted as descriptive measurements under a documented environment, not as hardware-independent constants.
+\paragraph{Comparability.}
+Across runs the harness keeps dataset artefacts, decoding/runtime limits, scoring logic, and execution order policy fixed. Local inference remains sensitive to transient system load, so reported values are descriptive measurements for the documented environment, not hardware-independent constants.
 
 \subsection*{Benchmark Substitution}
 \label{sec:eval-benchmark-substitution}
 
-The approved task description names \emph{Juliet} and \emph{OWASP Benchmark}
-as the benchmark suites, ``approximately 40--50 test cases mapped to CWE
-identifiers''. Both suites are real and well-known, but neither targets
-JavaScript or TypeScript: the NIST Juliet Test Suite is published in C/C++
-and Java only, and the OWASP Benchmark Project is a Java application. There
-is no first-party JavaScript port of either. Running this thesis's
-JavaScript/TypeScript detector against C/C++ or Java would not be
-meaningful, because the LLM is prompted for JS-language vulnerabilities and
-the canonical taxonomy (Section~\ref{sec:eval-metrics}) is JS-specific
-(prototype pollution, JSON deserialisation, eval-injection, npm-ecosystem
-CVEs).
-
-The thesis therefore evaluates on two CWE-mapped JavaScript corpora:
-
-\begin{itemize}
-  \item the curated 101-case primary corpus (71 vulnerable + 30 secure)
-        described in Section~\ref{sec:eval-dataset}, designed for
-        per-case error analysis at human-auditable scale;
-  \item an additional 15-case external corpus drawn from OWASP NodeGoat,
-        OWASP Juice Shop, and three named CVEs (CVE-2022-24999,
-        CVE-2021-23337, CVE-2022-24771) located under
-        \texttt{evaluation/datasets/external/}, used as a JS-language
-        substitute for the named Juliet/OWASP-Benchmark slice.
-\end{itemize}
-
-Per-case provenance --- source URL and (where applicable) upstream commit
---- is recorded in \texttt{evaluation/datasets/SOURCES.md} and bound into
-the signed corpus manifest (Section~\ref{sec:impl-corpus-signing}) so
-provenance cannot be silently rewritten.
+The approved task description names \emph{Juliet} and \emph{OWASP Benchmark} (40--50 CWE-mapped cases). Both are real but neither targets JavaScript: Juliet is published by NIST in C/C++ and Java only, and the OWASP Benchmark Project is a Java application. There is no first-party JavaScript port of either, and running this thesis's JS/TS detector against C/C++ or Java would not be meaningful. The thesis therefore evaluates on two CWE-mapped JavaScript corpora: the curated 101-case primary corpus (71 vulnerable + 30 secure) of Section~\ref{sec:eval-dataset}, and an additional 15-case external corpus (under \texttt{evaluation/datasets/external/}) drawn from OWASP NodeGoat, OWASP Juice Shop, and three named CVEs (CVE-2022-24999, CVE-2021-23337, CVE-2022-24771). Per-case provenance --- source URL and (where applicable) upstream commit --- is recorded in \texttt{evaluation/datasets/SOURCES.md} and bound into the signed corpus manifest (Section~\ref{sec:impl-corpus-signing}) so it cannot be silently rewritten.
 
 \subsection*{Real-World Project Slice}
 \label{sec:eval-realworld}
 
-The approved task additionally names ``one actively maintained real-world
-JavaScript/TypeScript project with documented vulnerabilities and verified
-patches''. This thesis selects \emph{OWASP NodeGoat}, an actively-maintained
-OWASP reference application whose per-lesson \texttt{tutorial/} directory
-documents vulnerable code paths and verified patches. The whole-project
-runner (\texttt{evaluation/run-realworld.js}) walks the project, slices each
-file by function, applies the same analyser pipeline used for the curated
-corpus, and computes per-CWE recall against
-\texttt{evaluation/realworld/nodegoat-vulnerabilities.json}, a curated list
-of ten OWASP-Top-10-tagged weaknesses with file paths and CWE identifiers.
+The task additionally names ``one actively maintained real-world JavaScript/TypeScript project with documented vulnerabilities and verified patches''. This thesis selects \emph{OWASP NodeGoat}, an actively-maintained OWASP reference application whose per-lesson \texttt{tutorial/} directory documents vulnerable code paths and verified patches. The whole-project runner (\texttt{evaluation/run-realworld.js}) walks the project, slices each file by function, applies the same analyser pipeline used for the curated corpus, and computes per-CWE recall against \texttt{evaluation/realworld/nodegoat-vulnerabilities.json}.
 
 \subsection*{Containerised Execution}
 \label{sec:eval-container}
 
-Reproducibility additionally relies on a containerised harness. A Dockerfile
-pins Node.js 20.19.0-alpine, installs the locked dependency set via
-\texttt{npm ci}, copies the harness, the signed RAG corpus, and the corpus
-public key into the image, and compiles the extension at build time. A
-\texttt{docker-compose.yml} brings up Ollama and the harness on an isolated
-user-defined bridge network with explicit CPU and memory limits
-(8 cores, 16\,GB) so resource-usage measurements (Section~\ref{sec:eval-r4})
-are comparable across hosts. The compose stack binds Ollama to loopback
-only, satisfying the network-isolation arm of the threat model
-(Section~\ref{sec:r5-privacy}).
+A Dockerfile pins Node.js 20.19.0-alpine, installs the locked dependency set via \texttt{npm ci}, copies the harness, the signed RAG corpus, and the corpus public key into the image, and compiles the extension at build time. A \texttt{docker-compose.yml} brings up Ollama and the harness on an isolated user-defined bridge with explicit CPU and memory limits (8 cores, 16\,GB) so resource measurements are comparable across hosts. The compose stack binds Ollama to loopback only, satisfying the network-isolation arm of the threat model.
 
-\subsection*{Reproducibility Snapshot}
-
-\begin{table}[H]
-  \centering
-  \caption{Run configuration used for reported results.}
-  \label{tab:eval-reproducibility}
-  \small
-  \begin{tabular}{p{0.33\textwidth}p{0.6\textwidth}}
-    \toprule
-    Item & Value \\
-    \midrule
-    Dataset files & \texttt{vulnerability-test-cases.generated.json} (71 vulnerable) + \texttt{negatives-only.generated.json} (30 secure) \\
-    Runs per sample & 3 (vulnerable and secure, symmetric) \\
-    Prompt modes & LLM-only, LLM+RAG \\
-    RAG settings & static security snippets, \texttt{k=5} \\
-    Generation settings & \texttt{temperature=0}, \texttt{seed=42}, \texttt{format='json'}, \texttt{num\_predict=1000} \\
-    Request controls & \texttt{timeoutMs=30000}, \texttt{requestDelayMs=500} \\
-    Execution mode & sequential, no warm-up, no retries \\
-    Models requested & \texttt{gemma3:1b}, \texttt{gemma3:4b}, \texttt{qwen3:4b}, \texttt{qwen3:8b}, \texttt{CodeLlama:latest} \\
-    Model resolution & All models resolved to the same tags as requested in this run \\
-    Software & Ollama 0.17.1, Node.js v20.19.5 \\
-    Hardware/OS & Apple M4 Max (16 CPU cores, 64 GB RAM), macOS Darwin 25.3.0 (arm64) \\
-    \bottomrule
-  \end{tabular}
-\end{table}
-
-\subsection{Run-to-Run Variability}
-\label{sec:eval-run-merging}
-
-The evaluation uses \texttt{runsPerSample=3} symmetrically for both the 71 vulnerable and 30 secure samples (213 vulnerable evaluations + 90 secure evaluations = 303 model invocations per model$\times$mode). The symmetric 3-run design supports inter-run confidence computation on every sample, including secure ones, so the confidence gate (Section~\ref{sec:eval-metrics}) applies uniformly across the dataset.
-
-Per-model metrics are computed as follows:
-\begin{itemize}
-  \item \textbf{Precision \& Recall:} Over 213 vulnerable evaluations using canonical type-level matching.
-  \item \textbf{FPR:} Over 90 secure evaluations at sample level (FP if \emph{any} issue is emitted in any run).
-  \item \textbf{Latency and parse success:} Pooled across all 303 evaluations.
-\end{itemize}
-
-All metrics are interpreted as descriptive measurements for this run configuration on this dataset, not population generalisations. Limitations are discussed in Section~\ref{sec:eval-summary}.
-
-\paragraph{Response parsing.}
-The harness strips Markdown code fences if present and then attempts JSON parsing. Parse failures are scored as producing no issues, which impacts recall on vulnerable samples.
-
-\subsection{Run Configuration}
+\subsection{Reproducibility Snapshot and Run Configuration}
 \label{sec:eval-refined-config}
 
+The harness uses \texttt{runsPerSample=3} symmetrically for both groups (213 vulnerable + 90 secure = 303 invocations per model$\times$mode). Precision and recall are computed over the 213 vulnerable evaluations under canonical type-level matching; FPR is computed at sample level over the 30 secure samples (a sample is FP if any of its 3 runs flags an issue); latency and parse-success rates are pooled across all 303. Parse failures are scored as producing no issues, which lowers recall on vulnerable samples. The canonical-matching metrics and the confidence gate are post-hoc transformations of the recorded per-finding outputs, so threshold sweeps do not require re-invoking the model.
+
 \begin{table}[H]
   \centering
-  \caption{Evaluation run configuration.}
-  \label{tab:eval-refined-config}
+  \caption{Run configuration for the headline evaluation.}
+  \label{tab:eval-reproducibility}
   \small
-  \begin{tabular}{p{0.32\textwidth}p{0.61\textwidth}}
+  \begin{tabular}{p{0.30\textwidth}p{0.63\textwidth}}
     \toprule
     Item & Value \\
     \midrule
-    System prompt & ${\sim}80$-token instruction with the four scoring rules \\
-    Runs per vulnerable / secure sample & \texttt{3} / \texttt{3} (so inter-run confidence is computable on both groups) \\
-    Type-level scoring & canonical taxonomy of 23 vulnerability classes (Section~\ref{sec:eval-metrics}) \\
-    Per-finding confidence & inter-run agreement fraction; reported un-gated and at $\geq 0.67$ \\
-    Auto-applicable repair rate & \texttt{@babel/parser} syntax check on every \texttt{suggestedFix}, with \texttt{byReason} breakdown \\
+    Dataset & \texttt{vulnerability-test-cases.generated.json} (71 vulnerable) + \texttt{negatives-only.generated.json} (30 secure) \\
+    Prompt modes & LLM-only, LLM+RAG (\texttt{k=5}, static snippets) \\
+    Runs per sample & 3 (vulnerable and secure, symmetric) \\
+    Generation & \texttt{temperature=0}, \texttt{seed=42}, \texttt{format='json'}, \texttt{num\_predict=1000} \\
+    Request controls & \texttt{timeoutMs=30000}, \texttt{requestDelayMs=500}, sequential, no warm-up, no retries \\
+    Type-level scoring & canonical taxonomy of 23 classes (Section~\ref{sec:eval-metrics}) \\
+    Confidence & inter-run agreement; reported un-gated and at $\geq 0.67$ \\
+    Auto-applicable repair rate & \texttt{@babel/parser} syntax check on every \texttt{suggestedFix} \\
+    Models & \texttt{gemma3:1b}, \texttt{gemma3:4b}, \texttt{qwen3:4b}, \texttt{qwen3:8b}, \texttt{CodeLlama:latest} \\
+    Software & Ollama 0.17.1, Node.js v20.19.5 \\
+    Hardware/OS & Apple M4 Max (16 cores, 64\,GB RAM), macOS Darwin 25.3.0 (arm64) \\
+    Invocation & \texttt{--ablation --include-baselines --runs 3} \\
     \bottomrule
   \end{tabular}
 \end{table}
-
-The run is invoked with \texttt{--ablation --include-baselines --runs 3} on the 101-case dataset and the hardware profile in Table~\ref{tab:eval-reproducibility}. The canonical-matching metrics and the confidence gate are post-hoc transformations of the recorded per-finding outputs; threshold sweeps therefore do not require re-invoking the model.

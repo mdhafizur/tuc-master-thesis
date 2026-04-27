@@ -32,17 +32,8 @@ Table~\ref{tab:r5-verification} shows the verification outcome for each privacy 
 
 \subsection{Evidence}
 
-\paragraph{Local inference.}
-All LLM calls use the Ollama HTTP API on \texttt{localhost:11434}. The extension configuration enforces this default, and the evaluation was run entirely without external network access for model inference.
-
-\paragraph{Local storage.}
-The RAG vector store (HNSWlib) and all embeddings are persisted in the VS Code workspace or global storage directory. No code-derived vectors are transmitted externally.
-
-\paragraph{No telemetry.}
-The extension does not include any analytics, telemetry, or crash-reporting libraries. No outbound connections are made during analysis workflows.
-
-\paragraph{Metadata refresh boundary.}
-The optional vulnerability data refresh (\texttt{vulnerabilityDataManager.ts}) fetches only public CVE/CWE/OWASP metadata from official APIs. Source code is never included in these requests. The refresh can be fully disabled for air-gapped environments.
+\paragraph{Local inference and storage.}
+All LLM calls use the Ollama HTTP API on \texttt{localhost:11434}; the extension configuration enforces this default and the evaluation ran entirely without external network access for inference. The RAG vector store (HNSWlib) and all embeddings persist in the VS Code workspace or global storage directory --- no code-derived vectors are transmitted externally. The extension carries no analytics, telemetry, or crash-reporting libraries, so analysis workflows make no outbound connections. The optional CVE/CWE/OWASP metadata refresh (\texttt{vulnerabilityDataManager.ts}) fetches only public metadata from official APIs and is gated behind \texttt{codeGuardian.enableExternalDataFetch} (default \texttt{false}); source code is never included in these requests.
 
 \paragraph{Automated egress harness.}
 \label{sec:eval-r5-egress}
@@ -121,31 +112,8 @@ the locked configuration regenerates the report deterministically. Results
 populate from the run output and are read alongside the egress and
 leak-detector reports as the three measured arms of the privacy section.
 
-\subsection{Comparison with Cloud-Based Tools}
-
-Table~\ref{tab:r5-comparison} compares Code Guardian's privacy model against cloud-based security tools.
-
-\begin{table}[H]
-  \centering
-  \caption{Privacy comparison: Code Guardian vs. cloud-based security tools.}
-  \label{tab:r5-comparison}
-  \small
-  \renewcommand{\arraystretch}{1.4}
-  \begin{tabularx}{\textwidth}{Xccc}
-    \toprule
-    \textbf{Property} & \textbf{Code Guardian} & \textbf{GitHub Copilot} & \textbf{Snyk Code} \\
-    \midrule
-    Inference location & Local only & Cloud & Cloud \\
-    Code transmitted to server & No & Yes & Yes \\
-    Requires internet for analysis & No & Yes & Yes \\
-    Works in air-gapped environments & Yes & No & No \\
-    Telemetry collection & None & Yes & Yes \\
-    Model weights stored locally & Yes & No & No \\
-    \bottomrule
-  \end{tabularx}
-\end{table}
-
-Cloud-based tools send code to external servers for analysis, which may conflict with corporate security policies, regulatory requirements (e.g., GDPR for EU-based code), or developer preference. Code Guardian avoids this by design. The trade-off is that local models are smaller and less capable than cloud-hosted models, which is reflected in the R1 accuracy results.
+\paragraph{Comparison with cloud tools.}
+Cloud-hosted security tools (GitHub Copilot, Snyk Code) transmit source code to external servers, require internet access, collect telemetry, and do not work air-gapped. Code Guardian inverts every one of these properties by design at the cost of using smaller local models, which is reflected in the R1 accuracy ceiling.
 
 \subsection{Level Mapping}
 

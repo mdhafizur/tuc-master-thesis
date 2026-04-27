@@ -27,10 +27,7 @@ Based on the problem statement and related work, five requirements define the ev
   \end{tabularx}
 \end{table}
 
-The following subsections define these requirements in detail and map them to measurable criteria.
-
-\paragraph{Requirements-to-measures traceability.}
-Table~\ref{tab:requirements-measures-trace} summarises the concrete measure(s) computed by the evaluation harness for each requirement. The detailed definitions, threshold scales, and per-configuration values are presented in the corresponding subsections (R1--R5) and in Chapter~\ref{chap:evaluation}.
+The following subsections define each requirement in detail and map it to measurable criteria. Table~\ref{tab:requirements-measures-trace} traces the concrete harness measures for each requirement; threshold scales and per-configuration values are in the corresponding subsections and in Chapter~\ref{chap:evaluation}.
 
 \begin{table}[H]
   \centering
@@ -55,7 +52,7 @@ Table~\ref{tab:requirements-measures-trace} summarises the concrete measure(s) c
   \end{tabularx}
 \end{table}
 
-Every measure in this table is computed by the evaluation harness from per-case detection logs, with no manual aggregation step except the explicitly-marked manual review portion of R3.
+Every measure is computed by the harness from per-case logs; only the R3 manual-review portion is explicitly hand-aggregated.
 
 \subsection{R1: Accuracy}\vspace{-2mm}
 \input{src/chapters/analysis/requirements/r1}
@@ -120,4 +117,4 @@ Two conclusions follow. First, no single paradigm satisfies R1--R5 alone; practi
 
 \section{Summary}
 
-This chapter established the requirements baseline for the thesis and compared the main design paradigms available in the literature. The analysis shows that a practical solution must combine deterministic baselines, contextual reasoning, explicit privacy boundaries, and workflow-aware responsiveness. These conclusions motivate the concept presented in the next chapter.
+The chapter established R1--R5 and compared the main design paradigms in the literature. A practical solution must combine deterministic baselines, contextual reasoning, explicit privacy boundaries, and workflow-aware responsiveness --- the motivation for the concept in the next chapter.

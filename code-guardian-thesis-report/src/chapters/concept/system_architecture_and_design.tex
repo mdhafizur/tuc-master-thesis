@@ -50,42 +50,7 @@ Figure~\ref{fig:c4-container} summarizes the main internal containers and their 
 \subsection{Process View: End-to-End Workflows}
 \label{subsec:process-view}
 
-Figure~\ref{fig:bpmn} illustrates the dynamic execution flow for the main workflows.
-
-\textbf{Real-time diagnostics (function scope).}
-\begin{enumerate}
-    \item A JavaScript/TypeScript document change event occurs in the active editor.
-    \item After a debounce interval (800\,ms), the extension extracts the innermost enclosing function at the cursor.
-    \item If the extracted scope is within size limits, the local analyzer is invoked and required to return a JSON array of findings.
-    \item Findings are parsed defensively, cached, and mapped to document ranges. For confirmed findings, a dedicated repair prompt generates fix suggestions, which are then surfaced as quick fixes.
-\end{enumerate}
-
-\textbf{On-demand file diagnostics.}
-\begin{enumerate}
-    \item The developer invokes the ``analyze full file'' command.
-    \item The full document text is analyzed (subject to a size guard).
-    \item Findings are mapped to diagnostics and rendered in the editor.
-\end{enumerate}
-
-\textbf{Interactive analysis (selection) and contextual Q\&A.}
-\begin{enumerate}
-    \item The developer selects code (or context files/folders) and asks a security question.
-    \item The extension collects the selected context locally and opens a WebView panel.
-    \item The local model streams Markdown-formatted responses; follow-up questions extend the conversation history.
-    \item When enabled, retrieved security knowledge can be injected into prompts to ground explanations.
-\end{enumerate}
-
-\textbf{Workspace scan and dashboard.}
-\begin{enumerate}
-    \item The developer starts a workspace scan from the command palette.
-    \item The scanner enumerates JS/TS files, excluding dependencies, and skips very large files.
-    \item Each file is analyzed locally; issues are aggregated and summarized by severity heuristics and issue density.
-    \item Results are shown in a dashboard WebView, which can open files directly and trigger rescans.
-\end{enumerate}
-
-\textbf{Privacy considerations in the process view.} Across all workflows, source code is sent only to the local LLM backend on \texttt{localhost}. Optional knowledge refresh operations fetch only public metadata and are cached; disabling refresh yields a fully offline analysis mode.
-
-These architecture views make explicit how Code Guardian operationalizes the conceptual design: modular responsibilities, local inference as the default deployment, optional retrieval grounding, and IDE-native presentation with developer-controlled remediation.
+Figure~\ref{fig:bpmn} illustrates the dynamic execution flow for the four main workflows. \emph{Real-time diagnostics} debounce document-change events for 800\,ms, extract the innermost enclosing function at the cursor, invoke the analyser within size limits, parse and cache the JSON findings, and surface repair suggestions as quick fixes. \emph{On-demand file diagnostics} run the analyser over the full document subject to a size guard. \emph{Interactive analysis and contextual Q\&A} open a WebView, stream Markdown responses from the local model, and optionally inject retrieved knowledge to ground explanations. \emph{Workspace scan} enumerates JS/TS files (excluding dependencies, skipping very large files), analyses each locally, aggregates by severity heuristic, and renders the results in a dashboard. Across all workflows source code is sent only to localhost; the optional metadata refresh fetches public CVE/CWE/OWASP records without source content and can be disabled for fully offline operation.
 
 \begin{sidewaysfigure}
   \centering
@@ -99,77 +64,25 @@ These architecture views make explicit how Code Guardian operationalizes the con
 \subsection{Sequence Diagrams: Concrete Detection Flows}
 \label{sec:sequence-diagrams}
 
-To illustrate how the architectural components interact in different detection scenarios, this section presents three representative sequence diagrams that capture key performance and caching characteristics.
-
-\paragraph{Inline Mode with Cache Hit (Figure~\ref{fig:seq-inline-cached}).}
-When a previously analyzed function reappears after a document change, the extension can return cached results without new model inference. This scenario demonstrates the effectiveness of content-based caching for unchanged code:
-\begin{enumerate}
-    \item Developer pauses after editing.
-    \item Extension extracts function context and computes content hash.
-    \item Cache layer returns cached findings (no LLM invocation).
-    \item Diagnostics are rendered immediately in the IDE.
-\end{enumerate}
-This flow is critical for IDE responsiveness, as it avoids LLM inference overhead for unmodified code.
+Three sequence diagrams capture the dominant interaction patterns. Inline mode with a cache hit (Figure~\ref{fig:seq-inline-cached}) returns previously-stored findings without invoking the model, which is the cheap path that absorbs most repeated keystrokes. Audit mode with RAG (Figure~\ref{fig:seq-audit-rag}) embeds the snippet, performs vector search (top-$k=3$ at runtime, $k=5$ in the evaluated setting), injects retrieved CWE/OWASP chunks, runs two detection passes with seeds 42 and 137 plus consensus filtering, and finally generates repairs in a separate Stage-2 pass. Real-time detection (Figure~\ref{fig:seq-realtime-debounced}) layers an 800\,ms debounce timer over the inline path so continuous typing collapses into a single analysis.
 
 \begin{figure}[H]
   \centering
   \safeincludegraphics[width=0.9\textwidth]{images/seq_inline_cached.drawio.pdf}
-  \caption{Sequence diagram: Inline mode with cache hit. No LLM invocation is required for previously analyzed code.}
+  \caption{Inline mode with cache hit: no LLM invocation when a previously analysed function reappears.}
   \label{fig:seq-inline-cached}
 \end{figure}
-
-\paragraph{Audit Mode with RAG (Figure~\ref{fig:seq-audit-rag}).}
-When performing a full workspace scan with retrieval augmentation enabled, the backend orchestrates vector search, multi-pass detection, and repair generation:
-\begin{enumerate}
-    \item Developer triggers audit scan; extension extracts code context and sends it to the backend.
-    \item Backend generates embedding, queries the vector database (runtime default: top-$k=3$ chunks; the evaluated benchmark setting uses $k=5$), and receives the top-$k$ chunks.
-    \item Retrieved CWE/OWASP chunks are injected into a RAG-augmented prompt.
-    \item Stage~1: Two detection passes are sent to Ollama with different seeds (seed=42 and seed=137).
-    \item Backend applies consensus filtering, retaining only findings confirmed by both passes.
-    \item Stage~2: For each confirmed finding, a dedicated repair prompt is sent to Ollama.
-    \item Findings and repairs are returned to the extension, which updates the cache and renders diagnostics with quick fixes.
-\end{enumerate}
-Total latency includes two detection passes, consensus filtering, and repair generation. In the evaluated setup, retrieval overhead remained modest relative to model inference.
 
 \begin{figure}[H]
   \centering
   \safeincludegraphics[width=0.95\textwidth]{images/seq_audit_rag.drawio.pdf}
-  \caption{Sequence diagram: Audit mode with RAG. The backend retrieves security knowledge via vector search, runs two detection passes with consensus filtering, and generates repairs for confirmed findings.}
+  \caption{Audit mode with RAG: vector search, two-pass consensus detection, then Stage-2 repair generation.}
   \label{fig:seq-audit-rag}
 \end{figure}
-
-\paragraph{Real-time Detection with Debouncing (Figure~\ref{fig:seq-realtime-debounced}).}
-During active typing, debouncing prevents analysis on every keystroke while maintaining responsiveness:
-\begin{enumerate}
-    \item Developer types code; each \texttt{onChange} event resets an 800\,ms timer.
-    \item When typing pauses for 800\,ms, the timer expires.
-    \item Extension extracts function scope and checks cache.
-    \item \textbf{If cache hit:} returns cached result immediately.
-    \item \textbf{If cache miss:} invokes LLM backend and stores result in cache.
-    \item Diagnostics are rendered in the editor.
-\end{enumerate}
-Debouncing reduces unnecessary LLM invocations during continuous typing, balancing responsiveness with resource efficiency.
 
 \begin{figure}[H]
   \centering
   \safeincludegraphics[width=0.95\textwidth]{images/seq_realtime.drawio.pdf}
-  \caption{Sequence diagram: Real-time detection flow with debouncing. An 800\,ms timer prevents excessive LLM invocations during active typing.}
+  \caption{Real-time detection with debouncing: an 800\,ms timer prevents redundant LLM invocations during continuous typing.}
   \label{fig:seq-realtime-debounced}
 \end{figure}
-
-\begin{table}[H]
-\centering
-\caption{Comparison of detection flow characteristics.}
-\label{tab:flow-characteristics}
-\small
-\begin{tabularx}{\textwidth}{lXll}
-\toprule
-\textbf{Flow} & \textbf{Trigger} & \textbf{Latency} & \textbf{LLM Invocation} \\
-\midrule
-Inline (cached) & Typing pause / repeated snippet & Near-instant & No \\
-Inline (uncached) & Typing pause / new snippet & Model-dependent & Yes \\
-Audit + RAG & Manual scan & Model-dependent & Yes (with retrieval) \\
-Real-time (debounced) & Typing pause (800\,ms) & Variable & Conditional \\
-\bottomrule
-\end{tabularx}
-\end{table}

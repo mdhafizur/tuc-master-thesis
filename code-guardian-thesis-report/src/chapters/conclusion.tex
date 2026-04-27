@@ -1,44 +1,22 @@
-This chapter summarizes the thesis outcomes, answers the research questions, and states deployment implications. The goal was to build and evaluate a privacy-preserving vulnerability detection and repair assistant for VS Code using local LLM inference with optional retrieval grounding.
+This chapter summarises the thesis outcomes, answers the research questions, and states deployment implications. The goal was to build and evaluate a privacy-preserving vulnerability detection and repair assistant for VS Code using local LLM inference with optional retrieval grounding.
 
 \section{Summary of Contributions}
 
-\textbf{Code Guardian: local IDE security assistance.}
-The thesis delivers \textbf{Code Guardian}, a VS Code extension for on-device vulnerability analysis in JavaScript/TypeScript projects. The system features multi-pass consensus filtering to reduce false positives, JSON-mode decoding enforcement for structured output stability, deterministic inference controls (temperature~0, fixed seed), and a two-stage detection-then-repair pipeline. Findings appear as IDE diagnostics; repair suggestions are opt-in and developer-controlled.
+The thesis delivers \textbf{Code Guardian}, a VS Code extension for on-device JavaScript/TypeScript vulnerability analysis. The system features multi-pass consensus filtering to reduce false positives, JSON-mode decoding enforcement for structured-output stability, deterministic inference controls (\texttt{temperature=0}, fixed seed), and a two-stage detection-then-repair pipeline; findings appear as IDE diagnostics and repair suggestions are opt-in and developer-controlled. Code analysis runs entirely in Ollama on-device, retrieval uses a local vector index over signed CWE/OWASP/CVE guidance, and the repository ships a documented local evaluation harness with benchmark datasets and SAST baselines (Semgrep, CodeQL, ESLint) for like-for-like comparison.
 
-\textbf{Privacy-preserving architecture with optional RAG.}
-Code analysis is executed locally (Ollama). Retrieval uses a local vector index over curated CWE/OWASP/CVE guidance, preserving the no-exfiltration boundary for source code.
+\section{Key Findings and Answers to Research Questions}
 
-\textbf{Practical IDE integration mechanisms.}
-Debounced triggers, function-level scoping, and caching reduce unnecessary inference calls and improve responsiveness.
+\paragraph{Findings.} Local deployment is feasible: useful vulnerability detection and repair assistance can be delivered in VS Code without source-code exfiltration when inference and retrieval stay on-device. Quality depends substantially on configuration --- model size, prompting mode, and retrieval --- so RAG should not be treated as a universal default. False-positive control remains the main practical barrier: the strongest local configurations improve recall over deterministic baselines but most LLM modes still produce too much alert noise for always-on use, making workflow-aware deployment more important than single-metric optimisation.
 
-\textbf{Documented evaluation harness.}
-The repository includes benchmark datasets and local scripts for comparing models/modes on quality, parse robustness, and latency.
+\paragraph{RQ1 (Feasibility).} Supported with caveats. Useful findings and repair suggestions can be generated with local inference inside VS Code while preserving the no-code-exfiltration objective; practical value depends on configuration choice.
 
-\section{Key Findings}
+\paragraph{RQ2 (Grounding).} Partially supported. RAG improved both \texttt{qwen3} variants at the issue-level metric layer but degraded \texttt{gemma3:4b} and \texttt{CodeLlama:latest}; exploratory McNemar tests on matched sample-level outcomes did not show a statistically significant \texttt{qwen3} mode effect, suggesting the gains are concentrated in per-sample output quality rather than binary detection shifts. RAG should therefore be treated as a model-specific configuration choice.
 
-\textbf{Local deployment is feasible.}
-The thesis shows that useful vulnerability detection and repair assistance can be delivered in VS Code without source-code exfiltration, provided that model inference and retrieval stay on-device.
-
-\textbf{Quality depends more on configuration than on the idea alone.}
-The measured results vary substantially across model size, prompting mode, and retrieval configuration. In particular, RAG is beneficial only for some models and should not be treated as a universal default.
-
-\textbf{False-positive control remains the main practical barrier.}
-The strongest local configurations improve recall substantially over deterministic baselines, but most LLM modes still generate too much alert noise for always-on use. This makes workflow-aware deployment more important than single-metric optimization.
-
-\section{Answers to Research Questions}
-
-\textbf{RQ1 (Feasibility).}
-Supported with caveats. Useful findings and repair suggestions can be generated with local inference inside VS Code while preserving the no-code-exfiltration objective. Practical value depends on configuration choice.
-
-\textbf{RQ2 (Grounding).}
-Partially supported. RAG improved both \texttt{qwen3} variants in this run at the issue-level metric layer, but degraded \texttt{gemma3:4b} and \texttt{CodeLlama:latest}. Exploratory exact McNemar tests on matched sample-level outcomes did not show a statistically significant \texttt{qwen3} mode effect in this dataset, which suggests that the observed gains are concentrated in per-sample output quality rather than in a clear shift in binary sample detection. Qualitative case analysis also suggests better explanation grounding in the stronger \texttt{qwen3} configurations. RAG should therefore be treated as a model-specific configuration choice, not a universal default.
-
-\textbf{RQ3 (Practicality).}
-Supported for constrained interactive workflows. Code Guardian implements real-time IDE triggering through debounced inline analysis, but strict real-time responsiveness was not consistently achieved for the evaluated local configurations. Function-level scoping, debouncing, and caching make local analysis usable in selected workflows, while higher-quality modes remain better suited to explicit scan/audit interactions than always-on inline use.
+\paragraph{RQ3 (Practicality).} Supported for constrained interactive workflows. Real-time IDE triggering through debounced inline analysis is implemented, but strict real-time responsiveness was not consistently achieved on the evaluated local configurations. Function-level scoping, debouncing, and caching make local analysis usable in selected workflows; higher-quality modes remain better suited to explicit scan/audit interactions than always-on inline use.
 
 \section{Implications for Practice}
 
-Table~\ref{tab:conclusion-deployment-profiles} summarizes practical deployment profiles derived from the measured single-tool results and, where noted, from reasoned engineering recommendations.
+Table~\ref{tab:conclusion-deployment-profiles} summarises practical deployment profiles derived from the measured results.
 
 \begin{table}[H]
   \centering
@@ -52,16 +30,13 @@ Table~\ref{tab:conclusion-deployment-profiles} summarizes practical deployment p
     Fast inline & \texttt{gemma3:1b+RAG} & Lowest LLM FPR among small models (23.33\%); fastest median (\textasciitilde1\,019\,ms) & Low recall (40.85\%) & Optional lightweight hints with light triage \\
     Audit-focused & \texttt{qwen3:4b} (LLM-only) & Highest LLM recall (78.87\%); F1 66.14\%; \textasciitilde1.3\,s median & FPR 90\% & Use in explicit scan mode with manual triage \\
     Best overall local run & \texttt{qwen3:8b+RAG} & F1 71.94\%, precision 73.53\%, FPR 10.00\%, median 1\,573\,ms; with confidence gate $\geq 0.67$ precision rises to 77.78\% & Inference cost dominates 99\% of latency & Recommended default for quality-oriented local analysis \\
-    Hybrid low-noise & Semgrep + \texttt{qwen3:8b+RAG} (opt-in fusion) & Promotes corroborated findings to confidence~1.0 / \texttt{hybrid} source; uses Semgrep's 6.67\% FPR as a high-precision overlay & Fusion only fires for the small share of cases Semgrep itself flags (Semgrep recall 12.68\%) & Use SAST corroboration as visible-confidence overlay; LLM-only findings remain surfaced \\
+    Hybrid low-noise & Semgrep + \texttt{qwen3:8b+RAG} (opt-in fusion) & Promotes corroborated findings to confidence~1.0 / \texttt{hybrid} source; uses Semgrep's 6.67\% FPR as a high-precision overlay & Fusion fires only for the small share Semgrep itself flags (recall 12.68\%) & Use SAST corroboration as visible-confidence overlay \\
     \bottomrule
   \end{tabularx}
 \end{table}
 
-\section{Responsible Use}
-
-Code Guardian is a decision-support tool, not an autonomous security verifier. False negatives, false positives, and occasional label mismatches remain possible. Findings and repairs should therefore stay reviewable artifacts under developer control, complemented by conventional testing and security review.
-
-As local models continue to improve, the privacy advantage of on-device analysis grows, but so does the potential for misuse --- for instance, using the tool to identify exploitable weaknesses rather than to fix them. Organizations deploying Code Guardian should establish policies for how LLM-generated findings are triaged, how repair suggestions are reviewed before merging, and who has access to aggregated vulnerability reports. The tool is designed to keep the developer in control at every step; maintaining that principle in organizational workflows is essential for responsible adoption.
+\paragraph{Responsible use.}
+Code Guardian is decision support, not an autonomous security verifier. False negatives, false positives, and occasional label mismatches remain possible, so findings and repairs should stay reviewable artefacts under developer control, complemented by conventional testing and security review. As local models improve the privacy advantage of on-device analysis grows, but so does the potential for misuse (e.g.\ identifying exploitable weaknesses rather than fixing them). Organisations deploying Code Guardian should establish triage policies for LLM-generated findings, repair-review gates before merging, and access controls on aggregated vulnerability reports.
 
 \section{Future Work}
 
@@ -69,8 +44,4 @@ As local models continue to improve, the privacy advantage of on-device analysis
 
 \section{Conclusion}
 
-Privacy-preserving secure-coding assistance in the IDE is feasible with local LLM inference, optional retrieval grounding, and developer-controlled remediation. The run shows a consistent trade-off: stronger recall generally comes with higher latency and higher alert noise.
-
-Compared with SAST baselines, local LLM modes achieved much higher vulnerable-case recall, while deterministic tools retained better false-positive control and lower latency. Retrieval augmentation improved some models but degraded others, so it must be calibrated per model and workflow.
-
-Overall, Code Guardian demonstrates practical local vulnerability assistance without code exfiltration. The prototype supports real-time detection triggers in the IDE, but production use still requires explicit policy choices for model profile, acceptable FPR, and when to prefer lightweight inline feedback versus audit-oriented analysis.
+Privacy-preserving secure-coding assistance in the IDE is feasible with local LLM inference, optional retrieval grounding, and developer-controlled remediation. Local LLM modes achieved much higher vulnerable-case recall than SAST baselines, while deterministic tools retained better false-positive control and lower latency; retrieval augmentation improved some models and degraded others. Code Guardian demonstrates practical local vulnerability assistance without code exfiltration; production use still requires explicit policy choices for model profile, acceptable FPR, and when to prefer lightweight inline feedback over audit-oriented analysis.

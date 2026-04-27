@@ -37,72 +37,7 @@ Table~\ref{tab:r4-latency} shows latency statistics for all model configurations
 \paragraph{Headline configuration.}
 \texttt{qwen3:8b+RAG} runs at median 1\,573\,ms (mean 1\,801\,ms). The previously-published median for the same configuration was 2\,721\,ms; the $-42\%$ reduction is attributable to the tightened system prompt (Section~\ref{sec:eval-refined-config}), not to a model or hardware change. Stage-split telemetry recorded inference time and parser time separately and confirms inference dominates the total by more than 99\%; parsing is essentially instantaneous at 0\,ms median.
 
-Figure~\ref{fig:r4-latency-comparison} visualizes the median and p95 latency for each configuration.
-
-\begin{figure}[H]
-\centering
-\begin{tikzpicture}
-  \begin{axis}[
-    width=15cm,
-    height=7cm,
-    ybar,
-    bar width=8pt,
-    ylabel={Latency (ms)},
-    ylabel style={font=\small\bfseries},
-    xlabel={},
-    symbolic x coords={
-      semgrep,
-      codeql,
-      gemma3:1b,
-      gemma3:4b,
-      qwen3:4b,
-      codellama,
-      qwen3:8b+RAG
-    },
-    xtick=data,
-    xticklabel style={font=\scriptsize, rotate=25, anchor=east},
-    ymin=0, ymax=6000,
-    ytick={0,1000,2000,3000,4000,5000},
-    ymajorgrids=true,
-    grid style={line width=0.3pt, draw=gray!30},
-    legend style={
-      at={(0.5,-0.20)},
-      anchor=north,
-      legend columns=2,
-      font=\small,
-    },
-    enlarge x limits=0.1,
-    nodes near coords,
-    nodes near coords style={font=\tiny, rotate=90, anchor=west},
-  ]
-
-  \addplot[fill=blue!60, draw=blue!80!black] coordinates {
-    (semgrep, 63)
-    (codeql, 182)
-    (gemma3:1b, 1019)
-    (gemma3:4b, 2077)
-    (qwen3:4b, 1305)
-    (codellama, 2024)
-    (qwen3:8b+RAG, 1573)
-  };
-  \addlegendentry{Median}
-
-  \addplot[fill=red!50, draw=red!80!black] coordinates {
-    (semgrep, 95)
-    (codeql, 350)
-    (gemma3:1b, 5672)
-    (gemma3:4b, 5461)
-    (qwen3:4b, 2869)
-    (codellama, 6617)
-    (qwen3:8b+RAG, 4214)
-  };
-  \addlegendentry{p95}
-
-  \end{axis}
-\end{tikzpicture}
-\caption{Median and p95 latency across configurations. SAST baselines remain orders of magnitude faster. Among LLM configurations, the headline \texttt{qwen3:8b+RAG} sits in the middle of the LLM range despite being the largest model, because the tight system prompt cuts prefill cost and JSON-mode decoding terminates output early.}
-\label{fig:r4-latency-comparison}
-\end{figure}
+SAST baselines remain orders of magnitude faster than every LLM configuration. Among LLM configurations the headline \texttt{qwen3:8b+RAG} sits in the middle of the LLM range despite being the largest model, because the tight system prompt cuts prefill cost and JSON-mode decoding terminates output early.
 
 \subsection{Latency Component Breakdown}
 

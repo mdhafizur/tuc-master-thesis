@@ -34,188 +34,17 @@ Table~\ref{tab:eval-r1-all} shows detection metrics for all evaluated configurat
 \end{tabular}
 \end{table}
 
-Figure~\ref{fig:r1-f1-comparison} visualizes the F1 scores across configurations.
-
-\begin{figure}[H]
-\centering
-\begin{tikzpicture}
-  \begin{axis}[
-    width=15cm,
-    height=7cm,
-    xbar,
-    bar width=8pt,
-    xlabel={F1 Score (\%)},
-    xlabel style={font=\small\bfseries},
-    ylabel style={font=\small\bfseries},
-    symbolic y coords={
-      {eslint},
-      {codeql},
-      {semgrep},
-      {gemma3:1b+RAG},
-      {gemma3:1b},
-      {gemma3:4b+RAG},
-      {gemma3:4b},
-      {codellama+RAG},
-      {codellama},
-      {qwen3:4b},
-      {qwen3:4b+RAG},
-      {qwen3:8b},
-      {qwen3:8b+RAG}
-    },
-    ytick=data,
-    yticklabel style={font=\scriptsize},
-    xmin=0, xmax=75,
-    xtick={0,10,20,30,40,50,60,70},
-    xmajorgrids=true,
-    grid style={line width=0.3pt, draw=gray!30},
-    enlarge y limits=0.05,
-    nodes near coords,
-    nodes near coords style={font=\scriptsize, anchor=west},
-  ]
-
-  \addplot[fill=blue!60, draw=blue!80!black] coordinates {
-    (0.00,{eslint})
-    (10.85,{codeql})
-    (20.22,{semgrep})
-    (23.17,{codellama+RAG})
-    (36.02,{gemma3:1b+RAG})
-    (36.65,{gemma3:1b})
-    (53.06,{codellama})
-    (57.14,{gemma3:4b+RAG})
-    (57.30,{gemma3:4b})
-    (60.92,{qwen3:4b+RAG})
-    (66.14,{qwen3:4b})
-    (67.52,{qwen3:8b})
-    (71.94,{qwen3:8b+RAG})
-  };
-
-  \end{axis}
-\end{tikzpicture}
-\caption{F1 scores across all configurations using canonical-taxonomy matching. LLM-based approaches dominate the SAST baselines on recall-driven F1; \texttt{qwen3:8b+RAG} achieves the highest score (71.94\%) at 10\% FPR.}
-\label{fig:r1-f1-comparison}
-\end{figure}
+LLM-based approaches dominate the SAST baselines on recall-driven F1; \texttt{qwen3:8b+RAG} achieves the highest score (71.94\%) at 10\% FPR.
 
 \subsection{RAG Ablation Impact on Accuracy}
 
-RAG effects are model-dependent. Figure~\ref{fig:r1-rag-ablation} compares LLM-only and LLM+RAG F1 for each model.
+RAG effects are strongly model-dependent (see the LLM-only / LLM+RAG rows in Table~\ref{tab:eval-r1-all}).
 
-\begin{figure}[H]
-\centering
-\begin{tikzpicture}
-  \begin{axis}[
-    width=14cm,
-    height=6cm,
-    ybar,
-    bar width=10pt,
-    ylabel={F1 Score (\%)},
-    ylabel style={font=\small\bfseries},
-    xlabel={Model},
-    xlabel style={font=\small\bfseries},
-    symbolic x coords={gemma3:1b, gemma3:4b, qwen3:4b, qwen3:8b, codellama},
-    xtick=data,
-    xticklabel style={font=\small},
-    ymin=0, ymax=75,
-    ytick={0,10,20,30,40,50,60,70},
-    ymajorgrids=true,
-    grid style={line width=0.3pt, draw=gray!30},
-    legend style={
-      at={(0.5,-0.15)},
-      anchor=north,
-      legend columns=2,
-      font=\small,
-    },
-    enlarge x limits=0.15,
-    nodes near coords,
-    nodes near coords style={font=\scriptsize, rotate=90, anchor=west},
-  ]
-
-  \addplot[fill=blue!60, draw=blue!80!black] coordinates {
-    (gemma3:1b, 36.65)
-    (gemma3:4b, 57.30)
-    (qwen3:4b, 66.14)
-    (qwen3:8b, 67.52)
-    (codellama, 53.06)
-  };
-  \addlegendentry{LLM-only}
-
-  \addplot[fill=orange!60, draw=orange!80!black] coordinates {
-    (gemma3:1b, 36.02)
-    (gemma3:4b, 57.14)
-    (qwen3:4b, 60.92)
-    (qwen3:8b, 71.94)
-    (codellama, 23.17)
-  };
-  \addlegendentry{LLM+RAG}
-
-  \end{axis}
-\end{tikzpicture}
-\caption{RAG ablation: F1 comparison by model (canonical-taxonomy matching). RAG strongly helps \texttt{qwen3:8b} (+4.42), is roughly neutral on \texttt{gemma3} models, and severely degrades \texttt{codellama} (--29.89).}
-\label{fig:r1-rag-ablation}
-\end{figure}
-
-RAG lifts \texttt{qwen3:8b} F1 from 67.52\% to 71.94\% ($+4.42$ points) and pushes its precision from 61.63\% to 73.53\% while halving FPR (50.00\% $\to$ 10.00\%). RAG is roughly neutral on \texttt{gemma3:1b} and \texttt{gemma3:4b}, slightly hurts \texttt{qwen3:4b} ($-5.22$ points), and dramatically degrades \texttt{codellama} ($-29.89$ points: F1 drops from 53.06\% to 23.17\%, latency nearly doubles). The \texttt{codellama+RAG} collapse is the strongest negative-RAG observation in the dataset and indicates that the additional retrieval context actively confuses \texttt{codellama}'s output structure rather than grounding it. Retrieval augmentation is therefore a model-specific configuration, not a universal default.
-
-\paragraph{Statistical power.} The observed F1 differences are descriptive measurements from a single evaluation run. Exploratory exact McNemar tests on matched sample-level detection outcomes (LLM-only vs.\ LLM+RAG for each model) did not reach statistical significance for the \texttt{qwen3} improvements in this dataset ($n = 71$ vulnerable samples). This is consistent with the modest sample size: a 5-point F1 difference requires a substantially larger evaluation set to detect reliably. The RAG effect should therefore be interpreted as an indicative trend rather than a confirmed improvement, and the direction of the effect (positive for \texttt{qwen3}, negative for \texttt{gemma3} and \texttt{codellama}) is more robust than the precise magnitude.
+RAG lifts \texttt{qwen3:8b} F1 from 67.52\% to 71.94\% ($+4.42$ points) and pushes its precision from 61.63\% to 73.53\% while halving FPR (50.00\% $\to$ 10.00\%). RAG is roughly neutral on \texttt{gemma3:1b} and \texttt{gemma3:4b}, slightly hurts \texttt{qwen3:4b} ($-5.22$ points), and dramatically degrades \texttt{codellama} ($-29.89$ points: F1 drops from 53.06\% to 23.17\%, latency nearly doubles). The \texttt{codellama+RAG} collapse is the strongest negative-RAG observation in the dataset and indicates that the additional retrieval context actively confuses \texttt{codellama}'s output structure rather than grounding it. Retrieval augmentation is therefore a model-specific configuration, not a universal default. Exploratory exact McNemar tests on matched sample-level outcomes for the \texttt{qwen3} improvements did not reach significance ($n=71$); the RAG effect is best read as an indicative trend whose direction (positive for \texttt{qwen3}, negative for \texttt{codellama}) is more robust than the precise magnitude.
 
 \subsection{Per-Category Detection Breakdown}
 
-Figure~\ref{fig:r1-category} shows recall by vulnerability category for the best configuration (\texttt{qwen3:8b+RAG}), restricted to categories with at least 3 test cases. The $n$ value indicates the number of vulnerable samples per category.
-
-\begin{figure}[H]
-\centering
-\begin{tikzpicture}
-  \begin{axis}[
-    width=15cm,
-    height=6cm,
-    xbar,
-    bar width=9pt,
-    xlabel={Recall (\%)},
-    xlabel style={font=\small\bfseries},
-    symbolic y coords={
-      {Improper Auth (n=9)},
-      {Input Validation (n=27)},
-      {Weak Encryption (n=3)},
-      {Deserialization (n=9)},
-      {Code Injection (n=6)},
-      {SQL Injection (n=30)},
-      {Command Inj (n=12)},
-      {Path Traversal (n=27)},
-      {Weak Crypto (n=12)},
-      {Prototype Poll (n=21)},
-      {XSS (n=30)}
-    },
-    ytick=data,
-    yticklabel style={font=\scriptsize},
-    xmin=0, xmax=115,
-    xtick={0,20,40,60,80,100},
-    xmajorgrids=true,
-    grid style={line width=0.3pt, draw=gray!30},
-    enlarge y limits=0.08,
-    nodes near coords,
-    nodes near coords style={font=\scriptsize, anchor=west},
-  ]
-
-  \addplot[fill=blue!60, draw=blue!80!black] coordinates {
-    (0,{Improper Auth (n=9)})
-    (0,{Input Validation (n=27)})
-    (0,{Weak Encryption (n=3)})
-    (33.33,{Deserialization (n=9)})
-    (50,{Code Injection (n=6)})
-    (90,{SQL Injection (n=30)})
-    (100,{Command Inj (n=12)})
-    (100,{Path Traversal (n=27)})
-    (100,{Weak Crypto (n=12)})
-    (100,{Prototype Poll (n=21)})
-    (100,{XSS (n=30)})
-  };
-
-  \end{axis}
-\end{tikzpicture}
-\caption{Per-canonical-category recall for \texttt{qwen3:8b+RAG} on the 3-runs-per-sample evaluation ($n$ counts pooled vulnerable evaluations across runs). Injection-style and prototype-pollution categories are detected at 90--100\%, while improper-auth, input-validation, and weak-encryption score 0\%. Section~\ref{sec:eval-error-analysis} analyses how much of this gap reflects true detection failure versus label mismatch.}
-\label{fig:r1-category}
-\end{figure}
-
-The per-category breakdown reveals a sharp split rather than a smooth gradient. Categories with well-known syntactic signatures --- injection sinks (SQL, XSS, command injection), path traversal, and prototype pollution --- are detected at 90--100\% recall. Cryptographic-misuse cases (weak-crypto: 100\% recall, hardcoded-credential: 100\%, ldap-injection: 100\%, ssrf: 100\%) are also reliably detected when the dangerous API is lexically obvious. In contrast, improper-authentication, input-validation, and weak-encryption achieve 0\% recall under canonical type matching, and deserialization reaches only 33.33\%. As Section~\ref{sec:eval-error-analysis} shows, a substantial share of this gap is a labelling artefact: the model detects the issue but uses a sibling canonical category. The auth-bypass canonical category illustrates this directly: the model emits 9 \emph{auth-bypass} findings on cases the dataset labels as \emph{improper-auth}, so they show up as 9 false positives on auth-bypass and 9 missed positives on improper-auth simultaneously.
+Per-canonical-category recall on \texttt{qwen3:8b+RAG} (3-runs pooled, categories with $\geq 3$ samples) shows a sharp split rather than a smooth gradient. Categories with well-known syntactic signatures --- SQL injection (90\%), XSS (100\%), command injection (100\%), path traversal (100\%), prototype pollution (100\%), weak-crypto, hardcoded credentials, LDAP injection, and SSRF (each 100\%) --- are detected at 90--100\% recall when the dangerous API is lexically obvious. In contrast, improper-auth, input-validation, and weak-encryption score 0\% recall, and deserialization only 33\%. Section~\ref{sec:eval-error-analysis} shows a substantial share of this gap is a labelling artefact rather than detection failure: the auth-bypass canonical category, for instance, absorbs nine model findings on cases the dataset labels \emph{improper-auth}, which simultaneously show up as nine false positives on auth-bypass and nine misses on improper-auth.
 
 \subsection{Qualitative Error Analysis on Zero-Recall Categories}
 \label{sec:eval-error-analysis}
@@ -240,20 +69,11 @@ weak-encryption    & 3  & 0 & Small sample of insufficient-key-length cases; the
 \end{tabular}
 \end{table}
 
-\paragraph{Cross-category mislabel (improper-auth $\to$ auth-bypass).}
-Every case the dataset labels as \emph{improper-auth} (3 samples, 9 evaluations under 3-run pooling) is detected by the model and emitted as \emph{authentication-bypass} or \emph{timing-attack}, both of which the canonical taxonomy maps to the sibling \emph{auth-bypass} category. The visible effect is 9 false positives on auth-bypass and 9 missed positives on improper-auth; the underlying detection is correct and the suggested fixes (constant-time comparison, JWT algorithm validation) are appropriate. Merging the two canonical buckets would lift improper-auth recall from 0\% to 100\% at the cost of conflating two CWE-aligned classes.
-
-\paragraph{Genuine miss (input-validation, real-world library code).}
-The 9 input-validation samples (27 evaluations) are not detected at all. They are extracted from real-world libraries (lodash, mongoose, moment, serialize-javascript), where the validation gap is implicit in dense utility logic rather than associated with a recognisable dangerous API. The model appears unable to reason about validation requirements in the absence of an obvious sink. This is the genuinely harder task and is the residual recall gap that the canonical taxonomy cannot recover.
-
-\paragraph{Construct validity implications.}
-Canonical matching has already absorbed the label-vocabulary variance for weak cryptography (now 100\% recall) and substantially for deserialization (33\% recall, with the rest mislabelled as code-injection). The two residual gaps are very different in kind: improper-auth is a one-line taxonomy decision, while input-validation requires the model to reason about absent-but-needed checks --- a harder task that future work would address with cross-file or taint-flow context, not with a labelling refinement.
+The two residual gaps differ in kind. Every \emph{improper-auth} case is detected and emitted as \emph{authentication-bypass} or \emph{timing-attack} --- canonical siblings of \emph{auth-bypass} --- so the underlying detection and the suggested fixes (constant-time comparison, JWT algorithm validation) are correct and merging the buckets would lift recall from 0\% to 100\% at the cost of conflating two CWE-aligned classes. The 9 input-validation samples (27 evaluations) are extracted from real-world libraries (lodash, mongoose, moment, serialize-javascript) where the validation gap is implicit in dense utility logic; the model produces no output for them. This is the residual recall gap the canonical taxonomy cannot recover --- it requires cross-file or taint-flow context, not a labelling refinement.
 
 \subsection{SAST Baseline Comparison}
 
-SAST tools show a different trade-off profile. Semgrep achieves the lowest FPR (6.67\%) but a low recall (12.68\% under canonical matching). CodeQL has higher FPR (53.33\%) with similar low recall (9.86\%). ESLint security plugins detect none of the test cases. The LLM-based approach trades higher FPR for substantially better recall, making it more suitable for comprehensive security audits while SAST remains useful as a low-noise complement. The hybrid SAST-fusion option (Section~\ref{sec:eval-refined-config}) operationalises this complementarity by promoting LLM findings corroborated by Semgrep to confidence~$1.0$.
-
-\paragraph{FPR confidence intervals.} The secure-sample set contains $n=30$ cases (the FPR is computed at sample level, with 3 runs each --- a sample is FP if any run flags an issue). For the headline configuration (\texttt{qwen3:8b+RAG}, 3 of 30 flagged, FPR = 10\%), the 95\% exact binomial confidence interval is $[2.1\%, 26.5\%]$. For configurations that flag all 30 secure samples (FPR = 100\%), the 95\% CI lower bound is 88.4\%. These intervals should be kept in mind when interpreting FPR differences across configurations.
+SAST tools show a different trade-off profile. Semgrep achieves the lowest FPR (6.67\%) but a low recall (12.68\% under canonical matching); CodeQL has higher FPR (53.33\%) with similar low recall (9.86\%); ESLint security plugins detect none of the test cases. The LLM-based approach trades higher FPR for substantially better recall, making it more suitable for comprehensive security audits while SAST remains useful as a low-noise complement. The hybrid SAST-fusion option (Section~\ref{sec:eval-refined-config}) operationalises this complementarity by promoting LLM findings corroborated by Semgrep to confidence~$1.0$. FPR is computed at sample level over $n=30$ secure cases; the 95\% exact binomial CI for the headline 10\% FPR is $[2.1\%, 26.5\%]$, and for 100\%-FPR configurations the lower bound is 88.4\%.
 
 \subsection{Canonical Matching}
 \label{sec:eval-r1-canonical}
