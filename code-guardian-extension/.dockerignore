@@ -1,0 +1,13 @@
+node_modules
+out
+dist
+coverage
+.nyc_output
+.vscode-test
+*.vsix
+test-workspace*
+keys/corpus-private.pem
+.git
+.idea
+*.log
+evaluation/logs

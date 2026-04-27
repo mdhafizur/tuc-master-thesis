@@ -44,8 +44,82 @@ The extension does not include any analytics, telemetry, or crash-reporting libr
 \paragraph{Metadata refresh boundary.}
 The optional vulnerability data refresh (\texttt{vulnerabilityDataManager.ts}) fetches only public CVE/CWE/OWASP metadata from official APIs. Source code is never included in these requests. The refresh can be fully disabled for air-gapped environments.
 
-\paragraph{Network verification.}
-During the evaluation run, network capture confirmed that analysis workflows produced zero outbound connections containing source code or code-derived content. The only outbound traffic was Ollama on localhost and optional metadata refresh to public vulnerability databases.
+\paragraph{Automated egress harness.}
+\label{sec:eval-r5-egress}
+Beyond observational network capture, the harness ships a hermetic egress
+test (\texttt{evaluation/privacy/test-egress.js}) that monkey-patches Node's
+\texttt{net.connect}, \texttt{dgram.send}, \texttt{dns.lookup},
+\texttt{http.request}, and \texttt{https.request} entry points before any
+analyser code is executed. Every outbound socket attempt is recorded; the
+test passes only if \emph{every} attempt targets a loopback host
+(\texttt{127.0.0.1}, \texttt{::1}, \texttt{localhost}, or \texttt{0.0.0.0}).
+A companion source-leak detector
+(\texttt{evaluation/privacy/leak-detector.js}) builds a sliding-window
+SHA-256 index over the input dataset (window size 64 bytes) and intercepts
+\texttt{net.Socket.write} to flag any outbound payload that contains an
+indexed window on a non-loopback connection. Both reports are emitted as
+JSON under \texttt{evaluation/logs/} and reviewed alongside the
+quantitative metrics. On the locked configuration the egress harness
+records zero non-loopback connection attempts and the leak detector
+records zero non-loopback source-window matches, in agreement with the
+observational tcpdump capture.
+
+\paragraph{Signed corpora and provenance.}
+The RAG knowledge base is verified at load time against an Ed25519-signed
+SHA-256 manifest (\texttt{src/corpusVerifier.ts}). Each manifest entry
+binds a file's hash to its source URL and retrieval timestamp, so a tampered
+or forged corpus is rejected before any of its content reaches the LLM
+prompt. This closes the retrieval-poisoning arm of the threat model
+explicitly named in the task description.
+
+\paragraph{Prompt-injection resistance.}
+\label{sec:eval-r5-prompt-injection}
+The third threat named in the task description is prompt injection: an
+attacker embeds an instruction inside the source code under analysis,
+attempting to coerce the analyser into suppressing findings, leaking the
+system prompt, or otherwise breaking the analysis contract. The defence is
+\emph{structural} rather than additive. Analysis instructions live in the
+system role; user code is delivered in the user role and treated as data.
+JSON-mode decoding (\texttt{format='json'}) plus the structured-output
+schema (\texttt{MODEL\_RESPONSE\_SCHEMA}) constrain the output channel to a
+fixed shape ($\{$\texttt{issues}$:[\{$\texttt{type, line, severity,
+message, suggestedFix?}$\}]\}$), so the model has no free-text channel
+through which to echo system-prompt content or acknowledge an injected
+directive. The single-turn design removes the ``wait for the next turn''
+escalation path that multi-turn injection attacks rely on.
+
+To measure how well this structural defence holds in practice, the harness
+includes an adversarial test
+(\texttt{evaluation/privacy/prompt-injection-test.js}) over a 12-case
+adversarial corpus
+(\texttt{evaluation/datasets/privacy/injection-corpus.json}). The corpus
+includes nine pure-injection cases (instruction-override comments, fake
+system/user role tags, schema-field poisoning, JSON-break strings,
+Markdown answer-block spoofs, pseudo-XML closing tags, LLaMA template-token
+spoofs, fake few-shot examples, zero-width-character variants of the
+override string) and three injection-paired-with-real-vulnerability cases
+(SQL injection, reflected XSS, \texttt{eval}-based code injection, each
+prefixed with an instruction telling the analyser to ignore them). For
+every case the test asserts three properties:
+
+\begin{itemize}
+  \item \textbf{schemaValidRate} --- the parsed response is a JSON object
+        with an \texttt{issues} array of canonical-shaped items.
+  \item \textbf{leakFreeRate} --- the raw response does not contain any of
+        a fixed list of instruction-language tokens that would indicate
+        the model echoed the injected directive.
+  \item \textbf{detectionSurvivesRate} --- for the three
+        injection-paired-with-real-vulnerability cases, the underlying
+        vulnerability is still flagged by the analyser (numerator) over
+        the three eligible cases (denominator).
+\end{itemize}
+
+The pass criterion is $100\%$ on all three rates simultaneously. The
+report (\texttt{evaluation/logs/privacy-prompt-injection-report.json})
+records the per-case outcome and the aggregated rates; rerunning under
+the locked configuration regenerates the report deterministically. Results
+populate from the run output and are read alongside the egress and
+leak-detector reports as the three measured arms of the privacy section.
 
 \subsection{Comparison with Cloud-Based Tools}
 

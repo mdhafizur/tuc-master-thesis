@@ -1,0 +1,73 @@
+\section{Privacy and Threat-Model Enforcement}
+\label{sec:impl-privacy-enforcement}
+
+The task description (Page~iv) names a strict zero-egress policy and a
+threat model that includes retrieval poisoning. This section describes the
+three enforcement layers in the delivered system: a network-policy module
+that gates every outbound socket, a signed-corpus verifier that detects
+RAG knowledge-base tampering at load time, and a containerised harness
+that pins the resource and network namespace.
+
+\subsection{Network Policy and Zero-Egress Gate}
+\label{sec:impl-network-policy}
+
+The extension routes every outbound HTTP(S) call through a single
+chokepoint, \texttt{src/networkPolicy.ts}. The module exports an
+\texttt{assertEgressAllowed(url)} function that throws an
+\texttt{EgressBlockedError} unless the URL's hostname is on a fixed
+loopback allowlist (\texttt{127.0.0.1}, \texttt{::1}, \texttt{localhost},
+\texttt{0.0.0.0}) \emph{or} the user has explicitly opted in via the new
+\texttt{codeGuardian.enableExternalDataFetch} setting (default
+\texttt{false}). The opt-in path exists for the public CWE/CVE/OWASP
+metadata refresh; it does not relax the policy for any source-code-bearing
+call. \texttt{src/vulnerabilityDataManager.ts} consults the gate before
+every fetch and additionally treats any cached file as valid when the gate
+is closed, so a fully offline machine can still load the bundled
+vulnerability snapshot. Because the gate is a synchronous assertion at
+the call site, it cannot be bypassed by code that holds a live HTTP
+client reference.
+
+\subsection{Signed Corpus and Provenance}
+\label{sec:impl-corpus-signing}
+
+Retrieval poisoning is the threat that an attacker swaps the on-disk RAG
+knowledge base for one carrying malicious ``guidance'' that the LLM then
+trusts as authoritative context. To detect this attack, the RAG corpus is
+signed with an Ed25519 detached signature over a SHA-256 manifest of every
+corpus file. The signing tool
+(\texttt{evaluation/sign-corpus.js}) generates the keypair on first run,
+walks \texttt{security-knowledge/}, computes a SHA-256 for each file,
+attaches per-file provenance from
+\texttt{evaluation/corpus-provenance.json} (source URL plus retrieval
+timestamp), produces a canonical tab-separated payload sorted by file
+path, signs the payload, and writes
+\texttt{security-knowledge/corpus-manifest.json}. The private key never
+ships with the extension; the public key
+(\texttt{keys/corpus-public.pem}) ships in the package and is bundled
+into the Docker image.
+
+At RAG load time \texttt{src/corpusVerifier.ts} re-derives the manifest
+hashes from the on-disk content, recomputes the canonical payload, and
+verifies the Ed25519 signature against the public key. A hash mismatch,
+a missing file, or a signature failure makes the load abort under
+the default \texttt{codeGuardian.requireSignedCorpus=true} setting.
+Because provenance fields are bound into the signed payload, an attacker
+cannot rewrite a corpus file's ``retrieved from'' string without
+invalidating the signature.
+
+\subsection{Containerised Harness}
+\label{sec:impl-container}
+
+\texttt{Dockerfile} pins \texttt{node:20.19.0-alpine}, installs the
+locked dependency set with \texttt{npm ci}, copies the harness, the signed
+corpus, and the public key into the image, and compiles the extension at
+build time. The private key is excluded by \texttt{.dockerignore} so
+images cannot accidentally carry signing material.
+\texttt{docker-compose.yml} brings up Ollama and the harness on a
+user-defined bridge network with explicit CPU and memory limits (8 CPUs,
+16\,GB) and binds the Ollama port to loopback only. This is the
+``containerised execution'' clause of the task description's
+reproducibility triad and the network-isolation arm of the threat model
+in one stack: the harness has no path to a non-loopback host, and resource
+measurements (Section~\ref{sec:eval-r4-resources}) are comparable across
+hosts because the container caps the harness side identically.

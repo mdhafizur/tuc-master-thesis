@@ -51,6 +51,67 @@ To support fair comparison across models and modes, the harness keeps the follow
 
 These controls reduce avoidable variance, but they do not remove all confounders. Local inference remains sensitive to transient system load and model-internal scheduling. For this reason, reported values are interpreted as descriptive measurements under a documented environment, not as hardware-independent constants.
 
+\subsection*{Benchmark Substitution}
+\label{sec:eval-benchmark-substitution}
+
+The approved task description names \emph{Juliet} and \emph{OWASP Benchmark}
+as the benchmark suites, ``approximately 40--50 test cases mapped to CWE
+identifiers''. Both suites are real and well-known, but neither targets
+JavaScript or TypeScript: the NIST Juliet Test Suite is published in C/C++
+and Java only, and the OWASP Benchmark Project is a Java application. There
+is no first-party JavaScript port of either. Running this thesis's
+JavaScript/TypeScript detector against C/C++ or Java would not be
+meaningful, because the LLM is prompted for JS-language vulnerabilities and
+the canonical taxonomy (Section~\ref{sec:eval-metrics}) is JS-specific
+(prototype pollution, JSON deserialisation, eval-injection, npm-ecosystem
+CVEs).
+
+The thesis therefore evaluates on two CWE-mapped JavaScript corpora:
+
+\begin{itemize}
+  \item the curated 101-case primary corpus (71 vulnerable + 30 secure)
+        described in Section~\ref{sec:eval-dataset}, designed for
+        per-case error analysis at human-auditable scale;
+  \item an additional 15-case external corpus drawn from OWASP NodeGoat,
+        OWASP Juice Shop, and three named CVEs (CVE-2022-24999,
+        CVE-2021-23337, CVE-2022-24771) located under
+        \texttt{evaluation/datasets/external/}, used as a JS-language
+        substitute for the named Juliet/OWASP-Benchmark slice.
+\end{itemize}
+
+Per-case provenance --- source URL and (where applicable) upstream commit
+--- is recorded in \texttt{evaluation/datasets/SOURCES.md} and bound into
+the signed corpus manifest (Section~\ref{sec:impl-corpus-signing}) so
+provenance cannot be silently rewritten.
+
+\subsection*{Real-World Project Slice}
+\label{sec:eval-realworld}
+
+The approved task additionally names ``one actively maintained real-world
+JavaScript/TypeScript project with documented vulnerabilities and verified
+patches''. This thesis selects \emph{OWASP NodeGoat}, an actively-maintained
+OWASP reference application whose per-lesson \texttt{tutorial/} directory
+documents vulnerable code paths and verified patches. The whole-project
+runner (\texttt{evaluation/run-realworld.js}) walks the project, slices each
+file by function, applies the same analyser pipeline used for the curated
+corpus, and computes per-CWE recall against
+\texttt{evaluation/realworld/nodegoat-vulnerabilities.json}, a curated list
+of ten OWASP-Top-10-tagged weaknesses with file paths and CWE identifiers.
+
+\subsection*{Containerised Execution}
+\label{sec:eval-container}
+
+Reproducibility additionally relies on a containerised harness. A Dockerfile
+pins Node.js 20.19.0-alpine, installs the locked dependency set via
+\texttt{npm ci}, copies the harness, the signed RAG corpus, and the corpus
+public key into the image, and compiles the extension at build time. A
+\texttt{docker-compose.yml} brings up Ollama and the harness on an isolated
+user-defined bridge network with explicit CPU and memory limits
+(8 cores, 16\,GB) so resource-usage measurements (Section~\ref{sec:eval-r4})
+are comparable across hosts. The compose stack binds Ollama to loopback
+only, satisfying the network-isolation arm of the threat model
+(Section~\ref{sec:r5-privacy}).
+
 \subsection*{Reproducibility Snapshot}
 
 \begin{table}[H]

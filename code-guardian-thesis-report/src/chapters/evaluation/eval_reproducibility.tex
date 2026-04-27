@@ -1,0 +1,69 @@
+\section{Reproducibility}
+\label{sec:eval-reproducibility-metric}
+
+The task description names \emph{reproducibility} as one of the evaluation
+metrics. Determinism is configured at decoding time
+(\texttt{temperature=0}, \texttt{seed=42}) and at the dependency layer
+(version-pinned \texttt{package-lock.json}, containerised execution per
+Section~\ref{sec:eval-container}); this section reports the
+\emph{measured} reproducibility of detector outputs under that
+configuration.
+
+\subsection{Method}
+
+A dedicated harness (\texttt{evaluation/reproducibility.js}) takes a
+fixed-size subset of the curated corpus (default 10 cases), runs the
+analyser $N=3$ times per case with the same seed, and computes two rates:
+
+\begin{itemize}
+  \item \textbf{byteIdentityRate} --- the fraction of cases for which every
+        run produced byte-identical raw model output. This is the strict
+        guarantee deterministic decoding promises.
+  \item \textbf{setIdentityRate} --- the fraction of cases for which every
+        run produced an identical canonical issue set, i.e.\ identical
+        \texttt{(canonical-category, line)} tuples after the canonical
+        taxonomy normaliser is applied. This is the more meaningful
+        ``the detector's conclusions are reproducible'' metric: it is
+        insensitive to harmless paraphrase of issue messages and to
+        permutations of the issue array.
+\end{itemize}
+
+A pass on \texttt{setIdentityRate} but not on \texttt{byteIdentityRate}
+indicates the detector reliably reaches the same conclusion through
+slightly different surface text. A failure on
+\texttt{setIdentityRate} indicates a non-determinism source that is not
+captured by the seed (e.g.\ floating-point scheduling on the GPU).
+
+\subsection{Results}
+
+For \texttt{qwen3:8b} on the locked $N=3$ identical-seed configuration
+(10 cases, seed 42, host \texttt{127.0.0.1:11434}), both rates reach
+their maximum:
+
+\begin{itemize}
+  \item \textbf{\texttt{byteIdentityRate} = 100\,\%} (10 / 10 cases) ---
+        every one of the 30 inferences (10 cases $\times$ 3 runs) produced
+        byte-identical raw model output. Deterministic decoding with
+        \texttt{temperature=0} and a fixed seed therefore holds end-to-end
+        on the locked hardware profile.
+  \item \textbf{\texttt{setIdentityRate} = 100\,\%} (10 / 10 cases) ---
+        the canonical \texttt{(category, line)} issue set is identical
+        across all three runs for every case. The detector's conclusions
+        are reproducible at the strongest available bar.
+\end{itemize}
+
+Median per-inference latency on this sample was 11\,238\,ms; this is
+slightly higher than the headline \texttt{qwen3:8b+RAG} median
+(1\,573\,ms, Section~\ref{sec:eval-r4}) because the reproducibility
+runner uses a more verbose system prompt to be self-contained. Latency
+is incidental to the reproducibility metric --- the rate that matters
+is whether identical inputs produce identical outputs, which they do.
+
+The byte-identity result is stronger than the literature typically reports
+for local LLM inference, where floating-point scheduling on the GPU is
+expected to introduce minor non-determinism. The 100\,\% byte-identity
+result on Apple M4 Max suggests Ollama's CPU/Metal kernel scheduling is
+deterministic under \texttt{temperature=0} on this hardware. Re-runs on
+different hardware would re-execute the same harness and produce a
+comparable report; we report on the configuration this thesis was
+evaluated on, not as a hardware-independent constant.

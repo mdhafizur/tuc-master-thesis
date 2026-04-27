@@ -183,6 +183,16 @@
           "type": "boolean",
           "default": false,
           "description": "Append a deterministic import/sink context summary to the analysis prompt. Helps the model surface categories (input-validation, auth, crypto, deserialization) where the dangerous API is not lexically obvious in the snippet."
+        },
+        "codeGuardian.enableExternalDataFetch": {
+          "type": "boolean",
+          "default": false,
+          "description": "Allow outbound HTTP(S) fetches to NVD, OWASP, and CWE for vulnerability-data refresh. Disabled by default to preserve the strict zero-egress privacy policy; the extension ships with pre-bundled vulnerability data and verified-signed RAG corpora."
+        },
+        "codeGuardian.requireSignedCorpus": {
+          "type": "boolean",
+          "default": true,
+          "description": "Refuse to load the RAG knowledge base unless its on-disk content matches the signed manifest shipped with the extension. Defends against retrieval poisoning by detecting tampered corpus files."
         }
       }
     }

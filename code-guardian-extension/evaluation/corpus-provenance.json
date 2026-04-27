@@ -1,0 +1,7 @@
+{
+  "_comment": "Phase A5 provenance metadata. Each key is a corpus file path (relative to security-knowledge/). Source URLs and retrieval timestamps are bound into the signed manifest, so provenance cannot be rewritten without invalidating the signature.",
+  "knowledge-base.json": {
+    "source": "aggregated:cwe.mitre.org+owasp.org+nvd.nist.gov+nodejs.org+capec.mitre.org",
+    "retrievedAt": "2026-04-27T00:00:00Z"
+  }
+}

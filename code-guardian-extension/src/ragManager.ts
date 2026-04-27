@@ -7,6 +7,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as fsPromises from 'fs/promises';
 import { VulnerabilityDataManager, VulnerabilityData } from './vulnerabilityDataManager';
+import { verifyCorpus } from './corpusVerifier';
 
 import { getLogger } from './logger';
 export interface SecurityKnowledge {
@@ -702,6 +703,11 @@ export class RAGManager {
             const knowledgePath = path.join(this.storagePath, 'knowledge-base.json');
 
             if (fs.existsSync(knowledgePath)) {
+                // Phase A2/A5: verify the on-disk corpus against the signed manifest
+                // before trusting any of its content. This blocks retrieval poisoning
+                // by detecting tampered knowledge-base.json or any other corpus file.
+                this.assertCorpusIntegrity();
+
                 const data = await fsPromises.readFile(knowledgePath, 'utf8');
                 const loaded = JSON.parse(data) as SecurityKnowledge[];
 
@@ -716,6 +722,52 @@ export class RAGManager {
             }
         } catch (error) {
             this.logger.error('Error loading knowledge base from disk:', error);
+        }
+    }
+
+    /**
+     * Phase A2/A5 — Verify the RAG corpus matches its signed manifest. Throws on
+     * mismatch so the caller refuses to load tampered content. Setting
+     * `codeGuardian.requireSignedCorpus=false` (debug only) downgrades to a warning.
+     */
+    private assertCorpusIntegrity(): void {
+        const manifestPath = path.join(this.storagePath, 'corpus-manifest.json');
+        const publicKeyPath = path.join(this.context.extensionPath, 'keys', 'corpus-public.pem');
+        const requireSigned = vscode.workspace
+            .getConfiguration('codeGuardian')
+            .get<boolean>('requireSignedCorpus', true);
+
+        // First-run / dev mode: no manifest yet. Warn but allow when verification
+        // is not required; refuse otherwise.
+        if (!fs.existsSync(manifestPath)) {
+            const msg = `No corpus manifest at ${manifestPath}. Run "node evaluation/sign-corpus.js --gen-keys" to produce one.`;
+            if (requireSigned) {
+                throw new Error(`Corpus integrity check failed: ${msg}`);
+            }
+            this.logger.warn(msg);
+            return;
+        }
+
+        const result = verifyCorpus(this.storagePath, manifestPath, publicKeyPath);
+        if (!result.valid) {
+            const msg = `Corpus integrity check failed: ${result.reason} (${result.verifiedFiles}/${result.expectedFiles} files verified)`;
+            if (requireSigned) {
+                throw new Error(msg);
+            }
+            this.logger.warn(msg);
+            return;
+        }
+
+        this.logger.info(
+            `🔐 Corpus verified: ${result.verifiedFiles} files, signature ${
+                result.signatureChecked ? 'OK' : 'not present'
+            }`
+        );
+        // A5 provenance: log on each load so reviewers can trace where knowledge came from.
+        for (const p of result.provenance) {
+            if (p.source) {
+                this.logger.debug(`  ↳ ${p.path} from ${p.source}${p.retrievedAt ? ' @ ' + p.retrievedAt : ''}`);
+            }
         }
     }
 

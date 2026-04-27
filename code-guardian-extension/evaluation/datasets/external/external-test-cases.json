@@ -1,0 +1,244 @@
+[
+  {
+    "id": "ext-nodegoat-a01-mass-assignment",
+    "name": "NodeGoat A01 - Mass assignment via req.body",
+    "code": "app.post('/profile', (req, res) => {\n  const userId = req.session.userId;\n  // Vulnerable: spreads untrusted input directly onto the user document\n  UserDAO.update(userId, { $set: req.body }, (err, result) => {\n    if (err) return res.status(500).send(err);\n    res.redirect('/profile');\n  });\n});",
+    "language": "javascript",
+    "expectedVulnerabilities": [
+      {
+        "type": "Authorization Bypass",
+        "cwe": "CWE-915",
+        "severity": "high",
+        "description": "Mass assignment allows clients to overwrite privileged fields (isAdmin, role)."
+      }
+    ],
+    "expectedFix": "Allowlist the fields copied from req.body before calling UserDAO.update.",
+    "source": "https://github.com/OWASP/NodeGoat/blob/master/app/routes/profile.js",
+    "commit": "main",
+    "tags": ["owasp-A01", "mass-assignment", "nodegoat"]
+  },
+  {
+    "id": "ext-nodegoat-a03-sql-injection",
+    "name": "NodeGoat A03 - SQL injection via string concatenation",
+    "code": "function searchUser(userInput) {\n  const sql = \"SELECT * FROM users WHERE name = '\" + userInput + \"'\";\n  return db.query(sql);\n}",
+    "language": "javascript",
+    "expectedVulnerabilities": [
+      {
+        "type": "SQL Injection",
+        "cwe": "CWE-89",
+        "severity": "high",
+        "description": "User input concatenated into SQL string without parameterisation."
+      }
+    ],
+    "expectedFix": "Use parameterized queries: db.query('SELECT * FROM users WHERE name = ?', [userInput]).",
+    "source": "https://github.com/OWASP/NodeGoat",
+    "commit": "main",
+    "tags": ["owasp-A03", "sql-injection", "nodegoat"]
+  },
+  {
+    "id": "ext-nodegoat-a03-xss-reflect",
+    "name": "NodeGoat A03 - Reflected XSS in profile response",
+    "code": "app.get('/greet', (req, res) => {\n  const name = req.query.name;\n  res.send('<h1>Hello ' + name + '</h1>');\n});",
+    "language": "javascript",
+    "expectedVulnerabilities": [
+      {
+        "type": "XSS",
+        "cwe": "CWE-79",
+        "severity": "high",
+        "description": "Unescaped query parameter rendered into HTML response."
+      }
+    ],
+    "expectedFix": "Encode 'name' before interpolation, e.g. via a templating engine with auto-escaping.",
+    "source": "https://github.com/OWASP/NodeGoat",
+    "commit": "main",
+    "tags": ["owasp-A03", "xss", "nodegoat"]
+  },
+  {
+    "id": "ext-nodegoat-a08-deserialization",
+    "name": "NodeGoat A08 - Insecure deserialisation via eval",
+    "code": "const preferencesString = req.body.preferences;\n// Vulnerable: eval on attacker-controlled JSON-shaped string\nconst preferences = eval('(' + preferencesString + ')');\nUserDAO.savePrefs(req.session.userId, preferences);",
+    "language": "javascript",
+    "expectedVulnerabilities": [
+      {
+        "type": "Code Injection",
+        "cwe": "CWE-95",
+        "severity": "high",
+        "description": "eval() on user-supplied data permits arbitrary code execution."
+      }
+    ],
+    "expectedFix": "Replace eval with JSON.parse and validate the parsed object against a schema.",
+    "source": "https://github.com/OWASP/NodeGoat",
+    "commit": "main",
+    "tags": ["owasp-A08", "code-injection", "nodegoat"]
+  },
+  {
+    "id": "ext-nodegoat-a02-weak-crypto",
+    "name": "NodeGoat A02 - Weak hashing for password storage",
+    "code": "const crypto = require('crypto');\nfunction hashPassword(pw) {\n  return crypto.createHash('md5').update(pw).digest('hex');\n}",
+    "language": "javascript",
+    "expectedVulnerabilities": [
+      {
+        "type": "Weak Crypto",
+        "cwe": "CWE-327",
+        "severity": "high",
+        "description": "MD5 is not collision-resistant and is unsuitable for password hashing."
+      }
+    ],
+    "expectedFix": "Use bcrypt, scrypt, or argon2 with a per-user salt.",
+    "source": "https://github.com/OWASP/NodeGoat",
+    "commit": "main",
+    "tags": ["owasp-A02", "weak-crypto", "nodegoat"]
+  },
+  {
+    "id": "ext-juiceshop-a01-broken-access",
+    "name": "Juice Shop - Broken access control on admin endpoint",
+    "code": "app.get('/admin/users', (req, res) => {\n  // Vulnerable: no authorisation check on admin route\n  UserDAO.findAll((err, users) => {\n    res.json(users);\n  });\n});",
+    "language": "javascript",
+    "expectedVulnerabilities": [
+      {
+        "type": "Auth Bypass",
+        "cwe": "CWE-862",
+        "severity": "high",
+        "description": "Admin endpoint exposed without role check."
+      }
+    ],
+    "expectedFix": "Add a middleware verifying req.user.role === 'admin' before responding.",
+    "source": "https://github.com/juice-shop/juice-shop",
+    "commit": "master",
+    "tags": ["owasp-A01", "auth-bypass", "juice-shop"]
+  },
+  {
+    "id": "ext-juiceshop-a03-path-traversal",
+    "name": "Juice Shop - Path traversal in file download",
+    "code": "app.get('/files/:name', (req, res) => {\n  const file = req.params.name;\n  res.sendFile(path.join(__dirname, 'uploads', file));\n});",
+    "language": "javascript",
+    "expectedVulnerabilities": [
+      {
+        "type": "Path Traversal",
+        "cwe": "CWE-22",
+        "severity": "high",
+        "description": "User-controlled filename joined into a filesystem path without containment."
+      }
+    ],
+    "expectedFix": "Resolve the joined path and assert it stays inside __dirname/uploads, e.g. via path.resolve and startsWith check.",
+    "source": "https://github.com/juice-shop/juice-shop",
+    "commit": "master",
+    "tags": ["owasp-A03", "path-traversal", "juice-shop"]
+  },
+  {
+    "id": "ext-juiceshop-a07-jwt-none-alg",
+    "name": "Juice Shop - JWT 'none' algorithm acceptance",
+    "code": "const jwt = require('jsonwebtoken');\nfunction verifyToken(token) {\n  // Vulnerable: algorithms not pinned, accepts 'none'\n  return jwt.verify(token, secret);\n}",
+    "language": "javascript",
+    "expectedVulnerabilities": [
+      {
+        "type": "Auth Bypass",
+        "cwe": "CWE-347",
+        "severity": "high",
+        "description": "jwt.verify without algorithms option accepts forged 'none'-algorithm tokens."
+      }
+    ],
+    "expectedFix": "Pass algorithms: ['HS256'] (or the pinned algorithm) to jwt.verify.",
+    "source": "https://github.com/juice-shop/juice-shop",
+    "commit": "master",
+    "tags": ["owasp-A07", "auth-bypass", "jwt", "juice-shop"]
+  },
+  {
+    "id": "ext-cve-2022-24999-express-qs",
+    "name": "CVE-2022-24999 - Express qs prototype pollution",
+    "code": "const express = require('express');\nconst app = express();\napp.get('/search', (req, res) => {\n  // Vulnerable: req.query parsed by qs <6.10.3 allows __proto__ pollution\n  const opts = req.query.opts;\n  Object.assign({}, opts);\n  res.send('ok');\n});",
+    "language": "javascript",
+    "expectedVulnerabilities": [
+      {
+        "type": "Prototype Pollution",
+        "cwe": "CWE-1321",
+        "severity": "high",
+        "description": "qs <6.10.3 parses __proto__ keys; Object.assign propagates the pollution."
+      }
+    ],
+    "expectedFix": "Upgrade qs to >=6.10.3 and switch to Object.assign(Object.create(null), opts).",
+    "source": "https://nvd.nist.gov/vuln/detail/CVE-2022-24999",
+    "commit": "n/a",
+    "tags": ["cve-2022-24999", "prototype-pollution", "express"]
+  },
+  {
+    "id": "ext-cve-2021-23337-lodash-template",
+    "name": "CVE-2021-23337 - Lodash _.template code injection",
+    "code": "const _ = require('lodash');\nfunction render(input) {\n  // Vulnerable: lodash <4.17.21 _.template compiles arbitrary code\n  const tpl = _.template(input);\n  return tpl({});\n}",
+    "language": "javascript",
+    "expectedVulnerabilities": [
+      {
+        "type": "Code Injection",
+        "cwe": "CWE-94",
+        "severity": "high",
+        "description": "Lodash <4.17.21 compiles user-controlled templates into JS code."
+      }
+    ],
+    "expectedFix": "Upgrade lodash to >=4.17.21 and never pass attacker-controlled strings to _.template.",
+    "source": "https://nvd.nist.gov/vuln/detail/CVE-2021-23337",
+    "commit": "n/a",
+    "tags": ["cve-2021-23337", "code-injection", "lodash"]
+  },
+  {
+    "id": "ext-cve-2022-24771-node-forge-jsonwebtoken",
+    "name": "CVE-2022-24771 - node-forge digest signature confusion",
+    "code": "const forge = require('node-forge');\nfunction verifySignature(cert, sig, data) {\n  // Vulnerable: node-forge <1.3.0 accepts crafted DigestInfo for signature\n  return cert.publicKey.verify(forge.md.sha256.create().update(data).digest().bytes(), sig);\n}",
+    "language": "javascript",
+    "expectedVulnerabilities": [
+      {
+        "type": "Signature Bypass",
+        "cwe": "CWE-347",
+        "severity": "high",
+        "description": "node-forge <1.3.0 mishandles DigestInfo, enabling RSA signature forgery."
+      }
+    ],
+    "expectedFix": "Upgrade node-forge to >=1.3.0.",
+    "source": "https://nvd.nist.gov/vuln/detail/CVE-2022-24771",
+    "commit": "n/a",
+    "tags": ["cve-2022-24771", "signature-bypass", "node-forge"]
+  },
+  {
+    "id": "ext-secure-parameterized-query",
+    "name": "Secure - Parameterised SQL query",
+    "code": "function getUserById(id) {\n  return db.query('SELECT * FROM users WHERE id = ?', [id]);\n}",
+    "language": "javascript",
+    "expectedVulnerabilities": [],
+    "expectedFix": null,
+    "source": "secure-baseline",
+    "commit": "n/a",
+    "tags": ["secure", "parameterized"]
+  },
+  {
+    "id": "ext-secure-bcrypt-hash",
+    "name": "Secure - bcrypt password hashing with salt",
+    "code": "const bcrypt = require('bcrypt');\nasync function hashPassword(pw) {\n  return bcrypt.hash(pw, 12);\n}",
+    "language": "javascript",
+    "expectedVulnerabilities": [],
+    "expectedFix": null,
+    "source": "secure-baseline",
+    "commit": "n/a",
+    "tags": ["secure", "bcrypt"]
+  },
+  {
+    "id": "ext-secure-jwt-pinned-alg",
+    "name": "Secure - JWT verify with pinned algorithm",
+    "code": "const jwt = require('jsonwebtoken');\nfunction verifyToken(token) {\n  return jwt.verify(token, secret, { algorithms: ['HS256'] });\n}",
+    "language": "javascript",
+    "expectedVulnerabilities": [],
+    "expectedFix": null,
+    "source": "secure-baseline",
+    "commit": "n/a",
+    "tags": ["secure", "jwt"]
+  },
+  {
+    "id": "ext-secure-path-containment",
+    "name": "Secure - Path traversal containment check",
+    "code": "const path = require('path');\nconst BASE = path.resolve(__dirname, 'uploads');\nfunction serve(name, res) {\n  const target = path.resolve(BASE, name);\n  if (!target.startsWith(BASE + path.sep)) return res.status(400).end();\n  res.sendFile(target);\n}",
+    "language": "javascript",
+    "expectedVulnerabilities": [],
+    "expectedFix": null,
+    "source": "secure-baseline",
+    "commit": "n/a",
+    "tags": ["secure", "path-traversal-containment"]
+  }
+]

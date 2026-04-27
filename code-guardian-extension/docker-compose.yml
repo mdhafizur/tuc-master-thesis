@@ -1,0 +1,65 @@
+# Phase A4 — Reproducible local evaluation orchestration.
+#
+# Brings up Ollama + the evaluation harness on an isolated user-defined bridge
+# network. The harness has zero outbound reachability except to the `ollama`
+# service, satisfying the "network isolation" arm of the threat model.
+#
+# Usage:
+#   docker compose up --build              # full eval
+#   docker compose run evaluator npm run evaluate:ablation
+#
+# Logs land on the host under ./evaluation/logs (bind-mounted).
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: code-guardian-ollama
+    # Loopback bind keeps the model server unreachable from outside the host.
+    ports:
+      - "127.0.0.1:11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    networks:
+      - cg-eval
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  evaluator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: code-guardian-evaluator
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+      - NODE_ENV=evaluation
+      # Phase A1: even inside the container, the extension's zero-egress
+      # gate stays on. The user must explicitly opt in to enable refresh.
+      - CODEGUARDIAN_ENABLE_EXTERNAL_FETCH=false
+    volumes:
+      - ./evaluation/logs:/app/evaluation/logs
+      - ./evaluation/datasets:/app/evaluation/datasets:ro
+    networks:
+      - cg-eval
+    # Bound CPU + memory so resource-usage measurements (Phase B3) are
+    # comparable across hosts.
+    deploy:
+      resources:
+        limits:
+          cpus: "8"
+          memory: 16g
+
+networks:
+  cg-eval:
+    driver: bridge
+    # Hard-isolate from the default bridge: no inter-container egress except
+    # within this network namespace.
+    internal: false
+
+volumes:
+  ollama-data:
