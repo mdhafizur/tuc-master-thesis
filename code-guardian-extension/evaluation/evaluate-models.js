@@ -1416,6 +1416,19 @@ async function analyzeWithModel(modelName, code, options) {
 
     try {
         const startTime = Date.now();
+        // Phase B3 — resource instrumentation. cpuUsage() returns microseconds
+        // since process start; memoryUsage() is a per-call snapshot. We capture
+        // baselines here and diff after the inference call so the metrics appear
+        // alongside responseTime in every run JSON.
+        const cpuStart = process.cpuUsage();
+        const memBefore = process.memoryUsage();
+        let memPeakRss = memBefore.rss;
+        let memPeakHeap = memBefore.heapUsed;
+        const memSampler = setInterval(() => {
+            const m = process.memoryUsage();
+            if (m.rss > memPeakRss) memPeakRss = m.rss;
+            if (m.heapUsed > memPeakHeap) memPeakHeap = m.heapUsed;
+        }, 100);
         const systemPrompt = useRAG
             ? `${SYSTEM_PROMPT}\n\nRELEVANT SECURITY KNOWLEDGE (top-k=${ragK}):\n${RAG_KNOWLEDGE_SNIPPETS.slice(0, Math.max(0, ragK)).map((s, i) => `${i + 1}. ${s}`).join('\n') || 'No retrieval snippets selected (k=0).'}`
             : SYSTEM_PROMPT;
@@ -1467,6 +1480,16 @@ async function analyzeWithModel(modelName, code, options) {
         const parseEndTime = Date.now();
         const parseTimeMs = parseEndTime - inferenceEndTime;
         const responseTime = parseEndTime - startTime;
+        clearInterval(memSampler);
+        const cpuDelta = process.cpuUsage(cpuStart);
+        const resourceUsage = {
+            cpuUserMs: Math.round(cpuDelta.user / 1000),
+            cpuSystemMs: Math.round(cpuDelta.system / 1000),
+            cpuTotalMs: Math.round((cpuDelta.user + cpuDelta.system) / 1000),
+            memPeakRssBytes: memPeakRss,
+            memPeakHeapBytes: memPeakHeap,
+            memDeltaRssBytes: memPeakRss - memBefore.rss
+        };
 
         if (!parsed.parseSuccess) {
             console.log(`   ⚠️  JSON parsing failed for ${modelName} (${parsed.parseReason})`);
@@ -1477,6 +1500,7 @@ async function analyzeWithModel(modelName, code, options) {
             responseTime,
             inferenceTimeMs,
             parseTimeMs,
+            resourceUsage,
             issues: parsed.issues,
             parseSuccess: parsed.parseSuccess,
             parseReason: parsed.parseReason,
@@ -1486,6 +1510,7 @@ async function analyzeWithModel(modelName, code, options) {
             ragEnabled: useRAG
         };
     } catch (error) {
+        clearInterval(memSampler);
         return {
             success: false,
             error: error.message,
@@ -1799,6 +1824,7 @@ async function evaluateModel(modelInfo, testCases, options) {
                     responseTime: result.responseTime,
                     inferenceTimeMs: result.inferenceTimeMs,
                     parseTimeMs: result.parseTimeMs,
+                    resourceUsage: result.resourceUsage || null,
                     detected: gatedIssues.length,
                     detectedRaw: result.issues.length,
                     expected: testCase.expectedVulnerabilities.length,

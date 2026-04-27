@@ -1,0 +1,14 @@
+{
+  "version": "1",
+  "createdAt": "2026-04-27T16:02:15.362Z",
+  "files": [
+    {
+      "path": "knowledge-base.json",
+      "sha256": "c466b3dac154123b9a29a92d9ce7ffccb248b69f8cf7f5801f006a81e4932eae",
+      "size": 200920,
+      "source": "aggregated:cwe.mitre.org+owasp.org+nvd.nist.gov+nodejs.org+capec.mitre.org",
+      "retrievedAt": "2026-04-27T00:00:00Z"
+    }
+  ],
+  "signature": "1sc1EGX8d1HrlecjIs8+RII7RlB6RMzYITmiO2R5d4b9M4GE+0ErfHtSsljsQNF71LyYihI4kKWDq4KcvERZAQ=="
+}

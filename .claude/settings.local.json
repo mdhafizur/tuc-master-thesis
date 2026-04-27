@@ -12,7 +12,11 @@
       "Bash(node -e \"try { const p = require\\('@babel/parser'\\); console.log\\('@babel/parser available:', p.version || 'yes'\\); } catch\\(e\\) { console.log\\('NOT installed:', e.message\\); }\")",
       "Bash(node evaluation/evaluate-models.js --model qwen3:8b --no-rag-only --runs 1 --limit 6 --tight-prompt)",
       "Bash(pdflatex -interaction=nonstopmode -halt-on-error Template.tex)",
-      "Bash(pdftotext -layout docs/thesis_task_description.pdf /tmp/task.txt)"
+      "Bash(pdftotext -layout docs/thesis_task_description.pdf /tmp/task.txt)",
+      "Bash(node -e ' *)",
+      "Bash(node evaluation/privacy/leak-detector.js --window 64)",
+      "Bash(node evaluation/reproducibility.js --cases 0 --runs 1)",
+      "Bash(node evaluation/run-realworld.js --project nodegoat --path /nonexistent --file-limit 1)"
     ]
   }
 }

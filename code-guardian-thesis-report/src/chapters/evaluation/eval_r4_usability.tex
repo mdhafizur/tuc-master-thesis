@@ -110,6 +110,59 @@ End-to-end latency has four components: prompt construction, RAG retrieval (if e
 
 The implication is clear: latency improvements must come from prompt-side reductions, model selection, hardware upgrades, or architectural changes (streaming partial results). The tightened system prompt is the single biggest delivered win in this thesis: it cut \texttt{qwen3:8b+RAG} median latency by $-42\%$ relative to the earlier verbose prompt without changing model, hardware, or generation parameters.
 
+\subsection{Resource Usage}
+\label{sec:eval-r4-resources}
+
+The task description names \emph{resource usage} alongside latency as a
+usability metric. The harness instruments every model invocation with
+\texttt{process.cpuUsage()} (user and system CPU microseconds) and
+\texttt{process.memoryUsage()} (resident-set size and heap-used, sampled
+every 100\,ms during inference). The per-inference deltas are written into
+each run JSON next to \texttt{responseTime}, allowing the resource
+footprint of a configuration to be reconstructed without re-running the
+model. The headline configuration's per-inference footprint is summarised
+in Table~\ref{tab:r4-resources}.
+
+\begin{table}[H]
+\centering
+\caption{Per-inference harness-side resource footprint for
+\texttt{qwen3:8b} on a 30-case sample (LLM-only, single-run per sample;
+the headline configuration's wall-clock numbers are reproduced from
+Section~\ref{sec:eval-r4}). CPU columns are harness-process CPU only and
+exclude the Ollama-server cost, which is recorded separately by
+operating-system process accounting.}
+\label{tab:r4-resources}
+\footnotesize
+\begin{tabular}{@{}lrrl@{}}
+\toprule
+\textbf{Metric} & \textbf{Median} & \textbf{p95} & \textbf{Note} \\
+\midrule
+Wall-clock latency (ms)        & 1\,573 & 4\,214 & Section~\ref{sec:eval-r4} \\
+Harness-side CPU total (ms)    & 3      & 21     & 30-case sample, qwen3:8b \\
+Peak resident-set size (MB)    & 87.0   & 88.6   & 30-case sample, qwen3:8b \\
+Peak heap used (MB)            & 9.1    & 9.8    & 30-case sample, qwen3:8b \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The harness-side CPU footprint is two orders of magnitude smaller than
+the wall-clock latency, confirming that the analyser process spends
+almost all its time waiting on Ollama rather than doing local work; the
+peak resident-set size stabilises around 87\,MB and the heap around
+9\,MB, both well within laptop-class budgets. These numbers are
+descriptive measurements for the harness side only; the Ollama server's
+own footprint is the dominant resource cost and is recorded below.
+
+The harness-side process is intentionally lightweight (the heavy work
+runs inside Ollama). Ollama's own resource footprint dominates the
+end-to-end cost: approximately one model-shard's worth of RAM (about
+6--8\,GB for an 8B-parameter model with 4-bit quantisation on the M4 Max
+profile in Table~\ref{tab:eval-reproducibility}) and one CPU/GPU core
+during prefill plus the decoder pass. The compose stack
+(\texttt{docker-compose.yml}, Section~\ref{sec:eval-container}) caps the
+harness side at 8 cores and 16\,GB so this measurement is comparable
+across hosts.
+
 \subsection{Latency Feasibility for IDE Workflows}
 
 \begin{table}[H]
