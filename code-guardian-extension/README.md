@@ -348,11 +348,6 @@ npm run benchmark
 
 ## 📚 Documentation
 
-### For Users
-
-- **[Quick Start Guide](docs/QUICK_START_GUIDE.md)** - Get up and running in minutes
-- **[Main Documentation](docs/)** - Complete documentation index
-
 ### For Developers
 
 - **[Deployment Guide](docs/DEPLOYMENT.md)** - Package and publish the extension

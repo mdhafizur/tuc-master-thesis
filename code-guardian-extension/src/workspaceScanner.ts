@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { analyzeCodeWithLLM, SecurityIssue } from './analyzer';
 import { RAGManager } from './ragManager';
+import { buildProjectMap, astFindingsByFile, ProjectMap } from './projectMapBuilder';
 
 import { getLogger } from './logger';
 /**
@@ -139,12 +140,17 @@ export class WorkspaceScanner {
 	}
 
 	/**
-	 * Scan a single file for vulnerabilities
+	 * Scan a single file for vulnerabilities.
+	 *
+	 * `astIssuesForFile` (audit mode) is a precomputed list of AST detections
+	 * for this file. They are unioned with the LLM findings without re-running
+	 * the AST traversal per file.
 	 */
 	private async scanFile(
 		fileUri: vscode.Uri,
 		workspaceRoot: string,
-		onProgress?: (message: string) => void
+		onProgress?: (message: string) => void,
+		astIssuesForFile?: SecurityIssue[]
 	): Promise<FileScanResult> {
 		const startTime = Date.now();
 
@@ -159,7 +165,7 @@ export class WorkspaceScanner {
 				return {
 					filePath: fileUri.fsPath,
 					relativePath: path.relative(workspaceRoot, fileUri.fsPath),
-					issues: [],
+					issues: astIssuesForFile ?? [],
 					linesOfCode: 0,
 					scanTime: Date.now() - startTime,
 					timestamp: new Date()
@@ -168,8 +174,13 @@ export class WorkspaceScanner {
 
 			onProgress?.(`Scanning ${path.basename(fileUri.fsPath)}...`);
 
-			// Analyze with LLM
-			const issues = await analyzeCodeWithLLM(content, undefined, this.ragManager);
+			// Analyze with LLM (Stage 1 of audit mode, single stage of inline mode).
+			const llmIssues = await analyzeCodeWithLLM(content, undefined, this.ragManager);
+
+			// Audit mode: union AST detections (Stage 0) and LLM findings (Stage 1),
+			// deduplicated by (canonical-shape, line). AST findings carry
+			// detectionSource='ast' and confidence=1.0.
+			const issues = this.mergeIssues(astIssuesForFile ?? [], llmIssues);
 
 			const linesOfCode = this.countLines(content);
 
@@ -187,12 +198,40 @@ export class WorkspaceScanner {
 			return {
 				filePath: fileUri.fsPath,
 				relativePath: path.relative(workspaceRoot, fileUri.fsPath),
-				issues: [],
+				issues: astIssuesForFile ?? [],
 				linesOfCode: 0,
 				scanTime: Date.now() - startTime,
 				timestamp: new Date()
 			};
 		}
+	}
+
+	/**
+	 * Deduplicate audit-mode issues by (line, message-shape). When an AST and
+	 * an LLM finding overlap on the same line for the same canonical category,
+	 * the AST finding wins because it is deterministic; we annotate it as
+	 * 'hybrid' to flag that the LLM corroborated.
+	 */
+	private mergeIssues(astIssues: SecurityIssue[], llmIssues: SecurityIssue[]): SecurityIssue[] {
+		if (astIssues.length === 0) {
+			return llmIssues;
+		}
+		const merged: SecurityIssue[] = [...astIssues];
+		const astByLine = new Map<number, SecurityIssue>();
+		for (const a of astIssues) {
+			astByLine.set(a.startLine, a);
+		}
+		for (const l of llmIssues) {
+			// If the LLM flagged the same line, mark the AST entry as 'hybrid'
+			// (corroborated). Otherwise add the LLM finding unchanged.
+			const overlap = astByLine.get(l.startLine);
+			if (overlap) {
+				overlap.detectionSource = 'hybrid';
+				continue;
+			}
+			merged.push(l);
+		}
+		return merged;
 	}
 
 	/**
@@ -226,6 +265,32 @@ export class WorkspaceScanner {
 				return null;
 			}
 
+			// Audit mode (Stage 0): build the deterministic AST project map once
+			// per scan. This is fast (microseconds per file) and produces sink
+			// detections that ground the LLM analysis (Stage 1) per file. The
+			// audit mode is on by default; users can disable it via the
+			// `codeGuardian.enableAuditMode` setting if they want LLM-only.
+			const auditEnabled = vscode.workspace
+				.getConfiguration('codeGuardian')
+				.get<boolean>('enableAuditMode', true);
+			let astByFile: Map<string, SecurityIssue[]> = new Map();
+			let auditMap: ProjectMap | null = null;
+			if (auditEnabled) {
+				try {
+					const mapStart = Date.now();
+					auditMap = buildProjectMap(workspaceRoot);
+					astByFile = astFindingsByFile(auditMap);
+					const total = [...astByFile.values()].reduce((s, l) => s + l.length, 0);
+					this.logger.info(
+						`Audit mode: project map built in ${Date.now() - mapStart}ms; ` +
+						`${auditMap.fileCount} files, ${total} AST detections.`
+					);
+					onProgress?.(0, files.length, `Audit map built (${total} AST detections); starting LLM analysis…`);
+				} catch (e) {
+					this.logger.warn(`Audit-mode project map failed; falling back to LLM-only: ${(e as Error).message}`);
+				}
+			}
+
 			onProgress?.(0, files.length, 'Starting workspace scan...');
 
 			// Scan files concurrently in batches
@@ -246,7 +311,8 @@ export class WorkspaceScanner {
 						this.scanFile(
 							file,
 							workspaceRoot,
-							(msg) => onProgress?.(scannedCount, files.length, msg)
+							(msg) => onProgress?.(scannedCount, files.length, msg),
+							astByFile.get(file.fsPath)
 						)
 					)
 				);

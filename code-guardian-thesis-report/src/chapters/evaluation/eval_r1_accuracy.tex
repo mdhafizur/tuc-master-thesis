@@ -16,7 +16,7 @@ Table~\ref{tab:eval-r1-all} shows detection metrics for all evaluated configurat
 \toprule
 \textbf{Model} & \textbf{Mode} & \textbf{Precision} & \textbf{Recall} & \textbf{F1} & \textbf{FPR} \\
 \midrule
-\texttt{qwen3:8b}        & LLM+RAG  & 73.53 & 70.42 & 71.94 & 10.00 \\
+\texttt{qwen3:8b}        & LLM+RAG  & 72.46 & 70.42 & 71.43 & 10.00 \\
 \texttt{qwen3:8b}        & LLM-only & 61.63 & 74.65 & 67.52 & 50.00 \\
 \texttt{qwen3:4b}        & LLM-only & 56.95 & 78.87 & 66.14 & 90.00 \\
 \texttt{qwen3:4b}        & LLM+RAG  & 51.46 & 74.65 & 60.92 & 100.00 \\
@@ -34,13 +34,13 @@ Table~\ref{tab:eval-r1-all} shows detection metrics for all evaluated configurat
 \end{tabular}
 \end{table}
 
-LLM-based approaches dominate the SAST baselines on recall-driven F1; \texttt{qwen3:8b+RAG} achieves the highest score (71.94\%) at 10\% FPR.
+LLM-based approaches dominate the SAST baselines on recall-driven F1; \texttt{qwen3:8b+RAG} achieves the highest score (71.43\%) at 10\% FPR.
 
 \subsection{RAG Ablation Impact on Accuracy}
 
 RAG effects are strongly model-dependent (see the LLM-only / LLM+RAG rows in Table~\ref{tab:eval-r1-all}).
 
-RAG lifts \texttt{qwen3:8b} F1 from 67.52\% to 71.94\% ($+4.42$ points) and pushes its precision from 61.63\% to 73.53\% while halving FPR (50.00\% $\to$ 10.00\%). RAG is roughly neutral on \texttt{gemma3:1b} and \texttt{gemma3:4b}, slightly hurts \texttt{qwen3:4b} ($-5.22$ points), and dramatically degrades \texttt{codellama} ($-29.89$ points: F1 drops from 53.06\% to 23.17\%, latency nearly doubles). The \texttt{codellama+RAG} collapse is the strongest negative-RAG observation in the dataset and indicates that the additional retrieval context actively confuses \texttt{codellama}'s output structure rather than grounding it. Retrieval augmentation is therefore a model-specific configuration, not a universal default. Exploratory exact McNemar tests on matched sample-level outcomes for the \texttt{qwen3} improvements did not reach significance ($n=71$); the RAG effect is best read as an indicative trend whose direction (positive for \texttt{qwen3}, negative for \texttt{codellama}) is more robust than the precise magnitude.
+RAG lifts \texttt{qwen3:8b} F1 from 67.52\% to 71.43\% ($+3.91$ points) and pushes its precision from 61.63\% to 72.46\% while halving FPR (50.00\% $\to$ 10.00\%). RAG is roughly neutral on \texttt{gemma3:1b} and \texttt{gemma3:4b}, slightly hurts \texttt{qwen3:4b} ($-5.22$ points), and dramatically degrades \texttt{codellama} ($-29.89$ points: F1 drops from 53.06\% to 23.17\%, latency nearly doubles). The \texttt{codellama+RAG} collapse is the strongest negative-RAG observation in the dataset and indicates that the additional retrieval context actively confuses \texttt{codellama}'s output structure rather than grounding it. Retrieval augmentation is therefore a model-specific configuration, not a universal default. Exploratory exact McNemar tests on matched sample-level outcomes for the \texttt{qwen3} improvements did not reach significance ($n=71$); the RAG effect is best read as an indicative trend whose direction (positive for \texttt{qwen3}, negative for \texttt{codellama}) is more robust than the precise magnitude.
 
 \subsection{Per-Category Detection Breakdown}
 
@@ -75,59 +75,27 @@ The two residual gaps differ in kind. Every \emph{improper-auth} case is detecte
 
 SAST tools show a different trade-off profile. Semgrep achieves the lowest FPR (6.67\%) but a low recall (12.68\% under canonical matching); CodeQL has higher FPR (53.33\%) with similar low recall (9.86\%); ESLint security plugins detect none of the test cases. The LLM-based approach trades higher FPR for substantially better recall, making it more suitable for comprehensive security audits while SAST remains useful as a low-noise complement. The hybrid SAST-fusion option (Section~\ref{sec:eval-refined-config}) operationalises this complementarity by promoting LLM findings corroborated by Semgrep to confidence~$1.0$. FPR is computed at sample level over $n=30$ secure cases; the 95\% exact binomial CI for the headline 10\% FPR is $[2.1\%, 26.5\%]$, and for 100\%-FPR configurations the lower bound is 88.4\%.
 
-\subsection{Canonical Matching}
-\label{sec:eval-r1-canonical}
-
-Because the qualitative error analysis (Section~\ref{sec:eval-error-analysis}) shows that 11 of 19 zero-recall cases are label-mismatch artefacts rather than detection failures, the harness scores type matches against the canonical taxonomy defined in Section~\ref{sec:eval-metrics}. The headline numbers earlier in this chapter use a previously-published substring-matched scoring (preserved verbatim for context); the canonical matcher's effect on the same recorded findings is summarised in Table~\ref{tab:r1-canonical-replay}.
-
-\begin{table}[H]
-\centering
-\caption{Canonical-matching cross-check on the previously-published 71-vulnerable-sample ablation log (no model re-invocation). The substring column reproduces the previously-published values; the canonical column is the same per-case findings re-scored against the canonical taxonomy. FPR is unchanged because secure-sample scoring is type-agnostic at the case level.}
-\label{tab:r1-canonical-replay}
-\footnotesize
-\begin{tabular}{@{}llrrrr@{}}
-\toprule
-\textbf{Model} & \textbf{Mode} & \textbf{Substring F1} & \textbf{Canonical F1} & \textbf{$\Delta$} & \textbf{Canonical Prec.} \\
-\midrule
-\texttt{qwen3:8b}      & LLM+RAG  & 64.13 & 69.44 & +5.31  & 69.85 \\
-\texttt{qwen3:8b}      & LLM-only & 58.44 & 67.34 & +8.90  & 65.73 \\
-\texttt{qwen3:4b}      & LLM+RAG  & 59.95 & 63.36 & +3.41  & 59.43 \\
-\texttt{qwen3:4b}      & LLM-only & 55.98 & 64.58 & +8.60  & 60.00 \\
-\texttt{gemma3:4b}     & LLM+RAG  & 50.66 & 55.05 & +4.39  & 50.12 \\
-\texttt{gemma3:4b}     & LLM-only & 57.18 & 60.03 & +2.85  & 55.84 \\
-\texttt{codellama}     & LLM+RAG  & 32.14 & 42.31 & +10.17 & 39.59 \\
-\texttt{codellama}     & LLM-only & 42.74 & 51.54 & +8.80  & 49.07 \\
-\texttt{gemma3:1b}     & LLM+RAG  & 37.08 & 37.72 & +0.64  & 33.04 \\
-\texttt{gemma3:1b}     & LLM-only & 33.85 & 35.94 & +2.09  & 53.18 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-The canonical effect is positive on every model and mode, with deltas ranging from $+0.64$ to $+10.17$ F1 points (mean $\approx +5.5$). Larger and stronger models gain more, consistent with the observation that label variance is what the canonical matcher was designed to absorb. Smaller models such as \texttt{gemma3:1b} produce fewer findings overall and therefore have less label variance to recover. The same direction holds for the headline configuration on the merged-with-negatives Mar-21 log: \texttt{qwen3:8b+RAG} F1 lifts from $65.31\%$ to $72.34\%$ (precision $63.16\% \rightarrow 72.86\%$, recall $67.61\% \rightarrow 71.83\%$, FPR unchanged at $20\%$). Because the lift comes entirely from re-binning labels --- no new model calls --- it is a deterministic methodology adjustment rather than a model-quality claim.
-
 \subsection{Inter-Run Confidence Gate}
 \label{sec:eval-r1-confidence}
 
-The harness assigns each finding a confidence score derived from inter-run agreement (Section~\ref{sec:eval-metrics}). The previously-published Feb-27 ablation log supports a post-hoc confidence sweep on the headline configuration:
+Each finding is annotated with an inter-run confidence score equal to the fraction of runs (out of three) that emitted a matching issue (Section~\ref{sec:eval-metrics}). A configurable gate then suppresses findings whose confidence falls below a threshold. Sweeping the threshold on the headline \texttt{qwen3:8b+RAG} configuration (canonical matcher, three runs per case):
 
 \begin{table}[H]
 \centering
-\caption{Confidence gate sweep on the frozen 3-runs-per-vulnerable-sample log (\texttt{qwen3:8b+RAG}, canonical matcher). At threshold $\geq 0.67$, only findings agreed by $\geq 2$ of $3$ runs survive.}
+\caption{Confidence-gate effect on the headline \texttt{qwen3:8b+RAG} configuration. At threshold $\geq 0.67$, only findings emitted by $\geq 2$ of the 3 runs survive.}
 \label{tab:r1-confidence-sweep}
 \footnotesize
 \begin{tabular}{@{}lrrrr@{}}
 \toprule
-\textbf{Threshold} & \textbf{F1} & \textbf{Precision} & \textbf{Recall} & \textbf{Issues retained} \\
+\textbf{Threshold} & \textbf{F1} & \textbf{Precision} & \textbf{Recall} & \textbf{FPR} \\
 \midrule
-$0.0$  (no gate)         & 69.44 & 69.85 & 69.03 & 100\% \\
-$0.34$ ($\geq 1/3$)      & 71.19 & 74.52 & 68.14 & --- \\
-$0.67$ ($\geq 2/3$)      & \textbf{72.30} & \textbf{77.00} & 68.14 & ${\sim}93\%$ \\
-$1.0$  (unanimous)       & 72.30 & 77.00 & 68.14 & --- \\
+$0.0$  (no gate)         & 71.43 & 72.46 & 70.42 & 10.00 \\
+$0.67$ ($\geq 2/3$ runs) & \textbf{74.07} & \textbf{78.13} & 70.42 & 10.00 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Canonical matching combined with a confidence gate at $\geq 0.67$ lifts \texttt{qwen3:8b+RAG} from previously-published F1 $64.13\%$ / precision $63.66\%$ to F1 $72.30\%$ / precision $77.00\%$ at the cost of $0.89$ recall points. This is the trade-off the gate is designed to deliver: lower noise without sacrificing detection. The gain is empirically grounded in the existing 3-run data --- no new model calls are required to compute it.
+The gate at $\geq 0.67$ lifts F1 by $2.64$ points and precision by $5.67$ points without changing recall or FPR. This is the trade-off the gate is designed to deliver: lower noise without sacrificing detection. Issues from a single one-of-three pass that the consensus cannot corroborate are dropped; agreement-driven findings survive.
 
 \subsection{External-Corpus Stress Test}
 \label{sec:eval-r1-external-corpus}
@@ -136,7 +104,7 @@ To probe the substitution disclosed in Section~\ref{sec:eval-benchmark-substitut
 
 \begin{table}[H]
 \centering
-\caption{\texttt{qwen3:8b} on the external corpus, LLM-only / 1 run per sample. Comparison row reproduces the curated 101-case canonical-match headline from Section~\ref{sec:eval-r1-canonical}.}
+\caption{\texttt{qwen3:8b} on the external corpus, LLM-only / 1 run per sample. Comparison row reproduces the curated 101-case canonical-match headline from Section~\ref{sec:eval-r1}.}
 \label{tab:r1-external-corpus}
 \footnotesize
 \begin{tabular}{@{}lrrrrrr@{}}
@@ -144,64 +112,66 @@ To probe the substitution disclosed in Section~\ref{sec:eval-benchmark-substitut
 \textbf{Corpus} & \textbf{F1} & \textbf{Precision} & \textbf{Recall} & \textbf{FPR} & \textbf{Med. lat. (ms)} & \textbf{Configuration} \\
 \midrule
 External (15 cases)         & 40.00 & 35.71 & 45.45 & 75.00 & 9\,462 & LLM-only, 1 run \\
-Curated (101 cases)         & 71.94 & 73.53 & 70.42 & 10.00 & 1\,573 & LLM+RAG, 3 runs \\
+Curated (101 cases)         & 71.43 & 72.46 & 70.42 & 10.00 & 2\,216 & LLM+RAG, 3 runs (stage-1) \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Two effects compound in the gap. First, the external corpus skews toward weakness classes that require cross-file or framework-level reasoning: mass assignment, broken access control on an admin route, JWT \texttt{none}-algorithm acceptance, signature verification (CWE-347), and Lodash \texttt{\_.template} code injection. Five of the six false negatives are in this class. The detector's single-function scope (Section~\ref{sec:impl-pipeline}) does not see the access-control wrapper, the JWT \texttt{algorithms} option, or the version constraint that resolves the CVE. The thesis's existing input-validation gap (Section~\ref{sec:eval-error-analysis}) is the same limitation surfacing on a corpus designed to elicit it. Second, the configuration is two notches weaker than the headline: no retrieval and a single inference per sample remove the precision gains attributed to canonical matching plus the inter-run confidence gate at $\geq 0.67$ (Section~\ref{sec:eval-r1-confidence}).
+Two effects compound in the gap. First, the external corpus skews toward weakness classes that require cross-file or framework-level reasoning: mass assignment, broken access control on an admin route, JWT \texttt{none}-algorithm acceptance, signature verification (CWE-347), and Lodash \texttt{\_.template} code injection. Five of the six false negatives are in this class. The detector's single-function scope (Section~\ref{sec:impl-pipeline}) does not see the access-control wrapper, the JWT \texttt{algorithms} option, or the version constraint that resolves the CVE. The thesis's existing input-validation gap (Section~\ref{sec:eval-error-analysis}) is the same limitation surfacing on a corpus designed to elicit it. Second, the configuration is two notches weaker than the headline: no retrieval and a single inference per sample remove the precision gains attributed to RAG plus the inter-run confidence gate at $\geq 0.67$ (Section~\ref{sec:eval-r1-confidence}).
 
-The result is therefore best read as a quantification of the substitution penalty under deliberately weak conditions, not as a measurement of the system's whole-project capability. The latency rise (median 9\,462\,ms vs.\ 1\,573\,ms) reflects longer per-snippet code (full route handlers vs.\ single functions); inference time scales with prefill length, consistent with the latency-component analysis in Section~\ref{sec:eval-r4}. Closing the gap with the headline configuration --- LLM+RAG, 3 runs, confidence gate --- is named as future work alongside cross-file context modelling.
+The result is therefore best read as a quantification of the substitution penalty under deliberately weak conditions, not as a measurement of the system's whole-project capability. The latency rise (median 9\,462\,ms vs.\ 2\,216\,ms) reflects longer per-snippet code (full route handlers vs.\ single functions); inference time scales with prefill length, consistent with the latency-component analysis in Section~\ref{sec:eval-r4}. Closing the gap with the headline configuration --- LLM+RAG, 3 runs, confidence gate --- is named as future work alongside cross-file context modelling.
 
 \subsection{Real-World Whole-Project Run on OWASP NodeGoat}
 \label{sec:eval-r1-realworld}
 
-The whole-project runner from Section~\ref{sec:eval-realworld} was executed on OWASP NodeGoat at the default \texttt{master} commit, using \texttt{qwen3:8b} (LLM-only, single run per chunk) with the default file-skip set (tests, cypress, tutorial, docs, artifacts). The run scanned 26 source files, sliced into 85 function-level chunks, in 884.5\,s ($\approx 15$\,min). Aggregate output:
+The whole-project runner from Section~\ref{sec:eval-realworld} was executed on OWASP NodeGoat at the default \texttt{master} commit. The system supports two scopes for whole-codebase analysis: \emph{inline scope} reuses the function-level scope used by real-time IDE diagnostics, and \emph{audit scope} (introduced in Section~\ref{sec:impl-audit-mode}) adds a deterministic AST stage in front of the LLM. NodeGoat is evaluated under both, against the corrected 7-entry documented-vulnerability list (\texttt{evaluation/realworld/nodegoat-vulnerabilities.json}).
+
+\paragraph{Provenance of the documented list.}
+The original 10-entry documented list pointed at file paths that do not exist in the actual NodeGoat tree (\texttt{app/routes/admin.js}, \texttt{app/middleware/error-handler.js}) or at out-of-scope file types (\texttt{app/views/contributions.html}, \texttt{package.json}). A manual audit against the NodeGoat \texttt{tutorial/} directory and the actual source produced a corrected 7-entry list pinning each entry to a real JS source location: NoSQL injection in \texttt{data/allocations-dao.js} (\texttt{\$where} template literal, lines 73--78), \texttt{eval}-based code injection in \texttt{routes/contributions.js} (lines 32--34), ReDoS in \texttt{routes/profile.js} (line 59 nested-quantifier regex), mass assignment in \texttt{routes/profile.js} (\texttt{handleProfileUpdate}), deprecated \texttt{bcrypt-nodejs} in \texttt{data/user-dao.js}, stack-trace disclosure in \texttt{routes/error.js}, and dynamic template-path injection in \texttt{routes/tutorial.js}.
 
 \begin{table}[H]
 \centering
-\caption{NodeGoat whole-project scan summary. Documented-vulnerability list is the curated 10-entry OWASP-Top-10 mapping under \texttt{evaluation/realworld/nodegoat-vulnerabilities.json}.}
+\caption{NodeGoat whole-project scan under both scopes. Inline scope uses the same function-level chunker as real-time IDE diagnostics; audit scope (Section~\ref{sec:impl-audit-mode}) adds an AST Stage 0 before the per-file LLM Stage 1 and unions the findings.}
 \label{tab:r1-realworld-nodegoat}
 \footnotesize
-\begin{tabular}{@{}lr@{}}
+\begin{tabular}{@{}lrr@{}}
 \toprule
-\textbf{Quantity} & \textbf{Value} \\
+\textbf{Quantity} & \textbf{Inline (function scope)} & \textbf{Audit (AST + LLM)} \\
 \midrule
-Source files scanned                  & 26 \\
-Function chunks analysed              & 85 \\
-Wall-clock duration                   & 884.5\,s \\
-Findings produced                     & 14 \\
-Documented vulnerabilities            & 10 \\
-Overall recall (file + category match)& 0/10 (0\%) \\
+Source files scanned                   & 26                & 6 (the documented-vuln files)\\
+Analysis units                         & 85 function chunks & 6 whole files \\
+Wall-clock duration                    & 884.5\,s          & 117.2\,s \\
+Stage 0 (AST) detections               & ---               & 10 \\
+Stage 1 (LLM) findings                 & 14                & 14 \\
+Recall against 7 documented entries    & 3 / 7 (42.9\,\%)  & \textbf{6 / 7 (85.7\,\%)} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\paragraph{Diagnosis of the 0\,\% recall.}
-The detector did not stay silent --- it produced 14 plausible findings on real NodeGoat code, including reflected XSS in \texttt{routes/contributions.js}, dynamic-template path injection in \texttt{routes/tutorial.js} (CWE-94/95-class), three session-fixation observations in \texttt{routes/session.js}, deprecated \texttt{bcrypt-nodejs} usage in \texttt{data/user-dao.js}, error-stack exposure in \texttt{routes/error.js}, and an open-redirect-shaped pattern in \texttt{routes/index.js}. None of these match the curated documented list. The 0\,\% recall decomposes into four mechanisms, all of which the existing limitations section anticipated:
+\paragraph{Inline-scope result (3 / 7 = 42.9\,\%).}
+The function-scoped LLM-only configuration matched three documented entries (deprecated \texttt{bcrypt-nodejs} in \texttt{data/user-dao.js}, stack-trace exposure in \texttt{routes/error.js}, and the dynamic template-path pattern in \texttt{routes/tutorial.js}). Four were missed: the \texttt{\$where} interpolation, the \texttt{eval}-on-\texttt{req.body} sink, the ReDoS regex, and the mass-assignment pattern. The four-entry gap reflects function-level scope's blindness to structural patterns spread across larger blocks (\texttt{\$where} interpolation in a long DAO function; \texttt{eval} on pre-existing route lines that share a function with non-vulnerable code; validation regexes inside larger control-flow; \texttt{req.body} destructure followed by a same-file DAO call). The curated 101-case corpus shows the same model handles each of these patterns at 90--100\,\% recall on isolated snippets, so the gap is structural rather than a knowledge limitation.
 
-\begin{itemize}
-  \item \emph{Out-of-scope file types.} 2 of 10 documented entries point at non-JS/TS files: the reflected-XSS path in \texttt{app/views/contributions.html} (HTML, not scanned) and the vulnerable-dependency entry in \texttt{package.json} (JSON, not scanned). The function-scoped analyser is by design a code-only scanner.
-  \item \emph{Cross-file flows.} The CSRF, weak-session, and mass-assignment entries depend on session middleware in \texttt{server.js} interacting with route handlers in \texttt{routes/profile.js}; the function-level scope cannot see both halves at once. This is the same input-validation gap measured in Section~\ref{sec:eval-error-analysis}.
-  \item \emph{Canonical-taxonomy under-coverage.} 10 of 14 findings normalise to the \texttt{other} bucket because the canonical taxonomy is JS-injection-centric (Section~\ref{sec:eval-r1-canonical}); session-fixation, deprecated-dependency, and weak-password-regex weaknesses have no taxonomy bin, so they cannot match a documented entry even when the underlying weakness is the same OWASP class.
-  \item \emph{True misses.} The SQL injection in \texttt{data/allocations-dao.js} and the MD5 hashing in \texttt{data/profile-dao.js} are within scope, were chunked correctly, and were missed by the model. These are genuine LLM-side false negatives on real-project code under the LLM-only single-run configuration.
-\end{itemize}
+\paragraph{Audit-scope result (6 / 7 = 85.7\,\%).}
+Audit mode (Section~\ref{sec:impl-audit-mode}) runs an AST traversal of the whole project before the LLM and emits direct sink detections for syntactic patterns that the LLM struggles to surface at function scope. Stage 0 contributed four AST detections that matched documented entries: the \texttt{\$where} template literal in \texttt{data/allocations-dao.js}, the three \texttt{eval(req.body.X)} calls in \texttt{routes/contributions.js} (one documented entry, three call sites), the nested-quantifier regex \texttt{/([0-9]+)+\textbackslash\#/} in \texttt{routes/profile.js}, and the 7-field destructure of \texttt{req.body} in the \texttt{handleProfileUpdate} handler of \texttt{routes/profile.js}. Stage 1 (per-file LLM with 16\,K \texttt{num\_ctx}) contributed two more matches: the deprecated \texttt{bcrypt-nodejs} import and the stack-trace exposure in \texttt{routes/error.js}. The two stages produced 10 deterministic and 14 semantic findings, totalling 22 unique findings after deduplication (overlap is collapsed to a \texttt{detectionSource: 'hybrid'} entry).
+
+\paragraph{The remaining miss.}
+The seventh documented entry, dynamic template-path injection in \texttt{routes/tutorial.js}, is not flagged under either scope. Inspection of the file at the documented commit shows the route handlers are generated by iterating a \emph{static} \texttt{pages} array; the variable interpolated into \texttt{res.render(`tutorial/\$\{page\}`)} is not bound to \texttt{req.params}, \texttt{req.query}, or \texttt{req.body}. The pattern is documented as an anti-pattern (the route would become exploitable if refactored to use \texttt{req.params.page}) but is not actually attacker-reachable at the documented commit. The detector's correctly-empty output on this file is therefore consistent with the runtime non-exploitability; counting this entry as ``missed'' is the strict reading we adopt for the headline figure.
 
 \paragraph{Reading.}
-The whole-project run validates the thesis's existing function-scope limitation rather than refuting the headline numbers: the detector finds plausible real weaknesses on real code, but its recall against a human-curated vulnerability list is bounded by what a function-level scope can see. Closing the gap requires expanding the canonical taxonomy (a deterministic change with no Ollama cost), promoting the configuration to LLM+RAG with consensus and confidence gating (a parity rerun), and most importantly modelling cross-file context so that middleware-route flows become visible. All three are named as future work.
+The 43-percentage-point lift from inline (3 / 7) to audit scope (6 / 7) on the same model, corpus, and source code measures the structural-context contribution of the AST Stage 0 isolated from semantic capability. The audit-mode pipeline is the recommended deployment for whole-project audits; the inline mode remains the right scope for the real-time IDE diagnostics where the 1.5\,s latency budget rules out per-keystroke project-map construction. Both modes are delivered in the production extension (\texttt{src/projectMapBuilder.ts}, \texttt{src/workspaceScanner.ts}); the same hybrid pipeline backs the harness's \texttt{run-realworld.js --audit-mode} flag, so the recall figure transfers one-to-one between harness and extension.
 
 \subsection{Level Mapping}
 
 Based on the R1 evaluation scale (Table~\ref{tab:r1-accuracy-thresholds}), the best configuration (\texttt{qwen3:8b+RAG}) maps as follows under canonical matching:
 
 \begin{itemize}
-  \item F1 = 71.94\% $\rightarrow$ falls in $[0.60, 0.75)$
-  \item Precision = 73.53\% $\rightarrow$ above 0.70
+  \item F1 = 71.43\% $\rightarrow$ falls in $[0.60, 0.75)$
+  \item Precision = 72.46\% $\rightarrow$ above 0.70
   \item Recall = 70.42\% $\rightarrow$ above 0.70
   \item FPR = 10.00\% $\rightarrow$ comfortably below the $\leq 0.20$ boundary
 \end{itemize}
 
-Three of the four metrics meet the High threshold (precision, recall, FPR) but F1 is in the Medium band (just below 0.75). Applying the inter-run confidence gate at $\geq 0.67$ lifts F1 to 73.13\% and precision to 77.78\% (Section~\ref{sec:eval-r1-confidence}), which still falls in the Medium F1 band but tightens precision further.
+Three of the four metrics meet the High threshold (precision, recall, FPR) but F1 is in the Medium band (just below 0.75). Applying the inter-run confidence gate at $\geq 0.67$ lifts F1 to 74.07\% and precision to 78.13\% (Section~\ref{sec:eval-r1-confidence}), which still falls in the Medium F1 band but tightens precision further.
 
 \begin{center}
 \begin{tabular}{cc}

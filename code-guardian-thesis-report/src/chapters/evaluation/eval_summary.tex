@@ -16,7 +16,7 @@ This section brings together the per-requirement results into a single complianc
     R1 &
     \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-150:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
     Medium &
-    Canonical F1 71.94\% / precision 73.53\% / recall 70.42\% / FPR 10.00\%. With confidence gate $\geq 0.67$: F1 73.13\%, precision 77.78\%. Three of four sub-metrics meet the High threshold; F1 sits just below it. \\
+    Canonical F1 71.43\% / precision 72.46\% / recall 70.42\% / FPR 10.00\%. With confidence gate $\geq 0.67$: F1 74.07\%, precision 78.13\%. Three of four sub-metrics meet the High threshold; F1 sits just below it. \\
     \midrule
     R2 &
     \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-150:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
@@ -24,14 +24,14 @@ This section brings together the per-requirement results into a single complianc
     JSON parse 100\%, detection agreement 87.6\%. Structured output fully stable; detection mostly stable. \\
     \midrule
     R3 &
-    \raisebox{-0.3cm}{\tikz{\draw (0,0) circle (0.35cm);}} &
-    Low (automated) / Medium (manual) &
-    Manual review of 25 samples: 68\% correct repairs. Auto-applicable rate (full $n=297$): 0\%; the model emits prose into the \texttt{suggestedFix} field rather than executable code, consistent with the field-wide observation in SecRepair~\cite{islam2024secrepair}. \\
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} &
+    High (automated) / Medium (manual) &
+    Manual review of 25 samples: 68\% correct repairs. Auto-applicable rate from the structured stage-2 repair pipeline (full $n=279$): \textbf{90.32\,\%} (252/279); the 27 residual rejections are mid-statement truncations or unterminated regex literals, not prose. \\
     \midrule
     R4 &
     \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} &
     High (inline) &
-    Median 1\,573\,ms per function (p95 4\,214\,ms), $-42\%$ vs.\ the previously-published median. Inference dominates total latency by $>99\%$. Full-file scans are Medium. \\
+    Stage-1 detection median 2\,216\,ms per function; stage-2 quick-fix repair median 3\,320\,ms per fix (incurred only when a finding triggers a repair). Inference dominates total latency by $>99\%$. The configuration sits in the on-demand band ($\leq 5$\,s); inline use is better served by smaller models such as \texttt{gemma3:1b+RAG}. \\
     \midrule
     R5 &
     \cmark &
@@ -42,6 +42,6 @@ This section brings together the per-requirement results into a single complianc
 \end{table}
 
 \paragraph{Key findings.}
-The headline configuration \texttt{qwen3:8b+RAG} reaches canonical F1 71.94\% / precision 73.53\% / recall 70.42\% / FPR 10.00\% / median 1\,573\,ms; with the inter-run confidence gate at $\geq 0.67$ precision rises to 77.78\% (F1 73.13\%). Compared to the previously-published headline (F1 65.31\%, FPR 20.00\%, median 2.7\,s) this is a +6.6-point F1 lift, halved FPR, and $-42\%$ latency, without changing model or hardware. RAG is sharply model-dependent: it lifts \texttt{qwen3:8b} (F1 $+4.42$, precision $+11.9$, FPR halved), is roughly neutral on \texttt{gemma3}, and severely degrades \texttt{codellama} ($-29.89$ F1, latency nearly doubles), so it must be calibrated per model rather than enabled by default. The remaining LLM configurations still flag every secure sample at least once, so the confidence gate alone is insufficient for them. Semgrep complements the LLM with very low FPR (6.67\%) and 63\,ms median latency at the cost of low recall (12.68\% canonical); the hybrid SAST-fusion option promotes LLM findings corroborated by Semgrep on overlapping line range and matching canonical category to confidence~$1.0$. The auto-applicable repair rate is 0\% across all 297 generated repairs --- the model writes prose into \texttt{suggestedFix} rather than syntactically applicable code, capturing a stricter bar than the 68\%-correct manual review of 25 samples; both are reported. Privacy is fully preserved: all analysis runs locally with no source-code transmission.
+The headline configuration \texttt{qwen3:8b+RAG} reaches canonical F1 71.43\% / precision 72.46\% / recall 70.42\% / FPR 10.00\% with stage-1 detection median 2\,216\,ms; with the inter-run confidence gate at $\geq 0.67$ precision rises to 78.13\% (F1 74.07\%) at unchanged FPR. The two-stage pipeline issues a separate stage-2 repair call per detected finding (median 3\,320\,ms per fix) using a structured \texttt{\{code, language\}} schema; this is the cost paid only when a quick-fix is generated. RAG is sharply model-dependent: it lifts \texttt{qwen3:8b} (F1 $+4.42$, precision $+11.9$, FPR halved), is roughly neutral on \texttt{gemma3}, and severely degrades \texttt{codellama} ($-29.89$ F1, latency nearly doubles), so it must be calibrated per model rather than enabled by default. The remaining LLM configurations still flag every secure sample at least once, so the confidence gate alone is insufficient for them. Semgrep complements the LLM with very low FPR (6.67\%) and 63\,ms median latency at the cost of low recall (12.68\% canonical); the hybrid SAST-fusion option promotes LLM findings corroborated by Semgrep on overlapping line range and matching canonical category to confidence~$1.0$. The auto-applicable repair rate is 90.32\,\% (252/279) from the structured stage-2 repair pipeline; the residual 10\,\% is mid-statement truncation or unterminated regex literals in real code rather than prose (Section~\ref{sec:eval-r3-auto-applicable}). Both manual review (68\,\% on $n=25$) and the deterministic auto-applicable bar are reported. Privacy is fully preserved: all analysis runs locally with no source-code transmission.
 
-Specific point estimates --- detection metrics (Sections~\ref{sec:eval-r1}, \ref{sec:eval-r1-canonical}, \ref{sec:eval-r1-confidence}), auto-applicable repair rate (Section~\ref{sec:eval-r3-auto-applicable}), stage-split latency (Section~\ref{sec:eval-metrics}), and reproducibility (Section~\ref{sec:eval-reproducibility-metric}) --- are presented in the corresponding requirement sections rather than duplicated here. Limitations and threats to validity are addressed in the Discussion chapter (Chapter~\ref{chap:discussion}).
+Specific point estimates --- detection metrics (Sections~\ref{sec:eval-r1}, \ref{sec:eval-r1-confidence}), auto-applicable repair rate (Section~\ref{sec:eval-r3-auto-applicable}), stage-split latency (Section~\ref{sec:eval-metrics}), and reproducibility (Section~\ref{sec:eval-reproducibility-metric}) --- are presented in the corresponding requirement sections rather than duplicated here. Limitations and threats to validity are addressed in the Discussion chapter (Chapter~\ref{chap:discussion}).

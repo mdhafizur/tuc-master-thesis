@@ -21,7 +21,7 @@ Table~\ref{tab:r4-latency} shows latency statistics for all model configurations
 \texttt{qwen3:4b}  & LLM-only & 1\,305 & 1\,538 & 2\,869 & 4\,232 \\
 \texttt{qwen3:4b}  & LLM+RAG  & 1\,328 & 1\,572 & 2\,953 & 3\,805 \\
 \texttt{qwen3:8b}  & LLM-only & 1\,534 & 1\,798 & 4\,662 & 6\,027 \\
-\texttt{qwen3:8b}  & LLM+RAG  & 1\,573 & 1\,801 & 4\,214 & 5\,748 \\
+\texttt{qwen3:8b}  & LLM+RAG  & 2\,216 & 1\,892 & 4\,327 & 5\,106 \\
 \texttt{codellama} & LLM-only & 2\,024 & 2\,390 & 6\,617 & 8\,476 \\
 \texttt{gemma3:4b} & LLM+RAG  & 2\,077 & 2\,714 & 5\,461 & 6\,578 \\
 \texttt{gemma3:4b} & LLM-only & 2\,550 & 3\,220 & 6\,468 & 12\,039 \\
@@ -35,15 +35,15 @@ Table~\ref{tab:r4-latency} shows latency statistics for all model configurations
 \end{table}
 
 \paragraph{Headline configuration.}
-\texttt{qwen3:8b+RAG} runs at median 1\,573\,ms (mean 1\,801\,ms). The previously-published median for the same configuration was 2\,721\,ms; the $-42\%$ reduction is attributable to the tightened system prompt (Section~\ref{sec:eval-refined-config}), not to a model or hardware change. Stage-split telemetry recorded inference time and parser time separately and confirms inference dominates the total by more than 99\%; parsing is essentially instantaneous at 0\,ms median.
+\texttt{qwen3:8b+RAG} runs at stage-1 detection median 2\,216\,ms (mean 1\,892\,ms, p95 4\,327\,ms). The pipeline is split into two Ollama calls: stage-1 emits detections only ($\{$message, type, line range, severity$\}$), and a stage-2 call per detected finding produces a structured \texttt{\{code, language\}} repair (median 3\,320\,ms per fix, p95 6\,240\,ms). Stage-2 cost is incurred only when a finding triggers a quick-fix surface, so it does not appear in the inline-diagnostics latency that users see when typing.
 
-SAST baselines remain orders of magnitude faster than every LLM configuration. Among LLM configurations the headline \texttt{qwen3:8b+RAG} sits in the middle of the LLM range despite being the largest model, because the tight system prompt cuts prefill cost and JSON-mode decoding terminates output early.
+SAST baselines remain orders of magnitude faster than every LLM configuration. Among LLM configurations the headline \texttt{qwen3:8b+RAG} sits in the upper-middle of the LLM range; smaller models such as \texttt{gemma3:1b+RAG} (1\,019\,ms) are noticeably faster but trade detection quality.
 
 \subsection{Latency Component Breakdown}
 
-End-to-end latency has four components: prompt construction, RAG retrieval (if enabled), LLM inference, and response parsing with diagnostic rendering. The harness records two of these directly --- \texttt{inferenceTimeMs} (the Ollama call) and \texttt{parseTimeMs} (the response parser). Across all 303 evaluations of \texttt{qwen3:8b+RAG}, parse time was a median of 0\,ms and never exceeded a handful of milliseconds; inference time accounts for more than 99\% of total response time. RAG retrieval is included inside \texttt{inferenceTimeMs} because retrieval is interleaved with the prompt-construction step on the harness side; its 60--120\,ms share is small relative to the 1.5\,s inference cost.
+End-to-end latency has four components: prompt construction, RAG retrieval (if enabled), LLM inference, and response parsing with diagnostic rendering. The harness records two of these directly --- \texttt{inferenceTimeMs} (the Ollama call) and \texttt{parseTimeMs} (the response parser). Across all 303 stage-1 evaluations of \texttt{qwen3:8b+RAG}, parse time was a median of 0\,ms and never exceeded a handful of milliseconds; inference time accounts for more than 99\% of total response time. RAG retrieval is included inside \texttt{inferenceTimeMs} because retrieval is interleaved with the prompt-construction step on the harness side; its 60--120\,ms share is small relative to the inference cost.
 
-The implication is clear: latency improvements must come from prompt-side reductions, model selection, hardware upgrades, or architectural changes (streaming partial results). The tightened system prompt is the single biggest delivered win in this thesis: it cut \texttt{qwen3:8b+RAG} median latency by $-42\%$ relative to the earlier verbose prompt without changing model, hardware, or generation parameters.
+The implication is clear: latency improvements must come from prompt-side reductions, model selection, hardware upgrades, or architectural changes (streaming partial results). The two-stage pipeline is the dominant architectural decision: stage-1 detection is what users see when typing (median 2\,216\,ms), while the heavier stage-2 repair generation runs only on demand when a finding triggers the quick-fix surface.
 
 \subsection{Resource Usage}
 \label{sec:eval-r4-resources}
@@ -72,7 +72,7 @@ operating-system process accounting.}
 \toprule
 \textbf{Metric} & \textbf{Median} & \textbf{p95} & \textbf{Note} \\
 \midrule
-Wall-clock latency (ms)        & 1\,573 & 4\,214 & Section~\ref{sec:eval-r4} \\
+Stage-1 detection latency (ms) & 2\,216 & 4\,327 & Section~\ref{sec:eval-r4} \\
 Harness-side CPU total (ms)    & 3      & 21     & 30-case sample, qwen3:8b \\
 Peak resident-set size (MB)    & 87.0   & 88.6   & 30-case sample, qwen3:8b \\
 Peak heap used (MB)            & 9.1    & 9.8    & 30-case sample, qwen3:8b \\
@@ -110,21 +110,21 @@ across hosts.
 \textbf{Workflow Mode} & \textbf{Target} & \textbf{Viable Configurations} \\
 \midrule
 Real-time inline    & $\leq 500$\,ms median & SAST baselines only \\
-Interactive inline  & $\leq 1.5$\,s median  & \texttt{qwen3:8b+RAG} (1\,573\,ms median, just over the boundary), \texttt{qwen3:4b}, \texttt{gemma3:1b+RAG} (1\,019\,ms) \\
-On-demand / audit   & $\leq 5$\,s median    & All LLM configurations except \texttt{codellama+RAG} (3\,529\,ms median, comfortable; p99 16\,s is the bound) \\
+Interactive inline  & $\leq 1.5$\,s median  & \texttt{gemma3:1b+RAG} (1\,019\,ms), \texttt{qwen3:4b} (1\,328\,ms) \\
+On-demand / audit   & $\leq 5$\,s median    & All LLM configurations except \texttt{codellama+RAG} (3\,529\,ms median, p99 16\,s); the headline \texttt{qwen3:8b+RAG} stage-1 detection at 2\,216\,ms median sits comfortably in this band \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The best-accuracy configuration (\texttt{qwen3:8b+RAG}, median 1\,573\,ms) sits just over the $1.5$\,s interactive-inline boundary and is comfortably inside the $5$\,s on-demand budget. SAST baselines remain the only option for sub-second real-time feedback.
+The best-accuracy configuration (\texttt{qwen3:8b+RAG}, stage-1 detection median 2\,216\,ms) sits in the on-demand band, comfortably inside the $5$\,s budget. The quick-fix repair stage adds median 3\,320\,ms when a finding triggers it, also within on-demand. For latency-sensitive interactive inline use, the smaller \texttt{gemma3:1b+RAG} (1\,019\,ms) trades detection quality for sub-1.5\,s response. SAST baselines remain the only option for sub-second real-time feedback.
 
 \subsection{Level Mapping}
 
 Based on the R4 evaluation scale (Table~\ref{tab:r4-usability-thresholds}), the best configuration (\texttt{qwen3:8b+RAG}) maps as follows:
 
 \begin{itemize}
-  \item Median function-level latency = 1\,573\,ms ($\leq 5$\,s; well within the High threshold).
-  \item p95 = 4\,214\,ms (still $\leq 5$\,s, so the slow-tail behaviour does not break the High band).
+  \item Stage-1 detection median = 2\,216\,ms ($\leq 5$\,s; within the High threshold).
+  \item p95 = 4\,327\,ms (still $\leq 5$\,s, so the slow-tail behaviour does not break the High band).
   \item For full-file scans (multiple functions), aggregate latency scales roughly linearly and typically reaches 8--20\,s, falling in the Medium range.
 \end{itemize}
 
@@ -135,4 +135,4 @@ Based on the R4 evaluation scale (Table~\ref{tab:r4-usability-thresholds}), the 
 \end{tabular}
 \end{center}
 
-Individual function analysis completes within interactive thresholds. Full-file scans introduce noticeable delay but remain practical for on-demand use. The $-42\%$ latency reduction over the previously-published median (2\,721\,ms $\to$ 1\,573\,ms) lifts the headline configuration from the upper edge of the High inline band to the middle of it.
+Individual function analysis completes within the on-demand threshold for stage-1 detection (2\,216\,ms median). Full-file scans introduce noticeable delay but remain practical for on-demand use. Stage-2 quick-fix repair adds median 3\,320\,ms when a finding triggers it, also within the on-demand band.

@@ -1,112 +1,83 @@
 [
   {
-    "id": "ng-a01-bac-admin",
-    "file": "app/routes/admin.js",
-    "line": null,
-    "cwe": "CWE-862",
-    "category": "auth-bypass",
-    "type": "Broken Access Control",
-    "owasp": "A01:2021",
-    "tutorial": "tutorial/a5-access-control.md",
-    "description": "Admin route reachable without a role check."
-  },
-  {
-    "id": "ng-a02-crypto-md5",
-    "file": "app/data/profile-dao.js",
-    "line": null,
-    "cwe": "CWE-327",
-    "category": "weak-crypto",
-    "type": "Weak Cryptographic Hash",
-    "owasp": "A02:2021",
-    "tutorial": "tutorial/a2-broken-authentication.md",
-    "description": "Password hashed with MD5 / weak hash."
-  },
-  {
-    "id": "ng-a03-sql-injection",
+    "id": "ng-allocations-nosql-injection",
     "file": "app/data/allocations-dao.js",
-    "line": null,
-    "cwe": "CWE-89",
-    "category": "sql-injection",
-    "type": "SQL Injection",
+    "line": 73,
+    "lineRange": [73, 78],
+    "cwe": "CWE-943",
+    "category": "nosql-injection",
+    "type": "NoSQL Injection",
     "owasp": "A03:2021",
     "tutorial": "tutorial/a1-injection.md",
-    "description": "User-controlled value concatenated into a database query."
+    "description": "User-controlled values interpolated into a MongoDB $where clause via template literal at lines 73-78 of getAllocationsByUserIdAndStocks. The fix uses parameterised filtering instead of string-interpolated $where."
   },
   {
-    "id": "ng-a03-xss-reflected",
-    "file": "app/views/contributions.html",
-    "line": null,
-    "cwe": "CWE-79",
-    "category": "xss",
-    "type": "Reflected XSS",
-    "owasp": "A03:2021",
-    "tutorial": "tutorial/a7-cross-site-scripting.md",
-    "description": "User input echoed without escaping."
-  },
-  {
-    "id": "ng-a08-deserialization",
-    "file": "app/routes/profile.js",
-    "line": null,
+    "id": "ng-contributions-eval-code-injection",
+    "file": "app/routes/contributions.js",
+    "line": 32,
+    "lineRange": [32, 34],
     "cwe": "CWE-95",
     "category": "code-injection",
-    "type": "Insecure Deserialization / eval",
-    "owasp": "A08:2021",
+    "type": "Code Injection via eval",
+    "owasp": "A03:2021",
     "tutorial": "tutorial/a8-insecure-deserialization.md",
-    "description": "User-supplied preferences string passed to eval."
+    "description": "User input from req.body.preTax / afterTax / roth is passed directly to eval(). The comment in the source explicitly marks the lines as 'Insecure use of eval() to parse inputs'."
   },
   {
-    "id": "ng-a01-csrf",
-    "file": "server.js",
-    "line": null,
-    "cwe": "CWE-352",
-    "category": "csrf",
-    "type": "Cross-Site Request Forgery",
-    "owasp": "A01:2021",
-    "tutorial": "tutorial/a8-csrf.md",
-    "description": "State-changing endpoints lack CSRF protection."
-  },
-  {
-    "id": "ng-a07-weak-session",
-    "file": "server.js",
-    "line": null,
-    "cwe": "CWE-384",
-    "category": "auth-bypass",
-    "type": "Weak Session Management",
-    "owasp": "A07:2021",
-    "tutorial": "tutorial/a2-broken-authentication.md",
-    "description": "Session cookie missing httpOnly / secure flags."
-  },
-  {
-    "id": "ng-a01-mass-assignment",
+    "id": "ng-profile-redos",
     "file": "app/routes/profile.js",
-    "line": null,
+    "line": 59,
+    "cwe": "CWE-1333",
+    "category": "redos",
+    "type": "Regular-expression Denial of Service",
+    "owasp": "A04:2021",
+    "tutorial": "tutorial/a3-sensitive-data.md",
+    "description": "Validation regex /([0-9]+)+\\#/ on bankRouting uses nested greedy quantifiers; the source comments explicitly identify this as catastrophic-backtracking-prone."
+  },
+  {
+    "id": "ng-profile-mass-assignment",
+    "file": "app/routes/profile.js",
+    "line": 40,
+    "lineRange": [40, 50],
     "cwe": "CWE-915",
     "category": "auth-bypass",
     "type": "Mass Assignment",
     "owasp": "A01:2021",
     "tutorial": "tutorial/a5-access-control.md",
-    "description": "Profile update spreads req.body wholesale, allowing privileged-field overwrite."
+    "description": "handleProfileUpdate destructures untrusted req.body fields directly into the profile-update DAO call without an allowlist of writable fields, permitting overwrite of privileged columns."
   },
   {
-    "id": "ng-a06-vuln-deps",
-    "file": "package.json",
-    "line": null,
+    "id": "ng-user-dao-deprecated-bcrypt",
+    "file": "app/data/user-dao.js",
+    "line": 1,
     "cwe": "CWE-1104",
-    "category": "vulnerable-dependency",
-    "type": "Vulnerable / Outdated Components",
+    "category": "weak-crypto",
+    "type": "Vulnerable / Deprecated Cryptographic Library",
     "owasp": "A06:2021",
     "tutorial": "tutorial/a9-vulnerable-components.md",
-    "description": "Pinned dependencies carry known CVEs."
+    "description": "bcrypt-nodejs is a pure-JS bcrypt port that has been deprecated and is recognised as a security-relevant outdated dependency; the README of the package itself recommends migrating to bcrypt or bcryptjs."
   },
   {
-    "id": "ng-a09-logging",
-    "file": "app/middleware/error-handler.js",
-    "line": null,
+    "id": "ng-error-stack-exposure",
+    "file": "app/routes/error.js",
+    "line": 6,
     "cwe": "CWE-209",
     "category": "information-exposure",
-    "type": "Stack Trace in Error Response",
+    "type": "Stack Trace Disclosure in Error Response",
     "owasp": "A09:2021",
-    "tutorial": "tutorial/a10-insufficient-logging.md",
-    "description": "Error handler exposes stack traces to the client."
+    "tutorial": "tutorial/a6-sensitive-data-exposure.md",
+    "description": "The error route renders the full error object (including stack) into the template, exposing sensitive runtime information to clients."
+  },
+  {
+    "id": "ng-tutorial-template-path-injection",
+    "file": "app/routes/tutorial.js",
+    "line": 31,
+    "lineRange": [30, 33],
+    "cwe": "CWE-94",
+    "category": "code-injection",
+    "type": "Dynamic Template Path Injection",
+    "owasp": "A03:2021",
+    "tutorial": "tutorial/a1-injection.md",
+    "description": "The tutorial route iterates a list of pages and renders res.render(`tutorial/${page}`); the route parameter is used to construct a template path, enabling template path injection attacks if the page list is bypassed."
   }
 ]

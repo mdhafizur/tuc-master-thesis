@@ -193,6 +193,11 @@
           "type": "boolean",
           "default": true,
           "description": "Refuse to load the RAG knowledge base unless its on-disk content matches the signed manifest shipped with the extension. Defends against retrieval poisoning by detecting tampered corpus files."
+        },
+        "codeGuardian.enableAuditMode": {
+          "type": "boolean",
+          "default": true,
+          "description": "Workspace Security Dashboard runs the AST + LLM hybrid pipeline. Stage 0 deterministically detects syntactic sinks (eval, $where, ReDoS, weak crypto, mass assignment, dynamic require) via TypeScript AST traversal of the whole project. Stage 1 runs the LLM analyser per file for semantic detections. Findings are unioned and tagged with their detection source. Disabling reverts the workspace dashboard to LLM-only function-scoped analysis."
         }
       }
     }

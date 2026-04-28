@@ -16,7 +16,11 @@
       "Bash(node -e ' *)",
       "Bash(node evaluation/privacy/leak-detector.js --window 64)",
       "Bash(node evaluation/reproducibility.js --cases 0 --runs 1)",
-      "Bash(node evaluation/run-realworld.js --project nodegoat --path /nonexistent --file-limit 1)"
+      "Bash(node evaluation/run-realworld.js --project nodegoat --path /nonexistent --file-limit 1)",
+      "Bash(pdfinfo Template.pdf)",
+      "Bash(node evaluation/recompute-realworld-recall.js)",
+      "Bash(grep -E \"realworld-\\(\\\\\\\\$\\\\\\\\{|nodegoat\\)\" /Users/hafiz/personal/repos/tuc-master-thesis/code-guardian-extension/evaluation/recompute-realworld-recall.js /Users/hafiz/personal/repos/tuc-master-thesis/code-guardian-extension/evaluation/run-realworld.js)",
+      "Bash(pdflatex -interaction=nonstopmode Template.tex)"
     ]
   }
 }
