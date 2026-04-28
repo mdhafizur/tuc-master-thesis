@@ -29,7 +29,7 @@ Table~\ref{tab:conclusion-deployment-profiles} summarises practical deployment p
     \midrule
     Fast inline & \texttt{gemma3:1b+RAG} & Lowest LLM FPR among small models (23.33\%); fastest median (\textasciitilde1\,019\,ms) & Low recall (40.85\%) & Optional lightweight hints with light triage \\
     Audit-focused & \texttt{qwen3:4b} (LLM-only) & Highest LLM recall (78.87\%); F1 66.14\%; \textasciitilde1.3\,s median & FPR 90\% & Use in explicit scan mode with manual triage \\
-    Best overall local run & \texttt{qwen3:8b+RAG} & F1 71.94\%, precision 73.53\%, FPR 10.00\%, median 1\,573\,ms; with confidence gate $\geq 0.67$ precision rises to 77.78\% & Inference cost dominates 99\% of latency & Recommended default for quality-oriented local analysis \\
+    Best overall local run & \texttt{qwen3:8b+RAG} & F1 71.43\%, precision 72.46\%, FPR 10.00\%, stage-1 detection median 2\,216\,ms; with confidence gate $\geq 0.67$ precision rises to 78.13\% (F1 74.07\%) & Inference cost dominates 99\% of latency & Recommended default for quality-oriented local analysis \\
     Hybrid low-noise & Semgrep + \texttt{qwen3:8b+RAG} (opt-in fusion) & Promotes corroborated findings to confidence~1.0 / \texttt{hybrid} source; uses Semgrep's 6.67\% FPR as a high-precision overlay & Fusion fires only for the small share Semgrep itself flags (recall 12.68\%) & Use SAST corroboration as visible-confidence overlay \\
     \bottomrule
   \end{tabularx}

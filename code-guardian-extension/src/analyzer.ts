@@ -13,7 +13,7 @@ import { validateRepair } from './repairValidator';
  * deterministic baseline tool only; `hybrid` = both agreed (used by the SAST+LLM gate
  * introduced in Phase 2 of the thesis refinement plan).
  */
-export type DetectionSource = 'llm' | 'sast' | 'hybrid';
+export type DetectionSource = 'llm' | 'sast' | 'hybrid' | 'ast';
 
 /**
  * Interface for the expected structure of a security issue returned by the LLM.
@@ -484,13 +484,14 @@ async function generateRepair(
 		: code;
 	const contextLabel = useWindow ? `Surrounding context (lines ${windowStart + 1}-${windowEnd})` : 'Full code context';
 
-	let repairSystemPrompt = `Secure code repair. Output ONLY a JSON object {"fix": "..."}.
+	let repairSystemPrompt = `Secure code repair. Output ONLY a JSON object {"code": "...", "language": "javascript" | "typescript"}.
 
 Rules:
+- "code" MUST contain only executable code; do NOT include prose, explanation, comments, or markdown fences
 - Address the reported vulnerability type directly
-- Executable code only, no prose or explanation
 - Preserve the original functionality
-- Use established secure patterns (parameterized queries, input validation, safe APIs)`;
+- Use established secure patterns (parameterized queries, input validation, safe APIs)
+- "language" reflects the source language of the snippet`;
 
 	let repairUserPrompt = `Vulnerability: ${issue.message}
 Vulnerable lines (${issue.startLine}-${issue.endLine}):
@@ -499,7 +500,7 @@ ${vulnerableLines}
 ${contextLabel}:
 ${windowedContext}
 
-Return ONLY the JSON object with the fix.`;
+Return ONLY the JSON object {code, language}.`;
 
 	// Enhance repair prompt with RAG if available
 	if (ragManager) {
@@ -513,6 +514,20 @@ Return ONLY the JSON object with the fix.`;
 		}
 	}
 
+	// Phase 1 (best-paper plan): tightened repair schema. The model is asked for
+	// {code, language} via Ollama structured output instead of a free-form
+	// {fix: string}. This prevents the schema from accepting prose ("Use
+	// parameterized queries...") in the fix field, which was the dominant cause
+	// of the 0/297 auto-applicable rate measured in the headline run.
+	const REPAIR_SCHEMA = {
+		type: 'object',
+		properties: {
+			code: { type: 'string' },
+			language: { type: 'string', enum: ['javascript', 'typescript'] }
+		},
+		required: ['code']
+	} as const;
+
 	try {
 		const res = await Promise.race([
 			ollama.chat({
@@ -521,7 +536,7 @@ Return ONLY the JSON object with the fix.`;
 					{ role: 'system', content: repairSystemPrompt },
 					{ role: 'user', content: repairUserPrompt }
 				],
-				format: 'json',
+				format: REPAIR_SCHEMA,
 				options: { temperature: 0, seed: 42 }
 			}),
 			new Promise<never>((_, reject) =>
@@ -532,11 +547,16 @@ Return ONLY the JSON object with the fix.`;
 		const raw = res.message.content.trim();
 		const parsed = JSON.parse(raw);
 
+		if (parsed && typeof parsed.code === 'string' && parsed.code.trim().length > 0) {
+			return parsed.code.trim();
+		}
+
+		// Back-compat fallback for the prior {fix: string} contract.
 		if (parsed && typeof parsed.fix === 'string' && parsed.fix.trim().length > 0) {
 			return parsed.fix.trim();
 		}
 
-		// Fallback: check for any string value in the response
+		// Last-resort fallback: first non-empty string value.
 		const firstString = Object.values(parsed).find(v => typeof v === 'string' && (v as string).trim().length > 0);
 		if (firstString) {
 			return (firstString as string).trim();

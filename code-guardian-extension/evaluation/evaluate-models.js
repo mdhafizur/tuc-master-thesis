@@ -196,12 +196,17 @@ async function loadTestDataset(datasetArg = DATASET_FLAG) {
 // JSON-mode + MODEL_RESPONSE_SCHEMA enforce output shape, so the prompt is a
 // tight ~80-token instruction with the four scoring rules; no verbose example
 // block is needed.
+// Two-stage harness: stage 1 emits detection only ({message, type, startLine,
+// endLine, severity}); stage 2 generates a structured {code, language} repair
+// per detected finding via a separate Ollama call. This mirrors the production
+// extension's split between analyzer.ts detection and analyzer.ts generateRepair,
+// so stage-1 latency reflects what users see in inline diagnostics and stage-2
+// latency reflects the on-demand quick-fix surface.
 const SYSTEM_PROMPT = `Detect exploitable security vulnerabilities in code. Return a JSON array. Each issue needs:
 - message: why this is exploitable
 - type: specific vulnerability name (e.g. SQL Injection, XSS, Command Injection, Path Traversal, Weak Cryptography)
 - startLine, endLine: 1-based line range
 - severity: high | medium | low
-- suggestedFix: secure code replacement
 
 Rules:
 - Report only actually exploitable issues, not theoretical risks or style issues
@@ -236,6 +241,9 @@ function buildRAGPrompt(ragK) {
     return `${SYSTEM_PROMPT}\n\nRELEVANT SECURITY KNOWLEDGE (top-k=${ragK}):\n${ragContext}`;
 }
 
+// Stage-1 detection schema: no suggestedFix. Repairs are produced by a separate
+// stage-2 call (REPAIR_SCHEMA below) so detection latency reflects inline
+// diagnostics and repair latency reflects the quick-fix surface separately.
 const MODEL_RESPONSE_SCHEMA = {
     type: 'array',
     items: {
@@ -245,12 +253,31 @@ const MODEL_RESPONSE_SCHEMA = {
             type: { type: 'string' },
             startLine: { type: 'integer' },
             endLine: { type: 'integer' },
-            severity: { type: 'string' },
-            suggestedFix: { type: 'string' }
+            severity: { type: 'string' }
         },
         required: ['message', 'type', 'startLine', 'endLine', 'severity']
     }
 };
+
+// Stage-2 repair schema: enforces {code, language} so the model cannot emit
+// prose paraphrases of the fix into the suggestedFix field.
+const REPAIR_SCHEMA = {
+    type: 'object',
+    properties: {
+        code: { type: 'string' },
+        language: { type: 'string', enum: ['javascript', 'typescript'] }
+    },
+    required: ['code']
+};
+
+const REPAIR_SYSTEM_PROMPT = `Secure code repair. Output ONLY a JSON object {"code": "...", "language": "javascript" | "typescript"}.
+
+Rules:
+- "code" MUST contain only executable code; do NOT include prose, explanation, comments, or markdown fences
+- Address the reported vulnerability type directly
+- Preserve the original functionality
+- Use established secure patterns (parameterized queries, input validation, safe APIs)
+- "language" reflects the source language of the snippet`;
 
 function toPositiveInteger(value, fallback) {
     const parsed = Number.parseInt(String(value), 10);
@@ -300,11 +327,21 @@ function normalizeIssueObject(issue) {
         endLine = startLine;
     }
 
-    const suggestedFixRaw =
+    // Phase 1 contract: suggestedFix may arrive as either
+    //   - {code: string, language?: string}  (new tightened schema)
+    //   - string                              (legacy shape, kept for back-compat
+    //                                          when re-normalising stored run JSONs)
+    // Aliases (issue.fix / .recommendation / .remediation) follow the legacy
+    // string convention.
+    let suggestedFixRaw =
         issue.suggestedFix ??
         issue.fix ??
         issue.recommendation ??
         issue.remediation;
+
+    if (suggestedFixRaw && typeof suggestedFixRaw === 'object' && !Array.isArray(suggestedFixRaw)) {
+        suggestedFixRaw = typeof suggestedFixRaw.code === 'string' ? suggestedFixRaw.code : undefined;
+    }
 
     const normalized = {
         message: message || 'Potential security issue',
@@ -1403,6 +1440,86 @@ async function evaluateBaselines(testCases, options) {
     return { results, status };
 }
 
+// Stage-2 per-issue repair generation. Mirrors src/analyzer.ts generateRepair:
+// windowed context (±5 lines) when the issue spans ≤10 lines, full code
+// otherwise; structured-output schema enforces {code, language} so the model
+// cannot reply with prose. Returns {fix, latencyMs} regardless of outcome so
+// the caller can attribute time and reason for failures.
+async function generateRepairStage2(modelName, code, issue, options) {
+    const { temperature, timeoutMs } = options;
+    const ollama = getOllamaClient();
+
+    const allLines = code.split('\n');
+    const startIdx = Math.max(0, (issue.startLine || 1) - 1);
+    const endIdx = Math.max(startIdx, (issue.endLine || issue.startLine || 1));
+    const vulnerableLines = allLines.slice(startIdx, endIdx).join('\n');
+
+    const issueSpan = endIdx - startIdx;
+    const useWindow = issueSpan <= 10;
+    const windowStart = Math.max(0, startIdx - 5);
+    const windowEnd = Math.min(allLines.length, endIdx + 5);
+    const windowedContext = useWindow
+        ? allLines.slice(windowStart, windowEnd).join('\n')
+        : code;
+    const contextLabel = useWindow
+        ? `Surrounding context (lines ${windowStart + 1}-${windowEnd})`
+        : 'Full code context';
+
+    const userPrompt = `Vulnerability: ${issue.message || issue.type || 'security issue'}
+Vulnerable lines (${issue.startLine}-${issue.endLine}):
+${vulnerableLines}
+
+${contextLabel}:
+${windowedContext}
+
+Return ONLY the JSON object {code, language}.`;
+
+    const start = Date.now();
+    try {
+        const requestPayload = {
+            model: modelName,
+            messages: [
+                { role: 'system', content: REPAIR_SYSTEM_PROMPT },
+                { role: 'user', content: userPrompt }
+            ],
+            format: ENABLE_STRUCTURED_OUTPUT ? REPAIR_SCHEMA : 'json',
+            options: { temperature, seed: 42 }
+        };
+        if (DISABLE_THINKING) {
+            requestPayload.think = false;
+        }
+
+        const response = await Promise.race([
+            ollama.chat(requestPayload),
+            new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('Stage-2 repair timeout')), timeoutMs)
+            )
+        ]);
+
+        const raw = (response.message?.content || '').trim();
+        let parsed;
+        try {
+            parsed = JSON.parse(raw);
+        } catch {
+            return { fix: undefined, latencyMs: Date.now() - start, error: 'parse_error' };
+        }
+
+        if (parsed && typeof parsed.code === 'string' && parsed.code.trim().length > 0) {
+            return { fix: parsed.code.trim(), latencyMs: Date.now() - start };
+        }
+        // Fallback: any non-empty string property.
+        const firstString = parsed && typeof parsed === 'object'
+            ? Object.values(parsed).find(v => typeof v === 'string' && v.trim().length > 0)
+            : undefined;
+        if (firstString) {
+            return { fix: firstString.trim(), latencyMs: Date.now() - start };
+        }
+        return { fix: undefined, latencyMs: Date.now() - start, error: 'empty_response' };
+    } catch (error) {
+        return { fix: undefined, latencyMs: Date.now() - start, error: error.message };
+    }
+}
+
 // Analyze code with a specific model
 async function analyzeWithModel(modelName, code, options) {
     const {
@@ -1495,13 +1612,38 @@ async function analyzeWithModel(modelName, code, options) {
             console.log(`   ⚠️  JSON parsing failed for ${modelName} (${parsed.parseReason})`);
         }
 
+        // Stage-2: per-detected-issue structured repair generation. Runs only when
+        // detection emitted at least one issue; mirrors the extension's two-call
+        // pipeline so stage-1 latency reflects inline diagnostics.
+        const stage2Start = Date.now();
+        let stage2RepairCount = 0;
+        let stage2RepairOk = 0;
+        const issuesWithRepairs = [];
+        for (const issue of parsed.issues || []) {
+            const result = await generateRepairStage2(modelName, code, issue, {
+                temperature,
+                timeoutMs
+            });
+            stage2RepairCount += 1;
+            const augmented = { ...issue };
+            if (result.fix) {
+                augmented.suggestedFix = result.fix;
+                stage2RepairOk += 1;
+            }
+            issuesWithRepairs.push(augmented);
+        }
+        const stage2TotalMs = Date.now() - stage2Start;
+
         return {
             success: true,
-            responseTime,
-            inferenceTimeMs,
+            responseTime,                  // stage-1 detection only
+            inferenceTimeMs,               // stage-1 detection inference time
             parseTimeMs,
+            stage2TotalMs,                 // total wall-clock spent on stage-2 repairs
+            stage2RepairCount,             // how many stage-2 calls were made
+            stage2RepairOk,                // how many returned a usable fix string
             resourceUsage,
-            issues: parsed.issues,
+            issues: issuesWithRepairs,
             parseSuccess: parsed.parseSuccess,
             parseReason: parsed.parseReason,
             parsedFrom: parsed.parsedFrom,
@@ -1824,6 +1966,9 @@ async function evaluateModel(modelInfo, testCases, options) {
                     responseTime: result.responseTime,
                     inferenceTimeMs: result.inferenceTimeMs,
                     parseTimeMs: result.parseTimeMs,
+                    stage2TotalMs: result.stage2TotalMs ?? 0,
+                    stage2RepairCount: result.stage2RepairCount ?? 0,
+                    stage2RepairOk: result.stage2RepairOk ?? 0,
                     resourceUsage: result.resourceUsage || null,
                     detected: gatedIssues.length,
                     detectedRaw: result.issues.length,
@@ -1881,6 +2026,26 @@ async function evaluateModel(modelInfo, testCases, options) {
     const medianParseMs = parseLatencies.length > 0 ? Math.round(median(parseLatencies)) : null;
     const parseSuccessRate = (successfulParses / totalRequests * 100).toFixed(2);
 
+    // Stage-2 repair latency. Aggregated per-call (averaged over the total number
+    // of stage-2 calls actually made) so the value reflects per-fix cost rather
+    // than per-case cost — most cases produce 0 or 1 fixes, a few produce 2+.
+    const stage2Latencies = [];
+    let stage2CallsTotal = 0;
+    let stage2OkTotal = 0;
+    for (const r of results) {
+        if (!r.success) continue;
+        const calls = r.stage2RepairCount || 0;
+        stage2CallsTotal += calls;
+        stage2OkTotal += (r.stage2RepairOk || 0);
+        // Per-fix latency is the per-case stage2TotalMs divided by the call count.
+        if (calls > 0 && Number.isFinite(r.stage2TotalMs)) {
+            const perCall = r.stage2TotalMs / calls;
+            for (let i = 0; i < calls; i++) stage2Latencies.push(perCall);
+        }
+    }
+    const meanStage2Ms = stage2Latencies.length > 0 ? Math.round(mean(stage2Latencies)) : null;
+    const medianStage2Ms = stage2Latencies.length > 0 ? Math.round(median(stage2Latencies)) : null;
+
     return {
         requestedModel: modelInfo.requestedModel,
         model: modelInfo.resolvedModel,
@@ -1907,6 +2072,10 @@ async function evaluateModel(modelInfo, testCases, options) {
         medianInferenceMs,
         meanParseMs,
         medianParseMs,
+        meanStage2Ms,
+        medianStage2Ms,
+        stage2CallsTotal,
+        stage2OkTotal,
         parseSuccessRate,
         parseDiagnostics: {
             reasons: parseReasonCounts,

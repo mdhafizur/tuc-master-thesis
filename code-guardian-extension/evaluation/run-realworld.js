@@ -52,15 +52,60 @@ const SKIP_DIRS = new Set([
   'public', 'cypress', 'test', 'tests', '__tests__', 'spec', 'docs', 'tutorial',
   'artifacts', '.github', 'vendor'
 ]);
-const PER_CALL_TIMEOUT_MS = parseInt(getArg('--call-timeout-ms') || '60000', 10);
+const PER_CALL_TIMEOUT_MS = parseInt(getArg('--call-timeout-ms') || '90000', 10);
+const USE_RAG = args.includes('--rag');
+const RUNS_PER_CHUNK = parseInt(getArg('--runs') || '1', 10);
+const SEEDS = [42, 137, 211, 421, 743];
+const WHOLE_FILE = args.includes('--whole-file');
+const WHOLE_FILE_MAX_CHARS = parseInt(getArg('--whole-file-max-chars') || '20000', 10);
+const AUDIT_MODE = args.includes('--audit-mode');
+const PROJECT_MAP_MAX_CHARS = parseInt(getArg('--map-max-chars') || '8000', 10);
+const MAP_ROOT_OVERRIDE = getArg('--map-root');
+const FILES_FILTER = getArg('--files'); // comma-separated paths (relative to map root or absolute)
+const projectMapBuilder = require('./project-map-builder');
 
-function* walkSource(dir) {
-  if (!fs.existsSync(dir)) return;
-  for (const name of fs.readdirSync(dir)) {
+// Each entry: short rule + keyword tags used for top-k retrieval against the chunk.
+// Tags chosen to fire only when the relevant API surface is present in the code.
+const RAG_KNOWLEDGE_SNIPPETS = [
+  { tags: ['db.query', 'select ', 'insert ', 'update ', 'sql'], rule: 'CWE-89 SQL Injection: parameterise queries — `db.query("... ?", [id])`, never concatenate.' },
+  { tags: ['innerhtml', 'document.write', 'res.send(', 'res.render('], rule: 'CWE-79 XSS: escape or sanitise before HTML insertion; prefer textContent or DOMPurify.' },
+  { tags: ['child_process', 'exec(', 'spawn(', 'execsync'], rule: 'CWE-78 Command Injection: pass argv array to execFile, never concatenate user input into a shell command.' },
+  { tags: ['eval(', 'function(', 'vm.run', 'new function'], rule: 'CWE-95 Eval on req.body / req.query / req.params is a critical sink. FIX: replace eval(req.body.x) with Number(...) or schema-validated JSON.parse.' },
+  { tags: ['path.join', 'path.resolve', 'fs.readfile', 'fs.createreadstream', 'sendfile'], rule: 'CWE-22 Path Traversal: canonicalise and check `path.resolve(base, x).startsWith(base)`.' },
+  { tags: ['createhash', 'md5', 'sha1', 'bcrypt-nodejs', 'math.random'], rule: 'CWE-327 Weak crypto: md5/sha1/bcrypt-nodejs are deprecated. FIX: sha256, bcrypt, crypto.randomBytes.' },
+  { tags: ['$where', '.find(', '.findone(', 'mongo', 'collection.update', '$ne'], rule: 'CWE-943 NoSQL Injection via $where template literal: never interpolate user input into `{$where: `...${x}...`}`. FIX: parameterise — `{userId: parsedId, stocks: {$gt: parsedThreshold}}`.' },
+  { tags: ['regex', 'regexp', '.test(', '.match(', '+\\#', '+)+'], rule: 'CWE-1333 ReDoS: nested or repeated quantifiers (`(a+)+`, `([0-9]+)+`) cause catastrophic backtracking. FIX: use single quantifier or possessive groups.' },
+  { tags: ['req.body', 'object.assign', '...req.body', 'destructur', '...req.', 'spread'], rule: 'CWE-915 Mass Assignment: do not destructure req.body and pass through to a DAO. FIX: allowlist writable fields explicitly before update.' },
+  { tags: ['err.stack', 'error.stack', 'res.send(err', 'res.render(.*err', 'console.error', 'res.json(err'], rule: 'CWE-209 Information Exposure via stack trace: never render full Error objects to clients. FIX: log internally, return a generic message.' },
+  { tags: ['__proto__', 'object.assign', 'merge(', 'extend(', 'recursive'], rule: 'CWE-1321 Prototype Pollution: reject __proto__/constructor/prototype keys; prefer Object.create(null).' },
+  { tags: ['json.parse', 'serialize', 'unserialize', 'eval'], rule: 'CWE-502 Insecure Deserialization: schema-validate before parsing — ajv or zod.' },
+  { tags: ['fetch(', 'axios.get', 'http.get', 'request(', 'https.get'], rule: 'CWE-918 SSRF: validate outbound URLs and reject private IP ranges (10/8, 172.16/12, 192.168/16, 169.254/16, 127/8).' },
+  { tags: ['res.render(', 'page', 'template', 'req.params', 'req.query'], rule: 'CWE-94 Dynamic Template Path Injection: never construct render paths from req.params/req.query (e.g. `res.render(`tutorial/${page}`)`). FIX: map the parameter through a static allowlist of known template names.' }
+];
+
+function pickTopK(code, k = 5) {
+  const lc = code.toLowerCase();
+  const scored = RAG_KNOWLEDGE_SNIPPETS.map(s => {
+    let hits = 0;
+    for (const t of s.tags) if (lc.includes(t)) hits++;
+    return { s, hits };
+  });
+  scored.sort((a, b) => b.hits - a.hits);
+  return scored.filter(x => x.hits > 0).slice(0, k).map(x => x.s.rule);
+}
+
+function* walkSource(target) {
+  if (!fs.existsSync(target)) return;
+  const st = fs.statSync(target);
+  if (st.isFile()) {
+    if (/\.(jsx?|tsx?)$/.test(target)) yield target;
+    return;
+  }
+  for (const name of fs.readdirSync(target)) {
     if (SKIP_DIRS.has(name)) continue;
-    const abs = path.join(dir, name);
-    const st = fs.statSync(abs);
-    if (st.isDirectory()) yield* walkSource(abs);
+    const abs = path.join(target, name);
+    const sub = fs.statSync(abs);
+    if (sub.isDirectory()) yield* walkSource(abs);
     else if (/\.(jsx?|tsx?)$/.test(name)) yield abs;
   }
 }
@@ -105,17 +150,40 @@ function splitByFunction(source, maxChunk = 2000) {
   return chunks;
 }
 
-async function analyse(ollama, code) {
+// Populated once per scan when AUDIT_MODE is true.
+let PROJECT_MAP_TEXT = '';
+
+function buildSystemPrompt(code) {
+  // Audit mode v3: the LLM runs INDEPENDENTLY of the AST. No project map in
+  // the system prompt — that caused the LLM to defer ("already flagged in the
+  // map, skipping"). Stage 0 (AST) and Stage 1 (LLM) are now two parallel
+  // detectors whose findings are unioned in the report.
+  const base = 'Return JSON only with shape {issues:[{type,line,severity,message}]}. If no issues, return {issues:[]}.';
+  const sections = [base];
+  if (USE_RAG) {
+    const top = pickTopK(code, 5);
+    if (top.length > 0) {
+      sections.push(`RELEVANT SECURITY KNOWLEDGE:\n${top.map((r, i) => `${i + 1}. ${r}`).join('\n')}`);
+    }
+  }
+  return sections.join('\n\n');
+}
+
+async function analyseOnce(ollama, code, seed) {
   try {
+    // Ollama defaults num_ctx to 2048 tokens — too small for whole-file scope
+    // (the file content alone consumes most of the budget, leaving no room for
+    // the model to reason or generate output). qwen3:8b supports 32K; we use
+    // 16K which fits any single source file plus the system prompt with RAG.
     const resp = await Promise.race([
       ollama.chat({
         model: MODEL,
         messages: [
-          { role: 'system', content: 'Return JSON only with shape {issues:[{type,line,severity,message}]}. If no issues, return {issues:[]}.' },
+          { role: 'system', content: buildSystemPrompt(code) },
           { role: 'user', content: `Analyze the following code for security vulnerabilities:\n\n${code}` }
         ],
         format: 'json',
-        options: { temperature: 0, num_predict: 512, seed: 42 }
+        options: { temperature: 0, num_predict: 1024, num_ctx: 16384, seed }
       }),
       new Promise((_, reject) => setTimeout(() => reject(new Error('per-call-timeout')), PER_CALL_TIMEOUT_MS))
     ]);
@@ -125,6 +193,24 @@ async function analyse(ollama, code) {
   } catch {
     return [];
   }
+}
+
+async function analyse(ollama, code) {
+  // Multi-run UNION: every issue surfaced by ANY of the N seeds is kept.
+  // Sequential through Ollama (which serialises requests anyway) so the
+  // per-call timeout fires per-call and the user can see progress per seed.
+  const seeds = SEEDS.slice(0, RUNS_PER_CHUNK);
+  const seen = new Set();
+  const merged = [];
+  for (let i = 0; i < seeds.length; i++) {
+    const issues = await analyseOnce(ollama, code, seeds[i]);
+    for (const issue of issues) {
+      const k = `${(issue.type || '').toLowerCase()}@${issue.line}`;
+      if (!seen.has(k)) { seen.add(k); merged.push(issue); }
+    }
+    if (seeds.length > 1) process.stdout.write(`s${i + 1}/${seeds.length}=${issues.length} `);
+  }
+  return merged;
 }
 
 async function scanCommit(label) {
@@ -139,15 +225,68 @@ async function scanCommit(label) {
   let scannedFns = 0;
   const t0 = Date.now();
 
-  const files = [...walkSource(PROJECT_PATH)];
+  // Determine the map root (whole-project context) and the analysis files.
+  // --map-root overrides; otherwise PROJECT_PATH if dir, else dirname of file.
+  const mapRoot = MAP_ROOT_OVERRIDE
+    ? path.resolve(MAP_ROOT_OVERRIDE)
+    : (fs.statSync(PROJECT_PATH).isFile() ? path.dirname(PROJECT_PATH) : PROJECT_PATH);
+
+  let files;
+  if (FILES_FILTER) {
+    // Explicit file list. Each entry is resolved against mapRoot (or absolute).
+    files = FILES_FILTER.split(',').map(s => s.trim()).filter(Boolean).map(p =>
+      path.isAbsolute(p) ? p : path.resolve(mapRoot, p)
+    );
+  } else {
+    files = [...walkSource(PROJECT_PATH)];
+  }
   const slice = FILE_LIMIT > 0 ? files.slice(0, FILE_LIMIT) : files;
-  console.log(`  ${slice.length} source files queued (skipping ${[...SKIP_DIRS].slice(0, 6).join(', ')}, ...)`);
+  const scopeLabel = WHOLE_FILE ? 'whole-file' : 'function-chunked';
+  console.log(`  ${slice.length} source files queued (${scopeLabel} scope${AUDIT_MODE ? ' + audit mode' : ''}${FILES_FILTER ? ' + targeted files' : ''}, map root: ${path.relative(ROOT, mapRoot)})`);
+
+  // Audit-mode hybrid pipeline:
+  //   Stage 0 (AST): deterministic project-map extraction → direct detections
+  //                  (eval, $where, ReDoS, weak-hash, dynamic require, etc.)
+  //   Stage 1 (LLM): structural-context-only prompt (imports / request usage /
+  //                  inventory — NO pre-flagged sinks, so the model doesn't
+  //                  defer to the AST and instead independently analyses each
+  //                  file). The LLM finds the structural patterns the AST
+  //                  cannot catch (mass-assignment, stack-trace exposure,
+  //                  dynamic template paths, semantic library-API misuse).
+  //   Stage 2: the union of (0) and (1) is the audit-mode result.
+  if (AUDIT_MODE) {
+    const mapStart = Date.now();
+    const map = projectMapBuilder.buildProjectMap(mapRoot);
+
+    // Stage 0: harvest AST findings as direct detections.
+    const astFindings = projectMapBuilder.astFindingsFromMap(map);
+    for (const f of astFindings) findings.push(f);
+
+    // Stage 1 system-prompt context: structural only, with sinks suppressed.
+    let mapText = projectMapBuilder.formatProjectMap(map, { skipSinks: true });
+    if (mapText.length > PROJECT_MAP_MAX_CHARS) {
+      mapText = projectMapBuilder.formatProjectMap(map, { skipSinks: true, skipInventory: true });
+      if (mapText.length > PROJECT_MAP_MAX_CHARS) mapText = mapText.slice(0, PROJECT_MAP_MAX_CHARS) + '\n... (truncated)';
+    }
+    PROJECT_MAP_TEXT = mapText;
+    console.log(`  audit-mode: project map built in ${((Date.now() - mapStart) / 1000).toFixed(2)}s; Stage 0 (AST) detections: ${astFindings.length}; Stage 1 context: ${PROJECT_MAP_TEXT.length} chars`);
+  }
 
   for (const file of slice) {
     scannedFiles++;
     const rel = path.relative(PROJECT_PATH, file);
     const src = fs.readFileSync(file, 'utf8');
-    const chunks = splitByFunction(src);
+    let chunks;
+    if (WHOLE_FILE) {
+      // Skip files that exceed the size guard (mirrors extension's analyzeFullFile cap).
+      if (src.length > WHOLE_FILE_MAX_CHARS) {
+        console.log(`  [${scannedFiles}/${slice.length}] ${rel} (skipped, ${src.length} > ${WHOLE_FILE_MAX_CHARS} chars)`);
+        continue;
+      }
+      chunks = [{ startLine: 1, code: src }];
+    } else {
+      chunks = splitByFunction(src);
+    }
     const fileStart = Date.now();
     let fileFindings = 0;
     for (const ch of chunks) {

@@ -20,3 +20,37 @@ Four configurable gates sit between the consensus filter and diagnostic emission
 \subsection*{System Prompt and Latency Telemetry}
 
 The stage-1 system prompt is a tight ${\sim}80$-token instruction; JSON-mode decoding plus the response schema enforce output shape, so a verbose response-format example block is unnecessary. Per-call latency is reported as \texttt{inferenceTimeMs} plus \texttt{parseTimeMs} so any latency change can be attributed unambiguously. Inference dominates the total by more than $99\%$ in measured micro-evaluation; the prompt size is therefore the dominant prefill-token cost lever.
+
+\subsection{Audit Mode: AST + LLM Hybrid Pipeline for Whole-Project Scans}
+\label{sec:impl-audit-mode}
+
+Inline real-time analysis uses function-level scope to stay inside the 1.5\,s latency budget; whole-project audits run under a different scope, with no per-keystroke deadline, so the system can afford a deeper structural analysis. Audit mode is the deployment of the workspace dashboard command (\texttt{codeSecurity.workspaceDashboard}). It is enabled by default through the new setting \texttt{codeGuardian.enableAuditMode}; setting it to \texttt{false} reverts the dashboard to the legacy LLM-only function-scoped behaviour.
+
+The pipeline runs in two stages, deterministic before semantic.
+
+\paragraph{Stage 0 --- AST project map.}
+\texttt{src/projectMapBuilder.ts} walks the workspace using Node \texttt{fs} (skipping \texttt{node\_modules}, \texttt{cypress}, \texttt{tests}, etc.) and parses every \texttt{.js}/\texttt{.ts}/\texttt{.jsx}/\texttt{.tsx} file with the TypeScript compiler API. For each file the visitor records: imports (\texttt{require()} and \texttt{import} declarations), top-level exports, request-input usage (\texttt{req.body}, \texttt{req.query}, \texttt{req.params}), and a curated set of direct sink shapes that map cleanly to the canonical taxonomy:
+
+\begin{itemize}
+  \item \texttt{eval(\dots)}, \texttt{Function(\dots)} --- CWE-95 code injection, with the request-input chain reported when the first argument is \texttt{req.body.X};
+  \item \texttt{child\_process.exec / execSync / spawn} --- CWE-78 command injection;
+  \item \texttt{crypto.createHash('md5'|'sha1'|'rmd160')} --- CWE-327 weak crypto;
+  \item \texttt{require(<dynamic>)} --- CWE-22 dynamic-path require;
+  \item ObjectLiteralExpression with key \texttt{\$where} and a TemplateExpression value --- CWE-943 NoSQL injection via \texttt{\$where} interpolation;
+  \item RegularExpressionLiteral matching the nested-quantifier shape \texttt{(X+)+ / (X*)+ / (X+)*} --- CWE-1333 ReDoS;
+  \item ObjectBindingPattern with $\geq 3$ fields whose initialiser is \texttt{req.body}, \texttt{req.query}, or \texttt{req.params} --- CWE-915 mass assignment.
+\end{itemize}
+
+Each detection is a \texttt{SecurityIssue} object tagged \texttt{detectionSource:\,'ast'} with confidence~$1.0$. The whole project map is built in well under a second on the M4 Max profile; the cost is bounded by file count and is independent of model latency.
+
+\paragraph{Stage 1 --- per-file LLM analysis.}
+After the AST map is built, the workspace scanner iterates the same file list and analyses each file with the existing \texttt{analyzeCodeWithLLM} pipeline (RAG-augmented when enabled). The whole-file scope requires a larger context window than the inline mode's 2\,000-character chunks; the implementation requests \texttt{num\_ctx:\,16384} so a 100--150-line source file plus the system prompt and RAG snippets fit with headroom for output. LLM findings are tagged \texttt{detectionSource:\,'llm'}.
+
+\paragraph{Stage 2 --- union and corroboration.}
+For each file, AST detections (Stage 0) and LLM findings (Stage 1) are unioned by \texttt{workspaceScanner.mergeIssues}. Findings on the same line collapse into a single entry tagged \texttt{detectionSource:\,'hybrid'}, signalling that both detectors agreed. The dashboard renders the three sources distinguishably so the developer can read the detection provenance directly from the diagnostic.
+
+\paragraph{Why the AST is independent of the LLM.}
+An earlier audit-mode iteration prepended the AST findings to the LLM's system prompt as ``known-risky sinks'' context. The model interpreted this as ``these are already flagged, do not re-flag'' and emitted near-zero findings. The current pipeline therefore runs the two detectors in parallel with no shared prompt context, leaving the LLM unaware of the AST findings; the union step does not require the LLM to confirm AST detections. This separation also means the deterministic rate (Section~\ref{sec:eval-reproducibility-metric}) of audit mode equals the LLM rate, since AST findings are byte-identical across runs by construction.
+
+\paragraph{Performance.}
+The 6-file targeted run on OWASP NodeGoat (Section~\ref{sec:eval-r1-realworld}) executes in 117\,s under audit mode versus 884.5\,s for the inline-scoped 26-file run. The AST stage adds approximately 30\,ms per 100 files; per-file LLM cost is dominated by the larger \texttt{num\_ctx} (16K tokens) which raises per-call latency from a function-chunked stage-1 baseline of 2\,216\,ms median to 19\,s median for whole-file scope. The latency increase is acceptable because audit mode is invoked explicitly, not on every keystroke. Files above 500\,KB are skipped to keep memory bounded across large monorepos.
