@@ -6,22 +6,38 @@ This appendix gathers the prompt contract, runtime guardrails, configuration kno
 \section{Prompt Contract (JSON-Only Output)}
 \label{app:prompt-contract}
 
-Code Guardian relies on a strict output contract so findings can be converted into IDE diagnostics reliably. The analyzer instructs the local model to return \emph{only} a JSON array of security issues.
+Code Guardian relies on a strict output contract so findings can be converted into IDE diagnostics reliably. Detection and repair run as two separate Ollama calls, each constrained by its own structured-output schema enforced via \texttt{format='json'} (Section~\ref{sec:impl-pipeline}).
 
-\begin{lstlisting}[language=Java, caption={JSON-only response schema (conceptual)}, label={lst:appendix-json-schema}]
-[
-  {
-    "message": "Issue description",
-    "startLine": 1,
-    "endLine": 3,
-    "suggestedFix": "Optional secure alternative"
-  }
-]
+\paragraph{Stage~1 (detection).}
+The detection call returns an object with an \texttt{issues} array. Each issue carries a vulnerability \texttt{type}, a coarse \texttt{severity}, a 1-based snippet-relative line range, and a short \texttt{message}. Repair text is \emph{not} requested at this stage.
+
+\begin{lstlisting}[language=Java, caption={Stage-1 detection schema (conceptual)}, label={lst:appendix-stage1-schema}]
+{
+  "issues": [
+    {
+      "type": "sql-injection",
+      "severity": "high",
+      "startLine": 1,
+      "endLine": 3,
+      "message": "Issue description"
+    }
+  ]
+}
+\end{lstlisting}
+
+\paragraph{Stage~2 (repair).}
+For each confirmed Stage-1 finding the harness issues a dedicated repair call. The schema constrains the response to executable code in a typed language field, so prose paraphrases of the fix cannot satisfy the contract.
+
+\begin{lstlisting}[language=Java, caption={Stage-2 repair schema (conceptual)}, label={lst:appendix-stage2-schema}]
+{
+  "code": "/* repaired snippet */",
+  "language": "javascript"
+}
 \end{lstlisting}
 
 \subsection*{Robustness in practice}
 
-Even with explicit instructions, some models occasionally emit Markdown fences or additional text. The prototype therefore applies defensive parsing: it removes common code-block markers and extracts the first JSON array substring before attempting to parse. This is a pragmatic mechanism to improve structured-output robustness for IDE integration.
+Even with explicit instructions and JSON-mode decoding, some models occasionally emit Markdown fences or additional text. The prototype therefore applies defensive parsing: it removes common code-block markers and extracts the first JSON object/array substring before attempting to parse. This is a pragmatic mechanism that absorbs the rare cases where the format constraint does not fully bind, improving structured-output robustness for IDE integration.
 
 \section{Runtime Guardrails}
 \label{app:guardrails}

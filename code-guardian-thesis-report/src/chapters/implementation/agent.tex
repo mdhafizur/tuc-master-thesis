@@ -11,14 +11,24 @@ Code Guardian extracts the smallest useful unit of code for interactive analysis
 \subsection{LLM Analyser (Local JSON-Only Output)}
 \label{subsec:impl-analyzer}
 
-The analyser performs local inference through Ollama and requires the model to return only a JSON array of findings against the schema below.
+The analyser performs local inference through Ollama and runs the detect-then-repair pipeline as two separate calls, each constrained by its own structured-output schema (Section~\ref{sec:impl-pipeline}). Stage~1 returns an \texttt{issues} array with the detection-side fields below; Stage~2 issues a per-finding repair call that returns a structured \texttt{\{code, language\}} object, and the validated repair is attached to the corresponding issue under \texttt{suggestedFix} before rendering.
 
-\begin{lstlisting}[caption={Security issue output schema used by Code Guardian}, label={lst:cg-issue-schema}]
-interface SecurityIssue {
-  message: string;
-  startLine: number;   // 1-based
+\begin{lstlisting}[caption={Stage-1 detection schema and the post-stage-2 in-IDE issue shape}, label={lst:cg-issue-schema}]
+// Stage-1 detection schema (LLM-emitted)
+interface DetectionIssue {
+  type: string;        // canonical category, e.g. "sql-injection"
+  severity: string;    // coarse: "low" | "medium" | "high" | "critical"
+  startLine: number;   // 1-based, snippet-relative
   endLine: number;     // 1-based
-  suggestedFix?: string;
+  message: string;
+}
+
+// In-IDE issue after Stage-2 repair attachment
+interface SecurityIssue extends DetectionIssue {
+  confidence?: number;        // [0,1], inter-run agreement
+  detectionSource?: 'llm' | 'ast' | 'hybrid';
+  suggestedFix?: string;      // attached from Stage-2 {code, language}
+  autoApplicable?: boolean;   // result of @babel/parser syntax check
 }
 \end{lstlisting}
 
@@ -37,7 +47,7 @@ When enabled, the RAG manager maintains a local security knowledge base and a pe
 \subsection{Analysis Cache}
 \label{subsec:impl-cache}
 
-To avoid repeated inference on unchanged snippets, results are cached in a bounded LRU with time-to-live expiration. The cache key is a SHA-256 hash of the trimmed snippet plus the active model name and prompt mode (RAG on/off), so LLM-only and RAG results are stored separately. Entries expire after 30 minutes and the cache holds at most 500 entries; least-recently-used eviction handles overflow. In repetitive editing patterns (undo/redo, small refactors) this removes a substantial share of otherwise-repeated LLM calls.
+To avoid repeated inference on unchanged snippets, results are cached in a bounded LRU with time-to-live expiration. The cache key is a SHA-256 hash of the trimmed snippet plus the active model name and prompt mode (RAG on/off), so LLM-only and RAG results are stored separately. Entries expire after 30 minutes and the cache holds at most 100 entries; least-recently-used eviction handles overflow. In repetitive editing patterns (undo/redo, small refactors) this removes a substantial share of otherwise-repeated LLM calls.
 
 \subsection{Workspace Scanner and Dashboard}
 \label{subsec:impl-workspace}

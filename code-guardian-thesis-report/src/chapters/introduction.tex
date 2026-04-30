@@ -62,9 +62,9 @@ The main threat addressed is unintended disclosure of proprietary code through e
     \toprule
     Threat class & Assumption / attack path & Design response in this thesis \\
     \midrule
-    Source-code exfiltration & External API calls could expose proprietary code or derived context. & Local inference only; prompts and code remain on localhost in evaluated workflows. \\
-    Prompt injection & Attacker-controlled code/comments attempt to override analysis instructions \cite{owaspLLMTop10_2023}. & Strict JSON contract, defensive parsing, and user approval before applying any repair. \\
-    Retrieval poisoning & Low-quality or malicious knowledge entries reduce grounding quality. & Curated local knowledge sources and explicit retrieval scope; stronger provenance controls left for future work. \\
+    Source-code exfiltration & External API calls could expose proprietary code or derived context. & Local inference only; a synchronous egress gate (Section~\ref{sec:impl-network-policy}) blocks every non-loopback connection by default. \\
+    Prompt injection & Attacker-controlled code/comments attempt to override analysis instructions \cite{owaspLLMTop10_2023}. & Strict JSON-mode contract for both detection and repair, defensive parsing, and user approval before applying any fix (Section~\ref{sec:eval-r5-prompt-injection}). \\
+    Retrieval poisoning & Low-quality or malicious knowledge entries reduce grounding quality. & Local curated knowledge corpus verified at load time against an Ed25519-signed SHA-256 manifest with bound provenance (Section~\ref{sec:impl-corpus-signing}). \\
     Local host compromise & Malware or untrusted local users access local code, prompts, or caches. & Out of scope; assumes trusted host and OS-level hardening. \\
     \bottomrule
  \end{tabularx}
@@ -94,4 +94,4 @@ Following this introduction, the thesis begins with a review of related work on 
 
 The next chapter introduces the overall system concept. It presents the architecture of Code Guardian together with key design decisions such as the two-stage detection-then-repair pipeline, structured JSON output enforcement, and the optional RAG module. After outlining the concept, the implementation chapter describes the VS Code extension, technology choices, and how core components --- such as the analyzer, RAG manager, analysis cache, and diagnostic rendering --- were developed, with an emphasis on modularity and local execution.
 
-The evaluation chapter examines system performance across five local models in both LLM-only and LLM+RAG configurations, using metrics such as precision, recall, F1, false-positive rate, JSON parse success, and latency. The thesis concludes by summarizing key findings, discussing limitations, and outlining opportunities for future work. Appendices provide supplementary material including prompt templates, detailed evaluation data, implementation details, case studies, and privacy verification evidence.
+The evaluation chapter examines system performance across five local models in both LLM-only and LLM+RAG configurations, using metrics such as precision, recall, F1, false-positive rate, JSON parse success, latency, and an automated auto-applicable repair rate. A separate discussion chapter then synthesises the results across requirements, positions them against related work, and addresses threats to validity. The thesis concludes by summarising key findings and outlining opportunities for future work. Appendices provide supplementary material including prompt templates, detailed evaluation data, implementation details, case studies, and privacy verification evidence.

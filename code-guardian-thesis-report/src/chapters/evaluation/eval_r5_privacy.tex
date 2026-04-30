@@ -72,11 +72,11 @@ system prompt, or otherwise breaking the analysis contract. The defence is
 \emph{structural} rather than additive. Analysis instructions live in the
 system role; user code is delivered in the user role and treated as data.
 JSON-mode decoding (\texttt{format='json'}) plus the structured-output
-schema (\texttt{MODEL\_RESPONSE\_SCHEMA}) constrain the output channel to a
-fixed shape ($\{$\texttt{issues}$:[\{$\texttt{type, line, severity,
-message, suggestedFix?}$\}]\}$), so the model has no free-text channel
-through which to echo system-prompt content or acknowledge an injected
-directive. The single-turn design removes the ``wait for the next turn''
+schema (\texttt{MODEL\_RESPONSE\_SCHEMA}) constrain the Stage-1 output
+channel to a fixed shape ($\{$\texttt{issues}$:[\{$\texttt{type,
+startLine, endLine, severity, message}$\}]\}$), so the model has no
+free-text channel through which to echo system-prompt content or
+acknowledge an injected directive. The single-turn design removes the ``wait for the next turn''
 escalation path that multi-turn injection attacks rely on.
 
 To measure how well this structural defence holds in practice, the harness

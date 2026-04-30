@@ -10,17 +10,17 @@ The thesis delivers \textbf{Code Guardian}, a VS Code extension for on-device Ja
 
 \paragraph{RQ1 (Feasibility).} Supported with caveats. Useful findings and repair suggestions can be generated with local inference inside VS Code while preserving the no-code-exfiltration objective; practical value depends on configuration choice.
 
-\paragraph{RQ2 (Grounding).} Partially supported. RAG improved both \texttt{qwen3} variants at the issue-level metric layer but degraded \texttt{gemma3:4b} and \texttt{CodeLlama:latest}; exploratory McNemar tests on matched sample-level outcomes did not show a statistically significant \texttt{qwen3} mode effect, suggesting the gains are concentrated in per-sample output quality rather than binary detection shifts. RAG should therefore be treated as a model-specific configuration choice.
+\paragraph{RQ2 (Grounding).} Partially supported, with sharply model-dependent effects. Under canonical-taxonomy matching RAG lifts \texttt{qwen3:8b} (+3.91 F1, precision $61.63\!\to\!72.46$\,\%, FPR $50\!\to\!10$\,\%), is roughly neutral on \texttt{gemma3:1b} and \texttt{gemma3:4b}, slightly degrades \texttt{qwen3:4b} ($-5.22$ F1), and severely degrades \texttt{codellama} ($-29.89$ F1, latency nearly doubles). Under Bonferroni correction across the five paired McNemar tests ($\alpha=0.01$) only the \texttt{codellama} degradation survives ($p=0.0013$); the \texttt{qwen3} effects are reported as indicative directions. RAG must therefore be treated as a per-model configuration choice rather than a universal default.
 
 \paragraph{RQ3 (Practicality).} Supported for constrained interactive workflows. Real-time IDE triggering through debounced inline analysis is implemented, but strict real-time responsiveness was not consistently achieved on the evaluated local configurations. Function-level scoping, debouncing, and caching make local analysis usable in selected workflows; higher-quality modes remain better suited to explicit scan/audit interactions than always-on inline use.
 
 \section{Implications for Practice}
 
-Table~\ref{tab:conclusion-deployment-profiles} summarises practical deployment profiles derived from the measured results.
+Table~\ref{tab:conclusion-deployment-profiles} summarises practical deployment profiles indicated by the measured results on the locked Apple M4 Max profile (Section~\ref{sec:eval-reproducibility-metric}). The profiles describe what the measurements support; they are not unconditional recommendations and would need re-validation on different hardware or different corpus characteristics.
 
 \begin{table}[H]
   \centering
-  \caption{Recommended deployment profiles from thesis results.}
+  \caption{Deployment profiles indicated by measurement on the locked hardware profile.}
   \label{tab:conclusion-deployment-profiles}
   \footnotesize
   \begin{tabularx}{\textwidth}{p{0.15\textwidth}p{0.18\textwidth}p{0.17\textwidth}p{0.17\textwidth}X}
@@ -29,7 +29,7 @@ Table~\ref{tab:conclusion-deployment-profiles} summarises practical deployment p
     \midrule
     Fast inline & \texttt{gemma3:1b+RAG} & Lowest LLM FPR among small models (23.33\%); fastest median (\textasciitilde1\,019\,ms) & Low recall (40.85\%) & Optional lightweight hints with light triage \\
     Audit-focused & \texttt{qwen3:4b} (LLM-only) & Highest LLM recall (78.87\%); F1 66.14\%; \textasciitilde1.3\,s median & FPR 90\% & Use in explicit scan mode with manual triage \\
-    Best overall local run & \texttt{qwen3:8b+RAG} & F1 71.43\%, precision 72.46\%, FPR 10.00\%, stage-1 detection median 2\,216\,ms; with confidence gate $\geq 0.67$ precision rises to 78.13\% (F1 74.07\%) & Inference cost dominates 99\% of latency & Recommended default for quality-oriented local analysis \\
+    Best overall local run & \texttt{qwen3:8b+RAG} & F1 71.43\%, precision 72.46\%, FPR 10.00\%, stage-1 detection median 2\,216\,ms; with confidence gate $\geq 0.67$ precision rises to 78.13\% (F1 74.07\%) & Inference cost dominates 99\% of latency & Indicated default for quality-oriented local analysis under this hardware profile \\
     Hybrid low-noise & Semgrep + \texttt{qwen3:8b+RAG} (opt-in fusion) & Promotes corroborated findings to confidence~1.0 / \texttt{hybrid} source; uses Semgrep's 6.67\% FPR as a high-precision overlay & Fusion fires only for the small share Semgrep itself flags (recall 12.68\%) & Use SAST corroboration as visible-confidence overlay \\
     \bottomrule
   \end{tabularx}
