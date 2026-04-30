@@ -6,7 +6,7 @@ All experiments run locally through the Code Guardian evaluation harness, which 
 Two configurations are evaluated quantitatively: \textbf{LLM-only} (analyser without retrieval) and \textbf{LLM+RAG} (retrieval-augmented prompting with static security snippets, \texttt{k=5}). The system prompt is a tight ${\sim}80$-token instruction listing the output schema and the four scoring rules; the historical longer prompt is referenced only for context (Section~\ref{sec:eval-r4}).
 
 \paragraph{Hybrid SAST gating (opt-in).}
-The harness optionally runs Semgrep once over a temporary baseline workspace at the start of a run and fuses each LLM finding whose line range overlaps a Semgrep finding (and whose canonical category agrees) by promoting confidence to $1.0$ and the detection source to \texttt{hybrid}. LLM-only findings keep their inter-run confidence. The fusion fires on the small share of cases where Semgrep itself produces a finding (consistent with its $9.73\%$ recall); the remainder pass through untouched.
+The harness optionally runs Semgrep once over a temporary baseline workspace at the start of a run and fuses each LLM finding whose line range overlaps a Semgrep finding (and whose canonical category agrees) by promoting confidence to $1.0$ and the detection source to \texttt{hybrid}. LLM-only findings keep their inter-run confidence. The fusion fires on the small share of cases where Semgrep itself produces a finding (consistent with its $12.68\%$ canonical recall, Section~\ref{sec:eval-r1}); the remainder pass through untouched.
 
 \paragraph{Baselines.}
 Three SAST baselines run through the same harness against per-snippet temporary workspaces: Semgrep with the registry packs \texttt{p/security-audit}, \texttt{p/javascript}, \texttt{p/typescript}, and \texttt{p/owasp-top-ten}; CodeQL with the \texttt{javascript-security-and-quality} suite; and ESLint with \texttt{eslint-plugin-security}. Per-snippet workspaces keep baseline execution repeatable but omit broader project context. Outputs are normalised into the same per-finding schema; vulnerability \texttt{type} for baseline findings is inferred from rule identifiers, messages, and CWE metadata, which introduces a construct-validity limitation when metadata is missing or mismatched.
@@ -48,9 +48,9 @@ The harness uses \texttt{runsPerSample=3} symmetrically for both groups (213 vul
     Runs per sample & 3 (vulnerable and secure, symmetric) \\
     Generation & \texttt{temperature=0}, \texttt{seed=42}, \texttt{format='json'}, \texttt{num\_predict=1000} \\
     Request controls & \texttt{timeoutMs=30000}, \texttt{requestDelayMs=500}, sequential, no warm-up, no retries \\
-    Type-level scoring & canonical taxonomy of 23 classes (Section~\ref{sec:eval-metrics}) \\
+    Type-level scoring & canonical taxonomy of 26 classes (Section~\ref{sec:eval-metrics}) \\
     Confidence & inter-run agreement; reported un-gated and at $\geq 0.67$ \\
-    Auto-applicable repair rate & \texttt{@babel/parser} syntax check on every \texttt{suggestedFix} \\
+    Auto-applicable repair rate & \texttt{@babel/parser} syntax check on every Stage-2 repair output (\texttt{\{code, language\}}) \\
     Models & \texttt{gemma3:1b}, \texttt{gemma3:4b}, \texttt{qwen3:4b}, \texttt{qwen3:8b}, \texttt{CodeLlama:latest} \\
     Software & Ollama 0.17.1, Node.js v20.19.5 \\
     Hardware/OS & Apple M4 Max (16 cores, 64\,GB RAM), macOS Darwin 25.3.0 (arm64) \\

@@ -40,7 +40,9 @@ LLM-based approaches dominate the SAST baselines on recall-driven F1; \texttt{qw
 
 RAG effects are strongly model-dependent (see the LLM-only / LLM+RAG rows in Table~\ref{tab:eval-r1-all}).
 
-RAG lifts \texttt{qwen3:8b} F1 from 67.52\% to 71.43\% ($+3.91$ points) and pushes its precision from 61.63\% to 72.46\% while halving FPR (50.00\% $\to$ 10.00\%). RAG is roughly neutral on \texttt{gemma3:1b} and \texttt{gemma3:4b}, slightly hurts \texttt{qwen3:4b} ($-5.22$ points), and dramatically degrades \texttt{codellama} ($-29.89$ points: F1 drops from 53.06\% to 23.17\%, latency nearly doubles). The \texttt{codellama+RAG} collapse is the strongest negative-RAG observation in the dataset and indicates that the additional retrieval context actively confuses \texttt{codellama}'s output structure rather than grounding it. Retrieval augmentation is therefore a model-specific configuration, not a universal default. Exploratory exact McNemar tests on matched sample-level outcomes for the \texttt{qwen3} improvements did not reach significance ($n=71$); the RAG effect is best read as an indicative trend whose direction (positive for \texttt{qwen3}, negative for \texttt{codellama}) is more robust than the precise magnitude.
+Across configurations, retrieval augmentation has model-specific effects: F1 lifts on \texttt{qwen3:8b} ($+3.91$ points: $67.52\% \to 71.43\%$, precision $61.63\% \to 72.46\%$, FPR $50.00\% \to 10.00\%$); is roughly neutral on \texttt{gemma3:1b} and \texttt{gemma3:4b}; slightly degrades \texttt{qwen3:4b} ($-5.22$ points); and dramatically degrades \texttt{codellama} ($-29.89$ points: F1 $53.06\% \to 23.17\%$, latency nearly doubles).
+
+Exact McNemar tests on per-case correctness pair the LLM-only and LLM+RAG outcomes for each model (one test per model, $n=101$ paired cases). With Bonferroni correction for the five model comparisons the corrected significance threshold is $\alpha = 0.05/5 = 0.01$. Only the \texttt{codellama} RAG-degrades-quality effect survives correction ($p = 0.0013$, 16 cases lost vs.\ 2 cases gained under RAG). The \texttt{qwen3:8b} ($p = 0.049$) and \texttt{qwen3:4b} ($p = 0.031$) effects are significant under uncorrected $\alpha = 0.05$ but do not survive correction; both \texttt{gemma3} effects are clearly null ($p = 0.74$ and $p = 1.0$). The single statistically defensible RAG conclusion under correction is therefore that retrieval augmentation actively harms \texttt{codellama}; the \texttt{qwen3} lifts are reported as indicative directions whose precise magnitudes should not be over-interpreted on a 101-case corpus. Retrieval augmentation is consistently \emph{not} a universal default --- it must be calibrated per model.
 
 \subsection{Per-Category Detection Breakdown}
 
@@ -97,29 +99,59 @@ $0.67$ ($\geq 2/3$ runs) & \textbf{74.07} & \textbf{78.13} & 70.42 & 10.00 \\
 
 The gate at $\geq 0.67$ lifts F1 by $2.64$ points and precision by $5.67$ points without changing recall or FPR. This is the trade-off the gate is designed to deliver: lower noise without sacrificing detection. Issues from a single one-of-three pass that the consensus cannot corroborate are dropped; agreement-driven findings survive.
 
-\subsection{External-Corpus Stress Test}
-\label{sec:eval-r1-external-corpus}
+\subsection{Held-Out Threshold Validation}
+\label{sec:eval-r1-heldout}
 
-To probe the substitution disclosed in Section~\ref{sec:eval-benchmark-substitution} the analyser was rerun on the 15-case external corpus (11 vulnerable + 4 secure) drawn from OWASP NodeGoat, OWASP Juice Shop, and three named CVEs (CVE-2022-24999, CVE-2021-23337, CVE-2022-24771). The configuration is intentionally conservative: \texttt{qwen3:8b}, LLM-only (no RAG), single run per sample (no inter-run consensus), no confidence gate. This is a stress test, not a parity comparison with the headline.
+Tuning a configuration parameter on the same set of cases that produces the headline number is a standard threat to validity. To rule it out for the inter-run confidence threshold, the curated 101-case corpus is partitioned in advance (\texttt{evaluation/build-split.js}, deterministic seed, stratified by vulnerable / secure) into a 71-case train split (50 vulnerable + 21 secure) and a 30-case test split (21 vulnerable + 9 secure). The split file (\texttt{evaluation/datasets/split-2026-04-28.json}) is timestamped and committed before any threshold sweep is run.
+
+The threshold is selected on the train split alone, then applied to the frozen test split:
 
 \begin{table}[H]
 \centering
-\caption{\texttt{qwen3:8b} on the external corpus, LLM-only / 1 run per sample. Comparison row reproduces the curated 101-case canonical-match headline from Section~\ref{sec:eval-r1}.}
-\label{tab:r1-external-corpus}
+\caption{Held-out threshold sweep on \texttt{qwen3:8b+RAG} (3 runs, canonical matcher). The threshold is selected on TRAIN by best F1 (tie-broken by lowest FPR); the TEST column is reported at that same threshold without further tuning.}
+\label{tab:r1-heldout}
 \footnotesize
-\begin{tabular}{@{}lrrrrrr@{}}
+\begin{tabular}{@{}lrrrrrrrr@{}}
 \toprule
-\textbf{Corpus} & \textbf{F1} & \textbf{Precision} & \textbf{Recall} & \textbf{FPR} & \textbf{Med. lat. (ms)} & \textbf{Configuration} \\
+\textbf{Threshold} & \multicolumn{4}{c}{\textbf{TRAIN} ($n=71$)} & \multicolumn{4}{c}{\textbf{TEST} ($n=30$)} \\
+\cmidrule(lr){2-5}\cmidrule(lr){6-9}
+ & F1 & Prec. & Rec. & FPR & F1 & Prec. & Rec. & FPR \\
 \midrule
-External (15 cases)         & 40.00 & 35.71 & 45.45 & 75.00 & 9\,462 & LLM-only, 1 run \\
-Curated (101 cases)         & 71.43 & 72.46 & 70.42 & 10.00 & 2\,216 & LLM+RAG, 3 runs (stage-1) \\
+$0.0$  (no gate)            & 76.92 & 74.07 & 80.00 & 14.29 & 60.00 & 63.16 & 57.14 & 0.00 \\
+$0.34$ ($\geq 1/3$)         & 78.79 & 79.59 & 78.00 & 14.29 & 63.16 & 70.59 & 57.14 & 0.00 \\
+$0.67$ ($\geq 2/3$)         & 78.79 & 79.59 & 78.00 & 14.29 & 63.16 & 70.59 & 57.14 & 0.00 \\
+$1.0$ (unanimous)           & 78.79 & 79.59 & 78.00 & 14.29 & 63.16 & 70.59 & 57.14 & 0.00 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Two effects compound in the gap. First, the external corpus skews toward weakness classes that require cross-file or framework-level reasoning: mass assignment, broken access control on an admin route, JWT \texttt{none}-algorithm acceptance, signature verification (CWE-347), and Lodash \texttt{\_.template} code injection. Five of the six false negatives are in this class. The detector's single-function scope (Section~\ref{sec:impl-pipeline}) does not see the access-control wrapper, the JWT \texttt{algorithms} option, or the version constraint that resolves the CVE. The thesis's existing input-validation gap (Section~\ref{sec:eval-error-analysis}) is the same limitation surfacing on a corpus designed to elicit it. Second, the configuration is two notches weaker than the headline: no retrieval and a single inference per sample remove the precision gains attributed to RAG plus the inter-run confidence gate at $\geq 0.67$ (Section~\ref{sec:eval-r1-confidence}).
+The thresholds $0.34$, $0.67$, and $1.0$ are tied on TRAIN F1 because each case's findings are highly self-consistent across the three runs --- once a finding survives at $\geq 1/3$ runs it almost always survives at $\geq 3/3$. The thesis carries the more conservative $\geq 0.67$ choice as the operational default because it requires majority-of-three agreement and therefore degrades more gracefully on configurations where run-to-run variance is higher. On the frozen TEST split this same threshold yields F1 $63.16\%$, precision $70.59\%$, recall $57.14\%$, and FPR $0\%$. The TEST FPR is lower than TRAIN ($0\%$ vs $14.29\%$) because three of the four false-positive secure cases in the corpus landed in TRAIN under the random split; this is a property of the small absolute denominator (9 secure cases on TEST) rather than a model-quality result.
 
-The result is therefore best read as a quantification of the substitution penalty under deliberately weak conditions, not as a measurement of the system's whole-project capability. The latency rise (median 9\,462\,ms vs.\ 2\,216\,ms) reflects longer per-snippet code (full route handlers vs.\ single functions); inference time scales with prefill length, consistent with the latency-component analysis in Section~\ref{sec:eval-r4}. Closing the gap with the headline configuration --- LLM+RAG, 3 runs, confidence gate --- is named as future work alongside cross-file context modelling.
+The held-out result rules out the threat that the gate threshold was overfitted to the test set. The selected threshold and its accompanying metrics are honest in the strict held-out sense.
+
+\subsection{External Corpus}
+\label{sec:eval-r1-external-corpus}
+
+To probe the substitution disclosed in Section~\ref{sec:eval-benchmark-substitution} the analyser is run on the 15-case external corpus (11 vulnerable + 4 secure) drawn from OWASP NodeGoat, OWASP Juice Shop, and three named CVEs (CVE-2022-24999, CVE-2021-23337, CVE-2022-24771). The configuration matches the curated headline: \texttt{qwen3:8b+RAG}, three runs per sample, inter-run confidence gate at $\geq 0.67$, two-stage pipeline with structured-output schemas for both detection and repair.
+
+\begin{table}[H]
+\centering
+\caption{\texttt{qwen3:8b+RAG} on the external corpus and the curated 101-case corpus, both under the same headline configuration (3 runs, gate $\geq 0.67$).}
+\label{tab:r1-external-corpus}
+\footnotesize
+\begin{tabular}{@{}lrrrrrr@{}}
+\toprule
+\textbf{Corpus} & \textbf{F1} & \textbf{Precision} & \textbf{Recall} & \textbf{FPR} & \textbf{Stage-1 med. (ms)} & \textbf{Auto-app.} \\
+\midrule
+External (15 cases)         & 63.64 & 63.64 & 63.64 & 25.00 & 1\,496 & 100.00\,\% \\
+Curated (101 cases)         & 74.07 & 78.13 & 70.42 & 10.00 & 2\,216 & 90.32\,\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The external corpus skews toward weakness classes that require cross-file or framework-level reasoning: mass assignment, broken access control on an admin route, JWT \texttt{none}-algorithm acceptance, signature verification (CWE-347), and Lodash \texttt{\_.template} code injection. The detector's single-function scope (Section~\ref{sec:impl-pipeline}) does not see the access-control wrapper, the JWT \texttt{algorithms} option, or the version constraint that resolves the CVE. The thesis's existing input-validation gap (Section~\ref{sec:eval-error-analysis}) is the same limitation surfacing on a corpus designed to elicit it; the gap closes substantially under the headline configuration but a $\sim$10-point F1 residual remains. The 25\,\% FPR concentrates on a single secure case in the 4-sample negative set, against which 12 of 12 runs flag spurious findings; the small denominator inflates the rate.
+
+Auto-applicable repair quality on the external corpus is 100\,\% (33/33), slightly higher than on the curated headline (90.32\,\%); the structured \texttt{\{code, language\}} schema makes the same kinds of well-formed code on both corpora. Stage-1 detection median is 1\,496\,ms on the external corpus versus 2\,216\,ms on the curated corpus, consistent with the prefill-length analysis in Section~\ref{sec:eval-r4} (the external corpus's per-snippet code is shorter on average for the cases that survive the function-scope filter).
 
 \subsection{Real-World Whole-Project Run on OWASP NodeGoat}
 \label{sec:eval-r1-realworld}

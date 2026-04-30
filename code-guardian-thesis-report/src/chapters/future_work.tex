@@ -33,7 +33,7 @@ Only \texttt{qwen3:8b} achieved acceptable FPR among tested configurations. Unde
 \medskip
 
 \noindent\textbf{7) Cross-file context for semantic vulnerability categories.}
-Categories requiring reasoning about missing logic (input validation, authentication) achieved 0\% recall, likely because the relevant evidence lies outside the analyzed function scope. Investigating whether lightweight cross-file context extraction --- such as import-chain summaries or taint-style source-to-sink traces --- can bridge this gap without full interprocedural analysis is a natural next step.
+Categories requiring reasoning about missing logic (input validation, improper authentication, weak encryption) achieved 0\,\% recall, likely because the relevant evidence lies outside the analyzed function scope (Section~\ref{sec:eval-error-analysis}). Investigating whether lightweight cross-file context extraction --- such as import-chain summaries or taint-style source-to-sink traces --- can bridge this gap without full interprocedural analysis is a natural next step.
 
 \medskip
 

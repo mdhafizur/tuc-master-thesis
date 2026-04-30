@@ -57,11 +57,11 @@ The script reports per-model precision/recall/F1, FPR, latency, and parse succes
 
 \subsection*{Merged Baseline Snapshot}
 
-From the merged artifact (\texttt{71 vulnerable + 30 secure}), baseline tools measured:
+From the merged artifact (\texttt{71 vulnerable + 30 secure}), under canonical-taxonomy matching (Section~\ref{sec:eval-metrics}) the SAST baselines measured:
 \begin{itemize}
-  \item \texttt{semgrep}: Precision 57.89\%, Recall 9.73\%, F1 16.67\%, FPR 6.67\%
-  \item \texttt{codeql}: Precision 15.71\%, Recall 9.73\%, F1 12.02\%, FPR 53.33\%
-  \item \texttt{eslint-security}: Precision 0.00\%, Recall 0.00\%, F1 0.00\%, FPR 0.00\%
+  \item \texttt{semgrep}: Precision 50.00\%, Recall 12.68\%, F1 20.22\%, FPR 6.67\%
+  \item \texttt{codeql}: Precision 12.07\%, Recall 9.86\%, F1 10.85\%, FPR 53.33\%
+  \item \texttt{eslint-security}: Precision ---, Recall 0.00\%, F1 0.00\%, FPR 0.00\%
 \end{itemize}
 
 Baselines run on a temporary snippet workspace. Semgrep uses \texttt{p/security-audit}, \texttt{p/javascript}, \texttt{p/typescript}, and \texttt{p/owasp-top-ten}; CodeQL uses \texttt{javascript-security-and-quality}; ESLint uses \texttt{eslint-plugin-security}. Findings are normalized into the harness schema via heuristic type inference, so category-level comparisons should be interpreted as approximate.
