@@ -78,26 +78,6 @@
   \IfFileExists{#2}{\includegraphics[#1]{#2}}{\fbox{Missing image}}%
 }
 
-% --- TOC Appearance Fixes ---
-\renewcommand*{\tableofcontents}{%
-  \begingroup
-  \tocsection
-  \tocfile{\contentsname}{toc}
-  \endgroup
-}
-\renewcommand*{\listoffigures}{%
-  \begingroup
-  \tocsection
-  \tocfile{\listfigurename}{lof}
-  \endgroup
-}
-\renewcommand{\listoftables}{
-  \begingroup
-  \tocsection
-  \tocfile{\listtablename}{lot}
-  \endgroup
-}
-
 \makeindex
 
 \begin{document}

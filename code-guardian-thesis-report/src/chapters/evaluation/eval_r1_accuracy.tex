@@ -51,7 +51,7 @@ Per-canonical-category recall on \texttt{qwen3:8b+RAG} (3-runs pooled, categorie
 \subsection{Qualitative Error Analysis on Zero-Recall Categories}
 \label{sec:eval-error-analysis}
 
-Three canonical categories remain at 0\% recall under \texttt{qwen3:8b+RAG} after canonical matching: improper-auth, input-validation, and weak-encryption. (Two other categories that scored 0\% under the previous substring matcher --- weak cryptography and insecure deserialization --- recovered to 100\% and 33\% respectively when the canonical matcher absorbed sub-type labels such as ``Weak Hashing Algorithm'' and ``Weak Random Number Generation''.)
+Three canonical categories remain at 0\% recall under \texttt{qwen3:8b+RAG}: improper-auth, input-validation, and weak-encryption. The canonical taxonomy absorbs sub-type labels such as ``Weak Hashing Algorithm'' and ``Weak Random Number Generation'' into the appropriate parent buckets, so weak cryptography and insecure deserialization sit at 100\% and 33\% recall respectively rather than appearing as zero-recall artefacts of label mismatch.
 
 The remaining zero-recall categories are dominated by two distinct effects, summarized in Table~\ref{tab:failure-modes}.
 
@@ -197,13 +197,13 @@ The 43-percentage-point lift from inline (3 / 7) to audit scope (6 / 7) on the s
 Based on the R1 evaluation scale (Table~\ref{tab:r1-accuracy-thresholds}), the best configuration (\texttt{qwen3:8b+RAG}) maps as follows under canonical matching:
 
 \begin{itemize}
-  \item F1 = 71.43\% $\rightarrow$ falls in $[0.60, 0.75)$
-  \item Precision = 72.46\% $\rightarrow$ above 0.70
-  \item Recall = 70.42\% $\rightarrow$ above 0.70
-  \item FPR = 10.00\% $\rightarrow$ comfortably below the $\leq 0.20$ boundary
+  \item F1 = 71.43\% (gated 74.07\%) $\rightarrow$ both fall in the Medium F1 range $[0.60, 0.75)$
+  \item Precision = 72.46\% (gated 78.13\%) $\rightarrow$ both exceed the High threshold of 0.70
+  \item Recall = 70.42\% $\rightarrow$ exceeds the High threshold of 0.70
+  \item FPR = 10.00\% $\rightarrow$ comfortably below the High ceiling of 0.20
 \end{itemize}
 
-Three of the four metrics meet the High threshold (precision, recall, FPR) but F1 is in the Medium band (just below 0.75). Applying the inter-run confidence gate at $\geq 0.67$ lifts F1 to 74.07\% and precision to 78.13\% (Section~\ref{sec:eval-r1-confidence}), which still falls in the Medium F1 band but tightens precision further.
+The bands defined in Table~\ref{tab:r1-accuracy-thresholds} are nested: a configuration is assigned the highest band whose conjunctive minimum-bar criteria are all met. Precision, recall, and FPR all meet the High thresholds, but F1 sits below 0.75; the configuration therefore lands in the Medium band overall, with F1 as the binding constraint. Applying the inter-run confidence gate at $\geq 0.67$ lifts F1 to 74.07\% and precision to 78.13\% (Section~\ref{sec:eval-r1-confidence}); F1 remains the binding metric and the configuration stays Medium overall while tightening precision toward the High class.
 
 \begin{center}
 \begin{tabular}{cc}

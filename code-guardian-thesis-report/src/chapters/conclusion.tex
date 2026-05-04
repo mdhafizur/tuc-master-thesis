@@ -2,7 +2,15 @@ This chapter summarises the thesis outcomes, answers the research questions, and
 
 \section{Summary of Contributions}
 
-The thesis delivers \textbf{Code Guardian}, a VS Code extension for on-device JavaScript/TypeScript vulnerability analysis. The system features multi-pass consensus filtering to reduce false positives, JSON-mode decoding enforcement for structured-output stability, deterministic inference controls (\texttt{temperature=0}, fixed seed), and a two-stage detection-then-repair pipeline; findings appear as IDE diagnostics and repair suggestions are opt-in and developer-controlled. Code analysis runs entirely in Ollama on-device, retrieval uses a local vector index over signed CWE/OWASP/CVE guidance, and the repository ships a documented local evaluation harness with benchmark datasets and SAST baselines (Semgrep, CodeQL, ESLint) for like-for-like comparison.
+The thesis delivers \textbf{Code Guardian}, a VS Code extension for on-device JavaScript/TypeScript vulnerability analysis. Five concrete contributions support that delivery:
+
+\begin{enumerate}
+  \item \textbf{Privacy-preserving architecture.} All inference runs through a local Ollama instance; an egress gate blocks every non-loopback connection by default, and the optional retrieval store reads from a signed local corpus of CWE, OWASP, and CVE guidance.
+  \item \textbf{Two-stage detection-then-repair pipeline.} Stage~1 emits structured JSON findings under JSON-mode decoding with a fixed schema; stage~2 generates one $\{\,\texttt{code}, \texttt{language}\,\}$ repair per finding under developer-controlled apply or preview.
+  \item \textbf{Multi-pass consensus filter and confidence gate.} Two seeded passes (configurable up to five) score each finding by inter-pass agreement; an opt-in threshold suppresses unmatched findings before stage~2.
+  \item \textbf{Hybrid AST+LLM audit pipeline.} A deterministic AST sink scanner runs in parallel with the LLM and unions findings, lifting whole-project recall on OWASP NodeGoat from $3/7$ inline to $6/7$ in audit mode while leaving the inline path inside the 1.5\,s latency budget.
+  \item \textbf{Reproducible evaluation harness.} The repository ships a documented harness with the 101-case curated corpus, a 15-case external corpus drawn from NodeGoat, Juice Shop, and three named CVEs, SAST baselines (Semgrep, CodeQL, ESLint), and a deterministic per-repair syntax validator for scaling R3 beyond manual review.
+\end{enumerate}
 
 \section{Key Findings and Answers to Research Questions}
 
