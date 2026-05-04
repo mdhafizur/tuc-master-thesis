@@ -24,10 +24,10 @@ To allow comparison with other tools and across Code Guardian's own settings, th
     & \textbf{High accuracy.} F1 $\geq 0.75$, precision $\geq 0.70$, recall $\geq 0.70$, and FPR $\leq 0.20$. The system finds vulnerabilities well with few false alarms. Suitable for always-on IDE use. \\
     \midrule
     \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-150:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}}
-    & \textbf{Medium accuracy.} F1 in $[0.60, 0.75)$, precision $\geq 0.55$, recall $\geq 0.55$, and FPR in $(0.20, 0.40]$. Results are worth reviewing with some manual checking needed. Suitable for on-demand or audit-mode use. \\
+    & \textbf{Medium accuracy.} F1 $\geq 0.60$, precision $\geq 0.55$, recall $\geq 0.55$, FPR $\leq 0.40$, and not in the High band. Results are worth reviewing with some manual checking needed. Suitable for on-demand or audit-mode use. \\
     \midrule
     \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-30:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}}
-    & \textbf{Low accuracy.} F1 in $[0.45, 0.60)$, or precision/recall below $0.55$, or FPR in $(0.40, 0.70]$. Findings need heavy manual checking. Only useful alongside rule-based tools. \\
+    & \textbf{Low accuracy.} F1 $\geq 0.45$, FPR $\leq 0.70$, and not in the Medium or High band. Findings need heavy manual checking. Only useful alongside rule-based tools. \\
     \midrule
     \raisebox{-0.3cm}{\tikz{\draw (0,0) circle (0.35cm);}}
     & \textbf{Insufficient accuracy.} F1 $< 0.45$ or FPR $> 0.70$. Detection is too weak or false alarms too frequent. The system is not useful in practice. \\

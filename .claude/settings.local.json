@@ -20,7 +20,8 @@
       "Bash(pdfinfo Template.pdf)",
       "Bash(node evaluation/recompute-realworld-recall.js)",
       "Bash(grep -E \"realworld-\\(\\\\\\\\$\\\\\\\\{|nodegoat\\)\" /Users/hafiz/personal/repos/tuc-master-thesis/code-guardian-extension/evaluation/recompute-realworld-recall.js /Users/hafiz/personal/repos/tuc-master-thesis/code-guardian-extension/evaluation/run-realworld.js)",
-      "Bash(pdflatex -interaction=nonstopmode Template.tex)"
+      "Bash(pdflatex -interaction=nonstopmode Template.tex)",
+      "Bash(python3 -c ' *)"
     ]
   }
 }
