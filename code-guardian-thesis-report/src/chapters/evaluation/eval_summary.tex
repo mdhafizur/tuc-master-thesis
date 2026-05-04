@@ -30,8 +30,8 @@ This section brings together the per-requirement results into a single complianc
     \midrule
     R4 &
     \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} &
-    High (inline) &
-    Stage-1 detection median 2\,216\,ms per function; stage-2 quick-fix repair median 3\,320\,ms per fix (incurred only when a finding triggers a repair). Inference dominates total latency by $>99\%$. The configuration sits in the on-demand band ($\leq 5$\,s); inline use is better served by smaller models such as \texttt{gemma3:1b+RAG}. \\
+    High (per-function; on-demand/audit band per R4 scale) &
+    Stage-1 detection median 2\,216\,ms per function meets the R4 High threshold ($\leq 5$\,s for inline analysis). The stricter interactive-inline budget ($\leq 1.5$\,s, Table~\ref{tab:r4-feasibility}) is not met; for that band smaller models such as \texttt{gemma3:1b+RAG} (1\,019\,ms) are indicated. Stage-2 quick-fix repair median 3\,320\,ms per fix (incurred only when a finding triggers a repair). Inference dominates total latency by $>99\%$. \\
     \midrule
     R5 &
     \cmark &

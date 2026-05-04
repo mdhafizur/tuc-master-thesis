@@ -221,4 +221,4 @@ The bands defined in Table~\ref{tab:r1-accuracy-thresholds} are nested: a config
 \end{tabular}
 \end{center}
 
-Results are usable in audit-mode and approach the threshold for always-on inline use; the residual barrier is the F1 ceiling driven by the input-validation true-miss category, not the false-positive rate.
+Results are usable in audit-mode. Two barriers prevent always-on interactive-inline use: F1 (71.43\%, gated 74.07\%) sits just below the High threshold of 0.75, and stage-1 detection median (2\,216\,ms) exceeds the 1\,500\,ms interactive-inline latency budget (Section~\ref{sec:eval-r4}). The FPR (10\%) is not a barrier --- it already satisfies the High threshold. Closing the accuracy gap requires reducing the input-validation true-miss category; closing the latency gap requires a smaller model or architectural changes such as streaming output.

@@ -27,13 +27,13 @@ Beyond the concrete engineering improvements described above, several broader qu
 
 \medskip
 
-\noindent\textbf{6) False-positive control and model scale.}
-Only \texttt{qwen3:8b} achieved acceptable FPR among tested configurations. Understanding whether this reflects a threshold effect of model scale, a property of the instruction-tuning approach, or an artifact of the specific prompt structure would help generalize the results to future model generations.
+\noindent\textbf{6) Calibration of FPR control to model scale.}
+The observation that only \texttt{qwen3:8b} achieves acceptable FPR raises an open question about \emph{why}: is 8B parameters a threshold effect, a consequence of instruction-tuning strategy, or an artifact of the specific structured-output contract used here? Characterising this relationship across a wider range of model sizes and families would allow deployment recommendations to be grounded in model-capability curves rather than empirical trial-and-error.
 
 \medskip
 
-\noindent\textbf{7) Cross-file context for semantic vulnerability categories.}
-Categories requiring reasoning about missing logic (input validation, improper authentication, weak encryption) achieved 0\,\% recall, likely because the relevant evidence lies outside the analysed function scope (Section~\ref{sec:eval-error-analysis}). Investigating whether lightweight cross-file context extraction --- such as import-chain summaries or taint-style source-to-sink traces --- can bridge this gap without full interprocedural analysis is a natural next step.
+\noindent\textbf{7) Source-to-sink taint analysis for semantic gap categories.}
+The three zero-recall categories (improper-auth, input-validation, weak-encryption) require reasoning about code \emph{not} present in the analysed function: validation in a separate module, a JWT \texttt{algorithms} option set at the framework layer, or an insufficient key length resolved by a configuration file. The open research question is whether a lightweight TypeScript-aware taint graph --- constructed once per project and queried per-snippet --- can close this gap without the latency and complexity of full interprocedural static analysis.
 
 \medskip
 
