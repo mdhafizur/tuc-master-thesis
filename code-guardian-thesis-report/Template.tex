@@ -1,5 +1,9 @@
 \documentclass[a4paper, 12pt, oneside, BCOR1cm, toc=chapterentrywithdots]{scrbook}
 
+% Pre-load url options before hyperref pulls url in transitively, so
+% \path{...} can break long literals at hyphens (e.g. javascript-security-and-quality).
+\PassOptionsToPackage{hyphens}{url}
+
 % --- Encoding and Fonts ---
 \usepackage[utf8]{inputenc}
 \usepackage{pifont}
@@ -22,6 +26,16 @@
 \usepackage[T1]{fontenc}
 \usepackage{microtype}   % reduces overfull boxes
 
+% Allow LaTeX more flexibility when no good line-break exists; clears most
+% small overfull \hbox warnings (under ~5pt) without visibly loose spacing.
+\setlength{\emergencystretch}{3em}
+
+% url.sty's \path{...} knows to break long literals (package names, file
+% paths, dotted identifiers). The [hyphens] option was passed at the very
+% top of this preamble before hyperref pulled url in transitively.
+\usepackage{url}
+\Urlmuskip=0mu plus 1mu\relax
+
 \usepackage{listings}
 \usepackage{xcolor}
 
@@ -38,6 +52,18 @@
   morecomment=[l]{//},
   morecomment=[s]{/*}{*/},
   morestring=[b]"
+}
+
+% Break long lines inside lstlisting blocks so embedded JSON/code samples
+% don't punch through the right margin (especially in case-studies appendix).
+\lstset{
+  basicstyle=\footnotesize\ttfamily,
+  breaklines=true,
+  breakatwhitespace=false,
+  breakautoindent=true,
+  columns=flexible,
+  postbreak=\mbox{\textcolor{gray}{$\hookrightarrow$}\space},
+  showstringspaces=false
 }
 
 \usepackage{tikz}

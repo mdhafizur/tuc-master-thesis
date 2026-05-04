@@ -105,7 +105,7 @@ across hosts.
 \caption{Latency feasibility for IDE workflow modes.}
 \label{tab:r4-feasibility}
 \footnotesize
-\begin{tabular}{@{}lll@{}}
+\begin{tabularx}{\textwidth}{@{}llX@{}}
 \toprule
 \textbf{Workflow Mode} & \textbf{Target} & \textbf{Viable Configurations} \\
 \midrule
@@ -113,7 +113,7 @@ Real-time inline    & $\leq 500$\,ms median & SAST baselines only \\
 Interactive inline  & $\leq 1.5$\,s median  & \texttt{gemma3:1b+RAG} (1\,019\,ms), \texttt{qwen3:4b} (1\,328\,ms) \\
 On-demand / audit   & $\leq 5$\,s median    & All LLM configurations except \texttt{codellama+RAG} (3\,529\,ms median, p99 16\,s); the headline \texttt{qwen3:8b+RAG} stage-1 detection at 2\,216\,ms median sits comfortably in this band \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{table}
 
 The best-accuracy configuration (\texttt{qwen3:8b+RAG}, stage-1 detection median 2\,216\,ms) sits in the on-demand band, comfortably inside the $5$\,s budget. The quick-fix repair stage adds median 3\,320\,ms when a finding triggers it, also within on-demand. For latency-sensitive interactive inline use, the smaller \texttt{gemma3:1b+RAG} (1\,019\,ms) trades detection quality for sub-1.5\,s response. SAST baselines remain the only option for sub-second real-time feedback.
