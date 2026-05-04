@@ -80,7 +80,7 @@ SAST tools show a different trade-off profile. Semgrep achieves the lowest FPR (
 \subsection{Inter-Run Confidence Gate}
 \label{sec:eval-r1-confidence}
 
-Each finding is annotated with an inter-run confidence score equal to the fraction of runs (out of three) that emitted a matching issue (Section~\ref{sec:eval-metrics}). A configurable gate then suppresses findings whose confidence falls below a threshold. Sweeping the threshold on the headline \texttt{qwen3:8b+RAG} configuration (canonical matcher, three runs per case):
+Each finding is annotated with an inter-run confidence score equal to the fraction of runs (out of three) that emitted a matching issue (Section~\ref{sec:eval-metrics}). A configurable gate then suppresses findings whose confidence falls below a threshold. Sweeping the threshold on the headline \texttt{qwen3:8b+RAG} configuration (canonical matcher, three runs per case) yields the values in Table~\ref{tab:r1-confidence-sweep}.
 
 \begin{table}[H]
 \centering
@@ -104,7 +104,7 @@ The gate at $\geq 0.67$ lifts F1 by $2.64$ points and precision by $5.67$ points
 
 Tuning a configuration parameter on the same set of cases that produces the headline number is a standard threat to validity. To rule it out for the inter-run confidence threshold, the curated 101-case corpus is partitioned in advance (\texttt{evaluation/build-split.js}, deterministic seed, stratified by vulnerable / secure) into a 71-case train split (50 vulnerable + 21 secure) and a 30-case test split (21 vulnerable + 9 secure). The split file (\texttt{evaluation/datasets/split-2026-04-28.json}) is timestamped and committed before any threshold sweep is run.
 
-The threshold is selected on the train split alone, then applied to the frozen test split:
+The threshold is selected on the train split alone, then applied to the frozen test split; the result is shown in Table~\ref{tab:r1-heldout}.
 
 \begin{table}[H]
 \centering
@@ -132,7 +132,7 @@ The held-out result rules out the threat that the gate threshold was overfitted 
 \subsection{External Corpus}
 \label{sec:eval-r1-external-corpus}
 
-To probe the substitution disclosed in Section~\ref{sec:eval-benchmark-substitution} the analyser is run on the 15-case external corpus (11 vulnerable + 4 secure) drawn from OWASP NodeGoat, OWASP Juice Shop, and three named CVEs (CVE-2022-24999, CVE-2021-23337, CVE-2022-24771). The configuration matches the curated headline: \texttt{qwen3:8b+RAG}, three runs per sample, inter-run confidence gate at $\geq 0.67$, two-stage pipeline with structured-output schemas for both detection and repair.
+To probe the substitution disclosed in Section~\ref{sec:eval-benchmark-substitution} the analyser is run on the 15-case external corpus (11 vulnerable + 4 secure) drawn from OWASP NodeGoat, OWASP Juice Shop, and three named CVEs (CVE-2022-24999, CVE-2021-23337, CVE-2022-24771). The configuration matches the curated headline: \texttt{qwen3:8b+RAG}, three runs per sample, inter-run confidence gate at $\geq 0.67$, two-stage pipeline with structured-output schemas for both detection and repair. Table~\ref{tab:r1-external-corpus} compares the two corpora side by side.
 
 \begin{table}[H]
 \centering
@@ -156,10 +156,19 @@ Auto-applicable repair quality on the external corpus is 100\,\% (33/33), slight
 \subsection{Real-World Whole-Project Run on OWASP NodeGoat}
 \label{sec:eval-r1-realworld}
 
-The whole-project runner from Section~\ref{sec:eval-realworld} was executed on OWASP NodeGoat at the default \texttt{master} commit. The system supports two scopes for whole-codebase analysis: \emph{inline scope} reuses the function-level scope used by real-time IDE diagnostics, and \emph{audit scope} (introduced in Section~\ref{sec:impl-audit-mode}) adds a deterministic AST stage in front of the LLM. NodeGoat is evaluated under both, against the corrected 7-entry documented-vulnerability list (\texttt{evaluation/realworld/nodegoat-vulnerabilities.json}).
+The whole-project runner from Section~\ref{sec:eval-realworld} was executed on OWASP NodeGoat at the default \texttt{master} commit. The system supports two scopes for whole-codebase analysis: \emph{inline scope} reuses the function-level scope used by real-time IDE diagnostics, and \emph{audit scope} (introduced in Section~\ref{sec:impl-audit-mode}) adds a deterministic AST stage in front of the LLM. NodeGoat is evaluated under both, against the corrected 7-entry documented-vulnerability list (\texttt{evaluation/realworld/nodegoat-vulnerabilities.json}); the per-scope recall is reported in Table~\ref{tab:r1-realworld-nodegoat}.
 
 \paragraph{Provenance of the documented list.}
-The original 10-entry documented list pointed at file paths that do not exist in the actual NodeGoat tree (\texttt{app/routes/admin.js}, \texttt{app/middleware/error-handler.js}) or at out-of-scope file types (\texttt{app/views/contributions.html}, \texttt{package.json}). A manual audit against the NodeGoat \texttt{tutorial/} directory and the actual source produced a corrected 7-entry list pinning each entry to a real JS source location: NoSQL injection in \texttt{data/allocations-dao.js} (\texttt{\$where} template literal, lines 73--78), \texttt{eval}-based code injection in \texttt{routes/contributions.js} (lines 32--34), ReDoS in \texttt{routes/profile.js} (line 59 nested-quantifier regex), mass assignment in \texttt{routes/profile.js} (\texttt{handleProfileUpdate}), deprecated \texttt{bcrypt-nodejs} in \texttt{data/user-dao.js}, stack-trace disclosure in \texttt{routes/error.js}, and dynamic template-path injection in \texttt{routes/tutorial.js}.
+The original 10-entry documented list pointed at file paths that do not exist in the actual NodeGoat tree (\texttt{app/routes/admin.js}, \texttt{app/middleware/error-handler.js}) or at out-of-scope file types (\texttt{app/views/contributions.html}, \texttt{package.json}). A manual audit against the NodeGoat \texttt{tutorial/} directory and the actual source produced a corrected 7-entry list pinning each entry to a real JS source location:
+\begin{itemize}
+  \item NoSQL injection in \path{data/allocations-dao.js} (\texttt{\$where} template literal, lines 73--78);
+  \item \texttt{eval}-based code injection in \path{routes/contributions.js} (lines 32--34);
+  \item ReDoS in \path{routes/profile.js} (line 59 nested-quantifier regex);
+  \item mass assignment in \path{routes/profile.js} (\texttt{handleProfileUpdate});
+  \item deprecated \texttt{bcrypt-nodejs} in \path{data/user-dao.js};
+  \item stack-trace disclosure in \path{routes/error.js};
+  \item dynamic template-path injection in \path{routes/tutorial.js}.
+\end{itemize}
 
 \begin{table}[H]
 \centering

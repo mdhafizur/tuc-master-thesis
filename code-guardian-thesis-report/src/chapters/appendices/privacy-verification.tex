@@ -10,7 +10,7 @@ Outbound traffic was monitored during representative inline and audit workflows 
 \begin{lstlisting}[language=bash]
 sudo tcpdump -i any -n 'not (host 127.0.0.1 or host ::1)' -w /tmp/cg.pcap
 \end{lstlisting}
-Detection and repair workflows produced no outbound requests; communication stayed on localhost between the extension host, local backend (\texttt{localhost:3000}), and Ollama (\texttt{localhost:11434}). External requests appeared only when knowledge refresh was explicitly triggered, contacting public CVE/CWE/OWASP endpoints with no source code or project artefacts in the request bodies. The same observation is reproduced quantitatively by the automated egress harness and source-leak detector (Section~\ref{sec:eval-r5-egress}).
+Detection and repair workflows produced no outbound requests; communication stayed on localhost between the extension host, local backend (\texttt{localhost:3000}), and Ollama (\texttt{localhost:11434}). External requests appeared only when knowledge refresh was explicitly triggered, contacting public CVE/CWE/OWASP endpoints with no source code or project artefacts in the request bodies. The same observation is reproduced quantitatively by the automated egress harness and source-leak detector (Section~\ref{sec:eval-r5-egress}). Table~\ref{tab:privacy-config} lists the configuration parameters that anchor this behaviour.
 
 \begin{table}[H]
   \centering
@@ -40,6 +40,6 @@ Detection and repair workflows produced no outbound requests; communication stay
   \label{fig:privacy-boundary}
 \end{figure}
 
-The IDE workspace, extension process, local backend, Ollama runtime, and vector store all reside inside the local trust boundary; source files, extracted snippets, prompts, responses, and embeddings never cross it. The only outbound channel is the public-metadata refresh, which carries no user code and is gated by \texttt{enableExternalDataFetch} (default \texttt{false}). The boundary does not mitigate local host compromise, physical access, or malicious third-party software on the same machine; those risks require endpoint and operational controls beyond thesis scope.
+Figure~\ref{fig:privacy-boundary} shows the trust boundary in C4-style notation. The IDE workspace, extension process, local backend, Ollama runtime, and vector store all reside inside the local trust boundary; source files, extracted snippets, prompts, responses, and embeddings never cross it. The only outbound channel is the public-metadata refresh, which carries no user code and is gated by \texttt{enableExternalDataFetch} (default \texttt{false}). The boundary does not mitigate local host compromise, physical access, or malicious third-party software on the same machine; those risks require endpoint and operational controls beyond thesis scope.
 
 Fully offline operation is supported by disabling external fetch, using the pre-seeded signed RAG corpus, and ensuring required local models are already pulled into Ollama.

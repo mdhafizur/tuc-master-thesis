@@ -22,7 +22,7 @@ app.get('/api/account', (req, res) => {
 
 The query is built by string concatenation. An attacker who sends \texttt{id=' OR '1'='1} retrieves every account in the database. No one notices the vulnerability until a penetration test three months later.
 
-The scenario surfaces every arm of the three-way trade-off in a single endpoint: a linter (ESLint) stays silent because the concatenation is syntactically valid; a SAST scanner (Semgrep) at best produces a generic ``potential SQL injection'' warning without grounding in the specific \texttt{req.query} $\to$ \texttt{db.query} data flow; a cloud LLM assistant (GitHub Copilot) explains and repairs the issue but requires transmitting the source to an external server. No tool provides context-aware detection, actionable repair, and privacy together. A local AI assistant integrated into VS Code closes this gap. As the developer writes the endpoint, the assistant analyses the enclosing function, identifies the unsanitised \texttt{req.query.id} flowing into a SQL string, and produces:
+The scenario surfaces every arm of the three-way trade-off in a single endpoint. A linter (ESLint) stays silent because the concatenation is syntactically valid. A SAST scanner (Semgrep) at best produces a generic ``potential SQL injection'' warning without grounding in the specific \texttt{req.query} $\to$ \texttt{db.query} data flow. A cloud LLM assistant (GitHub Copilot) explains and repairs the issue but requires transmitting the source to an external server. No tool provides context-aware detection, actionable repair, and privacy together. A local AI assistant integrated into VS Code closes this gap. As the developer writes the endpoint, the assistant analyses the enclosing function, identifies the unsanitised \texttt{req.query.id} flowing into a SQL string, and produces:
 
 \begin{quote}
 \textbf{SQL Injection (CWE-89):} User-controlled input \texttt{req.query.id} is concatenated into a SQL query without sanitization. Replace with a parameterized query: \texttt{db.query("SELECT * FROM accounts WHERE id = ?", [userId])}.
@@ -50,7 +50,7 @@ The thesis addresses three research questions:
 
 \subsection*{Threat Model and Trust Assumptions}
 
-The main threat addressed is unintended disclosure of proprietary code through external analysis services. Local inference reduces this risk surface but does not remove all security risks.
+The main threat addressed is unintended disclosure of proprietary code through external analysis services. Local inference reduces this risk surface but does not remove all security risks. Table~\ref{tab:intro-threat-model} summarises the threat classes considered, the attack path each assumes, and the design response carried into the chapters that follow.
 
 \begin{table}[H]
   \centering
