@@ -24,9 +24,9 @@ This section brings together the per-requirement results into a single complianc
     JSON parse 100\%, detection agreement 87.6\%. Structured output fully stable; detection mostly stable. \\
     \midrule
     R3 &
-    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} &
-    High (automated) / Medium (manual) &
-    Manual review of 25 samples: 68\% correct repairs. Auto-applicable rate from the structured stage-2 repair pipeline (full $n=279$): \textbf{90.32\,\%} (252/279); the 27 residual rejections are mid-statement truncations or unterminated regex literals, not prose. \\
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-90:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
+    Medium (manual review primary; 90.32\% auto-applicable as secondary) &
+    Manual review of 25 samples: 68\% correct repairs (primary R3 bar per Section~\ref{sec:r3-repair-quality}); combined correct-repair rate 68\% falls in the Medium $[50\%, 75\%)$ band. Auto-applicable rate on full $n=279$ stage-2 repairs: \textbf{90.32\,\%} (252/279) as a secondary automation-quality signal; the 27 residual rejections are mid-statement truncations or unterminated regex literals, not prose. \\
     \midrule
     R4 &
     \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} &

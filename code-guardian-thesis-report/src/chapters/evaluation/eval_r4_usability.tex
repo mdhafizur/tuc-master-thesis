@@ -125,15 +125,17 @@ The best-accuracy configuration (\texttt{qwen3:8b+RAG}, stage-1 detection median
 Based on the R4 evaluation scale (Table~\ref{tab:r4-usability-thresholds}), the best configuration (\texttt{qwen3:8b+RAG}) maps as follows:
 
 \begin{itemize}
-  \item Stage-1 detection median = 2\,216\,ms ($\leq 5$\,s; within the High threshold).
+  \item Stage-1 detection median = 2\,216\,ms ($\leq 5$\,s; within the High threshold for the \emph{on-demand / audit} band).
   \item p95 = 4\,327\,ms (still $\leq 5$\,s, so the slow-tail behaviour does not break the High band).
   \item For full-file scans (multiple functions), aggregate latency scales roughly linearly and typically reaches 8--20\,s, falling in the Medium range.
 \end{itemize}
 
+The High rating applies to the on-demand / audit workflow band ($\leq 5$\,s per function, per Table~\ref{tab:r4-feasibility}). The stricter \emph{interactive-inline} budget ($\leq 1.5$\,s) is only met by the smaller \texttt{gemma3:1b+RAG} (1\,019\,ms) and \texttt{qwen3:4b} (1\,328\,ms) configurations, both at a detection-quality cost relative to the headline.
+
 \begin{center}
 \begin{tabular}{cc}
 \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} &
-\textbf{R4 Level: High usability (inline) / Medium usability (full-file).} \\
+\textbf{R4 Level: High usability (on-demand / audit) / Medium usability (full-file).} \\
 \end{tabular}
 \end{center}
 

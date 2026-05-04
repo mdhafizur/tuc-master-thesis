@@ -68,3 +68,14 @@ different hardware would re-execute the same harness and produce a
 comparable report; the figure reported here applies to the
 configuration this thesis was evaluated on, not as a
 hardware-independent constant.
+
+\paragraph{Relationship to the inter-run agreement figures in Section~\ref{sec:eval-r2}.}
+The reproducibility harness uses \emph{identical} seeds across all three
+runs (seed 42 for each), while the main evaluation (Section~\ref{sec:eval-r2})
+uses \emph{different} seeds per run (42, 137, 200) to create meaningful
+consensus diversity. The 100\,\% byte-identity reported here confirms that
+the model is perfectly deterministic under a fixed seed; the 87.6\,\%
+inter-run agreement reported in Section~\ref{sec:eval-r2} reflects the
+genuine sampling variation that arises when different seeds are used, which
+is the signal the multi-pass consensus filter is designed to exploit. The
+two measurements are therefore compatible and complementary, not contradictory.

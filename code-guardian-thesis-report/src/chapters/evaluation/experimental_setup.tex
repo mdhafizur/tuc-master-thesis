@@ -1,7 +1,7 @@
 \section{Experimental Setup}
 \label{sec:eval-setup}
 
-All experiments run locally through the Code Guardian evaluation harness, which iterates over the dataset of Section~\ref{sec:eval-dataset} and invokes Ollama with a strict JSON-only system prompt. Decoding is deterministic (\texttt{temperature=0}, \texttt{seed=42}); JSON-mode decoding (\texttt{format='json'}) plus the response schema enforce output shape and eliminate parse failures from malformed responses. The schema requested for scoring carries a vulnerability \texttt{type} string and a coarse \texttt{severity} level alongside the location and optional fix --- richer than the in-editor diagnostics flow but required for type-level precision/recall.
+All experiments run locally through the Code Guardian evaluation harness, which iterates over the dataset of Section~\ref{sec:eval-dataset} and invokes Ollama with a strict JSON-only system prompt. Decoding uses \texttt{temperature=0} and \texttt{format='json'}; each of the three runs per sample uses a different seed (42, 137, 200) so that inter-run agreement captures genuine sampling variation rather than trivially reflecting deterministic repetition of an identical call. JSON-mode decoding plus the response schema enforce output shape and eliminate parse failures from malformed responses. The schema requested for scoring carries a vulnerability \texttt{type} string and a coarse \texttt{severity} level alongside the location and optional fix --- richer than the in-editor diagnostics flow but required for type-level precision/recall.
 
 Two configurations are evaluated quantitatively: \textbf{LLM-only} (analyser without retrieval) and \textbf{LLM+RAG} (retrieval-augmented prompting with static security snippets, \texttt{k=5}). The system prompt is a tight ${\sim}80$-token instruction listing the output schema and the four scoring rules; the historical longer prompt is referenced only for context (Section~\ref{sec:eval-r4}).
 
@@ -46,13 +46,13 @@ The harness uses \texttt{runsPerSample=3} symmetrically for both groups (213 vul
     Dataset & \texttt{vulnerability-test-cases.generated.json} (71 vulnerable) + \texttt{negatives-only.generated.json} (30 secure) \\
     Prompt modes & LLM-only, LLM+RAG (\texttt{k=5}, static snippets) \\
     Runs per sample & 3 (vulnerable and secure, symmetric) \\
-    Generation & \texttt{temperature=0}, \texttt{seed=42}, \texttt{format='json'}, \texttt{num\_predict=1000} \\
+    Generation & \texttt{temperature=0}, \texttt{seed=42/137/200} (different per run to enable consensus diversity), \texttt{format='json'}, \texttt{num\_predict=1000} \\
     Request controls & \texttt{timeoutMs=30000}, \texttt{requestDelayMs=500}, sequential, no warm-up, no retries \\
     Type-level scoring & canonical taxonomy of 26 classes (Section~\ref{sec:eval-metrics}) \\
     Confidence & inter-run agreement; reported un-gated and at $\geq 0.67$ \\
     Auto-applicable repair rate & \texttt{@babel/parser} syntax check on every Stage-2 repair output (\texttt{\{code, language\}}) \\
     Models & \texttt{gemma3:1b}, \texttt{gemma3:4b}, \texttt{qwen3:4b}, \texttt{qwen3:8b}, \texttt{CodeLlama:latest} \\
-    Software & Ollama 0.17.1, Node.js v20.19.5 \\
+    Software & Ollama 0.17.1, Node.js v20.19.5 (native macOS run); containerised harness pins node:20.19.0-alpine (Section~\ref{sec:impl-container}) \\
     Hardware/OS & Apple M4 Max (16 cores, 64\,GB RAM), macOS Darwin 25.3.0 (arm64) \\
     Invocation & \texttt{--ablation --include-baselines --runs 3} \\
     \bottomrule
