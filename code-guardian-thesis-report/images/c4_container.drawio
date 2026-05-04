@@ -70,7 +70,7 @@
         <mxCell id="vectordb-tech" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=10;fontStyle=2;fontColor=#E3F2FD;" value="[Local HNSW Index]" vertex="1">
           <mxGeometry height="20" width="280" x="1000" y="153" as="geometry" />
         </mxCell>
-        <mxCell id="vectordb-desc" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=10;fontColor=#E3F2FD;" value="Stores CWE/OWASP/CVE embeddings&#xa;&#xa;• 850+ CWE descriptions&#xa;• OWASP Top 10 guidance&#xa;• CVE pattern examples&#xa;• HNSW indexing for fast retrieval" vertex="1">
+        <mxCell id="vectordb-desc" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=10;fontColor=#E3F2FD;" value="Stores CWE/OWASP/CVE embeddings&#xa;&#xa;• ~180 CWE/OWASP/CVE entries&#xa;• OWASP Top 10 guidance&#xa;• CVE pattern examples&#xa;• HNSW indexing for fast retrieval" vertex="1">
           <mxGeometry height="90" width="260" x="1010" y="180" as="geometry" />
         </mxCell>
         <mxCell id="cache-container" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1168bd;strokeColor=#0e548f;strokeWidth=2;" value="" vertex="1">
@@ -79,7 +79,7 @@
         <mxCell id="cache-title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=15;fontStyle=1;fontColor=#FFFFFF;" value="Result Cache" vertex="1">
           <mxGeometry height="25" width="280" x="1000" y="318" as="geometry" />
         </mxCell>
-        <mxCell id="cache-tech" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=10;fontStyle=2;fontColor=#E3F2FD;" value="[In-Memory LRU + Persistent SQLite]" vertex="1">
+        <mxCell id="cache-tech" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=10;fontStyle=2;fontColor=#E3F2FD;" value="[In-Memory LRU]" vertex="1">
           <mxGeometry height="20" width="280" x="1000" y="343" as="geometry" />
         </mxCell>
         <mxCell id="cache-desc" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=10;fontColor=#E3F2FD;" value="Analysis results keyed by&#xa;(code hash, model, RAG enabled)&#xa;&#xa;• 100 entry limit (LRU)&#xa;• 30 minute TTL" vertex="1">
