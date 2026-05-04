@@ -173,9 +173,9 @@ export function getContextualQnAWebviewContent(
     </div>
     <script>
     (function() {
-        logger.info('Webview script starting...');
+        console.log('Webview script starting...');
         const vscode = acquireVsCodeApi();
-        logger.info('VS Code API acquired:', vscode);
+        console.log('VS Code API acquired:', vscode);
         let contextUris = [];
         let currentModel = '${escapeHtml(currentModel)}';
         
@@ -189,7 +189,7 @@ export function getContextualQnAWebviewContent(
         const loadingSpinner = document.getElementById('loadingSpinner');
         const selectContextBtn = document.getElementById('selectContextBtn');
         
-        logger.info('DOM elements found:', {
+        console.log('DOM elements found:', {
             contextList: !!contextList,
             selectContextBtn: !!selectContextBtn,
             askButton: !!askButton
@@ -206,12 +206,12 @@ export function getContextualQnAWebviewContent(
         };
         
         document.getElementById('selectContextBtn').onclick = function() {
-            logger.info('Select context button clicked');
+            console.log('Select context button clicked');
             vscode.postMessage({ type: 'selectContext' });
         };
         
         document.getElementById('testBtn').onclick = function() {
-            logger.info('Test button clicked - Script is working!');
+            console.log('Test button clicked - Script is working!');
             alert('Test button works! Script is running correctly.');
         };
         

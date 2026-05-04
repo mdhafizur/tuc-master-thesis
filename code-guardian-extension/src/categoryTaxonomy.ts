@@ -17,12 +17,15 @@ export type CanonicalCategory =
 	| 'hardcoded-credential'
 	| 'auth-bypass'
 	| 'improper-auth'
+	| 'session-fixation'
 	| 'prototype-pollution'
 	| 'race-condition'
 	| 'redos'
+	| 'weak-validation'
 	| 'input-validation'
 	| 'information-exposure'
 	| 'crypto-verification'
+	| 'vulnerable-dependency'
 	| 'other';
 
 interface CompiledPattern {

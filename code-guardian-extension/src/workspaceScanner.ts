@@ -175,7 +175,9 @@ export class WorkspaceScanner {
 			onProgress?.(`Scanning ${path.basename(fileUri.fsPath)}...`);
 
 			// Analyze with LLM (Stage 1 of audit mode, single stage of inline mode).
-			const llmIssues = await analyzeCodeWithLLM(content, undefined, this.ragManager);
+			// Whole-file scope: request the larger Ollama context window so prompts up
+			// to ~5,000 tokens (20,000-character file guard plus RAG injections) fit.
+			const llmIssues = await analyzeCodeWithLLM(content, undefined, this.ragManager, 'file');
 
 			// Audit mode: union AST detections (Stage 0) and LLM findings (Stage 1),
 			// deduplicated by (canonical-shape, line). AST findings carry

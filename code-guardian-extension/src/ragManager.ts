@@ -879,7 +879,7 @@ export class RAGManager {
         updated: number;
         errors: string[];
     }> {
-        this.logger.warn(' Using legacy method - redirecting to syncFromDynamicSources()');
+        this.logger.warn('Using legacy method - redirecting to syncFromDynamicSources()');
 
         const syncResult = await this.syncFromDynamicSources();
 

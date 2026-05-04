@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { analyzeCodeWithLLM, SecurityIssue } from './analyzer';
+import { analyzeCodeWithLLM, AnalysisScope, SecurityIssue } from './analyzer';
 import { RAGManager } from './ragManager';
 
 import { getLogger } from './logger';
@@ -12,20 +12,22 @@ import { getLogger } from './logger';
  * @param collection - The diagnostic collection to update.
  * @param lineOffset - The starting line number in the full document (used when analyzing a function snippet).
  * @param ragManager - Optional RAG manager for enhanced analysis.
+ * @param scope - 'function' for inline real-time snippets, 'file' for whole-file scans (the latter requests a larger Ollama context window).
  */
 export async function analyzeAndReportDiagnosticsFromText(
 	code: string | null,
 	doc: vscode.TextDocument,
 	collection: vscode.DiagnosticCollection,
 	lineOffset: number = 0, // Used to shift line numbers if analyzing a sub-block
-	ragManager?: RAGManager
+	ragManager?: RAGManager,
+	scope: AnalysisScope = 'function'
 ) {
 	const logger = getLogger();
 
 	if (!code) { return; }; // Skip analysis if no code is provided
 
 	// Run the LLM analysis and retrieve detected security issues
-	const issues: SecurityIssue[] = await analyzeCodeWithLLM(code, undefined, ragManager);
+	const issues: SecurityIssue[] = await analyzeCodeWithLLM(code, undefined, ragManager, scope);
 
 	logger.info(`Diagnostics: received ${issues.length} issues from LLM analysis`);
 	issues.forEach((issue, i) => {

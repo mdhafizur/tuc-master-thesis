@@ -16,6 +16,21 @@ import { validateRepair } from './repairValidator';
 export type DetectionSource = 'llm' | 'sast' | 'hybrid' | 'ast';
 
 /**
+ * Analysis scope. `function` is the real-time inline path (small snippets, default
+ * Ollama context window of 2048 tokens is sufficient). `file` covers the on-demand
+ * file scan and the workspace scanner: prompts can grow to ~5000 tokens, so the
+ * caller must request a larger num_ctx to avoid silent truncation.
+ */
+export type AnalysisScope = 'function' | 'file';
+
+/** Ollama default context window. */
+const DEFAULT_NUM_CTX = 2048;
+/** Whole-file context window — must accommodate up to a 20,000-character snippet
+ *  plus the system prompt and RAG-injected guidance. Matches the evaluation
+ *  harness's whole-project audit pipeline. */
+const FILE_SCOPE_NUM_CTX = 16384;
+
+/**
  * Interface for the expected structure of a security issue returned by the LLM.
  *
  * `confidence` is in [0, 1]: 1.0 = both consensus passes agreed; 0.3 = single-pass
@@ -212,7 +227,8 @@ function issuesMatch(a: SecurityIssue, b: SecurityIssue): boolean {
 async function singleAnalysisPass(
 	model: string,
 	messages: Array<{ role: string; content: string }>,
-	seed: number
+	seed: number,
+	numCtx: number = DEFAULT_NUM_CTX
 ): Promise<SecurityIssue[]> {
 	const logger = getLogger();
 
@@ -223,7 +239,7 @@ async function singleAnalysisPass(
 					model,
 					messages,
 					format: 'json',
-					options: { temperature: 0, seed }
+					options: { temperature: 0, seed, num_ctx: numCtx }
 				}),
 				new Promise<never>((_, reject) =>
 					setTimeout(() => reject(new AnalysisError(
@@ -583,10 +599,11 @@ Return ONLY the JSON object {code, language}.`;
  * @param ragManager - Optional RAG manager for enhanced prompts.
  * @returns A promise resolving to an array of SecurityIssue objects detected by the LLM.
  */
-export async function analyzeCodeWithLLM(code: string, modelName?: string, ragManager?: RAGManager): Promise<SecurityIssue[]> {
+export async function analyzeCodeWithLLM(code: string, modelName?: string, ragManager?: RAGManager, scope: AnalysisScope = 'function'): Promise<SecurityIssue[]> {
 	const logger = getLogger();
 	const model = modelName || getCurrentModel();
 	const ragEnabled = Boolean(ragManager);
+	const numCtx = scope === 'file' ? FILE_SCOPE_NUM_CTX : DEFAULT_NUM_CTX;
 
 	// Check cache first
 	const cache = getAnalysisCache();
@@ -649,7 +666,7 @@ Rules:
 	const passPromises = consensusConfig.seeds
 		.map((seed, i) => {
 			logger.debug(`Starting analysis pass ${i + 1} with seed ${seed}`);
-			return singleAnalysisPass(model, messages, seed);
+			return singleAnalysisPass(model, messages, seed, numCtx);
 		});
 
 	const passResults = await Promise.all(passPromises);

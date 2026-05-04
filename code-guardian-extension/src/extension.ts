@@ -27,39 +27,46 @@ export function activate(context: vscode.ExtensionContext) {
     const config = vscode.workspace.getConfiguration('codeGuardian');
     const isRAGEnabled = config.get<boolean>('enableRAG', true);
 
-    // Lazy initialization of RAG Manager - only created when first needed
+    // Lazy initialization of RAG Manager - only created when first needed.
+    // `ragInitPromise` lets command handlers await initialization so that the first
+    // invocation uses RAG instead of silently falling back to undefined.
     let ragManager: RAGManager | undefined;
-    let isInitializing = false;
+    let ragInitPromise: Promise<RAGManager | undefined> | undefined;
 
     /**
-     * Initialize RAG Manager lazily on first access
-     * This defers the expensive vector store loading until actually needed
+     * Initialize RAG Manager lazily. Returns a promise that resolves to the manager
+     * once the vector store has loaded (or `undefined` if RAG is disabled or
+     * initialization fails). Safe to call repeatedly — only the first call kicks
+     * off construction; later calls return the in-flight or completed promise.
      */
-    const initializeRAGIfNeeded = () => {
-        if (!isRAGEnabled || ragManager || isInitializing) {
-            return;
+    const initializeRAGIfNeeded = (): Promise<RAGManager | undefined> => {
+        if (!isRAGEnabled) {
+            return Promise.resolve(undefined);
+        }
+        if (ragInitPromise) {
+            return ragInitPromise;
         }
 
-        isInitializing = true;
         logger.info('Lazy loading RAG Manager...');
-
-        // Initialize in background
-        setTimeout(async () => {
+        ragInitPromise = (async (): Promise<RAGManager | undefined> => {
             try {
                 ragManager = new RAGManager(context);
                 logger.success('RAG Manager initialized with security knowledge base');
+                return ragManager;
             } catch (error) {
                 logger.error('Failed to initialize RAG Manager', error);
                 vscode.window.showWarningMessage('RAG Manager initialization failed. Using standard analysis mode.');
-            } finally {
-                isInitializing = false;
+                return undefined;
             }
-        }, 100); // Small delay to not block activation
+        })();
+        return ragInitPromise;
     };
 
     if (isRAGEnabled) {
         logger.info('RAG enabled - initializing...');
-        initializeRAGIfNeeded();
+        // Fire and forget at activation time. Command handlers that need RAG
+        // await initializeRAGIfNeeded() to get the resolved manager.
+        void initializeRAGIfNeeded();
     } else {
         logger.info('RAG disabled - using standard analysis mode');
     }
@@ -139,7 +146,7 @@ export function activate(context: vscode.ExtensionContext) {
             return;
         }
 
-        analyzeAndReportDiagnosticsFromText(fullText, doc, diagnosticCollection, 0, ragManager);
+        analyzeAndReportDiagnosticsFromText(fullText, doc, diagnosticCollection, 0, ragManager, 'file');
         vscode.window.showInformationMessage('🔍 Analyzing full file for security issues...');
     });
     context.subscriptions.push(fullScanCommand);
@@ -162,10 +169,7 @@ export function activate(context: vscode.ExtensionContext) {
     /**
      * Manual command: Analyze selected text or current line using LLM (AI).
      */
-    const selectionAnalysisCommand = vscode.commands.registerCommand('codeSecurity.analyzeSelectionWithAI', () => {
-        // Trigger lazy initialization on first analysis
-        initializeRAGIfNeeded();
-
+    const selectionAnalysisCommand = vscode.commands.registerCommand('codeSecurity.analyzeSelectionWithAI', async () => {
         const editor = vscode.window.activeTextEditor;
         if (!editor) { return; };
 
@@ -182,9 +186,12 @@ export function activate(context: vscode.ExtensionContext) {
             return;
         }
 
-        const analysisMode = ragManager ? '🧠 RAG-enhanced' : '🤖 standard';
+        // Wait for RAG to finish loading so the first invocation actually uses
+        // the knowledge base instead of silently falling back to standard mode.
+        const rag = await initializeRAGIfNeeded();
+        const analysisMode = rag ? '🧠 RAG-enhanced' : '🤖 standard';
         vscode.window.showInformationMessage(`🤖 Analyzing selected code with AI (${analysisMode})...`);
-        analyzeCode(selectedText, context, ragManager);
+        analyzeCode(selectedText, context, rag);
     });
     context.subscriptions.push(selectionAnalysisCommand);
 

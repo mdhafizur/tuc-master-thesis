@@ -2,6 +2,11 @@ import * as vscode from 'vscode';
 import ollama, { ModelResponse } from 'ollama';
 
 import { getLogger } from './logger';
+
+// Default model used when settings is missing or `customModel` is empty.
+// Must stay in sync with the package.json `codeGuardian.model` default.
+const DEFAULT_MODEL = 'codellama:7b';
+
 /**
  * List of allowed/recommended model patterns for code analysis
  * These patterns will be matched against available models from Ollama
@@ -10,11 +15,14 @@ const ALLOWED_MODEL_PATTERNS = [
     // Qwen 2.5-Coder models
     /^qwen2\.5-coder:(0\.5b|1\.5b|3b|7b|14b|32b)$/,
 
+    // Qwen 3 models (used in the thesis evaluation)
+    /^qwen3:(0\.6b|1\.7b|4b|8b|14b|32b)$/,
+
     // Gemma 3 models
     /^gemma3:(270m|1b|4b|12b|27b)$/,
 
-    // CodeLlama models - base versions
-    /^codellama:(7b|13b|34b|70b)$/,
+    // CodeLlama models - base versions and `latest` alias
+    /^codellama:(7b|13b|34b|70b|latest)$/,
 
     // DeepSeek-Coder models
     /^deepseek-coder:(1\.3b|6\.7b|33b)$/,
@@ -39,16 +47,16 @@ const ALLOWED_MODEL_PATTERNS = [
  */
 const MODEL_CATEGORIES = {
     'Recommended for Code Analysis': [
-        'gemma3:1b', 'llama3.2:1b', 'codellama:7b', 'qwen2.5-coder:7b'
+        'qwen3:8b', 'qwen2.5-coder:7b', 'gemma3:1b', 'codellama:7b'
     ],
     'Lightweight Models': [
-        'gemma3:1b', 'llama3.2:1b', 'qwen2.5-coder:0.5b', 'qwen2.5-coder:1.5b', 'gemma3:270m'
+        'gemma3:1b', 'qwen3:1.7b', 'qwen2.5-coder:0.5b', 'qwen2.5-coder:1.5b', 'gemma3:270m'
     ],
     'Professional Grade': [
-        'qwen2.5-coder:32b', 'codellama:70b', 'deepseek-coder:33b', 'wizardcoder:33b'
+        'qwen3:32b', 'qwen2.5-coder:32b', 'codellama:70b', 'deepseek-coder:33b', 'wizardcoder:33b'
     ],
     'Balanced Performance': [
-        'qwen2.5-coder:7b', 'gemma3:4b', 'codellama:13b', 'starcoder2:7b'
+        'qwen3:4b', 'qwen3:8b', 'qwen2.5-coder:7b', 'gemma3:4b', 'codellama:13b', 'starcoder2:7b'
     ]
 };
 
@@ -88,6 +96,9 @@ function getModelInfo(modelName: string): { category: string; description: strin
     if (modelName.includes('qwen2.5-coder')) {
         category = 'Qwen 2.5-Coder';
         description = 'Specialized for code generation and analysis';
+    } else if (modelName.includes('qwen3')) {
+        category = 'Qwen 3';
+        description = 'General-purpose reasoning model used in the thesis evaluation';
     } else if (modelName.includes('gemma3')) {
         category = 'Google Gemma 3';
         description = 'Multimodal model with coding support';
@@ -171,11 +182,11 @@ export function getCurrentModel(): string {
     }
 
     const config = vscode.workspace.getConfiguration('codeGuardian');
-    const selectedModel = config.get<string>('model', 'gemma3:1b');
+    const selectedModel = config.get<string>('model', DEFAULT_MODEL);
 
     if (selectedModel === 'custom') {
         const customModel = config.get<string>('customModel', '');
-        return customModel || 'gemma2:2b';
+        return customModel || DEFAULT_MODEL;
     }
 
     return selectedModel;
@@ -367,6 +378,7 @@ export async function showModelSelector(): Promise<ModelSelection | undefined> {
         // Add recommended models that aren't installed
         const installedModelNames = availableModels.map(m => m.name);
         const recommendedModels = [
+            'qwen3:8b',
             'qwen2.5-coder:7b',
             'gemma3:1b',
             'codellama:7b',
@@ -477,6 +489,13 @@ function getPreDefinedModels() {
         { name: 'qwen2.5-coder:14b', description: 'Advanced coder', size: 'Large', details: 'Enhanced coding capabilities' },
         { name: 'qwen2.5-coder:32b', description: 'Expert coder', size: 'X-Large', details: 'Professional code generation' },
 
+        // Qwen 3 models - thesis evaluation set
+        { name: 'qwen3:1.7b', description: 'Lightweight', size: 'Small', details: 'Compact reasoning model' },
+        { name: 'qwen3:4b', description: 'Balanced', size: 'Medium', details: 'Mid-size reasoning model used in evaluation' },
+        { name: 'qwen3:8b', description: 'Headline', size: 'Large', details: 'Headline configuration for the thesis evaluation' },
+        { name: 'qwen3:14b', description: 'Advanced', size: 'Large', details: 'Higher-capacity reasoning model' },
+        { name: 'qwen3:32b', description: 'Expert', size: 'X-Large', details: 'Largest Qwen 3 variant' },
+
         // Gemma 3 models - All available sizes
         { name: 'gemma3:270m', description: 'Micro', size: 'Micro', details: 'Ultra-compact multimodal model' },
         { name: 'gemma3:1b', description: 'Small', size: 'Small', details: 'Efficient multimodal capabilities' },
@@ -485,6 +504,7 @@ function getPreDefinedModels() {
         { name: 'gemma3:27b', description: 'Premium', size: 'X-Large', details: 'Full multimodal capabilities' },
 
         // CodeLlama models - All available sizes
+        { name: 'codellama:latest', description: 'Latest alias', size: 'Medium', details: 'Default tag (currently aliases codellama:7b)' },
         { name: 'codellama:7b', description: 'Foundation', size: 'Medium', details: 'Base coding model' },
         { name: 'codellama:13b', description: 'Enhanced', size: 'Large', details: 'Improved code understanding' },
         { name: 'codellama:34b', description: 'Professional', size: 'X-Large', details: 'Advanced code analysis' },
