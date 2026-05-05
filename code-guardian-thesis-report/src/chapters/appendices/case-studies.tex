@@ -1,7 +1,7 @@
 \chapter{Detailed Case Studies}
 \label{appendix:case-studies}
 
-This appendix walks five representative outcomes from the evaluation --- true positive with effective repair, false positive on secure code, false negative on a context-dependent pattern, partial repair, and a multi-CWE finding --- and shows how the measured aggregate metrics translate into per-case IDE behaviour.
+This appendix walks five representative outcomes from the evaluation --- true positive with effective repair, false positive on secure code, false negative on a context-dependent pattern, partial repair, and a multi-CWE finding --- and shows how the measured aggregate metrics translate into per-case IDE behavior.
 
 \section{Case 1: True Positive with Effective Repair}
 \label{sec:case-tp-good}
@@ -16,11 +16,11 @@ app.get('/user/:id', (req, res) => {
 // Model output: {"cwe":"CWE-89","lineStart":3,"lineEnd":3,
 //   "fixedCode":"const query = 'SELECT * FROM users WHERE id = ?';\ndb.query(query, [userId], ...)"}
 \end{lstlisting}
-Clean true positive with correct location and CWE, minimal parameterised repair, intent preserved. Low-friction remediation that developers can apply immediately.
+Clean true positive with correct location and CWE, minimal parameterized repair, intent preserved. Low-friction remediation that developers can apply immediately.
 
 \section{Case 2: False Positive (Over-Sensitivity)}
 \label{sec:case-fp}
-Secure username sanitisation flagged by \texttt{gemma3:4b} (LLM-only).
+Secure username sanitization flagged by \texttt{gemma3:4b} (LLM-only).
 \begin{lstlisting}[caption={Secure input validation flagged as CWE-94}]
 function sanitizeUsername(username) {
   const sanitized = username.replace(/[^a-zA-Z0-9_]/g, '');
@@ -29,7 +29,7 @@ function sanitizeUsername(username) {
 }
 // Model output: {"cwe":"CWE-94","message":"Potential code injection in replace()"}
 \end{lstlisting}
-The whitelist regex and length checks are appropriate; the CWE label is mismatched. Illustrates the high-FPR behaviour of smaller configurations (Section~\ref{sec:eval-r1}) and the triage overhead it imposes on developers.
+The whitelist regex and length checks are appropriate; the CWE label is mismatched. Illustrates the high-FPR behavior of smaller configurations (Section~\ref{sec:eval-r1}) and the triage overhead it imposes on developers.
 
 \section{Case 3: False Negative}
 \label{sec:case-fn}
@@ -54,7 +54,7 @@ app.get('/download', (req, res) => {
 });
 // Model output: {"cwe":"CWE-22","fixedCode":"const filename = path.basename(req.query.file);"}
 \end{lstlisting}
-\texttt{path.basename()} reduces traversal but not authorisation; allowlist checks remain. Shows why repairs are advisory and require project-specific review (Section~\ref{sec:eval-r3}).
+\texttt{path.basename()} reduces traversal but not authorization; allowlist checks remain. Shows why repairs are advisory and require project-specific review (Section~\ref{sec:eval-r3}).
 
 \section{Case 5: Multi-CWE Detection}
 \label{sec:case-multi-cwe}
@@ -67,7 +67,7 @@ app.post('/admin/exec', (req, res) => {
 });
 // Model output: [{"cwe":"CWE-798","lineStart":3},{"cwe":"CWE-78","lineStart":4}]
 \end{lstlisting}
-Both issues are correctly separated, which matters for IDE diagnostics and prioritisation. The credential fix is straightforward; command-execution remediation is design-sensitive.
+Both issues are correctly separated, which matters for IDE diagnostics and prioritization. The credential fix is straightforward; command-execution remediation is design-sensitive.
 
 \medskip
 

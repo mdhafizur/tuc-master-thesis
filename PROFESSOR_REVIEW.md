@@ -1,19 +1,21 @@
 # Professor-Grade Review — Code Guardian Thesis
 
-A consolidated review of `code-guardian-thesis-report/` from four perspectives: argument quality, per-chapter narrative health, methodology and defense readiness, and code/consistency. Complements the existing **`REVIEW.md`** (code-vs-thesis verification, citation audit, prose style) and **`TASK_COVERAGE.md`** (task description mapping). Every claim below carries `file:line` so the student can act item-by-item.
+A consolidated review of `code-guardian-thesis-report/` from four perspectives: argument quality, per-chapter narrative health, methodology and defense readiness, and code/consistency. Complements the existing **`REVIEW.md`** (code-vs-thesis verification, citation audit, prose style) and **`TASK_COVERAGE.md`** (task description mapping). Sections 1–6 below document the original analysis that produced the fix list. Section 7 now reflects post-fix status.
 
-## Executive Verdict
+## Executive Verdict — Post-Fix State
 
-| Dimension | Verdict | Top concern |
+| Dimension | Verdict | Status |
 |---|---|---|
-| Academic argument & contribution | 🟡 Adequate | RQ2 drift: introduction promises *"qualitative grounding of explanations"* but discussion delivers F1 deltas only — the question was changed, not answered |
-| Per-chapter narrative | 🟢 Good (Implementation: 🟡 Concerns) | Implementation chapter has flat outline preamble + 3-line summary; system_workflow.tex uses `\subsection*` (no ToC entry) |
-| Methodology & statistics | 🟡 Solid with one over-claim | *"rules out threshold overfitting"* (`eval_r1_accuracy.tex:122`) overstates what n=9 secure cases on TEST can rule out |
-| Defense readiness | 🟢 Strong | 35 anticipated examiner Qs answered with anchor facts; three rehearsed mitigations for the weakest claims |
-| Implementation health | 🟢 7 of 8 REVIEW.md blockers fixed | §1.3 partial — dead `isModelAllowed()` stub remains in `modelManager.ts:67-70` (one-line delete) |
-| Cross-cutting consistency | 🟡 One broken cross-reference | `discussion.tex:33` references `sec:intro-objectives` but should be `sec:intro-rqs` — wrong page renders today |
+| Academic argument & contribution | 🟢 Strong | RQ2 reworded to reflect what is actually measured; originality claim retreated to a defensible combination claim; Snyk Code positioning addressed in Problem Description |
+| Per-chapter narrative | 🟢 Good | Implementation chapter preamble rewritten to thematic prose; summary expanded to map mechanisms→requirements; `\subsection*` blocks numbered; conclusion no longer re-asserts achievement |
+| Methodology & statistics | 🟢 Solid | Threshold-overfitting and FPR-band claims now carry CIs and honest scope qualifiers; three new threats-to-validity paragraphs (training-data leakage, configuration-selection non-pre-registration, taxonomy construct validity merged with existing curator-bias) |
+| Defense readiness | 🟢 Strong | 35 anticipated examiner Qs documented in §4 below; three weakest claims (W1–W3) now honestly framed in the chapters themselves rather than relying on rehearsed mitigations alone |
+| Implementation health | 🟢 8 of 8 REVIEW.md blockers closed | §1.3 fully closed: dead `ALLOWED_MODEL_PATTERNS` array, `isModelAllowed()` stub, and the no-op `.filter()` site removed |
+| Cross-cutting consistency | 🟢 Clean | `discussion.tex:33` cross-ref now resolves to `sec:intro-rqs`; new inbound `\Cref` from evaluation chapter and R5 privacy section ground the new intro labels; LaTeX builds without `??` or undefined references |
 
-**Top three to fix before defense:** (1) `discussion.tex:33` cross-reference target; (2) `eval_r1_accuracy.tex:122` "rules out threshold overfitting" → "rules out the chosen threshold being a TRAIN-specific optimum among the swept set"; (3) RQ2 either restate to drop "qualitative grounding" or add a brief grounding-rubric sample to discussion §6.3.
+**Build status:** `npm run compile` (TypeScript + ESLint) clean; `pdflatex Template.tex` clean (only pre-existing package-config warnings).
+
+**Original top-three before defense (now closed):** (1) ~~`discussion.tex:33` cross-reference target~~ — fixed; (2) ~~`eval_r1_accuracy.tex:122` over-strong "rules out threshold overfitting"~~ — softened with CI; (3) ~~RQ2 question-shifting~~ — RQ2 restated to drop "qualitative grounding" clause.
 
 ---
 
@@ -291,49 +293,53 @@ Single `pdflatex -interaction=nonstopmode -draftmode` pass: **no `Reference X un
 
 ---
 
-## 7. Prioritised Punch List
+## 7. Prioritised Punch List — Status
 
-### Critical (fix before defense)
+All Critical, Important, and Nice-to-have items below have been resolved. Items 16 (stage notation consistency) is the one remaining item not yet acted on; tracked as an optional cosmetic.
 
-1. **Broken cross-reference** at [discussion.tex:33](code-guardian-thesis-report/src/chapters/discussion.tex#L33) — change `\ref{sec:intro-objectives}` to `\ref{sec:intro-rqs}`. Renders wrong page today. *One-line fix.*
+### Closed — Critical (defense-blocking)
 
-2. **Over-strong claim** at [eval_r1_accuracy.tex:122](code-guardian-thesis-report/src/chapters/evaluation/eval_r1_accuracy.tex#L122): "rules out threshold overfitting" → "rules out the chosen threshold being a TRAIN-specific optimum among the swept set". With n=9 secure on TEST and three thresholds tied, the strong claim is not supported. *Sentence-level rewrite.*
+| # | Item | Resolution |
+|---|---|---|
+| C1 | Broken cross-reference at `discussion.tex:33` | `\ref{sec:intro-objectives}` → `\ref{sec:intro-rqs}`. Build clean. |
+| C2 | "rules out threshold overfitting" at `eval_r1_accuracy.tex:122` | Reworded to "rules out the chosen threshold being a TRAIN-specific optimum among the swept set; with only 9 secure samples on TEST it cannot rule out small-effect overfitting in general." 95% CI [0%, 33.6%] now disclosed inline. |
+| C3 | RQ2 question-shifting | RQ2 restated at `introduction.tex:48`: "How does retrieval-augmented prompting influence detection quality compared to an LLM-only configuration, and is the effect uniform across model families or model-dependent?" Now matches what discussion §6.3 actually answers. |
+| C4 | "Comfortably below" FPR claim at `eval_r1_accuracy.tex:180` | Replaced with "point estimate below the High ceiling of 0.20; the upper CI bound straddles the threshold" plus the 95% CI [2.1%, 26.5%] inline. |
 
-3. **RQ2 question-shifting** ([introduction.tex:48](code-guardian-thesis-report/src/chapters/introduction.tex#L48) ↔ [discussion.tex:36-37](code-guardian-thesis-report/src/chapters/discussion.tex#L36-L37)): RQ2 promised "qualitative grounding of explanations" but discussion delivers F1 deltas only. Either restate RQ2 to drop the grounding clause **or** add a brief explanation-grounding rubric (3-5 paired RAG vs LLM-only outputs scored on grounding faithfulness) to discussion §6.3.
+### Closed — Important
 
-4. **FPR-band over-claim** at [eval_r1_accuracy.tex:180](code-guardian-thesis-report/src/chapters/evaluation/eval_r1_accuracy.tex#L180): 95% CI upper bound (26.5%) *exceeds* the High threshold (0.20). Soften "comfortably below" to "point estimate below the High ceiling; CI upper bound straddles it on n=30".
+| # | Item | Resolution |
+|---|---|---|
+| I5 | Conclusion re-asserts achievement | "Key Findings" section removed; conclusion preamble points to `sec:disc-rq-answers` for the verdicts. Three sections in conclusion: Summary of Contributions, Implications for Practice (with the "Decision support, not a verifier" caveat), Future Work, Conclusion. |
+| I6 | Implementation chapter narrative health | `implementation.tex:3` rewritten as a thematic preamble narrowing from runtime substrate inwards; the 3-line "Implementation Summary" expanded to map every implementation choice (two-stage pipeline, function-level scoping + LRU cache, egress gate + signed corpus, multi-pass consensus, auto-applicability check) onto the R1–R5 requirements. |
+| I7 | `\subsection*` in `system_workflow.tex` | Four `\subsection*` blocks ("End-to-End Flow", "Debouncing and Workflow Modes", "Pipeline Gates", "System Prompt and Latency Telemetry") converted to numbered `\subsection`. ToC now reflects the structure. |
+| I8 | Forward-references in Analysis chapter | Removed from `analysis.tex:42-50` traceability-table cells (kept `Chapter~\ref{chap:evaluation}` as a single back-pointer at the end of the surrounding paragraph); `requirements/r3.tex:9` forward-refs replaced with `Chapter~\ref{chap:evaluation}`; `system_architecture_and_design.tex:51` forward-ref to `sec:impl-audit-mode` replaced with "described in Chapter~\ref{chap:implementation}". |
+| I9 | Three threats-to-validity gaps | Two new paragraphs added at `discussion.tex` (Training-data leakage from public corpora; Configuration selection is not pre-registered); the third (Construct validity of the canonical taxonomy) was merged with the existing "Curator bias on dataset and taxonomy" paragraph into a single combined "Curator bias and taxonomy construct validity" paragraph after verification flagged redundancy. |
+| I10 | Originality over-claim at `positioning.tex:25` | Retreated from "Code Guardian is the only reviewed approach that reaches at least Medium across all five requirements" to "Among the reviewed approaches Code Guardian is the one that operationalises this combination — contextual reasoning, repair generation, IDE integration, and on-device privacy — in a single tool, scoring at least Medium on every requirement under the scales applied here." |
+| I11 | Snyk Code positioning at `introduction.tex:5` | Snyk Code paragraph added with `\cite{snykDocs}`: "Hybrid commercial offerings such as Snyk Code partly close the gap by running detection in a proprietary engine that can be deployed locally, but the engine is not a contextual LLM and key features remain bound to vendor cloud services in the default configuration." |
+| I12 | Dead allowlist code | `ALLOWED_MODEL_PATTERNS` array, `isModelAllowed()` stub, and the no-op `.filter()` call site all removed from `modelManager.ts` (~40 lines). REVIEW.md §1.3 now fully closed. TS compile + ESLint clean. |
 
-### Important
+### Closed — Nice-to-have
 
-5. **Conclusion still re-asserts achievement.** [conclusion.tex:15-17](code-guardian-thesis-report/src/chapters/conclusion.tex#L15-L17) "Key Findings" makes verdict-style claims ("Local deployment is feasible", "False-positive control remains the main practical barrier"). Soften to a 4-line "Summary" that cross-refs Chapter 5/6 for evidence. Per TU Chemnitz: conclusion = summary + outlook, not re-addressing achievement.
+| # | Item | Resolution |
+|---|---|---|
+| N13 | Inbound `\Cref` for new intro labels | `Section~\ref{sec:intro-rqs}` added to `evaluation.tex:1`; `Section~\ref{sec:intro-threat-model}` added to `eval_r5_privacy.tex:4`. |
+| N14 | Listing reference at `agent.tex:16` | "Stage 1 returns an `issues` array with the detection-side fields shown in Listing~\ref{lst:cg-issue-schema}" added to surrounding prose at `agent.tex:14`. |
+| N15 | Future_work preamble + spelling slip | "The thesis closes a privacy-preserving slice of the IDE-security space; several engineering and research directions extend it." prepended to `conclusion.tex:45` `\section{Future Work}` before the `\input`. "analyze" → "analyse" at `strategies.tex:35`. |
 
-6. **Implementation chapter narrative health.** [implementation.tex:3](code-guardian-thesis-report/src/chapters/implementation/implementation.tex#L3) is a flat one-sentence-per-section outline; [implementation.tex:17-19](code-guardian-thesis-report/src/chapters/implementation/implementation.tex#L17-L19) is a 3-line summary too thin to consolidate the chapter. Convert preamble to thematic prose; expand summary to 6–8 lines.
+### Verification-pass follow-ups (resolved during the post-fix re-review)
 
-7. **`\subsection*` in implementation.** [system_workflow.tex](code-guardian-thesis-report/src/chapters/implementation/system_workflow.tex) uses unnumbered `\subsection*{End-to-End Flow}`, `\subsection*{Pipeline Gates}`, etc. — they don't appear in the ToC and break the "≥2 numbered subchapters" rule. Convert to numbered `\subsection`.
+| Issue | Resolution |
+|---|---|
+| Conclusion preamble said "answers the research questions" but RQs now answered in discussion | Preamble updated to "summarises the thesis outcomes and states deployment implications" + explicit pointer to `Chapter~\ref{chap:discussion}` (Section~\ref{sec:disc-rq-answers}). |
+| Two `\section{Summary}`-style headings in conclusion (§7.1 "Summary of Contributions" + new §7.2 "Summary") | New §7.2 deleted; its forward-pointer content folded into the chapter preamble. |
+| Threats-to-validity overlap between existing "Curator bias on dataset and taxonomy" and new "Construct validity of the canonical taxonomy" | Merged into one paragraph "Curator bias and taxonomy construct validity"; auditability mitigations consolidated. |
+| Snyk Code claim originally asserted without citation | Rewritten with `\cite{snykDocs}` and softened to "key features remain bound to vendor cloud services in the default configuration" (defensible from public Snyk documentation). |
+| Discussion §6.5 Summary still claimed "cloud-LLM-class precision" without the CI caveat introduced in §6.3 | Reworded to "the precision band reported for cloud GPT-4 on context-rich function-level tasks (point estimate 78.13%, … single-point comparisons should be read as direction, not dominance)". |
 
-8. **Forward-references in Analysis.** [analysis.tex:42-50](code-guardian-thesis-report/src/chapters/analysis/analysis.tex#L42-L50) requirements traceability table forward-refs `sec:eval-r1` to `sec:eval-r5`; [requirements/r3.tex:9](code-guardian-thesis-report/src/chapters/analysis/requirements/r3.tex#L9) forward-refs `sec:eval-r3`; [system_architecture_and_design.tex:51](code-guardian-thesis-report/src/chapters/concept/system_architecture_and_design.tex#L51) forward-refs `sec:impl-audit-mode`. Replace with generic phrasing ("evaluated in Chapter~\ref{chap:evaluation}").
+### Outstanding (cosmetic, optional)
 
-9. **Three threats-to-validity gaps to add** to [discussion.tex:66-90](code-guardian-thesis-report/src/chapters/discussion.tex#L66-L90): (a) construct validity of canonical taxonomy, (b) training-data leakage from public corpora into LLM training, (c) configuration-selection non-pre-registration. Each adds one paragraph; mitigation language provided in §3.3 above.
-
-10. **Originality over-claim** at [positioning.tex:25](code-guardian-thesis-report/src/chapters/analysis/related_works/positioning.tex#L25): "the only reviewed approach that reaches at least Medium across all five requirements" rests on author-scored competitor evaluation. Retreat to a combination-claim: "the only reviewed approach to operationalise this combination".
-
-11. **Three-way trade-off frame** at [introduction.tex:5](code-guardian-thesis-report/src/chapters/introduction.tex#L5): "no current tool resolves" — Snyk Code's local mode plus repair guidance partially closes this. Add one paragraph addressing Snyk Code head-on, or measured against it.
-
-12. **Dead allowlist code** at [modelManager.ts:67-70](code-guardian-extension/src/modelManager.ts#L67-L70). `isModelAllowed()` returns `true` unconditionally; `ALLOWED_MODEL_PATTERNS` has zero callers. Delete both to close §1.3.
-
-### Nice-to-have
-
-13. **Inbound references for new intro labels.** Add `\Cref{sec:intro-rqs}` from the evaluation chapter where R1–R5 are introduced; add `\Cref{sec:intro-threat-model}` from `eval_r5_privacy.tex` or `concept_derivations.tex`.
-
-14. **Listing reference** at [agent.tex:16](code-guardian-thesis-report/src/chapters/implementation/agent.tex#L16) — add an `\autoref{lst:...}` from the surrounding paragraph (TU Chemnitz "every figure/table/listing referenced" rule).
-
-15. **Eval_r1_accuracy depth-2 grouping.** [eval_r1_accuracy.tex:39](code-guardian-thesis-report/src/chapters/evaluation/eval_r1_accuracy.tex#L39) onward has 10 sibling `\subsection`s. Group "RAG Ablation", "Per-Category Breakdown", "Qualitative Error Analysis", "SAST Baseline" under one `\subsection{Ablations and Diagnostics}` parent.
-
-16. **Stage notation consistency.** Mixed forms `Stage~1`, `stage-1`, `Stage 1`, `Stage-1` across files (REVIEW.md §4.2 already noted). Pick one (`Stage~1`) and apply globally.
-
-17. **British/US spelling slip** at [discussion.tex:28](code-guardian-thesis-report/src/chapters/discussion.tex#L28): "analyzed" in same paragraph as "analysed" elsewhere. Pick one.
-
-18. **Future_work preamble.** [conclusion.tex:43-45](code-guardian-thesis-report/src/chapters/conclusion.tex#L43-L45) `\section{Future Work}` has no preamble before `\input{src/chapters/future_work}`. Add one sentence introducing the section.
+- **Stage notation consistency.** Mixed forms `Stage~1`, `stage-1`, `Stage 1`, `Stage-1` remain across files. A global `sed` would touch many files at once; not done in this pass to keep the diff reviewable. Recommend one careful pass with manual review per file.
 
 ---
 

@@ -1,6 +1,6 @@
 \label{sec:r2-consistency}
 
-R2 addresses detection consistency. Code Guardian should produce stable results when the same code is analysed multiple times with the same settings. In security analysis, unstable output quickly reduces trust and makes it harder for developers to act on findings.
+R2 addresses detection consistency. Code Guardian should produce stable results when the same code is analyzed multiple times with the same settings. In security analysis, unstable output quickly reduces trust and makes it harder for developers to act on findings.
 
 This requirement matters because LLMs are nondeterministic. They can produce different outputs, schema errors, or changed labels across runs \cite{ji2023hallucination,openai2023gpt4}. Even if detection quality is good, inconsistent output makes a tool unsuitable for IDE use. Developers need to trust that warnings will not change randomly between runs \cite{johnson2013don}.
 

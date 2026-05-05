@@ -41,7 +41,7 @@ The implication is clear: latency improvements must come from prompt-side reduct
 \subsection{Resource Usage}
 \label{sec:eval-r4-resources}
 
-The harness-side process is intentionally lightweight: harness-side CPU totals a median of 3\,ms per inference and peak RSS stabilises around 87\,MB, both negligible relative to the wall-clock latency. The dominant resource cost is Ollama's own footprint --- approximately 6--8\,GB RAM for an 8B model at 4-bit quantisation plus one CPU/GPU core during the prefill and decode passes. These measurements confirm that inference dominates and that any latency improvement must come from model selection, prompt reduction, or hardware, not from the orchestration layer.
+The harness-side process is intentionally lightweight: harness-side CPU totals a median of 3\,ms per inference and peak RSS stabilizes around 87\,MB, both negligible relative to the wall-clock latency. The dominant resource cost is Ollama's own footprint --- approximately 6--8\,GB RAM for an 8B model at 4-bit quantization plus one CPU/GPU core during the prefill and decode passes. These measurements confirm that inference dominates and that any latency improvement must come from model selection, prompt reduction, or hardware, not from the orchestration layer.
 
 \subsection{Latency Feasibility for IDE Workflows}
 
@@ -71,16 +71,19 @@ Based on the R4 evaluation scale (Table~\ref{tab:r4-usability-thresholds}), the 
 
 \begin{itemize}
   \item Stage-1 detection median = 2\,216\,ms ($\leq 5$\,s; within the High threshold for the \emph{on-demand / audit} band).
-  \item p95 = 4\,327\,ms (still $\leq 5$\,s, so the slow-tail behaviour does not break the High band).
+  \item p95 = 4\,327\,ms (still $\leq 5$\,s, so the slow-tail behavior does not break the High band).
   \item For full-file scans (multiple functions), aggregate latency scales roughly linearly and typically reaches 8--20\,s, falling in the Medium range.
 \end{itemize}
 
 The High rating applies to the on-demand / audit workflow band ($\leq 5$\,s per function, per Table~\ref{tab:r4-feasibility}). The stricter \emph{interactive-inline} budget ($\leq 1.5$\,s) is only met by the smaller \texttt{gemma3:1b+RAG} (1\,019\,ms) and \texttt{qwen3:4b} (1\,328\,ms) configurations, both at a detection-quality cost relative to the headline.
 
 \begin{center}
-\begin{tabular}{cc}
+\begin{tabular}{cl}
 \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} &
-\textbf{R4 Level: High usability (on-demand / audit) / Medium usability (full-file).} \\
+\begin{tabular}[c]{@{}l@{}}
+\textbf{R4 Level: High usability (on-demand / audit band)} \\
+\textbf{\phantom{R4 Level: }Medium usability (full-file scans).}
+\end{tabular} \\
 \end{tabular}
 \end{center}
 

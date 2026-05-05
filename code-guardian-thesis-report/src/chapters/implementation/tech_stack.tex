@@ -35,7 +35,7 @@ These criteria explain the concrete stack decisions: Ollama for local model serv
 
 \subsection*{Shared TS / JS Modules}
 
-The system uses four small modules that are kept in sync between the extension runtime (TypeScript) and the evaluation harness (Node.js) by sharing a single source-of-truth JSON catalogue. Each module is covered by a deterministic snapshot test that asserts twin agreement on a fixed fixture set.
+The system uses four small modules that are kept in sync between the extension runtime (TypeScript) and the evaluation harness (Node.js) by sharing a single source-of-truth JSON catalog. Each module is covered by a deterministic snapshot test that asserts twin agreement on a fixed fixture set.
 
 \begin{itemize}
   \item \textbf{Canonical category taxonomy} (\path{src/categoryTaxonomy.json}, \path{src/categoryTaxonomy.ts}, \path{evaluation/category-taxonomy.js}). A versioned list of 26 canonical vulnerability classes plus an ordered set of regex patterns mapping raw model-emitted labels to canonical IDs. Used by both the extension and the harness for consistent type-level scoring.

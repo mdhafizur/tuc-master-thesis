@@ -5,7 +5,7 @@ The task description (Page~iv) names a strict zero-egress policy and a
 threat model that includes retrieval poisoning. This section describes the
 three enforcement layers in the delivered system: a network-policy module
 that gates every outbound socket, a signed-corpus verifier that detects
-RAG knowledge-base tampering at load time, and a containerised harness
+RAG knowledge-base tampering at load time, and a containerized harness
 that pins the resource and network namespace.
 
 \subsection{Network Policy and Zero-Egress Gate}
@@ -66,7 +66,7 @@ images cannot accidentally carry signing material.
 \texttt{docker-compose.yml} brings up Ollama and the harness on a
 user-defined bridge network with explicit CPU and memory limits (8 CPUs,
 16\,GB) and binds the Ollama port to loopback only. This is the
-``containerised execution'' clause of the task description's
+``containerized execution'' clause of the task description's
 reproducibility triad and the network-isolation arm of the threat model
 in one stack: the harness has no path to a non-loopback host, and resource
 measurements (Section~\ref{sec:eval-r4-resources}) are comparable across
