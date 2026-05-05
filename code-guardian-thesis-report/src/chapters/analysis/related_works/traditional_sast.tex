@@ -10,48 +10,4 @@ There is also a structural precision/recall tension in static analysis deploymen
 
 Finally, many SAST tools provide limited remediation guidance, requiring developers to interpret findings and design fixes manually. Empirical studies show that warning overload and poor actionability reduce adoption and remediation rates \cite{johnson2013don,christakis2016developers}. This gap between \emph{detection} and \emph{remediation support} is one reason why SAST outputs are often strongest as gatekeeping signals, but weaker as day-to-day developer coaching tools.
 
-Table~\ref{tab:eval-sast} evaluates the main SAST tools discussed above against the requirements defined in Section~\ref{sec:requirements}.
-
-\begin{table}[H]
-  \centering
-  \caption{Evaluation of traditional SAST tools against requirements R1--R5.}
-  \label{tab:eval-sast}
-  \small
-  \renewcommand{\arraystretch}{1.5}
-  \begin{tabular}{|m{2.2cm}|c|c|c|c|c|m{3.8cm}|}
-    \hline
-    \textbf{Tool} & \textbf{R1} & \textbf{R2} & \textbf{R3} & \textbf{R4} & \textbf{R5} & \textbf{Key Gap} \\
-    \hline
-
-    Semgrep \cite{semgrepDocs} &
-    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-90:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
-    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} &
-    \raisebox{-0.3cm}{\tikz{\draw (0,0) circle (0.35cm);}} &
-    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} &
-    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} &
-    No contextual reasoning or repair generation \\
-    \hline
-
-    CodeQL \cite{codeqlDocs} &
-    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-150:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
-    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} &
-    \raisebox{-0.3cm}{\tikz{\draw (0,0) circle (0.35cm);}} &
-    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} &
-    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} &
-    No repair suggestions; rigid query language \\
-    \hline
-
-    ESLint security plugins &
-    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-30:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
-    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} &
-    \raisebox{-0.3cm}{\tikz{\draw (0,0) circle (0.35cm);}} &
-    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} &
-    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} &
-    Surface-level patterns only; no semantic analysis \\
-    \hline
-  \end{tabular}
-\end{table}
-
-All three tools achieve high consistency (R2) because their results are deterministic and reproducible. They also score high on usability (R4) due to fast execution and CI/CD integration, and high on privacy (R5) since they run fully locally. However, accuracy (R1) varies: CodeQL's taint analysis provides better context than Semgrep's pattern matching, while ESLint security plugins cover only surface-level patterns. The main gap is repair quality (R3) --- none of these tools suggest concrete fixes, leaving developers to interpret findings and write repairs manually.
-
-These limitations motivate approaches that keep deterministic checks as guardrails while adding more flexible reasoning and repair generation closer to the developer workflow.
+All three tools score high on consistency (R2) and privacy (R5) but provide no repair guidance (R3), leaving developers to write fixes manually; a unified requirement-level comparison is provided in Appendix~\ref{appendix:positioning-table}. These limitations motivate approaches that keep deterministic checks as guardrails while adding more flexible reasoning and repair generation closer to the developer workflow.

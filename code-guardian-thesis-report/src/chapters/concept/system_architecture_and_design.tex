@@ -45,12 +45,10 @@ Figure~\ref{fig:c4-container} summarizes the main internal containers and their 
   \label{fig:c4-container}
 \end{sidewaysfigure}
 
-\clearpage
-
 \subsection{Process View: End-to-End Workflows}
 \label{subsec:process-view}
 
-Figure~\ref{fig:bpmn} illustrates the two dominant analysis workflows; interactive Q\&A and workspace scan extend the on-demand path with the same backend pipeline. \emph{Real-time diagnostics} debounce document-change events for 800\,ms, extract the innermost enclosing function at the cursor, invoke the analyser within size limits, parse and cache the JSON findings, and surface repair suggestions as quick fixes. \emph{On-demand file diagnostics} run the analyser over the full document subject to a size guard. \emph{Interactive analysis and contextual Q\&A} open a WebView, stream Markdown responses from the local model, and optionally inject retrieved knowledge to ground explanations. \emph{Workspace scan} enumerates JS/TS files (excluding dependencies, skipping very large files), analyses each locally, aggregates by severity heuristic, and renders the results in a dashboard. The audit-mode AST+LLM hybrid (Section~\ref{sec:impl-audit-mode}) extends the on-demand path with a deterministic AST stage that runs in parallel with the LLM and is not depicted in the BPMN. Across all workflows source code is sent only to localhost; the optional metadata refresh fetches public CVE/CWE/OWASP records without source content and can be disabled for fully offline operation.
+Figure~\ref{fig:bpmn} illustrates the two dominant analysis workflows; interactive Q\&A and workspace scan extend the on-demand path with the same backend pipeline. \emph{Real-time diagnostics} debounce document-change events for 800\,ms, extract the innermost enclosing function at the cursor, invoke the analyser within size limits, parse and cache the JSON findings, and surface repair suggestions as quick fixes. \emph{On-demand file diagnostics} run the analyser over the full document subject to a size guard. \emph{Interactive analysis and contextual Q\&A} open a WebView, stream Markdown responses from the local model, and optionally inject retrieved knowledge to ground explanations. \emph{Workspace scan} enumerates JS/TS files (excluding dependencies, skipping very large files), analyses each locally, aggregates by severity heuristic, and renders the results in a dashboard. The audit-mode AST+LLM hybrid (described in Chapter~\ref{chap:implementation}) extends the on-demand path with a deterministic AST stage that runs in parallel with the LLM and is not depicted in the BPMN. Across all workflows source code is sent only to localhost; the optional metadata refresh fetches public CVE/CWE/OWASP records without source content and can be disabled for fully offline operation.
 
 \begin{sidewaysfigure}
   \centering
@@ -58,8 +56,6 @@ Figure~\ref{fig:bpmn} illustrates the two dominant analysis workflows; interacti
   \caption{Process view showing two primary workflows with swim lanes. Workflow~1: Real-time function analysis with debouncing (800\,ms) and caching, where cache hits bypass LLM inference and cache misses invoke local analysis. Workflow~2: On-demand analysis with optional RAG; when enabled, the backend generates embeddings, performs vector search (runtime default $k{=}3$; evaluation uses $k{=}5$), and augments the prompt before LLM invocation. When RAG is disabled, analysis proceeds directly to LLM inference without retrieval. Color coding: user events (yellow), extension (orange), backend (purple), LLM (green). Privacy boundary (green dashed): all processes execute on localhost.}
   \label{fig:bpmn}
 \end{sidewaysfigure}
-
-\clearpage
 
 \subsection{Sequence Diagrams: Concrete Detection Flows}
 \label{sec:sequence-diagrams}

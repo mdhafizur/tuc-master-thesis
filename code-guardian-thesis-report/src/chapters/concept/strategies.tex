@@ -32,7 +32,7 @@ The file workflow provides broader coverage when a developer explicitly requests
 
 Some security questions require richer explanations than a single diagnostic message. Code Guardian therefore includes webview-based interaction modes.
 
-\textbf{Selection analysis view.} The user can analyze a selected region (or the current line) and inspect the response in a dedicated analysis panel. This mode supports follow-up questions and streams Markdown-formatted responses for readability. Because it is user-initiated and not continuously triggered, it can tolerate higher latency than real-time diagnostics.
+\textbf{Selection analysis view.} The user can analyse a selected region (or the current line) and inspect the response in a dedicated analysis panel. This mode supports follow-up questions and streams Markdown-formatted responses for readability. Because it is user-initiated and not continuously triggered, it can tolerate higher latency than real-time diagnostics.
 
 \textbf{Contextual Q\&A view.} The contextual Q\&A panel allows the user to select files and folders as context and ask security questions about that subset of the workspace. The extension reads the selected files locally and sends their contents only to the local LLM backend, preserving the no-exfiltration objective for source code.
 
@@ -65,15 +65,3 @@ Two design decisions complement consensus filtering to address the false-positiv
 
 Both mechanisms are conservative: they extend the existing pipeline with optional gates rather than replacing the un-gated path. The chapter's evaluation reports both with-gate and without-gate metrics so the contribution of each gate is attributable.
 
-\subsection{Workflow Selection in Practice}
-\label{subsec:workflow-integration}
-
-In typical use, workflows complement each other:
-\begin{enumerate}
-    \item Developers receive continuous feedback via debounced, function-level diagnostics while writing code.
-    \item Before committing or during review, developers run file scans for broader coverage.
-    \item For ambiguous findings or design-level questions, developers use the interactive analysis and contextual Q\&A views to obtain richer explanations and mitigation guidance.
-    \item Periodically, workspace scans provide an aggregate view that supports prioritization and remediation planning.
-\end{enumerate}
-
-Together, these workflows operationalize the core idea of Code Guardian: privacy-preserving local analysis combined with IDE-native feedback and developer-controlled remediation.

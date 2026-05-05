@@ -5,7 +5,7 @@ Code Guardian's repair suggestions are LLM-generated code transformations. Autom
 
 \subsection{Why Automated Repair Verification Was Deprioritised}
 
-Verifying that a repair preserves intended behaviour AND eliminates the vulnerability requires solving two undecidable problems simultaneously. Behavioural preservation needs an executable test suite covering the modified paths, semantic-equivalence checking (undecidable in general), and side-effect analysis for non-test-visible behaviour (performance, error handling, logging). Security-improvement verification needs an exploit oracle (as hard as detection itself), completeness checking across all instances of the pattern, and defence-in-depth validation so a repair does not silently weaken other controls. Given these costs and the thesis scope of demonstrating feasibility of privacy-preserving LLM-based detection, automated repair verification is explicitly out of scope; the design instead invests in robust detection, developer-controlled repair application, and clear documentation of repair limits.
+Full repair verification would require behavioural-equivalence checking (undecidable in general), an exploit oracle as hard as detection itself, and a test suite covering all modified paths. Given the thesis scope of demonstrating feasibility of privacy-preserving LLM-based detection, automated repair verification is explicitly out of scope; the design instead invests in developer-controlled application and syntactic auto-applicability checking as a practical proxy.
 
 \subsection{Repair Safety Mechanisms}
 

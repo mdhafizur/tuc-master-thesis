@@ -3,7 +3,7 @@
 
 This section explains how Code Guardian turns JavaScript/TypeScript code into vulnerability findings and repair suggestions, implementing the design from Chapter~\ref{chap:concept} against the requirements in Chapter~\ref{chap:analysis} (R3, R4, R5).
 
-\subsection*{End-to-End Flow}
+\subsection{End-to-End Flow}
 
 Two execution paths matter in the prototype. The \emph{structured diagnostics} path emits JSON findings for editor diagnostics, and the \emph{interactive analysis} path emits Markdown explanations in a WebView with follow-up Q\&A. A run is triggered automatically while editing (debounced) or explicitly via a command (analyse selection, analyse file, scan workspace); the chosen scope decides how much context is included.
 
@@ -13,11 +13,11 @@ The local Ollama model is then invoked with output constraints that match the wo
 
 Although inference is probabilistic, the orchestration is deterministic: for a fixed input snapshot, active model, and prompt mode, scope extraction, prompt-assembly structure, parsing, localisation mapping, and diagnostic emission follow a fixed sequence with explicit guards. This isolates model effects during debugging and evaluation. On each trigger the extension extracts and validates scope, computes a content-based cache key, returns immediately on hit, and on miss assembles the prompt (optionally with RAG), calls the model, validates the JSON response, maps snippet-relative line numbers to document positions, caches the result, and renders.
 
-\subsection*{Debouncing and Workflow Modes}
+\subsection{Debouncing and Workflow Modes}
 
 A debouncer suppresses analysis on every keystroke: each document-change event resets a timer, and analysis runs only after an 800\,ms pause. The real-time workflow uses function-level scope plus the 2\,000-character guard ($\sim$400--500 tokens) to keep inline feedback within acceptable bounds on consumer hardware. On-demand selection or file analysis applies a 20\,000-character file guard ($\sim$4\,000--5\,000 tokens) so prompts fit the effective context window of smaller local models (8K--16K) with headroom for RAG context and response generation. The workspace scanner iterates JS/TS files (excluding \texttt{node\_modules}) and aggregates findings into a dashboard; files above 500\,KB are skipped so memory use stays bounded across large monorepos.
 
-\subsection*{Pipeline Gates}
+\subsection{Pipeline Gates}
 
 Four configurable gates sit between the consensus filter and diagnostic emission, each toggleable through extension settings.
 
@@ -29,7 +29,7 @@ The opt-in \emph{hybrid SAST fusion} runs Semgrep once over the snippet. Any LLM
 
 \emph{Repair syntax validation} parses every \texttt{suggestedFix} after stage~2 and tags findings with an \texttt{autoApplicable} boolean (and a short rejection reason such as \texttt{prose\_not\_code}). The IDE quick-fix surface uses this to decide whether to offer one-click apply or a preview-first action.
 
-\subsection*{System Prompt and Latency Telemetry}
+\subsection{System Prompt and Latency Telemetry}
 
 The stage-1 system prompt is a tight ${\sim}80$-token instruction; JSON-mode decoding plus the response schema enforce output shape, so a verbose response-format example block is unnecessary. Per-call latency is reported as \texttt{inferenceTimeMs} plus \texttt{parseTimeMs} so any latency change can be attributed unambiguously. Inference dominates the total by more than $99\%$ in measured micro-evaluation; the prompt size is therefore the dominant prefill-token cost lever.
 

@@ -78,3 +78,114 @@ For reproducibility, archive:
 \end{itemize}
 
 The full dataset is machine-readable in the repository.
+
+\section{Headline Run Configuration}
+\label{app:run-config}
+
+\begin{table}[H]
+  \centering
+  \caption{Run configuration for the headline evaluation.}
+  \label{tab:eval-reproducibility}
+  \small
+  \begin{tabular}{p{0.30\textwidth}p{0.63\textwidth}}
+    \toprule
+    Item & Value \\
+    \midrule
+    Dataset & \texttt{vulnerability-test-cases.generated.json} (71 vulnerable) + \texttt{negatives-only.generated.json} (30 secure) \\
+    Prompt modes & LLM-only, LLM+RAG (\texttt{k=5}, static snippets) \\
+    Runs per sample & 3 (vulnerable and secure, symmetric) \\
+    Generation & \texttt{temperature=0}, \texttt{seed=42/137/200}, \texttt{format='json'}, \texttt{num\_predict=1000} \\
+    Request controls & \texttt{timeoutMs=30000}, \texttt{requestDelayMs=500}, sequential, no retries \\
+    Type-level scoring & canonical taxonomy of 26 classes (Section~\ref{sec:eval-metrics}) \\
+    Confidence & inter-run agreement; reported un-gated and at $\geq 0.67$ \\
+    Models & \texttt{gemma3:1b}, \texttt{gemma3:4b}, \texttt{qwen3:4b}, \texttt{qwen3:8b}, \texttt{CodeLlama:latest} \\
+    Software & Ollama 0.17.1, Node.js v20.19.5; containerised harness: node:20.19.0-alpine \\
+    Hardware/OS & Apple M4 Max (16 cores, 64\,GB RAM), macOS Darwin 25.3.0 (arm64) \\
+    Invocation & \texttt{--ablation --include-baselines --runs 3} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\section{Unified Requirement-Level Positioning Comparison}
+\label{appendix:positioning-table}
+
+Table~\ref{tab:positioning-r1r5-appendix} provides the full requirement-level comparison across all reviewed approaches using the R1--R5 evaluation scales from Section~\ref{sec:requirements}. The symbols use the same convention as the per-requirement level mappings in Chapter~\ref{chap:evaluation}.
+
+\begin{table}[H]
+  \centering
+  \caption{Unified requirement comparison of reviewed approaches and Code Guardian (R1--R5).}
+  \label{tab:positioning-r1r5-appendix}
+  \small
+  \renewcommand{\arraystretch}{1.5}
+  \begin{tabular}{|m{2.4cm}|c|c|c|c|c|}
+    \hline
+    \textbf{Approach} & \textbf{R1} & \textbf{R2} & \textbf{R3} & \textbf{R4} & \textbf{R5} \\
+    \hline
+    Semgrep &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-90:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\draw (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} \\
+    \hline
+    CodeQL &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-150:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\draw (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} \\
+    \hline
+    GitHub Copilot &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-150:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-30:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-90:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\draw (0,0) circle (0.35cm);}} \\
+    \hline
+    IRIS &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-150:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-90:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-90:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\draw (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\draw (0,0) circle (0.35cm);}} \\
+    \hline
+    SecRepair &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-90:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-90:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-90:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\draw (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\draw (0,0) circle (0.35cm);}} \\
+    \hline
+    RESCUE &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-150:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-150:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\draw (0,0) circle (0.35cm);}} &
+    ---\textsuperscript{*} \\
+    \hline
+    Snyk Code &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-150:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\draw (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-150:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} \\
+    \hline
+    \textbf{Code Guardian} &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-150:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-150:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-90:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} \\
+    \hline
+  \end{tabular}
+
+  \vspace{0.3em}
+  \footnotesize\noindent
+  Legend:
+  \raisebox{-0.15cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.2cm);}}~High \quad
+  \raisebox{-0.15cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.2cm) arc (90:-150:0.2cm) -- cycle; \draw (0,0) circle (0.2cm);}}~Medium \quad
+  \raisebox{-0.15cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.2cm) arc (90:-90:0.2cm) -- cycle; \draw (0,0) circle (0.2cm);}}~Medium--Low \quad
+  \raisebox{-0.15cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.2cm) arc (90:-30:0.2cm) -- cycle; \draw (0,0) circle (0.2cm);}}~Low \quad
+  \raisebox{-0.15cm}{\tikz{\draw (0,0) circle (0.2cm);}}~Insufficient/None \\[0.2em]
+  \textsuperscript{*}Property not evaluated or reported in the original work.
+\end{table}

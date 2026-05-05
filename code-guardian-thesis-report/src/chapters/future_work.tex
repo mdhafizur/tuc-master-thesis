@@ -1,41 +1,19 @@
-The evaluation results suggest clear priorities for improving Code Guardian’s practical reliability and external validity.
+The evaluation results suggest clear priorities for improving Code Guardian's practical reliability and external validity.
 
-\noindent\textbf{1) False-positive control beyond inter-run agreement.}
+\subsection{False-Positive Control Beyond Inter-Run Agreement}
 The pipeline already includes a per-finding confidence score from inter-run agreement, a configurable confidence gate, and an opt-in hybrid SAST-fusion step that promotes LLM findings corroborated by Semgrep (Section~\ref{subsec:confidence-abstention}). The remaining work is to extend the gate beyond agreement: explicit abstention prompting (asking the model to declare uncertainty), calibrated confidence rather than the current agreement-as-confidence proxy, and a confidence-aware ranking surface in the IDE so high-confidence findings are visually distinct from low-confidence ones.
 
-\medskip
-
-\noindent\textbf{2) Stronger context modeling across files.}
+\subsection{Stronger Context Modelling Across Files}
 Current function-level analysis misses some multi-file vulnerabilities. A regex-based import / sink resolver surfaces validator-package presence and category-tagged sinks (Section~\ref{sec:impl-tech-stack}); its empirical lift on the four zero-recall categories proved marginal. The natural next step is to replace the regex resolver with lightweight static analysis (taint-style source-to-sink traces using a TypeScript-aware parser), which would provide structurally grounded cross-function context rather than lexical hints.
 
-\medskip
-
-\noindent\textbf{3) Safer repair generation beyond syntax validation.}
+\subsection{Safer Repair Generation Beyond Syntax Validation}
 The pipeline includes a syntax check (\texttt{@babel/parser}) on every \texttt{suggestedFix} and reports the auto-applicable rate alongside the manual review (Section~\ref{sec:eval-r3-auto-applicable}). Remaining work is to layer a TypeScript type-check pass on top of the syntax check, run the local test suite (when present) on the patched buffer before offering a one-click apply, and re-run the analyser on the patched code to verify the original finding is gone and no new finding was introduced.
 
-\medskip
-
-\noindent\textbf{4) Robustness against adversarial inputs.}
+\subsection{Robustness Against Adversarial Inputs}
 Prompt-injection and retrieval-poisoning scenarios should be tested explicitly. Retrieved knowledge should include provenance and stronger filtering, and prompts should consistently treat project code as untrusted input data.
 
-\medskip
-
-\noindent\textbf{5) Broader evaluation and user-facing evidence.}
+\subsection{Broader Evaluation and User-Facing Evidence}
 The current dataset is useful for controlled iteration but too small for broad claims. Future evaluation should include larger JavaScript-applicable benchmark suites --- such as JavaScript adaptations comparable in scope to the OWASP Benchmark Project and NIST Juliet (both of which currently target Java and C/C++ only), as well as SecBench for cross-language vulnerability detection. Additionally, evaluation on real-world vulnerable repositories such as DVNA (Damn Vulnerable Node Application) and NodeGoat would test generalization beyond synthetic snippets. Workflow impact should be validated with developer studies measuring usability (SUS), cognitive load (NASA-TLX), and time-to-fix metrics \cite{brooke1996sus,hart1988nasa}.
 
-Beyond the concrete engineering improvements described above, several broader questions remain open for future research.
-
-\medskip
-
-\noindent\textbf{6) Calibration of FPR control to model scale.}
-The observation that only \texttt{qwen3:8b} achieves acceptable FPR raises an open question about \emph{why}: is 8B parameters a threshold effect, a consequence of instruction-tuning strategy, or an artifact of the specific structured-output contract used here? Characterising this relationship across a wider range of model sizes and families would allow deployment recommendations to be grounded in model-capability curves rather than empirical trial-and-error.
-
-\medskip
-
-\noindent\textbf{7) Source-to-sink taint analysis for semantic gap categories.}
-The three zero-recall categories (improper-auth, input-validation, weak-encryption) require reasoning about code \emph{not} present in the analysed function: validation in a separate module, a JWT \texttt{algorithms} option set at the framework layer, or an insufficient key length resolved by a configuration file. The open research question is whether a lightweight TypeScript-aware taint graph --- constructed once per project and queried per-snippet --- can close this gap without the latency and complexity of full interprocedural static analysis.
-
-\medskip
-
-\noindent\textbf{8) Developer interaction with LLM-generated security findings.}
-The current evaluation measures detection quality and latency but not developer behavior. User studies measuring trust calibration, time-to-fix, and alert fatigue thresholds under realistic conditions would determine whether the measured accuracy levels translate to practical adoption \cite{brooke1996sus,hart1988nasa}.
+\subsection{Open Research Questions}
+Beyond the engineering improvements above, three open research questions remain. First, the observation that only \texttt{qwen3:8b} achieves acceptable FPR warrants investigation: is 8B parameters a threshold effect, an instruction-tuning artefact, or an interaction with the structured-output contract? Second, the three zero-recall semantic categories (improper-auth, input-validation, weak-encryption) require reasoning about absent code; a lightweight TypeScript-aware taint graph could close this gap without full interprocedural analysis. Third, user studies measuring trust calibration, time-to-fix, and alert fatigue would determine whether the measured accuracy levels translate to practical adoption \cite{brooke1996sus,hart1988nasa}.

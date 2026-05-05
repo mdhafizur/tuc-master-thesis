@@ -52,11 +52,4 @@ The prototype also exposes maintenance commands for (i) updating vulnerability m
 \subsection{Human Factors and Safe Adoption}
 \label{subsec:ui-human-factors}
 
-Beyond visual presentation, safe adoption depends on how the interface shapes trust and attention. Three patterns are used in the prototype:
-\begin{itemize}
-  \item \textbf{Proximity:} findings appear at the relevant code location to minimize context switching.
-  \item \textbf{Progressive depth:} concise diagnostics for inline use, richer rationale in WebViews when needed.
-  \item \textbf{Reversibility:} quick-fix actions remain undoable, preserving safe experimentation.
-\end{itemize}
-
-These patterns do not guarantee correctness, but they reduce operational friction and over-automation risk. In security-sensitive workflows, this balance between assistance and control is a prerequisite for sustained usage.
+Safe adoption depends on keeping findings proximate to code (inline diagnostics at the relevant location), progressive in depth (concise squiggles for inline use, richer rationale on demand in WebViews), and reversible (quick-fix actions undo cleanly). These patterns reduce over-automation risk; in security-sensitive workflows this balance between assistance and control is a prerequisite for sustained use.

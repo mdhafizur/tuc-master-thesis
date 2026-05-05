@@ -9,63 +9,11 @@ JSON parse success measures how often the system returns valid, schema-compliant
 
 \subsection{Inter-Run Detection Agreement}
 
-Because each vulnerable sample was evaluated 3 times, the harness can measure how often the same sample produces the same binary detection outcome across runs. Agreement rate is the percentage of samples where all 3 runs agree on the detection result. Table~\ref{tab:r2-agreement} reports the rate per model and mode.
-
-\begin{table}[H]
-\centering
-\caption{Inter-run detection agreement (3 runs per sample, 71 vulnerable samples).}
-\label{tab:r2-agreement}
-\footnotesize
-\begin{tabular}{@{}llr@{}}
-\toprule
-\textbf{Model} & \textbf{Mode} & \textbf{Agreement Rate (\%)} \\
-\midrule
-\texttt{qwen3:8b} & LLM+RAG & 87.6 \\
-\texttt{qwen3:8b} & LLM-only & 84.1 \\
-\texttt{qwen3:4b} & LLM+RAG & 82.3 \\
-\texttt{qwen3:4b} & LLM-only & 79.6 \\
-\texttt{gemma3:4b} & LLM+RAG & 76.1 \\
-\texttt{gemma3:4b} & LLM-only & 78.8 \\
-\texttt{gemma3:1b} & LLM+RAG & 71.7 \\
-\texttt{gemma3:1b} & LLM-only & 73.5 \\
-\texttt{codellama} & LLM+RAG & 74.3 \\
-\texttt{codellama} & LLM-only & 77.0 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\texttt{qwen3:8b+RAG} shows the highest agreement (87.6\%), meaning that for roughly 62 out of 71 samples, all three runs produce the same detection decision. Smaller and code-specialized models show more variation, with \texttt{gemma3:1b} at 71.7--73.5\%. RAG slightly improves agreement for \texttt{qwen3} models but slightly reduces it for others, consistent with the accuracy findings.
+Because each vulnerable sample was evaluated 3 times, the harness measures how often all 3 runs agree on the detection decision. \texttt{qwen3:8b+RAG} shows the highest agreement at 87.6\% (roughly 62 of 71 samples unanimous); \texttt{gemma3:1b} sits at 71.7--73.5\%, and \texttt{codellama} ranges from 74.3 to 77.0\%. RAG slightly improves agreement for \texttt{qwen3} models but slightly reduces it for \texttt{codellama} and \texttt{gemma3}, consistent with the accuracy findings.
 
 \subsection{Label and Severity Stability}
 
-Beyond binary detection, the harness examines whether the reported vulnerability type and severity remain stable across runs. For samples detected in all 3 runs, the same CWE label and severity level should appear consistently.
-
-Table~\ref{tab:r2-label-stability} shows label and severity agreement rates for each model among samples where all 3 runs detected a vulnerability.
-
-\begin{table}[H]
-\centering
-\caption{Label and severity stability among consistently detected samples (3/3 runs).}
-\label{tab:r2-label-stability}
-\footnotesize
-\begin{tabular}{@{}llrr@{}}
-\toprule
-\textbf{Model} & \textbf{Mode} & \textbf{CWE Label Agreement (\%)} & \textbf{Severity Agreement (\%)} \\
-\midrule
-\texttt{qwen3:8b} & LLM+RAG & 91 & 85 \\
-\texttt{qwen3:8b} & LLM-only & 88 & 82 \\
-\texttt{qwen3:4b} & LLM+RAG & 83 & 76 \\
-\texttt{qwen3:4b} & LLM-only & 80 & 73 \\
-\texttt{gemma3:4b} & LLM+RAG & 72 & 64 \\
-\texttt{gemma3:4b} & LLM-only & 75 & 67 \\
-\texttt{gemma3:1b} & LLM+RAG & 65 & 58 \\
-\texttt{gemma3:1b} & LLM-only & 68 & 61 \\
-\texttt{codellama} & LLM+RAG & 70 & 62 \\
-\texttt{codellama} & LLM-only & 74 & 66 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-Larger, instruction-tuned models produce more stable classifications. \texttt{qwen3:8b+RAG} achieves 91\% CWE label agreement and 85\% severity agreement, while \texttt{gemma3:1b} drops to 65\% and 58\% respectively. Severity is generally less stable than CWE labels because severity is a subjective judgment that the model must infer from context, while CWE labels can often be derived from the vulnerability pattern itself.
+Among samples detected in all 3 runs, \texttt{qwen3:8b+RAG} achieves 91\% CWE label agreement and 85\% severity agreement, while the weakest configuration (\texttt{gemma3:1b}) drops to 65\% and 58\% respectively. Severity is consistently less stable than CWE labels because it requires contextual inference rather than pattern recognition. Larger, instruction-tuned models are more stable across both dimensions.
 
 \paragraph{By vulnerability category and against SAST.}
 Consistency varies by category: well-known patterns like SQL injection and XSS reach above 90\% inter-run agreement on \texttt{qwen3:8b} because detection relies on clear lexical signals, while prototype pollution and race conditions drop below 70\%. SAST baselines (Semgrep, CodeQL) are fully deterministic and trivially achieve 100\% on every consistency metric, at the cost of rigid pattern matching --- the trade-off between LLM flexibility and SAST determinism is the core architectural consideration.

@@ -11,7 +11,7 @@ Code Guardian extracts the smallest useful unit of code for interactive analysis
 \subsection{LLM Analyser (Local JSON-Only Output)}
 \label{subsec:impl-analyzer}
 
-The analyser performs local inference through Ollama and runs the detect-then-repair pipeline as two separate calls, each constrained by its own structured-output schema (Section~\ref{sec:impl-pipeline}). Stage~1 returns an \texttt{issues} array with the detection-side fields below; Stage~2 issues a per-finding repair call that returns a structured \texttt{\{code, language\}} object, and the validated repair is attached to the corresponding issue under \texttt{suggestedFix} before rendering.
+The analyser performs local inference through Ollama and runs the detect-then-repair pipeline as two separate calls, each constrained by its own structured-output schema (Section~\ref{sec:impl-pipeline}). Stage~1 returns an \texttt{issues} array with the detection-side fields shown in Listing~\ref{lst:cg-issue-schema}; Stage~2 issues a per-finding repair call that returns a structured \texttt{\{code, language\}} object, and the validated repair is attached to the corresponding issue under \texttt{suggestedFix} before rendering.
 
 \begin{lstlisting}[caption={Stage-1 detection schema and the post-stage-2 in-IDE issue shape}, label={lst:cg-issue-schema}]
 // Stage-1 detection schema (LLM-emitted)
@@ -34,10 +34,6 @@ interface SecurityIssue extends DetectionIssue {
 
 Reliability rests on three mechanisms. The system prompt enforces strict JSON-only output. Defensive parsing applies staged normalisation --- trim wrapper text, strip Markdown fences, extract the first array-like substring, then parse and validate field types --- and discards invalid entries rather than partially accepting them; hard parse failures produce an empty issue list with a categorised parse error so malformed outputs cannot propagate into editor state. Transient errors (timeouts, temporary unavailability) are handled by bounded retries with exponential backoff that absorbs short-lived contention from model warm-up or concurrent local inference; retries are capped to prevent cascading delays in interactive workflows. Non-recoverable failures (repeated timeouts, model-not-found) surface a user-facing message and return an empty list so the editor stays responsive while preserving explicit control over model configuration.
 
-\subsection{Diagnostics Mapping}
-\label{subsec:impl-localization}
-
-The diagnostic adapter converts the model's 1-based line numbering into VS Code's 0-based ranges and clamps indices to valid document bounds. When a function snippet is analysed, the previously-computed start-line offset is added to each finding's range. If a suggested fix is attached, it is exposed as a Quick Fix action.
 
 \subsection{RAG Manager and Knowledge Updates}
 \label{subsec:impl-rag-knowledge}
@@ -54,7 +50,3 @@ To avoid repeated inference on unchanged snippets, results are cached in a bound
 
 For project-level visibility, the workspace scanner analyses JavaScript and TypeScript files in batch and aggregates results into a dashboard WebView. The scanner enumerates by extension, excludes dependency folders (e.g.\ \texttt{node\_modules}), and skips very large files to bound runtime; processing is bounded and sequential to avoid saturating local inference capacity and degrading the interactive experience, optimising for reproducible periodic audits rather than throughput. Because the JSON-only schema does not mandate a severity field, the scanner applies a conservative keyword-based severity heuristic for coarse dashboard prioritisation, treated as a presentation aid rather than a ground-truth classifier.
 
-\subsection{Privacy Boundary and Threat Model}
-\label{subsec:impl-privacy-boundary}
-
-The privacy boundary is at inference: analysed code and extracted context go only to the local Ollama server, never to external services. Knowledge updates fetch only public vulnerability metadata and cache it locally before any prompt grounding. The threat-model arms named in the task description --- code exfiltration, retrieval poisoning, and prompt injection --- are addressed by the network policy, signed corpus, and structured-output schema described in Section~\ref{sec:impl-privacy-enforcement}.

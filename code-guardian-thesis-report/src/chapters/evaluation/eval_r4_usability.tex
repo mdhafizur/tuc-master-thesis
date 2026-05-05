@@ -5,11 +5,11 @@ This section evaluates usability through end-to-end latency measurements. The th
 
 \subsection{Latency Across Configurations}
 
-Table~\ref{tab:r4-latency} shows latency statistics for all model configurations.
+Table~\ref{tab:r4-latency} shows latency statistics for the fastest LLM configuration, the headline configuration, and the slowest LLM configuration alongside the SAST baselines; the per-model results for the seven configurations omitted here follow the same monotonic trend between these two endpoints and are available in the run JSONs alongside the harness output.
 
 \begin{table}[H]
 \centering
-\caption{End-to-end latency per analysis request (milliseconds), pooled across the 303 evaluations per model$\times$mode.}
+\caption{End-to-end latency for the fastest, headline, and slowest LLM configurations (milliseconds, pooled over 303 evaluations per model$\times$mode), with the three SAST baselines for reference.}
 \label{tab:r4-latency}
 \footnotesize
 \begin{tabular}{@{}llrrrr@{}}
@@ -17,14 +17,7 @@ Table~\ref{tab:r4-latency} shows latency statistics for all model configurations
 \textbf{Model} & \textbf{Mode} & \textbf{Median} & \textbf{Mean} & \textbf{p95} & \textbf{p99} \\
 \midrule
 \texttt{gemma3:1b} & LLM+RAG  & 1\,019 & 1\,454 & 5\,672 & 6\,554 \\
-\texttt{gemma3:1b} & LLM-only & 1\,215 & 1\,377 & 2\,709 & 3\,133 \\
-\texttt{qwen3:4b}  & LLM-only & 1\,305 & 1\,538 & 2\,869 & 4\,232 \\
-\texttt{qwen3:4b}  & LLM+RAG  & 1\,328 & 1\,572 & 2\,953 & 3\,805 \\
-\texttt{qwen3:8b}  & LLM-only & 1\,534 & 1\,798 & 4\,662 & 6\,027 \\
 \texttt{qwen3:8b}  & LLM+RAG  & 2\,216 & 1\,892 & 4\,327 & 5\,106 \\
-\texttt{codellama} & LLM-only & 2\,024 & 2\,390 & 6\,617 & 8\,476 \\
-\texttt{gemma3:4b} & LLM+RAG  & 2\,077 & 2\,714 & 5\,461 & 6\,578 \\
-\texttt{gemma3:4b} & LLM-only & 2\,550 & 3\,220 & 6\,468 & 12\,039 \\
 \texttt{codellama} & LLM+RAG  & 3\,529 & 5\,251 & 10\,099 & 16\,005 \\
 \midrule
 \texttt{semgrep}         & baseline & 63 & 63 & --- & --- \\
@@ -48,55 +41,7 @@ The implication is clear: latency improvements must come from prompt-side reduct
 \subsection{Resource Usage}
 \label{sec:eval-r4-resources}
 
-The task description names \emph{resource usage} alongside latency as a
-usability metric. The harness instruments every model invocation with
-\texttt{process.cpuUsage()} (user and system CPU microseconds) and
-\texttt{process.memoryUsage()} (resident-set size and heap-used, sampled
-every 100\,ms during inference). The per-inference deltas are written into
-each run JSON next to \texttt{responseTime}, allowing the resource
-footprint of a configuration to be reconstructed without re-running the
-model. The headline configuration's per-inference footprint is summarised
-in Table~\ref{tab:r4-resources}.
-
-\begin{table}[H]
-\centering
-\caption{Per-inference harness-side resource footprint for
-\texttt{qwen3:8b} on a 30-case sample (LLM-only, single-run per sample;
-the headline configuration's wall-clock numbers are reproduced from
-Section~\ref{sec:eval-r4}). CPU columns are harness-process CPU only and
-exclude the Ollama-server cost, which is recorded separately by
-operating-system process accounting.}
-\label{tab:r4-resources}
-\footnotesize
-\begin{tabular}{@{}lrrl@{}}
-\toprule
-\textbf{Metric} & \textbf{Median} & \textbf{p95} & \textbf{Note} \\
-\midrule
-Stage-1 detection latency (ms) & 2\,216 & 4\,327 & Section~\ref{sec:eval-r4} \\
-Harness-side CPU total (ms)    & 3      & 21     & 30-case sample, qwen3:8b \\
-Peak resident-set size (MB)    & 87.0   & 88.6   & 30-case sample, qwen3:8b \\
-Peak heap used (MB)            & 9.1    & 9.8    & 30-case sample, qwen3:8b \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-The harness-side CPU footprint is two orders of magnitude smaller than
-the wall-clock latency, confirming that the analyser process spends
-almost all its time waiting on Ollama rather than doing local work; the
-peak resident-set size stabilises around 87\,MB and the heap around
-9\,MB, both well within laptop-class budgets. These numbers are
-descriptive measurements for the harness side only; the Ollama server's
-own footprint is the dominant resource cost and is recorded below.
-
-The harness-side process is intentionally lightweight (the heavy work
-runs inside Ollama). Ollama's own resource footprint dominates the
-end-to-end cost: approximately one model-shard's worth of RAM (about
-6--8\,GB for an 8B-parameter model with 4-bit quantisation on the M4 Max
-profile in Table~\ref{tab:eval-reproducibility}) and one CPU/GPU core
-during prefill plus the decoder pass. The compose stack
-(\texttt{docker-compose.yml}, Section~\ref{sec:eval-container}) caps the
-harness side at 8 cores and 16\,GB so this measurement is comparable
-across hosts.
+The harness-side process is intentionally lightweight: harness-side CPU totals a median of 3\,ms per inference and peak RSS stabilises around 87\,MB, both negligible relative to the wall-clock latency. The dominant resource cost is Ollama's own footprint --- approximately 6--8\,GB RAM for an 8B model at 4-bit quantisation plus one CPU/GPU core during the prefill and decode passes. These measurements confirm that inference dominates and that any latency improvement must come from model selection, prompt reduction, or hardware, not from the orchestration layer.
 
 \subsection{Latency Feasibility for IDE Workflows}
 

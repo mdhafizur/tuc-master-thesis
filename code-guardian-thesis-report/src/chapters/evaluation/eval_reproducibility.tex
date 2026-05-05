@@ -9,32 +9,7 @@ Section~\ref{sec:eval-container}); this section reports the
 \emph{measured} reproducibility of detector outputs under that
 configuration.
 
-\subsection{Method}
-
-A dedicated harness (\texttt{evaluation/reproducibility.js}) takes a
-fixed-size subset of the curated corpus (default 10 cases), runs the
-analyser $N=3$ times per case with the same seed, and computes two rates:
-
-\begin{itemize}
-  \item \textbf{byteIdentityRate} --- the fraction of cases for which every
-        run produced byte-identical raw model output. This is the strict
-        guarantee deterministic decoding promises.
-  \item \textbf{setIdentityRate} --- the fraction of cases for which every
-        run produced an identical canonical issue set, i.e.\ identical
-        \texttt{(canonical-category, line)} tuples after the canonical
-        taxonomy normaliser is applied. This is the more meaningful
-        ``the detector's conclusions are reproducible'' metric: it is
-        insensitive to harmless paraphrase of issue messages and to
-        permutations of the issue array.
-\end{itemize}
-
-A pass on \texttt{setIdentityRate} but not on \texttt{byteIdentityRate}
-indicates the detector reliably reaches the same conclusion through
-slightly different surface text. A failure on
-\texttt{setIdentityRate} indicates a non-determinism source that is not
-captured by the seed (e.g.\ floating-point scheduling on the GPU).
-
-\subsection{Results}
+A dedicated harness (\texttt{evaluation/reproducibility.js}) runs the analyser $N=3$ times per case with the same fixed seed on a 10-case subset and computes two rates: \textbf{byteIdentityRate} (fraction of cases where all runs produced byte-identical raw output, the strict determinism guarantee) and \textbf{setIdentityRate} (fraction where all runs produced identical canonical \texttt{(category, line)} issue sets after taxonomy normalisation, insensitive to message paraphrase or array ordering).
 
 For \texttt{qwen3:8b} on the locked $N=3$ identical-seed configuration
 (10 cases, seed 42, host \texttt{127.0.0.1:11434}), both rates reach

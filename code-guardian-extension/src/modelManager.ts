@@ -8,41 +8,6 @@ import { getLogger } from './logger';
 const DEFAULT_MODEL = 'codellama:7b';
 
 /**
- * List of allowed/recommended model patterns for code analysis
- * These patterns will be matched against available models from Ollama
- */
-const ALLOWED_MODEL_PATTERNS = [
-    // Qwen 2.5-Coder models
-    /^qwen2\.5-coder:(0\.5b|1\.5b|3b|7b|14b|32b)$/,
-
-    // Qwen 3 models (used in the thesis evaluation)
-    /^qwen3:(0\.6b|1\.7b|4b|8b|14b|32b)$/,
-
-    // Gemma 3 models
-    /^gemma3:(270m|1b|4b|12b|27b)$/,
-
-    // CodeLlama models - base versions and `latest` alias
-    /^codellama:(7b|13b|34b|70b|latest)$/,
-
-    // DeepSeek-Coder models
-    /^deepseek-coder:(1\.3b|6\.7b|33b)$/,
-
-    // WizardCoder models
-    /^wizardcoder:33b$/,
-
-    // StarCoder2 models
-    /^starcoder2:(3b|7b|15b)$/,
-
-    // StableCode models
-    /^stable-code:3b$/,
-
-    // Allow any instruct, python, or other variants that might exist
-    /^codellama:(7b|13b|34b|70b)-(instruct|python)$/,
-    /^deepseek-coder:(1\.3b|6\.7b|33b)-instruct$/,
-    /^qwen2\.5-coder:(0\.5b|1\.5b|3b|7b|14b|32b)-instruct$/
-];
-
-/**
  * Model categories for better organization
  */
 const MODEL_CATEGORIES = {
@@ -59,15 +24,6 @@ const MODEL_CATEGORIES = {
         'qwen3:4b', 'qwen3:8b', 'qwen2.5-coder:7b', 'gemma3:4b', 'codellama:13b', 'starcoder2:7b'
     ]
 };
-
-/**
- * Check if a model is allowed/suitable for code analysis.
- * Uses case-insensitive matching and allows all locally installed models.
- */
-function isModelAllowed(_modelName: string): boolean {
-    // Allow all locally available models — if the user installed it, they should be able to use it
-    return true;
-}
 
 /**
  * Get model category and description based on model name
@@ -208,9 +164,8 @@ export async function getAvailableModels(): Promise<OllamaModel[]> {
     try {
         const response = await ollama.list();
 
-        // Filter and transform models
+        // Transform Ollama's list into our internal model shape (no filtering — any locally installed model is selectable)
         const availableModels: OllamaModel[] = response.models
-            .filter((model: ModelResponse) => isModelAllowed(model.name))
             .map((model: ModelResponse) => {
                 const info = getModelInfo(model.name);
                 return {

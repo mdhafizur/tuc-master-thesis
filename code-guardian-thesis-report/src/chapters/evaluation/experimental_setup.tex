@@ -34,27 +34,4 @@ A Dockerfile pins Node.js 20.19.0-alpine, installs the locked dependency set via
 
 The harness uses \texttt{runsPerSample=3} symmetrically for both groups (213 vulnerable + 90 secure = 303 invocations per model$\times$mode). Precision and recall are computed over the 213 vulnerable evaluations under canonical type-level matching; FPR is computed at sample level over the 30 secure samples (a sample is FP if any of its 3 runs flags an issue); latency and parse-success rates are pooled across all 303. Parse failures are scored as producing no issues, which lowers recall on vulnerable samples. The canonical-matching metrics and the confidence gate are post-hoc transformations of the recorded per-finding outputs, so threshold sweeps do not require re-invoking the model.
 
-\begin{table}[H]
-  \centering
-  \caption{Run configuration for the headline evaluation.}
-  \label{tab:eval-reproducibility}
-  \small
-  \begin{tabular}{p{0.30\textwidth}p{0.63\textwidth}}
-    \toprule
-    Item & Value \\
-    \midrule
-    Dataset & \texttt{vulnerability-test-cases.generated.json} (71 vulnerable) + \texttt{negatives-only.generated.json} (30 secure) \\
-    Prompt modes & LLM-only, LLM+RAG (\texttt{k=5}, static snippets) \\
-    Runs per sample & 3 (vulnerable and secure, symmetric) \\
-    Generation & \texttt{temperature=0}, \texttt{seed=42/137/200} (different per run to enable consensus diversity), \texttt{format='json'}, \texttt{num\_predict=1000} \\
-    Request controls & \texttt{timeoutMs=30000}, \texttt{requestDelayMs=500}, sequential, no warm-up, no retries \\
-    Type-level scoring & canonical taxonomy of 26 classes (Section~\ref{sec:eval-metrics}) \\
-    Confidence & inter-run agreement; reported un-gated and at $\geq 0.67$ \\
-    Auto-applicable repair rate & \texttt{@babel/parser} syntax check on every Stage-2 repair output (\texttt{\{code, language\}}) \\
-    Models & \texttt{gemma3:1b}, \texttt{gemma3:4b}, \texttt{qwen3:4b}, \texttt{qwen3:8b}, \texttt{CodeLlama:latest} \\
-    Software & Ollama 0.17.1, Node.js v20.19.5 (native macOS run); containerised harness pins node:20.19.0-alpine (Section~\ref{sec:impl-container}) \\
-    Hardware/OS & Apple M4 Max (16 cores, 64\,GB RAM), macOS Darwin 25.3.0 (arm64) \\
-    Invocation & \texttt{--ablation --include-baselines --runs 3} \\
-    \bottomrule
-  \end{tabular}
-\end{table}
+The full run configuration --- dataset paths, generation parameters (\texttt{temperature=0}, seeds 42/137/200, \texttt{num\_predict=1000}), request controls, software versions, and hardware profile --- is documented in Table~\ref{tab:eval-reproducibility} in Appendix~\ref{appendix:eval-details}.

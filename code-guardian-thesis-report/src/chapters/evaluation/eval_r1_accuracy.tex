@@ -102,37 +102,29 @@ The gate at $\geq 0.67$ lifts F1 by $2.64$ points and precision by $5.67$ points
 \subsection{Held-Out Threshold Validation}
 \label{sec:eval-r1-heldout}
 
-Tuning a configuration parameter on the same set of cases that produces the headline number is a standard threat to validity. To rule it out for the inter-run confidence threshold, the curated 101-case corpus is partitioned in advance (\texttt{evaluation/build-split.js}, deterministic seed, stratified by vulnerable / secure) into a 71-case train split (50 vulnerable + 21 secure) and a 30-case test split (21 vulnerable + 9 secure). The split file (\texttt{evaluation/datasets/split-2026-04-28.json}) is timestamped and committed before any threshold sweep is run.
-
-The threshold is selected on the train split alone, then applied to the frozen test split; the result is shown in Table~\ref{tab:r1-heldout}.
+The corpus is partitioned in advance (deterministic seed, stratified) into a 71-case TRAIN split and a 30-case TEST split (\texttt{split-2026-04-28.json}, timestamped before any sweep). Thresholds $0.34$, $0.67$, and $1.0$ all tie on TRAIN (F1 78.79\%, FPR 14.29\%), so $\geq 0.67$ (majority-of-three) is carried as the operational default because it degrades more gracefully on higher-variance configurations. Table~\ref{tab:r1-heldout} reports the TRAIN-selected threshold applied to the frozen TEST split.
 
 \begin{table}[H]
 \centering
-\caption{Held-out threshold sweep on \texttt{qwen3:8b+RAG} (3 runs, canonical matcher). The threshold is selected on TRAIN by best F1 (tie-broken by lowest FPR); the TEST column is reported at that same threshold without further tuning.}
+\caption{Held-out validation: TRAIN-selected threshold applied to frozen TEST split (\texttt{qwen3:8b+RAG}, canonical matcher).}
 \label{tab:r1-heldout}
 \footnotesize
-\begin{tabular}{@{}lrrrrrrrr@{}}
+\begin{tabular}{@{}lrrrr@{}}
 \toprule
-\textbf{Threshold} & \multicolumn{4}{c}{\textbf{TRAIN} ($n=71$)} & \multicolumn{4}{c}{\textbf{TEST} ($n=30$)} \\
-\cmidrule(lr){2-5}\cmidrule(lr){6-9}
- & F1 & Prec. & Rec. & FPR & F1 & Prec. & Rec. & FPR \\
+\textbf{Threshold (TEST, $n=30$)} & \textbf{F1} & \textbf{Precision} & \textbf{Recall} & \textbf{FPR} \\
 \midrule
-$0.0$  (no gate)            & 76.92 & 74.07 & 80.00 & 14.29 & 60.00 & 63.16 & 57.14 & 0.00 \\
-$0.34$ ($\geq 1/3$)         & 78.79 & 79.59 & 78.00 & 14.29 & 63.16 & 70.59 & 57.14 & 0.00 \\
-$0.67$ ($\geq 2/3$)         & 78.79 & 79.59 & 78.00 & 14.29 & 63.16 & 70.59 & 57.14 & 0.00 \\
-$1.0$ (unanimous)           & 78.79 & 79.59 & 78.00 & 14.29 & 63.16 & 70.59 & 57.14 & 0.00 \\
+$0.0$ (no gate)         & 60.00 & 63.16 & 57.14 & 0.00 \\
+$0.67$ (selected)       & \textbf{63.16} & \textbf{70.59} & 57.14 & \textbf{0.00} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The thresholds $0.34$, $0.67$, and $1.0$ are tied on TRAIN F1 because each case's findings are highly self-consistent across the three runs --- once a finding survives at $\geq 1/3$ runs it almost always survives at $\geq 3/3$. The thesis carries the more conservative $\geq 0.67$ choice as the operational default because it requires majority-of-three agreement and therefore degrades more gracefully on configurations where run-to-run variance is higher. On the frozen TEST split this same threshold yields F1 $63.16\%$, precision $70.59\%$, recall $57.14\%$, and FPR $0\%$. The TEST FPR is lower than TRAIN ($0\%$ vs $14.29\%$) because three of the four false-positive secure cases in the corpus landed in TRAIN under the random split; this is a property of the small absolute denominator (9 secure cases on TEST) rather than a model-quality result.
-
-The held-out result rules out the threat that the gate threshold was overfitted to the test set. The selected threshold and its accompanying metrics are honest in the strict held-out sense.
+The TEST FPR of $0\%$ is lower than TRAIN ($14.29\%$) because three of the four false-positive secure cases in the corpus landed in TRAIN under the random split --- a property of the small absolute denominator (9 secure cases on TEST, exact binomial 95\,\% CI $[0\%, 33.6\%]$). The held-out result rules out the chosen threshold being a TRAIN-specific optimum among the swept set; with only 9 secure samples on TEST it cannot rule out small-effect overfitting in general.
 
 \subsection{External Corpus}
 \label{sec:eval-r1-external-corpus}
 
-To probe the substitution disclosed in Section~\ref{sec:eval-benchmark-substitution} the analyser is run on the 15-case external corpus (11 vulnerable + 4 secure) drawn from OWASP NodeGoat, OWASP Juice Shop, and three named CVEs (CVE-2022-24999, CVE-2021-23337, CVE-2022-24771). The configuration matches the curated headline: \texttt{qwen3:8b+RAG}, three runs per sample, inter-run confidence gate at $\geq 0.67$, two-stage pipeline with structured-output schemas for both detection and repair. Table~\ref{tab:r1-external-corpus} compares the two corpora side by side.
+Table~\ref{tab:r1-external-corpus} compares the headline configuration on the 15-case external corpus (11 vulnerable + 4 secure, drawn from OWASP NodeGoat, Juice Shop, and three named CVEs) against the curated 101-case result.
 
 \begin{table}[H]
 \centering
@@ -149,30 +141,16 @@ Curated (101 cases)         & 74.07 & 78.13 & 70.42 & 10.00 & 2\,216 & 90.32\,\%
 \end{tabular}
 \end{table}
 
-The external corpus skews toward weakness classes that require cross-file or framework-level reasoning: mass assignment, broken access control on an admin route, JWT \texttt{none}-algorithm acceptance, signature verification (CWE-347), and Lodash \texttt{\_.template} code injection. The detector's single-function scope (Section~\ref{sec:impl-pipeline}) does not see the access-control wrapper, the JWT \texttt{algorithms} option, or the version constraint that resolves the CVE. The thesis's existing input-validation gap (Section~\ref{sec:eval-error-analysis}) is the same limitation surfacing on a corpus designed to elicit it; the gap closes substantially under the headline configuration but a $\sim$10-point F1 residual remains. The 25\,\% FPR concentrates on a single secure case in the 4-sample negative set, against which 12 of 12 runs flag spurious findings; the small denominator inflates the rate.
-
-Auto-applicable repair quality on the external corpus is 100\,\% (33/33), slightly higher than on the curated headline (90.32\,\%); the structured \texttt{\{code, language\}} schema makes the same kinds of well-formed code on both corpora. Stage-1 detection median is 1\,496\,ms on the external corpus versus 2\,216\,ms on the curated corpus, consistent with the prefill-length analysis in Section~\ref{sec:eval-r4} (the external corpus's per-snippet code is shorter on average for the cases that survive the function-scope filter).
+The $\sim$10-point F1 gap between the external (63.64\%) and curated (74.07\%) corpora reflects the external corpus's skew toward framework-level weakness classes (JWT algorithm acceptance, access-control wrappers, CVE version constraints) that the single-function scope cannot see. The 25\,\% FPR concentrates on a single secure case in the 4-sample negative set, inflated by the small denominator. Auto-applicable rate is 100\,\% (33/33) on the external corpus; stage-1 median latency is 1\,496\,ms (vs.\ 2\,216\,ms curated), consistent with shorter average per-snippet lengths.
 
 \subsection{Real-World Whole-Project Run on OWASP NodeGoat}
 \label{sec:eval-r1-realworld}
 
-The whole-project runner from Section~\ref{sec:eval-realworld} was executed on OWASP NodeGoat at the default \texttt{master} commit. The system supports two scopes for whole-codebase analysis: \emph{inline scope} reuses the function-level scope used by real-time IDE diagnostics, and \emph{audit scope} (introduced in Section~\ref{sec:impl-audit-mode}) adds a deterministic AST stage in front of the LLM. NodeGoat is evaluated under both, against the corrected 7-entry documented-vulnerability list (\texttt{evaluation/realworld/nodegoat-vulnerabilities.json}); the per-scope recall is reported in Table~\ref{tab:r1-realworld-nodegoat}.
-
-\paragraph{Provenance of the documented list.}
-The original 10-entry documented list pointed at file paths that do not exist in the actual NodeGoat tree (\texttt{app/routes/admin.js}, \texttt{app/middleware/error-handler.js}) or at out-of-scope file types (\texttt{app/views/contributions.html}, \texttt{package.json}). A manual audit against the NodeGoat \texttt{tutorial/} directory and the actual source produced a corrected 7-entry list pinning each entry to a real JS source location:
-\begin{itemize}
-  \item NoSQL injection in \path{data/allocations-dao.js} (\texttt{\$where} template literal, lines 73--78);
-  \item \texttt{eval}-based code injection in \path{routes/contributions.js} (lines 32--34);
-  \item ReDoS in \path{routes/profile.js} (line 59 nested-quantifier regex);
-  \item mass assignment in \path{routes/profile.js} (\texttt{handleProfileUpdate});
-  \item deprecated \texttt{bcrypt-nodejs} in \path{data/user-dao.js};
-  \item stack-trace disclosure in \path{routes/error.js};
-  \item dynamic template-path injection in \path{routes/tutorial.js}.
-\end{itemize}
+The whole-project runner was executed on OWASP NodeGoat against a corrected 7-entry documented-vulnerability list (\texttt{evaluation/realworld/nodegoat-vulnerabilities.json}), covering NoSQL injection, \texttt{eval}-based code injection, ReDoS, mass assignment, a deprecated crypto library, stack-trace disclosure, and a dynamic template-path pattern. The system was evaluated under two scopes: \emph{inline scope} (function-level, matching the real-time IDE diagnostics path) and \emph{audit scope} (AST Stage 0 followed by per-file LLM Stage 1, Section~\ref{sec:impl-audit-mode}). Table~\ref{tab:r1-realworld-nodegoat} reports the per-scope recall and runtime.
 
 \begin{table}[H]
 \centering
-\caption{NodeGoat whole-project scan under both scopes. Inline scope uses the same function-level chunker as real-time IDE diagnostics; audit scope (Section~\ref{sec:impl-audit-mode}) adds an AST Stage 0 before the per-file LLM Stage 1 and unions the findings.}
+\caption{NodeGoat whole-project scan under both scopes (\texttt{qwen3:8b+RAG}).}
 \label{tab:r1-realworld-nodegoat}
 \footnotesize
 \begin{tabular}{@{}lrr@{}}
@@ -189,17 +167,7 @@ Recall against 7 documented entries    & 3 / 7 (42.9\,\%)  & \textbf{6 / 7 (85.7
 \end{tabular}
 \end{table}
 
-\paragraph{Inline-scope result (3 / 7 = 42.9\,\%).}
-The function-scoped LLM-only configuration matched three documented entries (deprecated \texttt{bcrypt-nodejs} in \texttt{data/user-dao.js}, stack-trace exposure in \texttt{routes/error.js}, and the dynamic template-path pattern in \texttt{routes/tutorial.js}). Four were missed: the \texttt{\$where} interpolation, the \texttt{eval}-on-\texttt{req.body} sink, the ReDoS regex, and the mass-assignment pattern. The four-entry gap reflects function-level scope's blindness to structural patterns spread across larger blocks (\texttt{\$where} interpolation in a long DAO function; \texttt{eval} on pre-existing route lines that share a function with non-vulnerable code; validation regexes inside larger control-flow; \texttt{req.body} destructure followed by a same-file DAO call). The curated 101-case corpus shows the same model handles each of these patterns at 90--100\,\% recall on isolated snippets, so the gap is structural rather than a knowledge limitation.
-
-\paragraph{Audit-scope result (6 / 7 = 85.7\,\%).}
-Audit mode (Section~\ref{sec:impl-audit-mode}) runs an AST traversal of the whole project before the LLM and emits direct sink detections for syntactic patterns that the LLM struggles to surface at function scope. Stage 0 contributed four AST detections that matched documented entries: the \texttt{\$where} template literal in \texttt{data/allocations-dao.js}, the three \texttt{eval(req.body.X)} calls in \texttt{routes/contributions.js} (one documented entry, three call sites), the nested-quantifier regex \texttt{/([0-9]+)+\textbackslash\#/} in \texttt{routes/profile.js}, and the 7-field destructure of \texttt{req.body} in the \texttt{handleProfileUpdate} handler of \texttt{routes/profile.js}. Stage 1 (per-file LLM with 16\,K \texttt{num\_ctx}) contributed two more matches: the deprecated \texttt{bcrypt-nodejs} import and the stack-trace exposure in \texttt{routes/error.js}. The two stages produced 10 deterministic and 14 semantic findings, totalling 22 unique findings after deduplication (overlap is collapsed to a \texttt{detectionSource: 'hybrid'} entry).
-
-\paragraph{The remaining miss.}
-The seventh documented entry, dynamic template-path injection in \texttt{routes/tutorial.js}, is not flagged under either scope. Inspection of the file at the documented commit shows the route handlers are generated by iterating a \emph{static} \texttt{pages} array; the variable interpolated into \texttt{res.render(`tutorial/\$\{page\}`)} is not bound to \texttt{req.params}, \texttt{req.query}, or \texttt{req.body}. The pattern is documented as an anti-pattern (the route would become exploitable if refactored to use \texttt{req.params.page}) but is not actually attacker-reachable at the documented commit. The detector's correctly-empty output on this file is therefore consistent with the runtime non-exploitability; counting this entry as ``missed'' is the strict reading adopted here for the headline figure.
-
-\paragraph{Reading.}
-The 43-percentage-point lift from inline (3 / 7) to audit scope (6 / 7) on the same model, corpus, and source code measures the structural-context contribution of the AST Stage 0 isolated from semantic capability. The audit-mode pipeline is the recommended deployment for whole-project audits; the inline mode remains the right scope for the real-time IDE diagnostics where the 1.5\,s latency budget rules out per-keystroke project-map construction. Both modes are delivered in the production extension (\texttt{src/projectMapBuilder.ts}, \texttt{src/workspaceScanner.ts}); the same hybrid pipeline backs the harness's \texttt{run-realworld.js --audit-mode} flag, so the recall figure transfers one-to-one between harness and extension.
+Inline scope (42.9\,\%) misses four entries whose vulnerable patterns span larger function bodies or require cross-line data-flow context that the function-level chunker cannot provide. Audit scope (85.7\,\%) recovers these four through deterministic AST sink detection, adding them to the two LLM-matched entries. The remaining miss (\texttt{routes/tutorial.js}) is a documented anti-pattern that is not attacker-reachable at the evaluated commit; the detector's empty output is correct. The 43-point recall lift between the two scopes isolates the structural-context contribution of the AST Stage 0 from the model's semantic capability, and confirms that audit mode is the recommended deployment for whole-project scans while inline mode is appropriate for the real-time IDE diagnostic path.
 
 \subsection{Level Mapping}
 
@@ -209,7 +177,7 @@ Based on the R1 evaluation scale (Table~\ref{tab:r1-accuracy-thresholds}), the b
   \item F1 = 71.43\% (gated 74.07\%) $\rightarrow$ both fall in the Medium F1 range $[0.60, 0.75)$
   \item Precision = 72.46\% (gated 78.13\%) $\rightarrow$ both exceed the High threshold of 0.70
   \item Recall = 70.42\% $\rightarrow$ exceeds the High threshold of 0.70
-  \item FPR = 10.00\% $\rightarrow$ comfortably below the High ceiling of 0.20
+  \item FPR = 10.00\% (95\,\% CI $[2.1\%, 26.5\%]$ on $n=30$) $\rightarrow$ point estimate below the High ceiling of 0.20; the upper CI bound straddles the threshold, so the band is supported by the point estimate but not certified by the interval
 \end{itemize}
 
 The bands defined in Table~\ref{tab:r1-accuracy-thresholds} are nested: a configuration is assigned the highest band whose conjunctive minimum-bar criteria are all met. Precision, recall, and FPR all meet the High thresholds, but F1 sits below 0.75; the configuration therefore lands in the Medium band overall, with F1 as the binding constraint. Applying the inter-run confidence gate at $\geq 0.67$ lifts F1 to 74.07\% and precision to 78.13\% (Section~\ref{sec:eval-r1-confidence}); F1 remains the binding metric and the configuration stays Medium overall while tightening precision toward the High class.

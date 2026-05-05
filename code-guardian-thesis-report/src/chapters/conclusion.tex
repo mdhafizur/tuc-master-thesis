@@ -12,15 +12,9 @@ The thesis delivers \textbf{Code Guardian}, a VS Code extension for on-device Ja
   \item \textbf{Reproducible evaluation harness.} The repository ships a documented harness with the 101-case curated corpus, a 15-case external corpus drawn from NodeGoat, Juice Shop, and three named CVEs, SAST baselines (Semgrep, CodeQL, ESLint), and a deterministic per-repair syntax validator for scaling R3 beyond manual review.
 \end{enumerate}
 
-\section{Key Findings and Answers to Research Questions}
+\section{Summary}
 
-\paragraph{Findings.} Local deployment is feasible: useful vulnerability detection and repair assistance can be delivered in VS Code without source-code exfiltration when inference and retrieval stay on-device. Quality depends substantially on configuration --- model size, prompting mode, and retrieval --- so RAG should not be treated as a universal default. False-positive control remains the main practical barrier: the strongest local configurations improve recall over deterministic baselines but most LLM modes still produce too much alert noise for always-on use, making workflow-aware deployment more important than single-metric optimisation.
-
-\paragraph{RQ1 (Feasibility).} Supported with caveats. Useful findings and repair suggestions can be generated with local inference inside VS Code while preserving the no-code-exfiltration objective; practical value depends on configuration choice.
-
-\paragraph{RQ2 (Grounding).} Partially supported, with sharply model-dependent effects. Under canonical-taxonomy matching RAG lifts \texttt{qwen3:8b} (+3.91 F1, precision $61.63\!\to\!72.46$\,\%, FPR $50\!\to\!10$\,\%), is roughly neutral on \texttt{gemma3:1b} and \texttt{gemma3:4b}, slightly degrades \texttt{qwen3:4b} ($-5.22$ F1), and severely degrades \texttt{codellama} ($-29.89$ F1, latency nearly doubles). Under Bonferroni correction across the five paired McNemar tests ($\alpha=0.01$) only the \texttt{codellama} degradation survives ($p=0.0013$); the \texttt{qwen3} effects are reported as indicative directions. RAG must therefore be treated as a per-model configuration choice rather than a universal default.
-
-\paragraph{RQ3 (Practicality).} Supported for constrained interactive workflows. Real-time IDE triggering through debounced inline analysis is implemented, but strict real-time responsiveness was not consistently achieved on the evaluated local configurations. Function-level scoping, debouncing, and caching make local analysis usable in selected workflows; higher-quality modes remain better suited to explicit scan/audit interactions than always-on inline use.
+The thesis builds, evaluates, and analyses Code Guardian across the five requirements derived in Chapter~\ref{chap:analysis}. The detailed per-requirement evidence is presented in Chapter~\ref{chap:evaluation}, and the cross-cutting interpretation, threats to validity, and answers to RQ1--RQ3 are developed in Chapter~\ref{chap:discussion} (Section~\ref{sec:disc-rq-answers}). The remainder of this chapter draws practical implications and outlines future directions.
 
 \section{Implications for Practice}
 
@@ -43,10 +37,12 @@ Table~\ref{tab:conclusion-deployment-profiles} summarises practical deployment p
   \end{tabularx}
 \end{table}
 
-\paragraph{Responsible use.}
-Code Guardian is decision support, not an autonomous security verifier. False negatives, false positives, and occasional label mismatches remain possible, so findings and repairs should stay reviewable artefacts under developer control, complemented by conventional testing and security review. As local models improve the privacy advantage of on-device analysis grows, but so does the potential for misuse (e.g.\ identifying exploitable weaknesses rather than fixing them). Organisations deploying Code Guardian should establish triage policies for LLM-generated findings, repair-review gates before merging, and access controls on aggregated vulnerability reports.
+\paragraph{Decision support, not a verifier.}
+Code Guardian is decision support, not an autonomous security verifier. False negatives, false positives, and occasional label mismatches remain possible, so findings and repairs should stay reviewable artefacts under developer control, complemented by conventional testing and security review.
 
 \section{Future Work}
+
+The thesis closes a privacy-preserving slice of the IDE-security space; several engineering and research directions extend it.
 
 \input{src/chapters/future_work}
 

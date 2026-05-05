@@ -2,7 +2,7 @@ Injection flaws, cross-site scripting, and insecure data handling remain among t
 
 \section{Problem Description}
 
-SAST tools are deterministic and privacy-preserving but shallow: they match syntactic patterns without understanding context, cannot explain \emph{why} a finding matters, and rarely suggest how to fix it. The false-positive rate is high enough that developers routinely ignore the output under delivery pressure \cite{johnson2013don,christakis2016developers}. LLM-based assistants close both gaps --- contextual reasoning and concrete repair --- but the dominant offerings transmit source code to cloud servers, which is unacceptable for organisations bound by confidentiality requirements, regulations such as GDPR, or air-gapped environments \cite{carlini2021extracting,gdpr2016}. The result is a three-way trade-off no current tool resolves: SAST gives determinism and privacy but not reasoning or repair; cloud LLM assistants give reasoning and repair but not privacy. A developer who needs all three has no off-the-shelf option. This thesis explores whether a local, modular design --- keeping inference on the developer's machine, grounding model reasoning in curated security knowledge, and integrating into the editor with developer-controlled remediation --- can close that gap.
+SAST tools are deterministic and privacy-preserving but shallow: they match syntactic patterns without understanding context, cannot explain \emph{why} a finding matters, and rarely suggest how to fix it. The false-positive rate is high enough that developers routinely ignore the output under delivery pressure \cite{johnson2013don,christakis2016developers}. LLM-based assistants close both gaps --- contextual reasoning and concrete repair --- but the dominant offerings transmit source code to cloud servers, which is unacceptable for organisations bound by confidentiality requirements, regulations such as GDPR, or air-gapped environments \cite{carlini2021extracting,gdpr2016}. The result is a three-way trade-off no current tool resolves: SAST gives determinism and privacy but not reasoning or repair; cloud LLM assistants give reasoning and repair but not privacy. Hybrid commercial offerings such as Snyk Code partly close the gap by running detection in a local DeepCode engine and offering a degree of fix guidance, but their proprietary engine is not contextual-LLM-based and their default deployment still relies on cloud connectivity for advisory data and for quick-fix suggestion in some configurations. A developer who needs contextual LLM reasoning, concrete repair suggestions, and a strict on-device privacy guarantee at once has no off-the-shelf option. This thesis explores whether a local, modular design --- keeping inference on the developer's machine, grounding model reasoning in curated security knowledge, and integrating into the editor with developer-controlled remediation --- can close that gap.
 
 \section{Motivating Scenario}
 
@@ -39,16 +39,18 @@ The technical scope includes local LLM inference via Ollama, function-level code
 
 The evaluation is limited to the accuracy, consistency, and latency of the structured output produced from code snippets in a controlled test harness. This thesis does not cover areas such as multi-language support beyond JavaScript/TypeScript, real-time collaborative editing, endpoint hardening, hardware-level attacks, or enterprise identity and network controls. Optional knowledge-base refresh may fetch \emph{public} vulnerability metadata (for example CVE/CWE descriptions) and can be disabled for fully offline operation.
 
-\subsection*{Research Questions}
+\subsection{Research Questions}
+\label{sec:intro-rqs}
 
 The thesis addresses three research questions:
 \begin{itemize}
   \item \textbf{RQ1 (Feasibility):} To what extent can a locally deployed LLM integrated into VS Code provide useful vulnerability detection and repair suggestions without transmitting source code to external services?
-  \item \textbf{RQ2 (Grounding):} How does retrieval-augmented prompting influence detection quality and the qualitative grounding of explanations compared to an LLM-only configuration?
+  \item \textbf{RQ2 (Grounding):} How does retrieval-augmented prompting influence detection quality compared to an LLM-only configuration, and is the effect uniform across model families or model-dependent?
   \item \textbf{RQ3 (Practicality):} What performance mechanisms (scoping, caching, debouncing) are necessary to make LLM-based security feedback usable within interactive IDE workflows?
 \end{itemize}
 
-\subsection*{Threat Model and Trust Assumptions}
+\subsection{Threat Model and Trust Assumptions}
+\label{sec:intro-threat-model}
 
 The main threat addressed is unintended disclosure of proprietary code through external analysis services. Local inference reduces this risk surface but does not remove all security risks. Table~\ref{tab:intro-threat-model} summarises the threat classes considered, the attack path each assumes, and the design response carried into the chapters that follow.
 
@@ -90,8 +92,8 @@ These objectives guide the development and validation of a system that is not on
 \section{Thesis Outline}
 \label{sec:intro-structure}
 
-Following this introduction, the thesis begins with a review of related work on static analysis tools, LLM-based vulnerability detection, and retrieval-augmented generation for secure coding. The literature is analysed to identify current limitations and to derive requirements for a system that combines contextual reasoning, repair generation, and source-code privacy. This provides the conceptual foundation for understanding the need for a tool like Code Guardian.
+The thesis begins with the conceptual foundation. Chapter~\ref{chap:analysis} reviews related work on static analysis tools, LLM-based vulnerability detection, and retrieval-augmented generation for secure coding, and derives the R1--R5 requirements that frame the rest of the thesis. From these requirements, Chapter~\ref{chap:concept} presents the overall system concept --- the two-stage detection-then-repair pipeline, structured JSON output enforcement, the optional RAG module, and the architectural decisions that follow from the privacy goal.
 
-The next chapter introduces the overall system concept. It presents the architecture of Code Guardian together with key design decisions such as the two-stage detection-then-repair pipeline, structured JSON output enforcement, and the optional RAG module. After outlining the concept, the implementation chapter describes the VS Code extension, technology choices, and how core components --- such as the analyzer, RAG manager, analysis cache, and diagnostic rendering --- were developed, with an emphasis on modularity and local execution.
+Building on the concept, Chapter~\ref{chap:implementation} describes the VS Code extension itself, including the technology choices and the core components (analyzer, RAG manager, analysis cache, diagnostic rendering) with an emphasis on modularity and local execution. Chapter~\ref{chap:evaluation} then examines system performance across five local models in both LLM-only and LLM+RAG configurations, reporting precision, recall, F1, false-positive rate, JSON parse success, latency, and the auto-applicable repair rate against the R1--R5 requirements.
 
-The evaluation chapter examines system performance across five local models in both LLM-only and LLM+RAG configurations, using metrics such as precision, recall, F1, false-positive rate, JSON parse success, latency, and an automated auto-applicable repair rate. A separate discussion chapter then synthesises the results across requirements, positions them against related work, and addresses threats to validity. The thesis concludes by summarising key findings and outlining opportunities for future work. Appendices provide supplementary material including prompt templates, detailed evaluation data, implementation details, case studies, and privacy verification evidence.
+Chapter~\ref{chap:discussion} synthesises these results, positions them against related work, and addresses threats to validity. Chapter~\ref{chap:conclusion} summarises the key findings and outlines opportunities for future work. The appendices provide supplementary material, including implementation details, detailed evaluation data, the unified positioning comparison, qualitative case studies, and privacy verification evidence.
