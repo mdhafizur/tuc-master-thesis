@@ -6,7 +6,7 @@
 VSCE_PAT ?= $(shell cat .vsce-pat 2>/dev/null || echo "")
 VSCE ?= npx @vscode/vsce
 
-.PHONY: help install compile test package publish publish-patch publish-minor publish-major clean clean-test-cache dev lint format check-deps login set-pat release-patch release-minor release-major
+.PHONY: help install compile test package publish publish-only publish-patch publish-minor publish-major clean clean-test-cache dev lint format check-deps login set-pat release-patch release-minor release-major
 
 # Default target - show help
 help:
@@ -36,6 +36,7 @@ help:
 	@echo "  Deployment (Local):"
 	@echo "    make package        - Package extension as VSIX"
 	@echo "    make publish        - Publish to VS Code Marketplace (requires PAT)"
+	@echo "    make publish-only   - Publish without clean/compile/test (use after verifying)"
 	@echo "    make publish-patch  - Bump patch version and publish locally"
 	@echo "    make publish-minor  - Bump minor version and publish locally"
 	@echo "    make publish-major  - Bump major version and publish locally"
@@ -141,7 +142,7 @@ package: clean compile test
 login:
 	@echo "🔐 Logging in to VS Code Marketplace..."
 	@if [ -n "$(VSCE_PAT)" ]; then \
-		echo "$(VSCE_PAT)" | $(VSCE) login DreamersRedemption; \
+		echo "$(VSCE_PAT)" | $(VSCE) login DreamersRedemption && \
 		echo "✅ Login successful!"; \
 	else \
 		echo "❌ No PAT found. Set VSCE_PAT in Makefile or environment variable"; \
@@ -153,10 +154,21 @@ login:
 publish: package
 	@echo "🚀 Publishing to VS Code Marketplace..."
 	@if [ -n "$(VSCE_PAT)" ]; then \
-		$(VSCE) publish --no-dependencies --pat "$(VSCE_PAT)"; \
+		$(VSCE) publish --no-dependencies --pat "$(VSCE_PAT)" && \
 		echo "✅ Published successfully!"; \
 	else \
 		echo "❌ No PAT found. Set VSCE_PAT in Makefile"; \
+		exit 1; \
+	fi
+
+# Publish without running clean / compile / tests (use only when you have already verified the build)
+publish-only:
+	@echo "🚀 Publishing to VS Code Marketplace (skipping clean/compile/test)..."
+	@if [ -n "$(VSCE_PAT)" ]; then \
+		$(VSCE) publish --no-dependencies --pat "$(VSCE_PAT)" && \
+		echo "✅ Published successfully!"; \
+	else \
+		echo "❌ No PAT found. Set VSCE_PAT in Makefile or environment variable"; \
 		exit 1; \
 	fi
 
@@ -164,7 +176,7 @@ publish: package
 publish-patch: clean compile test
 	@echo "🚀 Publishing patch version..."
 	@if [ -n "$(VSCE_PAT)" ]; then \
-		$(VSCE) publish patch --no-dependencies --pat "$(VSCE_PAT)"; \
+		$(VSCE) publish patch --no-dependencies --pat "$(VSCE_PAT)" && \
 		echo "✅ Patch version published successfully!"; \
 	else \
 		echo "❌ No PAT found. Set VSCE_PAT in Makefile"; \
@@ -175,7 +187,7 @@ publish-patch: clean compile test
 publish-minor: clean compile test
 	@echo "🚀 Publishing minor version..."
 	@if [ -n "$(VSCE_PAT)" ]; then \
-		$(VSCE) publish minor --no-dependencies --pat "$(VSCE_PAT)"; \
+		$(VSCE) publish minor --no-dependencies --pat "$(VSCE_PAT)" && \
 		echo "✅ Minor version published successfully!"; \
 	else \
 		echo "❌ No PAT found. Set VSCE_PAT in Makefile"; \
@@ -186,7 +198,7 @@ publish-minor: clean compile test
 publish-major: clean compile test
 	@echo "🚀 Publishing major version..."
 	@if [ -n "$(VSCE_PAT)" ]; then \
-		$(VSCE) publish major --no-dependencies --pat "$(VSCE_PAT)"; \
+		$(VSCE) publish major --no-dependencies --pat "$(VSCE_PAT)" && \
 		echo "✅ Major version published successfully!"; \
 	else \
 		echo "❌ No PAT found. Set VSCE_PAT in Makefile"; \

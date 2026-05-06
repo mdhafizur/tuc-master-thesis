@@ -285,6 +285,11 @@ async function singleAnalysisPass(
 				const arrayProp = Object.values(parsed).find(v => Array.isArray(v));
 				if (arrayProp) {
 					parsed = arrayProp;
+				} else if (typeof parsed.message === 'string'
+						&& typeof parsed.startLine === 'number'
+						&& typeof parsed.endLine === 'number') {
+					// Single-issue object — wrap as a one-element array
+					parsed = [parsed];
 				} else {
 					throw new AnalysisError(
 						AnalysisErrorType.PARSE_ERROR,
@@ -468,6 +473,63 @@ export function applyConfidenceGate(issues: SecurityIssue[], threshold: number):
 }
 
 /**
+ * Normalizes an LLM-returned repair so it is safe to drop into
+ * WorkspaceEdit.replace(range). Strips markdown fences, trims leading/trailing
+ * blank lines, and removes lines that match the file's surrounding context
+ * (which the model sometimes echoes back despite being told not to).
+ */
+function sanitizeRepair(
+	rawCode: string,
+	allLines: string[],
+	startLine: number,
+	endLine: number
+): string {
+	let text = rawCode;
+
+	// Strip ```lang ... ``` fences if present.
+	text = text.replace(/^\s*```(?:[a-zA-Z]+)?\s*\n?/, '').replace(/\n?```\s*$/, '');
+
+	let lines = text.split('\n');
+
+	const before: string[] = [];
+	for (let i = startLine - 2; i >= 0 && before.length < 5; i--) {
+		before.unshift(allLines[i] ?? '');
+	}
+	while (
+		lines.length > 0 &&
+		before.length > 0 &&
+		lines[0].trim() === before[before.length - 1].trim() &&
+		lines[0].trim() !== ''
+	) {
+		lines.shift();
+		before.pop();
+	}
+
+	const after: string[] = [];
+	for (let i = endLine; i < allLines.length && after.length < 5; i++) {
+		after.push(allLines[i] ?? '');
+	}
+	while (
+		lines.length > 0 &&
+		after.length > 0 &&
+		lines[lines.length - 1].trim() === after[0].trim() &&
+		lines[lines.length - 1].trim() !== ''
+	) {
+		lines.pop();
+		after.shift();
+	}
+
+	while (lines.length > 0 && lines[0].trim() === '') {
+		lines.shift();
+	}
+	while (lines.length > 0 && lines[lines.length - 1].trim() === '') {
+		lines.pop();
+	}
+
+	return lines.join('\n');
+}
+
+/**
  * Generates a targeted repair for a single detected vulnerability using a dedicated prompt.
  * This second-stage prompt focuses purely on fix generation, producing higher-quality repairs
  * than asking the model to detect and fix simultaneously.
@@ -503,20 +565,23 @@ async function generateRepair(
 	let repairSystemPrompt = `Secure code repair. Output ONLY a JSON object {"code": "...", "language": "javascript" | "typescript"}.
 
 Rules:
-- "code" MUST contain only executable code; do NOT include prose, explanation, comments, or markdown fences
-- Address the reported vulnerability type directly
-- Preserve the original functionality
-- Use established secure patterns (parameterized queries, input validation, safe APIs)
-- "language" reflects the source language of the snippet`;
+- "code" MUST be a DROP-IN REPLACEMENT for ONLY the vulnerable lines provided. It will be substituted in-place via VS Code WorkspaceEdit.replace(range).
+- DO NOT include any surrounding context, imports, function/class declarations, or other lines that already exist outside the vulnerable range. Those lines are shown only for context.
+- Preserve the original indentation level of the vulnerable lines.
+- The replacement should typically have a similar number of lines as the original; do not wrap it in a new function or block unless the original was a function/block.
+- "code" MUST contain only executable code; do NOT include prose, explanation, comments, or markdown fences.
+- Address the reported vulnerability type directly using established secure patterns (parameterized queries, input validation, safe APIs) while preserving original functionality.
+- "language" reflects the source language of the snippet.`;
 
 	let repairUserPrompt = `Vulnerability: ${issue.message}
-Vulnerable lines (${issue.startLine}-${issue.endLine}):
+
+VULNERABLE LINES TO REPLACE (lines ${issue.startLine}-${issue.endLine}) — your "code" field must replace exactly these:
 ${vulnerableLines}
 
-${contextLabel}:
+${contextLabel} (FOR UNDERSTANDING ONLY — DO NOT INCLUDE IN OUTPUT):
 ${windowedContext}
 
-Return ONLY the JSON object {code, language}.`;
+Output the JSON object {code, language} where "code" is the replacement for the vulnerable lines above and nothing else.`;
 
 	// Enhance repair prompt with RAG if available
 	if (ragManager) {
@@ -563,22 +628,24 @@ Return ONLY the JSON object {code, language}.`;
 		const raw = res.message.content.trim();
 		const parsed = JSON.parse(raw);
 
-		if (parsed && typeof parsed.code === 'string' && parsed.code.trim().length > 0) {
-			return parsed.code.trim();
+		const pickCode = (): string | undefined => {
+			if (parsed && typeof parsed.code === 'string' && parsed.code.trim().length > 0) {
+				return parsed.code;
+			}
+			if (parsed && typeof parsed.fix === 'string' && parsed.fix.trim().length > 0) {
+				return parsed.fix;
+			}
+			const firstString = Object.values(parsed).find(v => typeof v === 'string' && (v as string).trim().length > 0);
+			return typeof firstString === 'string' ? firstString : undefined;
+		};
+
+		const candidate = pickCode();
+		if (!candidate) {
+			return undefined;
 		}
 
-		// Back-compat fallback for the prior {fix: string} contract.
-		if (parsed && typeof parsed.fix === 'string' && parsed.fix.trim().length > 0) {
-			return parsed.fix.trim();
-		}
-
-		// Last-resort fallback: first non-empty string value.
-		const firstString = Object.values(parsed).find(v => typeof v === 'string' && (v as string).trim().length > 0);
-		if (firstString) {
-			return (firstString as string).trim();
-		}
-
-		return undefined;
+		const sanitized = sanitizeRepair(candidate, allLines, issue.startLine, issue.endLine);
+		return sanitized.length > 0 ? sanitized : undefined;
 	} catch (error) {
 		logger.debug(`Repair generation failed for lines ${issue.startLine}-${issue.endLine}: ${error}`);
 		return undefined;

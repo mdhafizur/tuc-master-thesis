@@ -109,7 +109,7 @@
           </mxGeometry>
         </mxCell>
 
-        <mxCell id="step9" value="9. LLM inference (~2.2s)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+        <mxCell id="step9" value="9. LLM inference (~2.2s)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d6b656;" vertex="1" parent="1">
           <mxGeometry x="630" y="460" width="120" height="40" as="geometry" />
         </mxCell>
 
@@ -120,7 +120,7 @@
           </mxGeometry>
         </mxCell>
 
-        <mxCell id="step9c" value="11. LLM inference (~2.2s)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+        <mxCell id="step9c" value="11. LLM inference (~2.2s)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d6b656;" vertex="1" parent="1">
           <mxGeometry x="630" y="540" width="120" height="40" as="geometry" />
         </mxCell>
 
@@ -142,7 +142,7 @@
           </mxGeometry>
         </mxCell>
 
-        <mxCell id="step11c" value="15. Generate fix" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+        <mxCell id="step11c" value="15. Generate fix" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d6b656;" vertex="1" parent="1">
           <mxGeometry x="630" y="700" width="120" height="40" as="geometry" />
         </mxCell>
 

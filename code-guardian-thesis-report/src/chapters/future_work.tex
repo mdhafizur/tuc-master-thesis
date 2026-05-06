@@ -1,6 +1,6 @@
 The evaluation in Chapter~\ref{chap:evaluation} closes a privacy-preserving slice of the IDE-security space, but it also exposes specific gaps that further work should address. The directions below are grouped into three categories: \emph{engineering} (improvements that strengthen the delivered system on its current scope), \emph{methodology} (changes to how the system should be measured), and \emph{open research questions} (effects whose causes are not yet understood).
 
-\subsection{Engineering Directions}
+\section{Engineering Directions}
 \label{sec:fw-engineering}
 
 \paragraph{False-positive control beyond inter-run agreement.}
@@ -15,7 +15,7 @@ The pipeline includes a syntax check (\texttt{@babel/parser}) on every \texttt{s
 \paragraph{Robustness against adversarial inputs.}
 The current adversarial harness (\texttt{evaluation/privacy/prompt-injection-test.js}) covers 12 cases at 100\,\% leak-free and 100\,\% detection-survival rates (Section~\ref{sec:eval-r5-prompt-injection}). Future work should extend the corpus to several hundred cases, add retrieval-poisoning attacks against the signed corpus (e.g.\ tampered files staged at known cache paths), and measure performance under multi-turn injection through the contextual Q\&A WebView. Retrieved knowledge should additionally include richer provenance and stronger filtering, and prompts should consistently treat project code as untrusted input data.
 
-\subsection{Methodological Directions}
+\section{Methodological Directions}
 \label{sec:fw-methodology}
 
 \paragraph{Broader evaluation corpora.}
@@ -25,12 +25,12 @@ The current 101-case dataset is useful for controlled iteration but too small fo
 The 25-sample R3 manual review was performed by a single reviewer; no inter-rater reliability was measured (Section~\ref{sec:eval-r3}). A two-rater protocol with Cohen's $\kappa$ on at least a 10-case overlap, scaled to the full 25-case set if resources allow, would substantially strengthen the 68\,\% combined-correct claim. The deterministic auto-applicable rate complements this on the full $n=279$ sample, but does not substitute for inter-rater agreement on the qualitative dimensions (semantic correctness, strategy alignment, executable-code share).
 
 \paragraph{Pre-registered configuration selection.}
-The headline configuration (\texttt{qwen3:8b+RAG}, three runs, gate $\geq 0.67$) was identified by post-hoc evaluation across ten model$\times$mode configurations rather than declared before the sweep (Section~\ref{sec:eval-summary}). The held-out 71/30 split addresses threshold tuning but not configuration selection. A future evaluation cycle should pre-register the selection protocol on a separate development corpus before the test corpus is touched, and report the protocol document alongside the evaluation harness.
+The headline configuration (\texttt{qwen3:8b+RAG}, three runs, gate $\geq 0.67$) was identified by post-hoc evaluation across ten model$\times$mode configurations rather than declared before the sweep (Section~\ref{sec:eval-comparative}). The held-out 71/30 split addresses threshold tuning but not configuration selection. A future evaluation cycle should pre-register the selection protocol on a separate development corpus before the test corpus is touched, and report the protocol document alongside the evaluation harness.
 
 \paragraph{Workflow impact and developer studies.}
 R4 is currently measured by latency only. Workflow impact should be validated with developer studies measuring usability (SUS), cognitive load (NASA-TLX), and time-to-fix metrics \cite{brooke1996sus,hart1988nasa}, ideally as a small-$n$ controlled walkthrough (3--5 participants, 2-hour sessions) at first and a larger study once the deployment profile is stable. Independent user studies of AI-assisted secure coding \cite{perry2023users,sandoval2023lost} provide methodological templates that translate directly to the Code Guardian deployment profile.
 
-\subsection{Open Research Questions}
+\section{Open Research Questions}
 \label{sec:fw-research}
 
 \paragraph{Why does only \texttt{qwen3:8b} achieve acceptable FPR?}

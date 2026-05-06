@@ -66,5 +66,10 @@ yarn.lock
 .env
 .env.*
 *.key
+**/*.key
 *.pem
+**/*-private.pem
+keys/corpus-private.pem
 secrets/
+# Keep the public verification key bundled
+!keys/corpus-public.pem

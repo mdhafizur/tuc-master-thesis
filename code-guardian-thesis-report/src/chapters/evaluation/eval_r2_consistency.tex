@@ -5,7 +5,61 @@ This section evaluates detection consistency: whether the system produces stable
 
 \subsection{Structured Output Stability}
 
-JSON parse success measures how often the system returns valid, schema-compliant output the IDE can process; a parse failure makes the result unusable regardless of semantic quality. All \texttt{qwen3} models achieve $\geq 98.8\%$ parse success, with \texttt{qwen3:8b} reaching $100.0\%$ in both modes thanks to JSON-mode decoding enforcement. Smaller models drop below 96\% (\texttt{gemma3:1b}: 95.6\% / 94.7\% LLM-only / +RAG), and RAG slightly reduces parse rates across all models due to increased prompt complexity. \texttt{codellama} sits at 96.5\% / 95.3\%.
+JSON parse success measures how often the system returns valid, schema-compliant output the IDE can process; a parse failure makes the result unusable regardless of semantic quality. All \texttt{qwen3} models achieve $\geq 98.8\%$ parse success, with \texttt{qwen3:8b} reaching $100.0\%$ in both modes thanks to JSON-mode decoding enforcement. Smaller models drop below 96\% (\texttt{gemma3:1b}: 95.6\% / 94.7\% LLM-only / +RAG), and RAG slightly reduces parse rates across all models due to increased prompt complexity. \texttt{codellama} sits at 96.5\% / 95.3\%. Figure~\ref{fig:r2-json-parse} compares the rates by model and mode.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+  \begin{axis}[
+    width=14cm,
+    height=6cm,
+    ybar,
+    bar width=10pt,
+    ylabel={JSON Parse Success Rate (\%)},
+    ylabel style={font=\small\bfseries},
+    xlabel={Model},
+    xlabel style={font=\small\bfseries},
+    symbolic x coords={gemma3:1b, gemma3:4b, qwen3:4b, qwen3:8b, codellama},
+    xtick=data,
+    xticklabel style={font=\small},
+    ymin=80, ymax=102,
+    ytick={80,85,90,95,100},
+    ymajorgrids=true,
+    grid style={line width=0.3pt, draw=gray!30},
+    legend style={
+      at={(0.5,-0.20)},
+      anchor=north,
+      legend columns=2,
+      font=\small,
+    },
+    enlarge x limits=0.15,
+    nodes near coords,
+    nodes near coords style={font=\scriptsize, rotate=90, anchor=west},
+  ]
+
+  \addplot[fill=blue!60, draw=blue!80!black] coordinates {
+    (gemma3:1b, 95.6)
+    (gemma3:4b, 97.3)
+    (qwen3:4b, 99.1)
+    (qwen3:8b, 100.0)
+    (codellama, 96.5)
+  };
+  \addlegendentry{LLM-only}
+
+  \addplot[fill=orange!60, draw=orange!80!black] coordinates {
+    (gemma3:1b, 94.7)
+    (gemma3:4b, 96.8)
+    (qwen3:4b, 98.8)
+    (qwen3:8b, 100.0)
+    (codellama, 95.3)
+  };
+  \addlegendentry{LLM+RAG}
+
+  \end{axis}
+\end{tikzpicture}
+\caption{JSON parse success rate by model and mode. Larger models produce more reliably structured output; RAG adds slight overhead that marginally reduces parse success in smaller models.}
+\label{fig:r2-json-parse}
+\end{figure}
 
 \subsection{Inter-Run Detection Agreement}
 

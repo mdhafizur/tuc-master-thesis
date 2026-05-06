@@ -1,0 +1,88 @@
+\section{Comparative Analysis}
+\label{sec:eval-comparative}
+
+This section consolidates the per-requirement results from Sections~\ref{sec:eval-r1}--\ref{sec:eval-r5} into a single compliance overview, draws the cross-requirement picture, and positions the measurements against the prior work surveyed in Chapter~\ref{chap:analysis}.
+
+\subsection{Requirement Compliance Overview}
+
+Table~\ref{tab:eval-compliance} maps the headline configuration (\texttt{qwen3:8b+RAG}) to the evaluation levels defined in Chapter~\ref{chap:analysis}.
+
+\begin{table}[H]
+  \centering
+  \caption{Requirement compliance summary for Code Guardian (\texttt{qwen3:8b+RAG}).}
+  \label{tab:eval-compliance}
+  \small
+  \renewcommand{\arraystretch}{1.5}
+  \begin{tabularx}{\textwidth}{ccp{2.5cm}X}
+    \toprule
+    \textbf{Req} & \textbf{Level} & \textbf{Rating} & \textbf{Key Evidence} \\
+    \midrule
+    R1 &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-150:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
+    Medium &
+    Canonical F1 71.43\% / precision 72.46\% / recall 70.42\% / FPR 10.00\%. With confidence gate $\geq 0.67$: F1 74.07\%, precision 78.13\%. Three of four sub-metrics meet the High threshold; F1 sits just below it. \\
+    \midrule
+    R2 &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-150:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
+    Medium &
+    JSON parse 100\%, detection agreement 87.6\%. Structured output fully stable; detection mostly stable. \\
+    \midrule
+    R3 &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-90:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
+    Medium (manual review primary; 90.32\% auto-applicable as secondary) &
+    Manual review of 25 samples: 68\% correct repairs (primary R3 bar per Section~\ref{sec:r3-repair-quality}); combined correct-repair rate 68\% falls in the Medium $[50\%, 75\%)$ band. Auto-applicable rate on full $n=279$ stage-2 repairs: \textbf{90.32\,\%} (252/279) as a secondary automation-quality signal; the 27 residual rejections are mid-statement truncations or unterminated regex literals, not prose. \\
+    \midrule
+    R4 &
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} &
+    High (per-function; on-demand/audit band per R4 scale) &
+    Stage~1 detection median 2\,216\,ms per function meets the R4 High threshold ($\leq 5$\,s for on-demand analysis). The interactive-inline budget ($\leq 1.5$\,s, Table~\ref{tab:r4-feasibility}) is not met; smaller models (\texttt{gemma3:1b+RAG}, 1\,019\,ms) are indicated for that band. Stage~2 quick-fix repair median is 3\,320\,ms per fix, incurred only when a finding triggers a repair. Inference dominates total latency by more than 99\%. \\
+    \midrule
+    R5 &
+    \cmark &
+    Pass &
+    All 5 privacy criteria verified. Code never leaves the machine. \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\subsection{Result Analysis}
+
+The strongest signal across the evaluated configurations is the gap between obvious-sink categories and semantic categories. The headline configuration reaches near-complete canonical recall on lexically-explicit sinks (XSS, command injection, path traversal, prototype pollution, weak cryptography, hardcoded credentials, LDAP injection, SSRF, and SQL injection) and zero recall on improper authentication, input validation, and weak encryption (Section~\ref{sec:eval-r1}). The qualitative analysis in Section~\ref{sec:eval-error-analysis} shows that the improper-auth and weak-encryption gaps are taxonomy artifacts (the model emits sibling canonical categories for the same code), while input-validation is a genuine reasoning gap on real-world library code. Contextual reasoning about lexically-explicit sinks works very well; reasoning about the absence of validation does not.
+
+False-positive control is one of the cleanest results. The headline configuration holds sample-level FPR in the low-noise band under three runs per secure sample, and the inter-run confidence gate preserves that level while lifting precision. Most other LLM configurations still flag every secure case at least once, even with the gate, which means the control is specific to the strongest model in the set rather than a generic property of multi-pass consensus. This is consistent with the general observation that smaller instruction-tuned models tend to be less well calibrated than larger ones \cite{ji2023hallucination}.
+
+Latency results validate the design hypothesis that prefill-token cost dominates inference on local hardware. The pipeline is split into a stage-1 detection call and an on-demand stage-2 repair call, so the cost of generating a structured \texttt{\{code, language\}} repair is paid only when a finding triggers a quick-fix surface. Stage-split telemetry confirms inference accounts for more than 99\% of the total response time (Section~\ref{sec:eval-r4}); there is no realistic gain to be made on the parsing side. The remaining latency budget is therefore best spent on either smaller models (with a quality cost) or on architectural changes such as streaming partial JSON output.
+
+The repair-quality result is shaped by the structural repair contract: a dedicated stage-2 call per detected finding asks the model to fill \texttt{\{code, language\}} via Ollama's structured-output schema, and the system prompt forbids prose, explanation, or markdown fences. Under this contract more than nine in ten generated repairs in the headline configuration pass the syntactic auto-applicability check; the residual rejections are not prose paraphrases of the fix but real code fragments that fail to parse for structural reasons (mid-statement truncation by \texttt{num\_predict}, unterminated regex literals). The achievable auto-applicable rate is therefore bounded above by structural-emit defects of the underlying model rather than by the prompting strategy.
+
+\subsection{Cross-Requirement Synthesis}
+\label{sec:eval-cross-requirement}
+
+The five requirements are not independent in operation: an IDE integration must satisfy all five at once for the system to be useful in practice. Three interactions deserve direct attention.
+
+\paragraph{Latency $\times$ Accuracy.}
+The headline configuration sits above the strict interactive-inline latency threshold (Section~\ref{sec:eval-r4}). Treated as a single number this looks like a modest miss, but it has a concrete operational consequence: the highest-quality local configuration is on-demand, not interactive-inline, while a smaller model (\texttt{gemma3:1b+RAG}) sits inside the inline budget at lower recall. The user-facing implication is that \emph{a single model cannot serve both inline and audit roles for this scope on this hardware}; the deployment profile in the conclusion (Table~\ref{tab:conclusion-deployment-profiles}) splits the role accordingly.
+
+\paragraph{Repair quality $\times$ Detection.}
+The 90.32\,\% auto-applicable rate is conditioned on detected findings, so its value is gated by R1 recall: missed vulnerabilities never receive a repair. The combined system therefore has a recall ceiling at the R1 level (about 71\,\% on the curated headline) and a fix-applicability ceiling at the R3 level. The two compose multiplicatively in the user's experience --- of every ten exploitable issues a developer might want surfaced and fixed by the tool, R1 catches roughly seven and R3 produces directly applicable fixes for roughly six. This is the operationally meaningful number, not the per-requirement marginals.
+
+\paragraph{Privacy $\times$ Everything Else.}
+The R5 privacy guarantee (zero egress, signed corpus integrity) is binary in the way the others are not: a model that exfiltrates code once is permanently disqualified for sensitive projects regardless of its R1 or R4 numbers. Privacy is therefore treated as a fixed precondition rather than as a tunable axis. The R1/R3/R4 numbers above are reported \emph{within} the privacy envelope; trading R5 for marginal R1 or R4 gains (e.g.\ a cloud LLM at lower latency) is an operationally different system, not a better point on the same Pareto frontier.
+
+\paragraph{When Code Guardian is and is not useful.}
+The function-level scope adds clear value when the dangerous API is lexically present in the analyzed unit: SQL string concatenation, \texttt{innerHTML} assignments, \texttt{exec} on user input, weak hash algorithms, hardcoded credentials, prototype pollution sinks. On the curated corpus these classes hit 90--100\,\% canonical recall (Section~\ref{sec:eval-r1}). The scope does \emph{not} add value when the vulnerability requires reasoning about code that is not in the analyzed unit: cross-file taint flow, framework-level invariants (the JWT \texttt{algorithms} option, an Express access-control wrapper), absent validation, or the version constraint that resolves a CVE. The external-corpus result (F1 63.64\,\%, $\sim$10-point gap to curated) and the inline-mode NodeGoat result (3 of 7) make this concrete: when frame conditions matter, function-scope LLM analysis under-reads the situation. The audit-mode AST + LLM hybrid (Section~\ref{sec:impl-audit-mode}) is the architectural response for whole-project work, lifting the same NodeGoat result to 6 of 7 by adding deterministic AST sink detection alongside the semantic LLM stage.
+
+\subsection{Comparison with Related Work}
+\label{sec:eval-related-comparison}
+
+Three benchmarks anchor the comparison. IRIS~\cite{li2025iris} reports a false discovery rate of 84.82\% (precision approximately 15\%) for GPT-4 on whole-repository Java analysis, with 55 of 120 vulnerabilities detected. CWEval~\cite{peng2025cweval} establishes outcome-driven evaluation as a methodological benchmark and reports that LLMs achieve more than 70\% F1 with about 80\% precision when given context-rich prompts. SecRepair~\cite{islam2024secrepair} reports a 12\% improvement on automated similarity-based repair-quality metrics but explicitly admits in its own analysis that those metrics are ``fundamentally inadequate'' for security correctness assessment.
+
+Code Guardian's measured 78.13\% precision (with the inter-run confidence gate) on a local 8B-parameter model lands in the same precision class as the cloud-LLM systems cited above. This is not a head-to-head dominance claim --- the datasets and analysis scopes differ --- but it is a defensible counterpoint to the assumption that local models cannot reach cloud-class precision on focused vulnerability detection. The path that gets there is the explicit pipeline of canonical type matching, multi-pass consensus, inter-run confidence gating, and a tightened structured-output contract, rather than raw model scale.
+
+The honest negative result on RAG also aligns with the literature. RESCUE~\cite{shi2025rescue} reports that conventional retrieval augmentation (SecCoder, the closest baseline in their study) does not significantly improve secure code generation, and proposes a more sophisticated multi-faceted retrieval to close the gap. The thesis's RAG ablation results show \texttt{qwen3:8b} benefitting (+4.42 F1 with the canonical matcher) while \texttt{codellama} collapses ($-29.89$ F1 with RAG enabled). The collapse is driven by the additional retrieval context interfering with \texttt{codellama}'s output structure: latency nearly doubles, recall drops by twenty points, and parse failures increase. The conclusion that RAG must be calibrated per model rather than enabled by default is therefore strongly supported, both by the rerun data and by the related literature.
+
+The auto-applicable repair rate complements SecRepair's characterization of automated repair-quality metrics. SecRepair argues that similarity-based metrics such as cosine similarity, BLEU, and CodeBERTScore are ``fundamentally inadequate'' for security correctness; this thesis offers a deterministic, fleet-wide alternative by pairing a structural repair contract (\texttt{\{code, language\}}) with a syntactic-applicability bar, and reports 90.32\,\% on the full $n=279$ sample (Section~\ref{sec:eval-r3-auto-applicable}). The auto-applicable rate is therefore positioned as a complement to manual review: it scales without rater effort, is reproducible across runs, and addresses one specific axis of the inadequacy SecRepair identifies.
+
+\medskip
+
+To summarize, the headline configuration reaches a precision band reported for cloud GPT-4 on context-rich function-level tasks with a local 8B-parameter model, by combining canonical type matching, multi-pass consensus, inter-run confidence gating, and structural output contracts for both detection and repair. The detector remains weaker on semantic categories that require reasoning about absent code, where the gap is structural rather than capability-bound. The structural \texttt{\{code, language\}} repair contract delivers a 90.32\,\% auto-applicable rate, with the residual bounded by model-side truncation rather than prompt design. Specific point estimates --- detection metrics (Sections~\ref{sec:eval-r1}, \ref{sec:eval-r1-confidence}), auto-applicable repair rate (Section~\ref{sec:eval-r3-auto-applicable}), stage-split latency (Section~\ref{sec:eval-metrics}), and reproducibility (Appendix~\ref{appendix:experimental-results}) --- are presented in the corresponding sections rather than duplicated here.

@@ -1,4 +1,4 @@
-This chapter summarizes the thesis outcomes and states deployment implications. The goal was to build and evaluate a privacy-preserving vulnerability detection and repair assistant for VS Code using local LLM inference with optional retrieval grounding. The detailed per-requirement evidence appears in Chapter~\ref{chap:evaluation}; the cross-cutting interpretation, threats to validity, and answers to RQ1--RQ3 are developed in Chapter~\ref{chap:discussion} (Section~\ref{sec:disc-rq-answers}).
+This chapter summarizes the thesis outcomes, recapitulates the headline findings, names the remaining limitations, and states deployment implications. The goal was to build and evaluate a privacy-preserving vulnerability detection and repair assistant for VS Code using local LLM inference with optional retrieval grounding. The detailed per-requirement evidence appears in Chapter~\ref{chap:evaluation}; the cross-cutting interpretation and comparison with related work are developed in Section~\ref{sec:eval-comparative}.
 
 \section{Summary of Contributions}
 
@@ -12,9 +12,61 @@ The thesis delivers \textbf{Code Guardian}, a VS Code extension for on-device Ja
   \item \textbf{Reproducible evaluation harness.} The repository ships a documented harness with the 101-case curated corpus, a 15-case external corpus drawn from NodeGoat, Juice Shop, and three named CVEs, SAST baselines (Semgrep, CodeQL, ESLint), and a deterministic per-repair syntax validator for scaling R3 beyond manual review.
 \end{enumerate}
 
+\section{Key Findings}
+\label{sec:conclusion-key-findings}
+
+The cross-cutting analysis in Section~\ref{sec:eval-comparative} maps onto the three research questions stated in Section~\ref{sec:intro-rqs}.
+
+\paragraph{RQ1 (Feasibility) --- supported with caveats.}
+The headline configuration delivers useful detection and developer-controlled repair inside VS Code while preserving the no-code-exfiltration objective (Sections~\ref{sec:eval-r1},~\ref{sec:eval-r5}). Practical value depends on configuration choice: the function-level scope works well when the dangerous API is lexically present, less well when frame conditions outside the scope determine reachability. With the inter-run confidence gate the local 8B-parameter model reaches 78.13\,\% precision (F1 74.07\,\%, FPR 10.00\,\%), in the same precision band reported for cloud GPT-4 on context-rich function-level tasks.
+
+\paragraph{RQ2 (Grounding) --- partially supported, sharply model-dependent.}
+Retrieval augmentation lifts the strongest 8B-parameter model and slightly degrades or severely degrades smaller and code-specialized models, with only the \texttt{codellama} degradation surviving Bonferroni correction across the five paired McNemar tests (Section~\ref{sec:eval-r1}). Retrieval must therefore be treated as a per-model configuration choice rather than a universal default --- a finding consistent with RESCUE's report that conventional RAG does not significantly improve secure code generation \cite{shi2025rescue}.
+
+\paragraph{RQ3 (Practicality) --- supported for constrained interactive workflows.}
+Function-level scoping, debouncing, and caching make local analysis usable in selected workflows; the highest-quality configuration's stage-1 detection median exceeds the strict interactive-inline threshold, so quality-oriented modes are better suited to explicit scan or audit interactions than to always-on inline use (Section~\ref{sec:eval-r4}). Inference accounts for more than 99\,\% of the response time, so further latency improvements require model or architectural changes rather than parsing optimization.
+
+\paragraph{Repair quality.}
+The structural \texttt{\{code, language\}} repair contract delivers a 90.32\,\% auto-applicable rate on the full $n=279$ stage-2 output, complementing the 68\,\% manual-review correctness on a 25-sample subset. The residual rejections are model-side structural defects (mid-statement truncation, unterminated regex literals), not prose paraphrases of the fix.
+
+\section{Limitations}
+\label{sec:conclusion-limitations}
+
+The findings rest on a controlled curated corpus, a single hardware profile, and a configuration selection that is not pre-registered. The limitations below qualify the headline numbers; none invalidate the qualitative conclusions, but each constrains how the measurements should be generalized.
+
+\paragraph{Scope and context depth.}
+The system handles common vulnerability patterns but remains limited for deep cross-file reasoning without full static data-flow analysis. Three semantic categories register zero recall under the canonical taxonomy. A regex-based import / sink resolver (Section~\ref{sec:impl-tech-stack}) provides lightweight cross-snippet hints, but it does not surface new instances in those categories; the canonical taxonomy explains most of the apparent gap by re-binning labels rather than by detecting additional findings.
+
+\paragraph{Evaluation representativeness and statistical power.}
+The curated dataset is intentionally small and human-auditable. The 101 cases align with the scale of contemporary curated benchmarks (CWEval at 119 tasks, IRIS at 120 vulnerabilities) but do not generalize to production repository scale; results are indicative, not definitive. The small absolute sample size also limits statistical power: only the \texttt{codellama+RAG} degradation survives Bonferroni correction across the five RAG-vs-no-RAG model tests; the \texttt{qwen3} RAG-lift directions are consistent with the data but not statistically significant under correction. Confidence intervals on FPR are wide for the same reason: the 95\,\% exact binomial CI for the headline 10\,\% FPR is $[2.1\%, 26.5\%]$ on $n=30$ secure cases.
+
+\paragraph{Curator bias and taxonomy construct validity.}
+The curated 101-case corpus and the 26-class canonical taxonomy were both authored by the candidate, and both shape the headline numbers. Bucketing decisions absorb sub-types into parent classes (for example, \emph{improper-auth} subsumes several CWE variants that the model emits as sibling labels), so per-category recall is sensitive to those decisions. Three mitigations are in place: every case is sourced from an authoritative public corpus (OWASP Benchmark, Juice Shop, NodeGoat, named CVEs) and the canonical taxonomy is aligned with CWE IDs where applicable; the held-out 71/30 split (Section~\ref{sec:eval-r1-heldout}) keeps threshold tuning off the TEST cases; and the taxonomy itself is pinned by a snapshot test over 48 fixture inputs (Section~\ref{sec:eval-metrics}), with per-canonical-category TP / FP / FN counts emitted unchanged in every run JSON so an external reviewer can re-bucket the raw findings under a different taxonomy and re-score without consulting the author.
+
+\paragraph{Repair correctness bar.}
+Repairs are model-generated and may change behavior. Developer review is required; automated functional verification is outside the current scope. The pipeline includes a syntactic auto-applicability check (Section~\ref{sec:eval-r3-auto-applicable}) that scales to the full evaluation set, but this is a strictly weaker signal than functional verification: a parse-clean fix can still be semantically wrong, and a parse-failing fix may still be informative as decision support. The 25-sample manual review of repair quality (Section~\ref{sec:eval-r3}) was performed by a single reviewer; no inter-rater reliability was measured.
+
+\paragraph{Hardware profile and run-to-run variance.}
+All measurements are from a single Apple M4 Max profile (16 cores, 64\,GB RAM) with deterministic decoding (\texttt{temperature=0}, fixed seed). Local inference on GPU hardware can introduce minor non-determinism from floating-point scheduling. The 3-run design partially mitigates this for vulnerable cases, but performance on lower-end hardware may differ. Reported values are descriptive measurements under a documented environment, not hardware-independent constants.
+
+\paragraph{Usability evidence is latency-only.}
+R4 is measured by stage-split latency against HCI response-time thresholds; developer satisfaction, trust, and adoption were not evaluated under a controlled walkthrough. The deployment-profile recommendations (Table~\ref{tab:conclusion-deployment-profiles}) are therefore framed as \emph{indicated by measurement under a specific hardware profile}, not as universally validated defaults.
+
+\paragraph{Commercial SAST baselines absent.}
+The SAST baselines benchmarked here are open-source (Semgrep, CodeQL, ESLint with security plugins). Commercial offerings such as Snyk Code, Veracode, and Fortify were not benchmarked. Three reasons make this a deliberate scope choice rather than an oversight. First, commercial scanners are typically licensed under terms that restrict publishing benchmark numbers. Second, cloud-only commercial scanners conflict with the R5 zero-egress requirement and would have to be excluded from privacy-preserving comparisons regardless. Third, for the function-level JS/TS scope this thesis targets, the open-source baselines already span the cost / FPR / recall spectrum that a privacy-preserving local tool must compete inside.
+
+\paragraph{Training-data leakage from public corpora.}
+The 15-case external corpus draws from OWASP NodeGoat, OWASP Juice Shop, and three named CVEs, all of which are public and almost certainly present in the pre-training data of the evaluated models. Headline numbers measured on these cases may therefore reflect partial memorization rather than pure generalization. The internally authored 71+30 curated portion is not a public corpus and is the primary evaluation surface; the external corpus result (Section~\ref{sec:eval-r1-external-corpus}) is reported separately and serves as the leakage-resistant reference. The roughly ten-point F1 gap between the two surfaces is consistent with --- though does not prove --- the leakage hypothesis, since framework-level weakness classes also account for some of the gap.
+
+\paragraph{Configuration selection is not pre-registered.}
+The headline configuration (\texttt{qwen3:8b+RAG}, three runs, gate $\geq 0.67$) was identified by post-hoc evaluation across ten model$\times$mode configurations rather than declared before the sweep. The held-out 71/30 split (Section~\ref{sec:eval-r1-heldout}) addresses one specific kind of overfitting --- threshold tuning on the same cases as the headline --- but does not address selection of the model and retrieval mode themselves. Per-configuration metrics are reported alongside the headline (Section~\ref{sec:eval-r1}) so the selection is auditable.
+
+\paragraph{Deviations from the approved task.}
+A subset of mechanisms named in the registered task description was scoped down or replaced during execution. The approved task specified evaluation on \emph{Juliet} and \emph{OWASP Benchmark} (40--50 CWE-mapped cases). Both suites are real but neither targets JavaScript: Juliet is published by NIST in C/C++ and Java only, and the OWASP Benchmark Project is a Java application. The delivered evaluation therefore substitutes two CWE-mapped JavaScript corpora: the curated 101-case primary corpus (71 vulnerable + 30 secure) and an additional 15-case external corpus drawn from OWASP NodeGoat, OWASP Juice Shop, and three named CVEs. The substitution preserves the property the named benchmarks provide (CWE-mapped, vulnerability-tagged samples drawn from authoritative sources) in the language the detector targets. The substitution penalty is measured in Section~\ref{sec:eval-r1-external-corpus}: under the headline configuration the external corpus reaches F1 63.64\,\% versus the curated headline's 74.07\,\%, an approximately 10-point gap concentrated in framework-level weakness classes that the function-level scope does not see. These deviations were discussed with the supervisor during the implementation phase.
+
 \section{Implications for Practice}
 
-Table~\ref{tab:conclusion-deployment-profiles} summarizes practical deployment profiles indicated by the measured results on the locked Apple M4 Max profile (Section~\ref{sec:eval-reproducibility-metric}). The profiles describe what the measurements support; they are not unconditional recommendations and would need re-validation on different hardware or different corpus characteristics.
+Table~\ref{tab:conclusion-deployment-profiles} summarizes practical deployment profiles indicated by the measured results on the locked Apple M4 Max profile (Appendix~\ref{appendix:experimental-results}). The profiles describe what the measurements support; they are not unconditional recommendations and would need re-validation on different hardware or different corpus characteristics.
 
 \begin{table}[H]
   \centering
@@ -35,12 +87,6 @@ Table~\ref{tab:conclusion-deployment-profiles} summarizes practical deployment p
 
 \paragraph{Decision support, not a verifier.}
 Code Guardian is decision support, not an autonomous security verifier. False negatives, false positives, and occasional label mismatches remain possible, so findings and repairs should stay reviewable artifacts under developer control, complemented by conventional testing and security review.
-
-\section{Future Work}
-
-The thesis closes a privacy-preserving slice of the IDE-security space; several engineering and research directions extend it.
-
-\input{src/chapters/future_work}
 
 \section{Conclusion}
 

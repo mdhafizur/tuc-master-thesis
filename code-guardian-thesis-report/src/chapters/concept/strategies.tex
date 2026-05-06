@@ -1,7 +1,27 @@
 \section{Detection Workflows}
 \label{sec:detection-strategies}
 
-While the component architecture defines what responsibilities exist in the system, IDE usability depends on how these components are orchestrated in concrete workflows. Code Guardian supports several workflows that trade off latency, context breadth, and output structure. This section describes the main workflows implemented in the prototype and relates them to requirements R1--R5.
+While the component architecture defines what responsibilities exist in the system, IDE usability depends on how these components are orchestrated in concrete workflows. Code Guardian supports five workflows that trade off latency, context breadth, and output surface. Table~\ref{tab:concept-workflows-overview} summarises them; the subsections that follow describe each in detail and relate them to requirements R1--R5. The process logic shared across the four detection workflows is illustrated by the BPMN in Section~\ref{subsec:process-view}; differences are confined to the trigger and the output surface.
+
+\begin{table}[H]
+  \centering
+  \caption{Workflow modes supported by Code Guardian. The four detection workflows share the same backend pipeline (extract scope → optional RAG → Stage~1 LLM → parse → render); they differ only in trigger and output surface. Stage~2 repair is invoked per finding from any of the four detection workflows.}
+  \label{tab:concept-workflows-overview}
+  \footnotesize
+  \renewcommand{\arraystretch}{1.2}
+  \begin{tabularx}{\textwidth}{p{0.20\textwidth}p{0.20\textwidth}p{0.20\textwidth}X}
+    \toprule
+    \textbf{Workflow} & \textbf{Trigger} & \textbf{Scope} & \textbf{Output surface} \\
+    \midrule
+    Real-time function diagnostics (\S\ref{subsec:inline-detection}) & \texttt{onDidChangeText} (debounced 800\,ms) & Enclosing function ($\leq$2\,000 chars) & VS Code diagnostics, Problems panel, quick fixes \\
+    On-demand file diagnostics (\S\ref{subsec:comprehensive-analysis}) & Command palette & Active document ($\leq$20\,000 chars) & VS Code diagnostics, Problems panel \\
+    Interactive analysis \& Q\&A (\S\ref{subsec:interactive-analysis}) & Command palette, selection action & Selection / files \& folders & WebView panel (streamed Markdown) \\
+    Workspace scan (\S\ref{subsec:workspace-scan}) & Command palette & \texttt{*.js/.ts/.tsx/.jsx} ($\leq$500\,KB / file) & Dashboard WebView, Problems panel \\
+    \midrule
+    Stage~2 repair (\S\ref{subsec:repair-workflow}) & Per Stage~1 finding & Single finding & VS Code quick fix (developer-applied) \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
 
 \subsection{Real-Time Function-Level Diagnostics}
 \label{subsec:inline-detection}

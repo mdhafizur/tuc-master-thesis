@@ -7,7 +7,3 @@ The chapter develops the design from the outside in. It first traces how each ar
 \input{src/chapters/concept/components}
 \input{src/chapters/concept/strategies}
 \input{src/chapters/concept/system_architecture_and_design}
-
-\section{Summary}
-
-The concept chapter derived Code Guardian's architecture from the requirements and gaps identified in Chapter~\ref{chap:analysis}. The central design choices --- local-only inference, consensus-based false-positive filtering, strict JSON output contracts, and a two-stage detection-then-repair pipeline --- each address specific weaknesses in existing tools while respecting the privacy and latency constraints of an IDE-integrated workflow. The C4 views and sequence diagrams make one boundary explicit above all others: source code stays on the developer's machine. The next chapter describes how this design was implemented.

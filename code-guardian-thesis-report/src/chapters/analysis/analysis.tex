@@ -89,32 +89,3 @@ This section reviews prior work on SAST, LLM-based security assistance, retrieva
 
 \subsection{Positioning of This Thesis}\vspace{-2mm}
 \input{src/chapters/analysis/related_works/positioning}
-
-\subsection{Critical Comparison Across Paradigms}
-\label{sec:related-work-critical-comparison}
-
-The reviewed literature indicates that security assistants should be compared as \emph{design paradigms}, not as isolated tools. Table~\ref{tab:related-work-paradigm-compare} summarizes the trade-offs that motivate this thesis architecture.
-
-\begin{table}[H]
-  \centering
-  \caption{Critical comparison of major security-assistance paradigms.}
-  \label{tab:related-work-paradigm-compare}
-  \footnotesize
-  \renewcommand{\arraystretch}{1.15}
-  \begin{tabularx}{\textwidth}{p{0.18\textwidth}XXX}
-    \toprule
-    Paradigm & Primary strengths & Primary limitations & Implication for this thesis \\
-    \midrule
-    Rule-based SAST & Deterministic behavior, reproducible CI/CD integration, explicit audit trails. & Limited semantic adaptation and weak repair guidance. & Keep deterministic baseline signals and add contextual reasoning. \\
-    LLM-only IDE assistant & Flexible reasoning, explanation, and repair suggestion in context. & Probabilistic behavior, hallucination risk, and variable false-positive control. & Enforce strict output contracts and developer-controlled patching. \\
-    RAG-assisted LLM & Better grounding and explanation alignment in favorable setups. & Model-dependent gains and additional latency/complexity. & Treat RAG as tunable per model/workflow, not universal. \\
-    Local-first deployment & Strong source-code privacy boundary and reproducibility. & Dependence on local hardware/host security assumptions. & Prioritize no-exfiltration while documenting residual risks. \\
-    \bottomrule
-  \end{tabularx}
-\end{table}
-
-Two conclusions follow. First, no single paradigm satisfies R1--R5 alone; practical systems combine complementary mechanisms. Second, evaluation must jointly report quality and operational metrics because deployment value depends on recall, false-positive control, repair quality, latency, and privacy guarantees together.
-
-\section{Summary}
-
-The chapter established R1--R5 and compared the main design paradigms in the literature. A practical solution must combine deterministic baselines, contextual reasoning, explicit privacy boundaries, and workflow-aware responsiveness --- the motivation for the concept in the next chapter.

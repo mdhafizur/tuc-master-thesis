@@ -39,20 +39,9 @@ The technical scope includes local LLM inference via Ollama, function-level code
 
 The evaluation is limited to the accuracy, consistency, and latency of the structured output produced from code snippets in a controlled test harness. This thesis does not cover areas such as multi-language support beyond JavaScript/TypeScript, real-time collaborative editing, endpoint hardening, hardware-level attacks, or enterprise identity and network controls. Optional knowledge-base refresh may fetch \emph{public} vulnerability metadata (for example CVE/CWE descriptions) and can be disabled for fully offline operation.
 
-\subsection{Research Questions}
-\label{sec:intro-rqs}
+The thesis addresses three research questions, referenced throughout as RQ1--RQ3 (\label{sec:intro-rqs}). \textbf{RQ1 (Feasibility):} To what extent can a locally deployed LLM integrated into VS Code provide useful vulnerability detection and repair suggestions without transmitting source code to external services? \textbf{RQ2 (Grounding):} How does retrieval-augmented prompting influence detection quality compared to an LLM-only configuration, and to what extent is that effect uniform across model families? \textbf{RQ3 (Practicality):} What performance mechanisms (scoping, caching, debouncing) are necessary to make LLM-based security feedback usable within interactive IDE workflows?
 
-The thesis addresses three research questions:
-\begin{itemize}
-  \item \textbf{RQ1 (Feasibility):} To what extent can a locally deployed LLM integrated into VS Code provide useful vulnerability detection and repair suggestions without transmitting source code to external services?
-  \item \textbf{RQ2 (Grounding):} How does retrieval-augmented prompting influence detection quality compared to an LLM-only configuration, and to what extent is that effect uniform across model families?
-  \item \textbf{RQ3 (Practicality):} What performance mechanisms (scoping, caching, debouncing) are necessary to make LLM-based security feedback usable within interactive IDE workflows?
-\end{itemize}
-
-\subsection{Threat Model and Trust Assumptions}
-\label{sec:intro-threat-model}
-
-The main threat addressed is unintended disclosure of proprietary code through external analysis services. Local inference reduces this risk surface but does not remove all security risks. Table~\ref{tab:intro-threat-model} summarizes the threat classes considered, the attack path each assumes, and the design response carried into the chapters that follow.
+The main threat addressed is unintended disclosure of proprietary code through external analysis services (\label{sec:intro-threat-model}). Local inference reduces this risk surface but does not remove all security risks. Table~\ref{tab:intro-threat-model} summarizes the threat classes considered, the attack path each assumes, and the design response carried into the chapters that follow.
 
 \begin{table}[H]
   \centering
@@ -96,4 +85,4 @@ The thesis begins with the conceptual foundation. Chapter~\ref{chap:analysis} re
 
 Building on the concept, Chapter~\ref{chap:implementation} describes the VS Code extension itself, including the technology choices and the core components (analyzer, RAG manager, analysis cache, diagnostic rendering) with an emphasis on modularity and local execution. Chapter~\ref{chap:evaluation} then examines system performance across five local models in both LLM-only and LLM+RAG configurations, reporting precision, recall, F1, false-positive rate, JSON parse success, latency, and the auto-applicable repair rate against the R1--R5 requirements.
 
-Chapter~\ref{chap:discussion} synthesizes these results, positions them against related work, and addresses threats to validity. Chapter~\ref{chap:conclusion} summarizes the key findings and outlines opportunities for future work. The appendices provide supplementary material, including implementation details, detailed evaluation data, the unified positioning comparison, qualitative case studies, and privacy verification evidence.
+Chapter~\ref{chap:conclusion} consolidates the headline findings, names the limitations and threats to validity, states the deployment implications, and answers RQ1--RQ3. Chapter~\ref{chap:future-work} sketches engineering, methodological, and open-research extensions. The appendices provide supplementary material, including detailed implementation results (privacy verification evidence, configuration tables, prompt contracts) and detailed experimental results (full per-configuration accuracy tables, reproducibility measurement, qualitative case studies).

@@ -1,161 +1,133 @@
-<mxfile host="Electron" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/29.6.1 Chrome/142.0.7444.265 Electron/39.8.0 Safari/537.36" version="29.6.1">
+<mxfile host="Electron">
   <diagram name="C4 Container" id="3FC7Rw8jHermrIPeUQn5">
-    <mxGraphModel dx="1018" dy="650" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1050" math="0" shadow="0">
+    <mxGraphModel dx="1018" dy="650" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="700" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=18;fontStyle=1;" value="Container Diagram: Code Guardian Internal Components" vertex="1">
-          <mxGeometry height="40" width="600" x="400" y="10" as="geometry" />
+
+        <!-- System boundary (dashed) -->
+        <mxCell id="boundary" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#666666;strokeWidth=2;dashed=1;dashPattern=8 8;" value="" vertex="1">
+          <mxGeometry x="260" y="100" width="780" height="500" as="geometry" />
         </mxCell>
-        <mxCell id="system-boundary" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#1168bd;strokeWidth=4;dashed=1;dashPattern=12 12;" value="" vertex="1">
-          <mxGeometry height="370" width="1240" x="65" y="95" as="geometry" />
+        <mxCell id="boundary-label" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=12;fontStyle=2;fontColor=#666666;" value="Code Guardian (local trust boundary)" vertex="1">
+          <mxGeometry x="270" y="75" width="320" height="20" as="geometry" />
         </mxCell>
-        <mxCell id="system-label" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;fontSize=14;fontStyle=1;fontColor=#1168bd;" value="Code Guardian System Boundary" vertex="1">
-          <mxGeometry height="30" width="300" x="65" y="50" as="geometry" />
+
+        <!-- INTERNAL: VS Code Extension -->
+        <mxCell id="extension" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=1;fontSize=13;" value="VS Code Extension&#xa;(TypeScript)" vertex="1">
+          <mxGeometry x="290" y="240" width="180" height="80" as="geometry" />
         </mxCell>
-        <mxCell id="extension-container" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1168bd;strokeColor=#0e548f;strokeWidth=2;" value="" vertex="1">
-          <mxGeometry height="320" width="400" x="80" y="120" as="geometry" />
+
+        <!-- INTERNAL: Local Analysis Backend -->
+        <mxCell id="backend" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=1;fontSize=13;" value="Local Analysis Backend&#xa;(TypeScript, Ollama client)" vertex="1">
+          <mxGeometry x="550" y="240" width="220" height="80" as="geometry" />
         </mxCell>
-        <mxCell id="ext-title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=15;fontStyle=1;fontColor=#FFFFFF;" value="VS Code Extension" vertex="1">
-          <mxGeometry height="25" width="400" x="80" y="128" as="geometry" />
+
+        <!-- INTERNAL: Repair Generator -->
+        <mxCell id="repair" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=1;fontSize=13;" value="Repair Generator&#xa;(Stage 2)" vertex="1">
+          <mxGeometry x="850" y="240" width="160" height="80" as="geometry" />
         </mxCell>
-        <mxCell id="ext-tech" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=10;fontStyle=2;fontColor=#E3F2FD;" value="[TypeScript, VS Code Extension API]" vertex="1">
-          <mxGeometry height="20" width="400" x="80" y="153" as="geometry" />
+
+        <!-- INTERNAL: Result Cache (cylinder) -->
+        <mxCell id="cache" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=13;" value="Result Cache&#xa;(in-memory LRU)" vertex="1">
+          <mxGeometry x="310" y="430" width="160" height="100" as="geometry" />
         </mxCell>
-        <mxCell id="ext-comp1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0d47a1;strokeColor=#001970;align=left;spacingLeft=10;fontColor=#FFFFFF;fontSize=10;" value="Diagnostics Provider&#xa;• Real-time onChange listener&#xa;• Debouncing (800ms)&#xa;• Function-level scoping" vertex="1">
-          <mxGeometry height="80" width="170" x="100" y="185" as="geometry" />
+
+        <!-- INTERNAL: Vector Index (cylinder) -->
+        <mxCell id="vectordb" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=13;" value="Vector Index&#xa;(local HNSW)" vertex="1">
+          <mxGeometry x="600" y="430" width="160" height="100" as="geometry" />
         </mxCell>
-        <mxCell id="ext-comp2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0d47a1;strokeColor=#001970;align=left;spacingLeft=10;fontColor=#FFFFFF;fontSize=10;" value="Command Handlers&#xa;• Analyze selection&#xa;• Scan file/workspace&#xa;• Interactive Q&amp;A" vertex="1">
-          <mxGeometry height="80" width="170" x="290" y="185" as="geometry" />
+
+        <!-- EXTERNAL: VS Code IDE -->
+        <mxCell id="vscode" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;strokeWidth=1;fontSize=13;" value="VS Code IDE&#xa;(editor &amp; diagnostics)" vertex="1">
+          <mxGeometry x="60" y="240" width="160" height="80" as="geometry" />
         </mxCell>
-        <mxCell id="ext-comp3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0d47a1;strokeColor=#001970;align=left;spacingLeft=10;fontColor=#FFFFFF;fontSize=10;" value="Cache Manager&#xa;• LRU + TTL (30min)&#xa;• Content-based hashing&#xa;• 100 entry limit" vertex="1">
-          <mxGeometry height="80" width="170" x="100" y="280" as="geometry" />
+
+        <!-- EXTERNAL: Ollama LLM Runtime -->
+        <mxCell id="ollama" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;strokeWidth=1;fontSize=13;" value="Ollama LLM Runtime&#xa;(localhost:11434)" vertex="1">
+          <mxGeometry x="1100" y="240" width="200" height="80" as="geometry" />
         </mxCell>
-        <mxCell id="ext-comp4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0d47a1;strokeColor=#001970;align=left;spacingLeft=10;fontColor=#FFFFFF;fontSize=10;" value="UI Renderer&#xa;• Diagnostics (squiggles)&#xa;• Quick fixes&#xa;• WebView (interactive)" vertex="1">
-          <mxGeometry height="80" width="170" x="290" y="280" as="geometry" />
+
+        <!-- EXTERNAL: CVE/NVD APIs (optional, dashed) -->
+        <mxCell id="cve" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;strokeWidth=1;dashed=1;dashPattern=6 6;fontSize=13;" value="CVE/NVD APIs&#xa;(public metadata, optional)" vertex="1">
+          <mxGeometry x="1100" y="450" width="200" height="80" as="geometry" />
         </mxCell>
-        <mxCell id="ext-desc" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=10;fontColor=#E3F2FD;" value="Orchestrates analysis workflows, manages caching,&#xa;renders diagnostics and quick fixes in IDE." vertex="1">
-          <mxGeometry height="40" width="380" x="90" y="375" as="geometry" />
-        </mxCell>
-        <mxCell id="backend-container" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1168bd;strokeColor=#0e548f;strokeWidth=2;" value="" vertex="1">
-          <mxGeometry height="320" width="400" x="540" y="120" as="geometry" />
-        </mxCell>
-        <mxCell id="backend-title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=15;fontStyle=1;fontColor=#FFFFFF;" value="Local Analysis Backend" vertex="1">
-          <mxGeometry height="25" width="400" x="540" y="128" as="geometry" />
-        </mxCell>
-        <mxCell id="backend-tech" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=10;fontStyle=2;fontColor=#E3F2FD;" value="[TypeScript, Ollama API]" vertex="1">
-          <mxGeometry height="20" width="400" x="540" y="153" as="geometry" />
-        </mxCell>
-        <mxCell id="backend-comp1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0d47a1;strokeColor=#001970;align=left;spacingLeft=10;fontColor=#FFFFFF;fontSize=10;" value="Analysis Engine&#xa;• Prompt builder&#xa;• LLM client (Ollama, JSON-mode)&#xa;• Multi-pass consensus filter" vertex="1">
-          <mxGeometry height="80" width="175" x="560" y="185" as="geometry" />
-        </mxCell>
-        <mxCell id="backend-comp2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0d47a1;strokeColor=#001970;align=left;spacingLeft=10;fontColor=#FFFFFF;fontSize=10;" value="RAG Orchestrator&#xa;• Embedding generation&#xa;• Vector search (top-k)&#xa;• Context augmentation" vertex="1">
-          <mxGeometry height="80" width="175" x="750" y="185" as="geometry" />
-        </mxCell>
-        <mxCell id="backend-comp3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0d47a1;strokeColor=#001970;align=left;spacingLeft=10;fontColor=#FFFFFF;fontSize=10;" value="Knowledge Refresher&#xa;• CVE/NVD API client&#xa;• CWE/OWASP parser&#xa;• Incremental indexing" vertex="1">
-          <mxGeometry height="80" width="175" x="560" y="280" as="geometry" />
-        </mxCell>
-        <mxCell id="backend-comp4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0d47a1;strokeColor=#001970;align=left;spacingLeft=10;fontColor=#FFFFFF;fontSize=10;" value="Repair Generator (Stage 2)&#xa;• Dedicated repair prompt&#xa;• Per-vulnerability fix gen.&#xa;• Developer-controlled patches" vertex="1">
-          <mxGeometry height="80" width="175" x="750" y="280" as="geometry" />
-        </mxCell>
-        <mxCell id="backend-desc" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=10;fontColor=#E3F2FD;" value="Executes LLM analysis, manages RAG retrieval,&#xa;generates repair suggestions." vertex="1">
-          <mxGeometry height="40" width="380" x="550" y="375" as="geometry" />
-        </mxCell>
-        <mxCell id="vectordb-container" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1168bd;strokeColor=#0e548f;strokeWidth=2;" value="" vertex="1">
-          <mxGeometry height="160" width="280" x="1000" y="120" as="geometry" />
-        </mxCell>
-        <mxCell id="vectordb-title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=15;fontStyle=1;fontColor=#FFFFFF;" value="Vector Database" vertex="1">
-          <mxGeometry height="25" width="280" x="1000" y="128" as="geometry" />
-        </mxCell>
-        <mxCell id="vectordb-tech" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=10;fontStyle=2;fontColor=#E3F2FD;" value="[Local HNSW Index]" vertex="1">
-          <mxGeometry height="20" width="280" x="1000" y="153" as="geometry" />
-        </mxCell>
-        <mxCell id="vectordb-desc" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=10;fontColor=#E3F2FD;" value="Stores CWE/OWASP/CVE embeddings&#xa;&#xa;• ~180 CWE/OWASP/CVE entries&#xa;• OWASP Top 10 guidance&#xa;• CVE pattern examples&#xa;• HNSW indexing for fast retrieval" vertex="1">
-          <mxGeometry height="90" width="260" x="1010" y="180" as="geometry" />
-        </mxCell>
-        <mxCell id="cache-container" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1168bd;strokeColor=#0e548f;strokeWidth=2;" value="" vertex="1">
-          <mxGeometry height="140" width="280" x="1000" y="310" as="geometry" />
-        </mxCell>
-        <mxCell id="cache-title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=15;fontStyle=1;fontColor=#FFFFFF;" value="Result Cache" vertex="1">
-          <mxGeometry height="25" width="280" x="1000" y="318" as="geometry" />
-        </mxCell>
-        <mxCell id="cache-tech" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=10;fontStyle=2;fontColor=#E3F2FD;" value="[In-Memory LRU]" vertex="1">
-          <mxGeometry height="20" width="280" x="1000" y="343" as="geometry" />
-        </mxCell>
-        <mxCell id="cache-desc" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=10;fontColor=#E3F2FD;" value="Analysis results keyed by&#xa;(code hash, model, RAG enabled)&#xa;&#xa;• 100 entry limit (LRU)&#xa;• 30 minute TTL" vertex="1">
-          <mxGeometry height="70" width="260" x="1010" y="370" as="geometry" />
-        </mxCell>
-        <mxCell id="vscode-ext" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#999999;strokeColor=#666666;strokeWidth=2;fontColor=#FFFFFF;fontSize=11;" value="VS Code IDE&#xa;[External Platform]&#xa;&#xa;Editor API, Language Services,&#xa;Diagnostics UI" vertex="1">
-          <mxGeometry height="100" width="200" x="120" y="510" as="geometry" />
-        </mxCell>
-        <mxCell id="ollama-ext" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#999999;strokeColor=#666666;strokeWidth=2;fontColor=#FFFFFF;fontSize=11;" value="Ollama LLM Runtime&#xa;[External System]&#xa;&#xa;localhost:11434&#xa;qwen3, gemma3, CodeLlama" vertex="1">
-          <mxGeometry height="100" width="200" x="570" y="510" as="geometry" />
-        </mxCell>
-        <mxCell id="cve-api-ext" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d6b656;strokeColor=#9f8c3d;strokeWidth=2;dashed=1;dashPattern=8 8;fontColor=#FFFFFF;fontSize=11;" value="CVE/NVD APIs&#xa;[External - Optional]&#xa;&#xa;Public vulnerability metadata&#xa;(no code sent)" vertex="1">
-          <mxGeometry height="100" width="200" x="1020" y="510" as="geometry" />
-        </mxCell>
-        <mxCell id="rel1" edge="1" parent="1" source="extension-container" style="endArrow=classic;html=1;strokeWidth=2;strokeColor=#666666;startArrow=classic;startFill=1;" target="vscode-ext" value="Document events,&#xa;diagnostics">
-          <mxGeometry relative="1" x="0.2" y="10" as="geometry">
-            <mxPoint as="offset" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="rel2" edge="1" parent="1" source="extension-container" style="endArrow=classic;html=1;strokeWidth=3;strokeColor=#1168bd;" target="backend-container" value="Code snippets,&#xa;analysis requests">
-          <mxGeometry relative="1" x="-0.2" y="-20" as="geometry">
-            <mxPoint as="offset" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="rel3" edge="1" parent="1" source="backend-container" style="endArrow=classic;html=1;strokeWidth=2;strokeColor=#666666;startArrow=classic;startFill=1;" target="ollama-ext" value="Prompts →&#xa;← JSON findings">
-          <mxGeometry relative="1" x="0.2" y="10" as="geometry">
-            <mxPoint as="offset" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="rel4" edge="1" parent="1" source="backend-comp2" style="endArrow=classic;html=1;strokeWidth=3;strokeColor=#1168bd;startArrow=classic;startFill=1;" target="vectordb-container" value="Embeddings,&#xa;top-k search">
-          <mxGeometry relative="1" x="-0.2" y="-15" as="geometry">
-            <mxPoint as="offset" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="rel5" edge="1" parent="1" source="ext-comp3" style="endArrow=classic;html=1;strokeWidth=3;strokeColor=#1168bd;startArrow=classic;startFill=1;" target="cache-container" value="Cache lookups,&#xa;store results">
-          <mxGeometry relative="1" x="-0.3" y="-15" as="geometry">
-            <mxPoint as="offset" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="rel6" edge="1" parent="1" source="backend-comp3" style="endArrow=classic;html=1;strokeWidth=2;strokeColor=#9f8c3d;dashed=1;dashPattern=8 8;" target="cve-api-ext" value="[Optional]&#xa;Metadata refresh">
-          <mxGeometry relative="1" x="0.2" y="15" as="geometry">
-            <mxPoint as="offset" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="privacy-note" parent="1" style="text;html=1;strokeColor=none;fillColor=#e8f5e9;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=11;fontStyle=1;fontColor=#00994d;" value="Privacy Guarantee: All source code stays within the system boundary (blue dashed).&#xa;Only public metadata leaves the local machine (optional, can be disabled)." vertex="1">
-          <mxGeometry height="40" width="900" x="200" y="650" as="geometry" />
-        </mxCell>
-        <mxCell id="legend-title2" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=12;fontStyle=1;" value="Legend:" vertex="1">
-          <mxGeometry height="20" width="60" x="100" y="720" as="geometry" />
-        </mxCell>
-        <mxCell id="legend-internal" edge="1" parent="1" style="endArrow=classic;html=1;strokeWidth=3;strokeColor=#1168bd;" value="">
+
+        <!-- EDGES (orthogonal routing, explicit anchors) -->
+
+        <!-- VS Code IDE <-> Extension (horizontal) -->
+        <mxCell id="e1" parent="1" edge="1" source="vscode" target="extension" style="endArrow=open;startArrow=open;html=1;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;strokeWidth=1;strokeColor=#666666;fontSize=12;labelBackgroundColor=#FFFFFF;">
           <mxGeometry relative="1" as="geometry">
-            <mxPoint x="100" y="755" as="sourcePoint" />
-            <mxPoint x="180" y="755" as="targetPoint" />
+            <Array as="points" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="legend-internal-label" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=10;" value="Internal data flow" vertex="1">
-          <mxGeometry height="20" width="120" x="190" y="745" as="geometry" />
+        <mxCell id="e1-label" parent="1" style="text;html=1;strokeColor=none;fillColor=#FFFFFF;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=11;" value="Document events,&#xa;diagnostics" vertex="1">
+          <mxGeometry x="225" y="200" width="60" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="legend-external" edge="1" parent="1" style="endArrow=classic;html=1;strokeWidth=2;strokeColor=#666666;" value="">
+
+        <!-- Extension -> Backend (horizontal) -->
+        <mxCell id="e2" parent="1" edge="1" source="extension" target="backend" style="endArrow=open;html=1;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;strokeWidth=1;strokeColor=#666666;fontSize=12;labelBackgroundColor=#FFFFFF;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2-label" parent="1" style="text;html=1;strokeColor=none;fillColor=#FFFFFF;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=11;" value="Analysis&#xa;requests" vertex="1">
+          <mxGeometry x="475" y="200" width="70" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Backend -> Repair (horizontal) -->
+        <mxCell id="e3" parent="1" edge="1" source="backend" target="repair" style="endArrow=open;html=1;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;strokeWidth=1;strokeColor=#666666;fontSize=12;labelBackgroundColor=#FFFFFF;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3-label" parent="1" style="text;html=1;strokeColor=none;fillColor=#FFFFFF;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=11;" value="Confirmed&#xa;findings" vertex="1">
+          <mxGeometry x="775" y="200" width="70" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Backend -> Ollama (Stage 1, top route) -->
+        <mxCell id="e4" parent="1" edge="1" source="backend" target="ollama" style="endArrow=open;startArrow=open;html=1;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=0.5;exitY=0;entryX=0.5;entryY=0;strokeWidth=1;strokeColor=#666666;fontSize=12;labelBackgroundColor=#FFFFFF;">
           <mxGeometry relative="1" as="geometry">
-            <mxPoint x="340" y="755" as="sourcePoint" />
-            <mxPoint x="420" y="755" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="660" y="170" />
+              <mxPoint x="1200" y="170" />
+            </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="legend-external-label" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=10;" value="External integration" vertex="1">
-          <mxGeometry height="20" width="120" x="430" y="745" as="geometry" />
+        <mxCell id="e4-label" parent="1" style="text;html=1;strokeColor=none;fillColor=#FFFFFF;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=11;" value="Stage 1 prompt /&#xa;JSON findings" vertex="1">
+          <mxGeometry x="850" y="155" width="120" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="legend-optional2" edge="1" parent="1" style="endArrow=classic;html=1;strokeWidth=2;strokeColor=#9f8c3d;dashed=1;dashPattern=8 8;" value="">
+
+        <!-- Repair -> Ollama (Stage 2, bottom-right route) -->
+        <mxCell id="e5" parent="1" edge="1" source="repair" target="ollama" style="endArrow=open;startArrow=open;html=1;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;strokeWidth=1;strokeColor=#666666;fontSize=12;labelBackgroundColor=#FFFFFF;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5-label" parent="1" style="text;html=1;strokeColor=none;fillColor=#FFFFFF;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=11;" value="Stage 2 prompt /&#xa;{code, language}" vertex="1">
+          <mxGeometry x="1015" y="265" width="100" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Extension -> Cache (vertical) -->
+        <mxCell id="e6" parent="1" edge="1" source="extension" target="cache" style="endArrow=open;startArrow=open;html=1;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeWidth=1;strokeColor=#666666;fontSize=12;labelBackgroundColor=#FFFFFF;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6-label" parent="1" style="text;html=1;strokeColor=none;fillColor=#FFFFFF;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=11;" value="Lookup /&#xa;store" vertex="1">
+          <mxGeometry x="395" y="365" width="60" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Backend -> Vector Index (vertical) -->
+        <mxCell id="e7" parent="1" edge="1" source="backend" target="vectordb" style="endArrow=open;html=1;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeWidth=1;strokeColor=#666666;fontSize=12;labelBackgroundColor=#FFFFFF;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e7-label" parent="1" style="text;html=1;strokeColor=none;fillColor=#FFFFFF;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=11;" value="RAG&#xa;query" vertex="1">
+          <mxGeometry x="685" y="365" width="50" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Backend -> CVE (optional, dashed) -->
+        <mxCell id="e8" parent="1" edge="1" source="backend" target="cve" style="endArrow=open;html=1;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=1;exitY=1;entryX=0;entryY=0.5;strokeWidth=1;strokeColor=#666666;dashed=1;dashPattern=6 6;fontSize=12;labelBackgroundColor=#FFFFFF;">
           <mxGeometry relative="1" as="geometry">
-            <mxPoint x="580" y="755" as="sourcePoint" />
-            <mxPoint x="660" y="755" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="900" y="490" />
+            </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="legend-optional-label2" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=10;" value="Optional/disabled" vertex="1">
-          <mxGeometry height="20" width="110" x="670" y="745" as="geometry" />
+        <mxCell id="e8-label" parent="1" style="text;html=1;strokeColor=none;fillColor=#FFFFFF;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=11;fontStyle=2;" value="Optional metadata&#xa;refresh" vertex="1">
+          <mxGeometry x="930" y="475" width="120" height="30" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>

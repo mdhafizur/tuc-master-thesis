@@ -5,32 +5,77 @@ This section evaluates usability through end-to-end latency measurements. The th
 
 \subsection{Latency Across Configurations}
 
-Table~\ref{tab:r4-latency} shows latency statistics for the fastest LLM configuration, the headline configuration, and the slowest LLM configuration alongside the SAST baselines. The per-model results for the seven configurations omitted here follow the same monotonic trend between these endpoints; the full ten-configuration table is reproduced in Appendix~\ref{app:full-latency} (Table~\ref{tab:r4-latency-full}).
-
-\begin{table}[H]
-\centering
-\caption{End-to-end latency for the fastest, headline, and slowest LLM configurations (milliseconds, pooled over 303 evaluations per model$\times$mode), with the three SAST baselines for reference.}
-\label{tab:r4-latency}
-\footnotesize
-\begin{tabular}{@{}llrrrr@{}}
-\toprule
-\textbf{Model} & \textbf{Mode} & \textbf{Median} & \textbf{Mean} & \textbf{p95} & \textbf{p99} \\
-\midrule
-\texttt{gemma3:1b} & LLM+RAG  & 1\,019 & 1\,454 & 5\,672 & 6\,554 \\
-\texttt{qwen3:8b}  & LLM+RAG  & 2\,216 & 1\,892 & 4\,327 & 5\,106 \\
-\texttt{codellama} & LLM+RAG  & 3\,529 & 5\,251 & 10\,099 & 16\,005 \\
-\midrule
-\texttt{semgrep}         & baseline & 63 & 63 & --- & --- \\
-\texttt{codeql}          & baseline & 182 & 182 & --- & --- \\
-\texttt{eslint-security} & baseline & 1 & 1 & --- & --- \\
-\bottomrule
-\end{tabular}
-\end{table}
+Stage-1 detection latency is bounded by three reference points across the LLM sweep: the fastest LLM configuration \texttt{gemma3:1b+RAG} runs at median $1\,019$\,ms (mean $1\,454$\,ms, p95 $5\,672$\,ms, p99 $6\,554$\,ms); the headline \texttt{qwen3:8b+RAG} runs at median $2\,216$\,ms (mean $1\,892$\,ms, p95 $4\,327$\,ms, p99 $5\,106$\,ms); the slowest LLM configuration \texttt{codellama+RAG} runs at median $3\,529$\,ms (mean $5\,251$\,ms, p95 $10\,099$\,ms, p99 $16\,005$\,ms). The seven configurations between these endpoints follow the same monotonic trend. SAST baselines are orders of magnitude faster --- semgrep at $63$\,ms median, codeql at $182$\,ms, ESLint-security at $1$\,ms --- because each is a single deterministic invocation. The detailed per-configuration latency statistics are tabulated in Appendix Table~\ref{tab:r4-latency-app}, and the complete ten-configuration breakdown in Appendix~\ref{app:full-latency} (Table~\ref{tab:r4-latency-full}).
 
 \paragraph{Headline configuration.}
 \texttt{qwen3:8b+RAG} runs at stage-1 detection median 2\,216\,ms (mean 1\,892\,ms, p95 4\,327\,ms). The mean sits below the median because the per-call latency distribution is bimodal: 103 of the 303 stage-1 calls (34\,\%) return an empty findings array \texttt{[]} and complete in under 500\,ms (a short-output decode path), while the remaining 200 calls produce non-empty JSON findings and run in the 1.5--3.5\,s steady-state band. The median therefore better describes the latency a developer experiences \emph{when} the model has something to flag, while the mean is pulled toward the fast empty-response cluster. The pipeline is split into two Ollama calls: stage-1 emits detections only ($\{$message, type, line range, severity$\}$), and a stage-2 call per detected finding produces a structured \texttt{\{code, language\}} repair (median 3\,320\,ms per fix, p95 6\,240\,ms). Stage~2 cost is incurred only when a finding triggers a quick-fix surface, so it does not appear in the inline-diagnostics latency that users see when typing.
 
-SAST baselines remain orders of magnitude faster than every LLM configuration. Among LLM configurations the headline \texttt{qwen3:8b+RAG} sits in the upper-middle of the LLM range; smaller models such as \texttt{gemma3:1b+RAG} (1\,019\,ms) are noticeably faster but trade detection quality.
+SAST baselines remain orders of magnitude faster than every LLM configuration. Among LLM configurations the headline \texttt{qwen3:8b+RAG} sits in the upper-middle of the LLM range; smaller models such as \texttt{gemma3:1b+RAG} (1\,019\,ms) are noticeably faster but trade detection quality. Figure~\ref{fig:r4-latency-comparison} compares stage-1 detection median and p95 across configurations.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+  \begin{axis}[
+    width=15cm,
+    height=7cm,
+    ybar,
+    bar width=8pt,
+    ylabel={Latency (ms)},
+    ylabel style={font=\small\bfseries},
+    xlabel={},
+    symbolic x coords={
+      semgrep,
+      codeql,
+      gemma3:1b,
+      qwen3:4b,
+      gemma3:4b,
+      codellama,
+      qwen3:8b+RAG
+    },
+    xtick=data,
+    xticklabel style={font=\scriptsize, rotate=25, anchor=east},
+    ymin=0, ymax=8000,
+    ytick={0,1000,2000,3000,4000,5000,6000,7000,8000},
+    ymajorgrids=true,
+    grid style={line width=0.3pt, draw=gray!30},
+    legend style={
+      at={(0.5,-0.20)},
+      anchor=north,
+      legend columns=2,
+      font=\small,
+    },
+    enlarge x limits=0.1,
+    nodes near coords,
+    nodes near coords style={font=\tiny, rotate=90, anchor=west},
+  ]
+
+  \addplot[fill=blue!60, draw=blue!80!black] coordinates {
+    (semgrep, 63)
+    (codeql, 182)
+    (gemma3:1b, 1019)
+    (qwen3:4b, 1328)
+    (gemma3:4b, 1822)
+    (codellama, 1998)
+    (qwen3:8b+RAG, 2216)
+  };
+  \addlegendentry{Median}
+
+  \addplot[fill=red!50, draw=red!80!black] coordinates {
+    (semgrep, 63)
+    (codeql, 182)
+    (gemma3:1b, 5672)
+    (qwen3:4b, 3802)
+    (gemma3:4b, 4455)
+    (codellama, 7114)
+    (qwen3:8b+RAG, 4327)
+  };
+  \addlegendentry{p95}
+
+  \end{axis}
+\end{tikzpicture}
+\caption{Stage-1 detection median and p95 latency across configurations. SAST baselines are orders of magnitude faster than every LLM configuration; among LLM configurations the headline \texttt{qwen3:8b+RAG} sits in the upper-middle of the range, while smaller models such as \texttt{gemma3:1b+RAG} trade detection quality for sub-1.1\,s median response. SAST p95 columns equal the median because each per-snippet baseline run is a single invocation.}
+\label{fig:r4-latency-comparison}
+\end{figure}
 
 \subsection{Latency Component Breakdown}
 

@@ -1,7 +1,8 @@
-\chapter{Implementation Details}
+\chapter{Detailed Implementation Results}
 \label{appendix:impl-details}
+\label{appendix:impl-results}
 
-This appendix gathers the prompt contract, runtime guardrails, configuration knobs, and harness pointers that support reproducibility but would clutter the implementation chapter if included inline.
+This appendix gathers the prompt contract, runtime guardrails, configuration knobs, harness pointers, and privacy-verification evidence that support reproducibility but would clutter the implementation chapter if included inline.
 
 \section{Prompt Contract (JSON-Only Output)}
 \label{app:prompt-contract}
@@ -142,3 +143,47 @@ The cap of three attempts is deliberately conservative for an interactive IDE pi
 \label{app:eval-harness}
 
 The evaluation script and curated datasets are included in the Code Guardian repository alongside the extension source code.
+
+\section{Privacy Verification Evidence}
+\label{app:privacy-verification}
+
+This section records the privacy evidence behind R5: network-traffic observation, configuration, and the trust-boundary architecture.
+
+\subsection{Network Traffic Analysis}
+\label{sec:privacy-network-analysis}
+
+Outbound traffic was monitored during representative inline and audit workflows on the evaluation environment using
+\begin{lstlisting}[language=bash]
+sudo tcpdump -i any -n 'not (host 127.0.0.1 or host ::1)' -w /tmp/cg.pcap
+\end{lstlisting}
+Detection and repair workflows produced no outbound requests; communication stayed on localhost between the extension host, local backend (\texttt{localhost:3000}), and Ollama (\texttt{localhost:11434}). External requests appeared only when knowledge refresh was explicitly triggered, contacting public CVE/CWE/OWASP endpoints with no source code or project artifacts in the request bodies. The same observation is reproduced quantitatively by the automated egress harness and source-leak detector (Section~\ref{sec:eval-r5-egress}). Table~\ref{tab:privacy-config} lists the configuration parameters that anchor this behavior.
+
+\begin{table}[H]
+  \centering
+  \caption{Privacy-relevant configuration parameters in the evaluated setup.}
+  \label{tab:privacy-config}
+  \small
+  \begin{tabularx}{\textwidth}{lXl}
+    \toprule
+    Parameter & Purpose & Value \\
+    \midrule
+    \texttt{ollama.baseUrl} & LLM inference endpoint & \texttt{http://localhost:11434} \\
+    \texttt{backend.serverUrl} & Analysis backend endpoint & \texttt{http://localhost:3000} \\
+    \texttt{vectorStore.provider} & Retrieval backend & \texttt{local} (HNSW) \\
+    \texttt{codeGuardian.enableExternalDataFetch} & External metadata refresh & \texttt{false} \\
+    \texttt{codeGuardian.requireSignedCorpus} & Reject unsigned RAG corpus & \texttt{true} \\
+    \texttt{telemetry.enabled} & Telemetry collection & \texttt{false} \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\subsection{Privacy Boundary Architecture}
+
+\begin{figure}[H]
+  \centering
+  \safeincludegraphics[width=0.95\textwidth]{images/privacy_boundary.drawio.pdf}
+  \caption{Local privacy boundary for code analysis workflows. The IDE workspace, extension process, local backend, Ollama runtime, and vector store all reside inside the local trust boundary; source files, extracted snippets, prompts, responses, and embeddings never cross it. The only outbound channel is the public-metadata refresh, which carries no user code and is gated by \texttt{enableExternalDataFetch} (default \texttt{false}).}
+  \label{fig:privacy-boundary}
+\end{figure}
+
+The boundary does not mitigate local host compromise, physical access, or malicious third-party software on the same machine; those risks require endpoint and operational controls beyond thesis scope. Fully offline operation is supported by disabling external fetch, using the pre-seeded signed RAG corpus, and ensuring required local models are already pulled into Ollama.

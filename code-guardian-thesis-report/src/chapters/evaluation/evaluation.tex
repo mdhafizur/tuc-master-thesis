@@ -1,6 +1,6 @@
-This chapter evaluates Code Guardian against the five requirements defined in Chapter~\ref{chap:analysis} and answers the research questions stated in Section~\ref{sec:intro-rqs}: detection accuracy (R1), consistency (R2), repair quality (R3), usability (R4), and privacy (R5). Each requirement is assessed using the metrics and level scales introduced in the requirements analysis. The evaluation uses a curated dataset of 101 test cases (71 vulnerable, 30 secure) covering major CWE categories, executed on local hardware with five Ollama models in both LLM-only and LLM+RAG configurations and three runs per sample. Three SAST baselines (Semgrep, CodeQL, ESLint) provide reference points. Headline figures for the best-performing configuration (\texttt{qwen3:8b+RAG}) are reported in the per-requirement sections and recapitulated in Section~\ref{sec:eval-summary}.
+This chapter evaluates Code Guardian against the five requirements defined in Chapter~\ref{chap:analysis} and answers the research questions stated in Section~\ref{sec:intro-rqs}: detection accuracy (R1), consistency (R2), repair quality (R3), usability (R4), and privacy (R5). Each requirement is assessed using the metrics and level scales introduced in the requirements analysis. The evaluation uses a curated dataset of 101 test cases (71 vulnerable, 30 secure) covering major CWE categories, executed on local hardware with five Ollama models in both LLM-only and LLM+RAG configurations and three runs per sample. Three SAST baselines (Semgrep, CodeQL, ESLint) provide reference points. Headline figures for the best-performing configuration (\texttt{qwen3:8b+RAG}) are reported in the per-requirement sections and consolidated in Section~\ref{sec:eval-comparative}.
 
-Sections~\ref{sec:eval-dataset}--\ref{sec:eval-setup} introduce the dataset, metrics, and experimental setup. Sections~\ref{sec:eval-r1}--\ref{sec:eval-r5} present results organized by requirement, each ending with a level mapping. Section~\ref{sec:eval-summary} synthesizes the findings into a requirement compliance overview.
+Sections~\ref{sec:eval-dataset}--\ref{sec:eval-setup} introduce the dataset, metrics, and experimental setup. Sections~\ref{sec:eval-r1}--\ref{sec:eval-r5} present results organized by requirement, each ending with a level mapping. Section~\ref{sec:eval-comparative} synthesizes the findings into a cross-requirement compliance overview and positions the measured outcomes against related work.
 
 \input{src/chapters/evaluation/dataset_details}
 \input{src/chapters/evaluation/evaluation_metrics}
@@ -10,5 +10,4 @@ Sections~\ref{sec:eval-dataset}--\ref{sec:eval-setup} introduce the dataset, met
 \input{src/chapters/evaluation/eval_r3_repair}
 \input{src/chapters/evaluation/eval_r4_usability}
 \input{src/chapters/evaluation/eval_r5_privacy}
-\input{src/chapters/evaluation/eval_reproducibility}
-\input{src/chapters/evaluation/eval_summary}
+\input{src/chapters/evaluation/comparative_analysis}

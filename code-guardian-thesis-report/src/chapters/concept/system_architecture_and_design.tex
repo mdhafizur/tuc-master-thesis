@@ -52,8 +52,8 @@ Figure~\ref{fig:bpmn} illustrates the two dominant analysis workflows; interacti
 
 \begin{sidewaysfigure}
   \centering
-  \safeincludegraphics[width=\linewidth]{images/bpmn_process_flow.pdf}
-  \caption{Process view showing two primary workflows with swim lanes. Workflow~1: Real-time function analysis with debouncing (800\,ms) and caching, where cache hits bypass LLM inference and cache misses invoke local analysis. Workflow~2: On-demand analysis with optional RAG; when enabled, the backend generates embeddings, performs vector search (runtime default $k{=}3$; evaluation uses $k{=}5$), and augments the prompt before LLM invocation. When RAG is disabled, analysis proceeds directly to LLM inference without retrieval. Color coding: user events (yellow), extension (orange), backend (purple), LLM (green). Privacy boundary (green dashed): all processes execute on localhost.}
+  \safeincludegraphics[width=\linewidth]{images/bpmn_process_flow.drawio.pdf}
+  \caption{BPMN process view of Code Guardian's inline analysis workflow with two swim lanes (Developer, Code Guardian System). The workflow starts when the developer types or saves source code, sending an \texttt{onChange} message into the system. After an 800\,ms debounce timer the system extracts the function scope and reaches an exclusive cache-hit gateway: a hit short-circuits straight to rendering, a miss reaches a second gateway for the optional RAG branch (vector search and prompt augmentation when enabled). LLM Stage~1 inference, JSON parsing with cache write, and IDE diagnostic rendering follow, after which a message flow returns the findings to the developer for review and quick-fix application.}
   \label{fig:bpmn}
 \end{sidewaysfigure}
 

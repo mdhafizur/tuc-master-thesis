@@ -5,71 +5,197 @@ This section evaluates detection accuracy across all model and retrieval configu
 
 \subsection{Detection Quality Across Configurations}
 
-Table~\ref{tab:eval-r1-all} shows detection metrics for all evaluated configurations. Results are pooled over 213 vulnerable-sample evaluations (71 samples $\times$ 3 runs) and 90 secure-sample evaluations (30 samples $\times$ 3 runs); FPR is computed at sample level over the 30 secure samples (a sample is counted as FP if any of its 3 runs flags an issue).
+Detection metrics for all 13 evaluated configurations (10 LLM modes + 3 SAST baselines) are pooled over 213 vulnerable-sample evaluations (71 samples $\times$ 3 runs) and 90 secure-sample evaluations (30 samples $\times$ 3 runs). FPR is computed at sample level over the 30 secure samples (a sample is counted as FP if any of its 3 runs flags an issue). The full per-configuration breakdown of precision, recall, F1, and FPR is reported in Appendix~\ref{appendix:experimental-results} (Table~\ref{tab:eval-r1-all-app}); Figure~\ref{fig:r1-f1-comparison} below shows the F1 ranking visually.
 
-\begin{table}[H]
+LLM-based approaches dominate the SAST baselines on recall-driven F1; \texttt{qwen3:8b+RAG} achieves the highest score (71.43\,\%) at 10\,\% FPR.
+
+\begin{figure}[H]
 \centering
-\caption{Detection accuracy across all configurations using canonical-taxonomy matching (Section~\ref{sec:eval-metrics}). 71 vulnerable + 30 secure samples, 3 runs each ($n = 303$ evaluations per model$\times$mode). FPR is at the secure-sample level (FP if any issue is emitted in any run).}
-\label{tab:eval-r1-all}
-\footnotesize
-\begin{tabular}{@{}llrrrr@{}}
-\toprule
-\textbf{Model} & \textbf{Mode} & \textbf{Precision} & \textbf{Recall} & \textbf{F1} & \textbf{FPR} \\
-\midrule
-\texttt{qwen3:8b}        & LLM+RAG  & 72.46 & 70.42 & 71.43 & 10.00 \\
-\texttt{qwen3:8b}        & LLM-only & 61.63 & 74.65 & 67.52 & 50.00 \\
-\texttt{qwen3:4b}        & LLM-only & 56.95 & 78.87 & 66.14 & 90.00 \\
-\texttt{qwen3:4b}        & LLM+RAG  & 51.46 & 74.65 & 60.92 & 100.00 \\
-\texttt{gemma3:4b}       & LLM-only & 46.49 & 74.65 & 57.30 & 100.00 \\
-\texttt{gemma3:4b}       & LLM+RAG  & 46.85 & 73.24 & 57.14 & 100.00 \\
-\texttt{codellama}       & LLM-only & 41.60 & 73.24 & 53.06 & 100.00 \\
-\texttt{gemma3:1b}       & LLM-only & 29.17 & 49.30 & 36.65 & 53.33 \\
-\texttt{gemma3:1b}       & LLM+RAG  & 32.22 & 40.85 & 36.02 & 23.33 \\
-\texttt{codellama}       & LLM+RAG  & 14.79 & 53.52 & 23.17 & 100.00 \\
-\midrule
-\texttt{semgrep}         & baseline & 50.00 & 12.68 & 20.22 & 6.67 \\
-\texttt{codeql}          & baseline & 12.07 & 9.86  & 10.85 & 53.33 \\
-\texttt{eslint-security} & baseline & ---   & 0.00  & 0.00  & 0.00 \\
-\bottomrule
-\end{tabular}
-\end{table}
+\begin{tikzpicture}
+  \begin{axis}[
+    width=15cm,
+    height=7cm,
+    xbar,
+    bar width=8pt,
+    xlabel={F1 Score (\%)},
+    xlabel style={font=\small\bfseries},
+    ylabel style={font=\small\bfseries},
+    symbolic y coords={
+      {eslint},
+      {codeql},
+      {semgrep},
+      {gemma3:1b+RAG},
+      {gemma3:1b},
+      {gemma3:4b+RAG},
+      {gemma3:4b},
+      {codellama+RAG},
+      {codellama},
+      {qwen3:4b+RAG},
+      {qwen3:4b},
+      {qwen3:8b},
+      {qwen3:8b+RAG}
+    },
+    ytick=data,
+    yticklabel style={font=\scriptsize},
+    xmin=0, xmax=75,
+    xtick={0,10,20,30,40,50,60,70},
+    xmajorgrids=true,
+    grid style={line width=0.3pt, draw=gray!30},
+    enlarge y limits=0.05,
+    nodes near coords,
+    nodes near coords style={font=\scriptsize, anchor=west},
+  ]
 
-LLM-based approaches dominate the SAST baselines on recall-driven F1; \texttt{qwen3:8b+RAG} achieves the highest score (71.43\%) at 10\% FPR.
+  \addplot[fill=blue!60, draw=blue!80!black] coordinates {
+    (0.00,{eslint})
+    (10.85,{codeql})
+    (20.22,{semgrep})
+    (23.17,{codellama+RAG})
+    (36.02,{gemma3:1b+RAG})
+    (36.65,{gemma3:1b})
+    (53.06,{codellama})
+    (57.14,{gemma3:4b+RAG})
+    (57.30,{gemma3:4b})
+    (60.92,{qwen3:4b+RAG})
+    (66.14,{qwen3:4b})
+    (67.52,{qwen3:8b})
+    (71.43,{qwen3:8b+RAG})
+  };
+
+  \end{axis}
+\end{tikzpicture}
+\caption{F1 scores across all configurations using canonical-taxonomy matching. LLM-based approaches dominate the SAST baselines on recall-driven F1; \texttt{qwen3:8b+RAG} achieves the highest score (71.43\,\%) at 10\,\% FPR.}
+\label{fig:r1-f1-comparison}
+\end{figure}
 
 \subsection{RAG Ablation Impact on Accuracy}
 
-RAG effects are strongly model-dependent (see the LLM-only / LLM+RAG rows in Table~\ref{tab:eval-r1-all}).
+RAG effects are strongly model-dependent (see the LLM-only / LLM+RAG rows in Appendix Table~\ref{tab:eval-r1-all-app}).
 
-Across configurations, retrieval augmentation has model-specific effects. F1 lifts on \texttt{qwen3:8b} ($+3.91$ points: $67.52\% \to 71.43\%$, precision $61.63\% \to 72.46\%$, FPR $50.00\% \to 10.00\%$). It is roughly neutral on \texttt{gemma3:1b} and \texttt{gemma3:4b}. It slightly degrades \texttt{qwen3:4b} ($-5.22$ points), and dramatically degrades \texttt{codellama} ($-29.89$ points: F1 $53.06\% \to 23.17\%$, latency nearly doubles).
+Across configurations, retrieval augmentation has model-specific effects. F1 lifts on \texttt{qwen3:8b} ($+3.91$ points: $67.52\% \to 71.43\%$, precision $61.63\% \to 72.46\%$, FPR $50.00\% \to 10.00\%$). It is roughly neutral on \texttt{gemma3:1b} and \texttt{gemma3:4b}. It slightly degrades \texttt{qwen3:4b} ($-5.22$ points), and dramatically degrades \texttt{codellama} ($-29.89$ points: F1 $53.06\% \to 23.17\%$, latency nearly doubles). Figure~\ref{fig:r1-rag-ablation} compares LLM-only and LLM+RAG F1 for each model.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+  \begin{axis}[
+    width=14cm,
+    height=6cm,
+    ybar,
+    bar width=10pt,
+    ylabel={F1 Score (\%)},
+    ylabel style={font=\small\bfseries},
+    xlabel={Model},
+    xlabel style={font=\small\bfseries},
+    symbolic x coords={gemma3:1b, gemma3:4b, qwen3:4b, qwen3:8b, codellama},
+    xtick=data,
+    xticklabel style={font=\small},
+    ymin=0, ymax=75,
+    ytick={0,10,20,30,40,50,60,70},
+    ymajorgrids=true,
+    grid style={line width=0.3pt, draw=gray!30},
+    legend style={
+      at={(0.5,-0.20)},
+      anchor=north,
+      legend columns=2,
+      font=\small,
+    },
+    enlarge x limits=0.15,
+    nodes near coords,
+    nodes near coords style={font=\scriptsize, rotate=90, anchor=west},
+  ]
+
+  \addplot[fill=blue!60, draw=blue!80!black] coordinates {
+    (gemma3:1b, 36.65)
+    (gemma3:4b, 57.30)
+    (qwen3:4b, 66.14)
+    (qwen3:8b, 67.52)
+    (codellama, 53.06)
+  };
+  \addlegendentry{LLM-only}
+
+  \addplot[fill=orange!60, draw=orange!80!black] coordinates {
+    (gemma3:1b, 36.02)
+    (gemma3:4b, 57.14)
+    (qwen3:4b, 60.92)
+    (qwen3:8b, 71.43)
+    (codellama, 23.17)
+  };
+  \addlegendentry{LLM+RAG}
+
+  \end{axis}
+\end{tikzpicture}
+\caption{RAG ablation: F1 comparison by model (canonical-taxonomy matching). RAG lifts \texttt{qwen3:8b} ($+3.91$), is roughly neutral on \texttt{gemma3} models, slightly degrades \texttt{qwen3:4b} ($-5.22$), and severely degrades \texttt{codellama} ($-29.89$).}
+\label{fig:r1-rag-ablation}
+\end{figure}
 
 Exact McNemar tests on per-case correctness pair the LLM-only and LLM+RAG outcomes for each model (one test per model, $n=101$ paired cases). With Bonferroni correction for the five model comparisons the corrected significance threshold is $\alpha = 0.05/5 = 0.01$. Only the \texttt{codellama} RAG-degrades-quality effect survives correction ($p = 0.0013$, 16 cases lost vs.\ 2 cases gained under RAG). The \texttt{qwen3:8b} ($p = 0.049$) and \texttt{qwen3:4b} ($p = 0.031$) effects are significant under uncorrected $\alpha = 0.05$ but do not survive correction. Both \texttt{gemma3} effects are clearly null ($p = 0.74$ and $p = 1.0$). The single statistically defensible RAG conclusion under correction is therefore that retrieval augmentation actively harms \texttt{codellama}. The \texttt{qwen3} lifts are reported as indicative directions whose precise magnitudes should not be over-interpreted on a 101-case corpus. Retrieval augmentation is consistently \emph{not} a universal default --- it must be calibrated per model.
 
 \subsection{Per-Category Detection Breakdown}
 
-Per-canonical-category recall on \texttt{qwen3:8b+RAG} (3-runs pooled, categories with $\geq 3$ samples) shows a sharp split rather than a smooth gradient. Categories with well-known syntactic signatures --- SQL injection (90\%), XSS (100\%), command injection (100\%), path traversal (100\%), prototype pollution (100\%), weak-crypto, hardcoded credentials, LDAP injection, and SSRF (each 100\%) --- are detected at 90--100\% recall when the dangerous API is lexically obvious. In contrast, improper-auth, input-validation, and weak-encryption score 0\% recall, and deserialization only 33\%. Section~\ref{sec:eval-error-analysis} shows a substantial share of this gap is a labeling artifact rather than detection failure: the auth-bypass canonical category, for instance, absorbs nine model findings on cases the dataset labels \emph{improper-auth}, which simultaneously show up as nine false positives on auth-bypass and nine misses on improper-auth.
+Per-canonical-category recall on \texttt{qwen3:8b+RAG} (3-runs pooled, categories with $\geq 3$ samples) shows a sharp split rather than a smooth gradient. Categories with well-known syntactic signatures --- SQL injection (90\%), XSS (100\%), command injection (100\%), path traversal (100\%), prototype pollution (100\%), weak-crypto, hardcoded credentials, LDAP injection, and SSRF (each 100\%) --- are detected at 90--100\% recall when the dangerous API is lexically obvious. In contrast, improper-auth, input-validation, and weak-encryption score 0\% recall, and deserialization only 33\%. Figure~\ref{fig:r1-category} shows the full breakdown.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+  \begin{axis}[
+    width=15cm,
+    height=6cm,
+    xbar,
+    bar width=9pt,
+    xlabel={Recall (\%)},
+    xlabel style={font=\small\bfseries},
+    symbolic y coords={
+      {Improper Auth (n=9)},
+      {Input Validation (n=27)},
+      {Weak Encryption (n=3)},
+      {Deserialization (n=9)},
+      {Code Injection (n=6)},
+      {SQL Injection (n=30)},
+      {Command Inj (n=12)},
+      {Path Traversal (n=27)},
+      {Weak Crypto (n=12)},
+      {Prototype Poll (n=21)},
+      {XSS (n=30)}
+    },
+    ytick=data,
+    yticklabel style={font=\scriptsize},
+    xmin=0, xmax=115,
+    xtick={0,20,40,60,80,100},
+    xmajorgrids=true,
+    grid style={line width=0.3pt, draw=gray!30},
+    enlarge y limits=0.08,
+    nodes near coords,
+    nodes near coords style={font=\scriptsize, anchor=west},
+  ]
+
+  \addplot[fill=blue!60, draw=blue!80!black] coordinates {
+    (0,{Improper Auth (n=9)})
+    (0,{Input Validation (n=27)})
+    (0,{Weak Encryption (n=3)})
+    (33.33,{Deserialization (n=9)})
+    (50,{Code Injection (n=6)})
+    (90,{SQL Injection (n=30)})
+    (100,{Command Inj (n=12)})
+    (100,{Path Traversal (n=27)})
+    (100,{Weak Crypto (n=12)})
+    (100,{Prototype Poll (n=21)})
+    (100,{XSS (n=30)})
+  };
+
+  \end{axis}
+\end{tikzpicture}
+\caption{Per-canonical-category recall for \texttt{qwen3:8b+RAG} on the 3-runs-per-sample evaluation ($n$ counts pooled vulnerable evaluations across runs). Injection-style and prototype-pollution categories are detected at 90--100\,\%, while improper-auth, input-validation, and weak-encryption score 0\,\%. Section~\ref{sec:eval-error-analysis} analyses how much of this gap reflects true detection failure versus label mismatch.}
+\label{fig:r1-category}
+\end{figure}
+
+Section~\ref{sec:eval-error-analysis} shows a substantial share of this gap is a labeling artifact rather than detection failure: the auth-bypass canonical category, for instance, absorbs nine model findings on cases the dataset labels \emph{improper-auth}, which simultaneously show up as nine false positives on auth-bypass and nine misses on improper-auth.
 
 \subsection{Qualitative Error Analysis on Zero-Recall Categories}
 \label{sec:eval-error-analysis}
 
 Three canonical categories remain at 0\% recall under \texttt{qwen3:8b+RAG}: improper-auth, input-validation, and weak-encryption. The canonical taxonomy absorbs sub-type labels such as ``Weak Hashing Algorithm'' and ``Weak Random Number Generation'' into the appropriate parent buckets, so weak cryptography and insecure deserialization sit at 100\% and 33\% recall respectively rather than appearing as zero-recall artifacts of label mismatch.
 
-The remaining zero-recall categories are dominated by two distinct effects, summarized in Table~\ref{tab:failure-modes}.
-
-\begin{table}[H]
-\centering
-\caption{Residual zero-recall categories after canonical matching (\texttt{qwen3:8b+RAG}, 3-run pooled).}
-\label{tab:failure-modes}
-\footnotesize
-\begin{tabular}{@{}lccp{6.5cm}@{}}
-\toprule
-\textbf{Canonical category} & \textbf{Expected $n$} & \textbf{TP} & \textbf{Dominant failure mode} \\
-\midrule
-improper-auth      & 9  & 0 & Cross-category mislabel: model emits 9 \emph{auth-bypass} findings on these cases, so the issue \emph{is} detected but binned in a sibling canonical category. \\
-input-validation   & 27 & 0 & Genuine miss: most cases are real-world library code (lodash, mongoose, moment) where the validation gap is implicit; the model produces no output flagged as input-validation. \\
-weak-encryption    & 3  & 0 & Small sample of insufficient-key-length cases; the model labels the underlying weakness but the canonical taxonomy separates weak-encryption from weak-crypto. \\
-\bottomrule
-\end{tabular}
-\end{table}
+The remaining zero-recall categories are dominated by two distinct effects: a cross-category mislabel on improper-auth ($n = 9$ expected, 0 TP --- the model emits 9 sibling \emph{auth-bypass} findings on these cases) and a small insufficient-key-length subset on weak-encryption ($n = 3$, taxonomy split from \emph{weak-crypto}); both are taxonomy artefacts rather than genuine misses. The third zero-recall category, input-validation ($n = 27$), is a genuine miss on real-world library code (lodash, mongoose, moment) where the validation gap is implicit. Per-category counts and the dominant failure mode for each are tabulated in Appendix Table~\ref{tab:failure-modes-app}.
 
 The two residual gaps differ in kind. Every \emph{improper-auth} case is detected and emitted as \emph{authentication-bypass} or \emph{timing-attack} --- canonical siblings of \emph{auth-bypass} --- so the underlying detection and the suggested fixes (constant-time comparison, JWT algorithm validation) are correct and merging the buckets would lift recall from 0\% to 100\% at the cost of conflating two CWE-aligned classes. The 9 input-validation samples (27 evaluations) are extracted from real-world libraries (lodash, mongoose, moment, serialize-javascript) where the validation gap is implicit in dense utility logic; the model produces no output for them. This is the residual recall gap the canonical taxonomy cannot recover --- it requires cross-file or taint-flow context, not a labeling refinement.
 
@@ -80,92 +206,26 @@ SAST tools show a different trade-off profile. Semgrep achieves the lowest FPR (
 \subsection{Inter-Run Confidence Gate}
 \label{sec:eval-r1-confidence}
 
-Each finding is annotated with an inter-run confidence score equal to the fraction of runs (out of three) that emitted a matching issue (Section~\ref{sec:eval-metrics}). A configurable gate then suppresses findings whose confidence falls below a threshold. Sweeping the threshold on the headline \texttt{qwen3:8b+RAG} configuration (canonical matcher, three runs per case) yields the values in Table~\ref{tab:r1-confidence-sweep}.
-
-\begin{table}[H]
-\centering
-\caption{Confidence-gate effect on the headline \texttt{qwen3:8b+RAG} configuration. At threshold $\geq 0.67$, only findings emitted by $\geq 2$ of the 3 runs survive.}
-\label{tab:r1-confidence-sweep}
-\footnotesize
-\begin{tabular}{@{}lrrrr@{}}
-\toprule
-\textbf{Threshold} & \textbf{F1} & \textbf{Precision} & \textbf{Recall} & \textbf{FPR} \\
-\midrule
-$0.0$  (no gate)         & 71.43 & 72.46 & 70.42 & 10.00 \\
-$0.67$ ($\geq 2/3$ runs) & \textbf{74.07} & \textbf{78.13} & 70.42 & 10.00 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-The gate at $\geq 0.67$ lifts F1 by $2.64$ points and precision by $5.67$ points without changing recall or FPR. This is the trade-off the gate is designed to deliver: lower noise without sacrificing detection. Issues from a single one-of-three pass that the consensus cannot corroborate are dropped; agreement-driven findings survive.
+Each finding is annotated with an inter-run confidence score equal to the fraction of runs (out of three) that emitted a matching issue (Section~\ref{sec:eval-metrics}). A configurable gate then suppresses findings whose confidence falls below a threshold. Sweeping the threshold on the headline \texttt{qwen3:8b+RAG} configuration (canonical matcher, three runs per case): at $\geq 0.67$ the gate lifts F1 from $71.43\,\%$ to $\mathbf{74.07\,\%}$ and precision from $72.46\,\%$ to $\mathbf{78.13\,\%}$ without changing recall ($70.42\,\%$) or FPR ($10.00\,\%$), trading $5.67$ precision points for no recall loss (Appendix Table~\ref{tab:r1-confidence-sweep-app}). This is the trade-off the gate is designed to deliver: lower noise without sacrificing detection. Issues from a single one-of-three pass that the consensus cannot corroborate are dropped; agreement-driven findings survive.
 
 \subsection{Held-Out Threshold Validation}
 \label{sec:eval-r1-heldout}
 
-The 101-case corpus is partitioned in advance (deterministic seed, stratified by vulnerable / secure) into a 71-case TRAIN split (50 vulnerable + 21 secure) and a 30-case TEST split (21 vulnerable + 9 secure), recorded in \texttt{split-2026-04-28.json}, timestamped before any threshold sweep. Thresholds $0.34$, $0.67$, and $1.0$ all tie on TRAIN F1 (78.79\,\% at FPR 14.29\,\%), so $\geq 0.67$ (majority-of-three) is carried as the operational default because it degrades more gracefully on higher-variance configurations. Table~\ref{tab:r1-heldout} reports the TRAIN-selected threshold applied to the frozen TEST split.
-
-\begin{table}[H]
-\centering
-\caption{Held-out validation: TRAIN-selected threshold applied to frozen TEST split (\texttt{qwen3:8b+RAG}, canonical matcher).}
-\label{tab:r1-heldout}
-\footnotesize
-\begin{tabular}{@{}lrrrr@{}}
-\toprule
-\textbf{Threshold (TEST, $n=30$)} & \textbf{F1} & \textbf{Precision} & \textbf{Recall} & \textbf{FPR} \\
-\midrule
-$0.0$ (no gate)         & 60.00 & 63.16 & 57.14 & 0.00 \\
-$0.67$ (selected)       & \textbf{63.16} & \textbf{70.59} & 57.14 & \textbf{0.00} \\
-\bottomrule
-\end{tabular}
-\end{table}
+The 101-case corpus is partitioned in advance (deterministic seed, stratified by vulnerable / secure) into a 71-case TRAIN split (50 vulnerable + 21 secure) and a 30-case TEST split (21 vulnerable + 9 secure), recorded in \texttt{split-2026-04-28.json}, timestamped before any threshold sweep. Thresholds $0.34$, $0.67$, and $1.0$ all tie on TRAIN F1 (78.79\,\% at FPR 14.29\,\%), so $\geq 0.67$ (majority-of-three) is carried as the operational default because it degrades more gracefully on higher-variance configurations. Applied to the frozen TEST split, the selected threshold yields F1 $\mathbf{63.16\,\%}$ (precision $\mathbf{70.59\,\%}$, recall $57.14\,\%$, FPR $\mathbf{0\,\%}$), a small lift over the un-gated TEST F1 of $60.00\,\%$ at the same recall (Appendix Table~\ref{tab:r1-heldout-app}).
 
 The TEST FPR of $0\%$ is lower than TRAIN ($14.29\%$) because all three false-positive secure cases in the corpus landed in TRAIN under the random split (TRAIN: $3 / 21$ secure; TEST: $0 / 9$ secure) --- a property of the small absolute denominator on TEST (9 secure cases, exact binomial 95\,\% CI $[0\%, 33.6\%]$). The held-out result rules out the chosen threshold being a TRAIN-specific optimum among the swept set; with only 9 secure samples on TEST it cannot rule out small-effect overfitting in general.
 
 \subsection{External Corpus}
 \label{sec:eval-r1-external-corpus}
 
-Table~\ref{tab:r1-external-corpus} compares the headline configuration on the 15-case external corpus (11 vulnerable + 4 secure, drawn from OWASP NodeGoat, Juice Shop, and three named CVEs) against the curated 101-case result.
+Under the same headline configuration (3 runs, gate $\geq 0.67$), the 15-case external corpus (11 vulnerable + 4 secure, drawn from OWASP NodeGoat, Juice Shop, and three named CVEs) reaches F1 $63.64\,\%$ (precision $63.64\,\%$, recall $63.64\,\%$, FPR $25.00\,\%$, stage-1 median $1\,496$\,ms, auto-applicable rate $100\,\%$), versus the curated 101-case headline of F1 $74.07\,\%$ (precision $78.13\,\%$, recall $70.42\,\%$, FPR $10.00\,\%$, stage-1 median $2\,216$\,ms, auto-applicable rate $90.32\,\%$); both are tabulated side-by-side in Appendix Table~\ref{tab:r1-external-corpus-app}.
 
-\begin{table}[H]
-\centering
-\caption{\texttt{qwen3:8b+RAG} on the external corpus and the curated 101-case corpus, both under the same headline configuration (3 runs, gate $\geq 0.67$).}
-\label{tab:r1-external-corpus}
-\footnotesize
-\begin{tabular}{@{}lrrrrrr@{}}
-\toprule
-\textbf{Corpus} & \textbf{F1} & \textbf{Precision} & \textbf{Recall} & \textbf{FPR} & \textbf{Stage~1 med. (ms)} & \textbf{Auto-app.} \\
-\midrule
-External (15 cases)         & 63.64 & 63.64 & 63.64 & 25.00 & 1\,496 & 100.00\,\% \\
-Curated (101 cases)         & 74.07 & 78.13 & 70.42 & 10.00 & 2\,216 & 90.32\,\% \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-The $\sim$10-point F1 gap between the external (63.64\%) and curated (74.07\%) corpora reflects the external corpus's skew toward framework-level weakness classes (JWT algorithm acceptance, access-control wrappers, CVE version constraints) that the single-function scope cannot see. The 25\,\% FPR concentrates on a single secure case in the 4-sample negative set, inflated by the small denominator. Auto-applicable rate is 100\,\% (33/33) on the external corpus; stage-1 median latency is 1\,496\,ms (vs.\ 2\,216\,ms curated), consistent with shorter average per-snippet lengths.
+The $\sim$10-point F1 gap between the external (63.64\%) and curated (74.07\%) corpora reflects the external corpus's skew toward framework-level weakness classes (JWT algorithm acceptance, access-control wrappers, CVE version constraints) that the single-function scope cannot see. The 25\,\% FPR concentrates on a single secure case in the 4-sample negative set, inflated by the small denominator. The shorter stage-1 median latency on the external corpus is consistent with shorter average per-snippet lengths.
 
 \subsection{Real-World Whole-Project Run on OWASP NodeGoat}
 \label{sec:eval-r1-realworld}
 
-The whole-project runner was executed on OWASP NodeGoat against a corrected 7-entry documented-vulnerability list (\path{evaluation/realworld/nodegoat-vulnerabilities.json}), covering NoSQL injection, \texttt{eval}-based code injection, ReDoS, mass assignment, a deprecated crypto library, stack-trace disclosure, and a dynamic template-path pattern. The system was evaluated under two scopes: \emph{inline scope} (function-level, matching the real-time IDE diagnostics path) and \emph{audit scope} (AST Stage~0 followed by per-file LLM Stage~1, Section~\ref{sec:impl-audit-mode}). Table~\ref{tab:r1-realworld-nodegoat} reports the per-scope recall and runtime.
-
-\begin{table}[H]
-\centering
-\caption{NodeGoat whole-project scan under both scopes (\texttt{qwen3:8b+RAG}).}
-\label{tab:r1-realworld-nodegoat}
-\footnotesize
-\begin{tabular}{@{}lrr@{}}
-\toprule
-\textbf{Quantity} & \textbf{Inline (function scope)} & \textbf{Audit (AST + LLM)} \\
-\midrule
-Source files scanned                   & 26                & 6 (the documented-vuln files)\\
-Analysis units                         & 85 function chunks & 6 whole files \\
-Wall-clock duration                    & 884.5\,s          & 117.2\,s \\
-Stage~0 (AST) detections               & ---               & 10 \\
-Stage~1 (LLM) findings                 & 14                & 14 \\
-Recall against 7 documented entries    & 3 / 7 (42.9\,\%)  & \textbf{6 / 7 (85.7\,\%)} \\
-\bottomrule
-\end{tabular}
-\end{table}
+The whole-project runner was executed on OWASP NodeGoat against a corrected 7-entry documented-vulnerability list (\path{evaluation/realworld/nodegoat-vulnerabilities.json}), covering NoSQL injection, \texttt{eval}-based code injection, ReDoS, mass assignment, a deprecated crypto library, stack-trace disclosure, and a dynamic template-path pattern. The system was evaluated under two scopes: \emph{inline scope} (function-level, matching the real-time IDE diagnostics path) scanned 26 source files (85 function chunks) in $884.5$\,s wall-clock and detected $3 / 7$ documented entries ($42.9\,\%$); \emph{audit scope} (AST Stage~0 followed by per-file LLM Stage~1, Section~\ref{sec:impl-audit-mode}) scanned 6 files (the documented-vuln files) in $117.2$\,s, with $10$ Stage~0 (AST) detections and $14$ Stage~1 (LLM) findings combining to recover $\mathbf{6 / 7}$ entries ($\mathbf{85.7\,\%}$). Per-scope file counts, analysis units, and detection counts are tabulated in Appendix Table~\ref{tab:r1-realworld-nodegoat-app}.
 
 Inline scope (42.9\,\%) misses four entries whose vulnerable patterns span larger function bodies or require cross-line data-flow context that the function-level chunker cannot provide. Audit scope (85.7\,\%) recovers these four through deterministic AST sink detection, adding them to the two LLM-matched entries. The remaining miss (\texttt{routes/tutorial.js}) is a documented anti-pattern that is not attacker-reachable at the evaluated commit; the detector's empty output is correct. The 43-point recall lift between the two scopes isolates the structural-context contribution of the AST Stage~0 from the model's semantic capability, and confirms that audit mode is the recommended deployment for whole-project scans while inline mode is appropriate for the real-time IDE diagnostic path.
 

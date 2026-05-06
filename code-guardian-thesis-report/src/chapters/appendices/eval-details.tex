@@ -1,7 +1,8 @@
-\chapter{Evaluation Details}
+\chapter{Detailed Experimental Results}
 \label{appendix:eval-details}
+\label{appendix:experimental-results}
 
-This appendix documents the evaluation dataset composition, run configuration, and per-case schema beyond what fits in the evaluation chapter.
+This appendix documents the evaluation dataset composition, run configuration, per-case schema, and full per-configuration result tables that would clutter the main evaluation chapter if included inline.
 
 \section{Curated Test Suite Overview}
 \label{app:dataset-overview}
@@ -223,3 +224,284 @@ Section~\ref{sec:eval-r4} reports latency for the fastest, headline, and slowest
 \end{table}
 
 The trend between the fastest (\texttt{gemma3:1b+RAG}) and the slowest LLM configuration (\texttt{codellama+RAG}) is monotonic: median latency rises with model size and is further inflated by RAG context for every model except \texttt{qwen3:8b} (where the larger model amortizes the additional retrieval tokens more efficiently). The intermediate \texttt{qwen3:4b} and \texttt{gemma3:4b} rows confirm that the chapter's three reported configurations bound the rest of the sweep without surprises. Stage~2 repair latencies follow the same monotonic pattern at roughly 1.5$\times$ the stage-1 cost; full per-model stage-2 numbers are emitted in the per-run JSONs.
+
+\section{Full Per-Configuration Detection Accuracy}
+\label{app:r1-full-detection}
+
+Section~\ref{sec:eval-r1} reports F1 across all 13 configurations as a visual ranking (Figure~\ref{fig:r1-f1-comparison}); the full numerical breakdown of precision, recall, F1, and FPR per configuration is reproduced here.
+
+\begin{table}[H]
+\centering
+\caption{Detection accuracy across all configurations using canonical-taxonomy matching (Section~\ref{sec:eval-metrics}). 71 vulnerable + 30 secure samples, 3 runs each ($n = 303$ evaluations per model$\times$mode). FPR is at the secure-sample level (FP if any issue is emitted in any run).}
+\label{tab:eval-r1-all-app}
+\footnotesize
+\begin{tabular}{@{}llrrrr@{}}
+\toprule
+\textbf{Model} & \textbf{Mode} & \textbf{Precision} & \textbf{Recall} & \textbf{F1} & \textbf{FPR} \\
+\midrule
+\texttt{qwen3:8b}        & LLM+RAG  & 72.46 & 70.42 & 71.43 & 10.00 \\
+\texttt{qwen3:8b}        & LLM-only & 61.63 & 74.65 & 67.52 & 50.00 \\
+\texttt{qwen3:4b}        & LLM-only & 56.95 & 78.87 & 66.14 & 90.00 \\
+\texttt{qwen3:4b}        & LLM+RAG  & 51.46 & 74.65 & 60.92 & 100.00 \\
+\texttt{gemma3:4b}       & LLM-only & 46.49 & 74.65 & 57.30 & 100.00 \\
+\texttt{gemma3:4b}       & LLM+RAG  & 46.85 & 73.24 & 57.14 & 100.00 \\
+\texttt{codellama}       & LLM-only & 41.60 & 73.24 & 53.06 & 100.00 \\
+\texttt{gemma3:1b}       & LLM-only & 29.17 & 49.30 & 36.65 & 53.33 \\
+\texttt{gemma3:1b}       & LLM+RAG  & 32.22 & 40.85 & 36.02 & 23.33 \\
+\texttt{codellama}       & LLM+RAG  & 14.79 & 53.52 & 23.17 & 100.00 \\
+\midrule
+\texttt{semgrep}         & baseline & 50.00 & 12.68 & 20.22 & 6.67 \\
+\texttt{codeql}          & baseline & 12.07 & 9.86  & 10.85 & 53.33 \\
+\texttt{eslint-security} & baseline & ---   & 0.00  & 0.00  & 0.00 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Reproducibility Measurement}
+\label{sec:eval-reproducibility-metric}
+
+The task description names \emph{reproducibility} as one of the evaluation metrics. Determinism is configured at decoding time (\texttt{temperature=0}, \texttt{seed=42}) and at the dependency layer (version-pinned \texttt{package-lock.json}, containerized execution per Section~\ref{sec:impl-container}); this section reports the \emph{measured} reproducibility of detector outputs under that configuration.
+
+A dedicated harness (\texttt{evaluation/reproducibility.js}) runs the analyzer $N=3$ times per case with the same fixed seed on a 10-case subset and computes two rates: \textbf{byteIdentityRate} (fraction of cases where all runs produced byte-identical raw output, the strict determinism guarantee) and \textbf{setIdentityRate} (fraction where all runs produced identical canonical \texttt{(category, line)} issue sets after taxonomy normalization, insensitive to message paraphrase or array ordering).
+
+For \texttt{qwen3:8b} on the locked $N=3$ identical-seed configuration (10 cases, seed 42, host \texttt{127.0.0.1:11434}), both rates reach their maximum:
+
+\begin{itemize}
+  \item \textbf{\texttt{byteIdentityRate} = 100\,\%} (10 / 10 cases) --- every one of the 30 inferences (10 cases $\times$ 3 runs) produced byte-identical raw model output. Deterministic decoding with \texttt{temperature=0} and a fixed seed therefore holds end-to-end on the locked hardware profile.
+  \item \textbf{\texttt{setIdentityRate} = 100\,\%} (10 / 10 cases) --- the canonical \texttt{(category, line)} issue set is identical across all three runs for every case. The detector's conclusions are reproducible at the strongest available bar.
+\end{itemize}
+
+Median per-inference latency on this sample was 11\,238\,ms; this is higher than the headline \texttt{qwen3:8b+RAG} stage-1 detection median (2\,216\,ms) because the reproducibility runner uses a more verbose system prompt to be self-contained. Latency is incidental to the reproducibility metric --- the rate that matters is whether identical inputs produce identical outputs, which they do.
+
+The byte-identity result is stronger than the literature typically reports for local LLM inference, where floating-point scheduling on the GPU is expected to introduce minor non-determinism. The 100\,\% byte-identity result on Apple M4 Max suggests Ollama's CPU/Metal kernel scheduling is deterministic under \texttt{temperature=0} on this hardware. Re-runs on different hardware would re-execute the same harness and produce a comparable report; the figure reported here applies to the configuration this thesis was evaluated on, not as a hardware-independent constant.
+
+\paragraph{Relationship to inter-run agreement.}
+The reproducibility harness uses \emph{identical} seeds across all three runs (seed 42 for each), while the main evaluation (Section~\ref{sec:eval-r2}) uses \emph{different} seeds per run (42, 137, 200) to create meaningful consensus diversity. The 100\,\% byte-identity reported here confirms that the model is perfectly deterministic under a fixed seed; the 87.6\,\% inter-run agreement reported in Section~\ref{sec:eval-r2} reflects the genuine sampling variation that arises when different seeds are used, which is the signal the multi-pass consensus filter is designed to exploit. The two measurements are therefore compatible and complementary, not contradictory.
+
+\section{Per-Vulnerability-Type Repair Generation Rate}
+\label{app:r3-by-type}
+
+The 25-sample manual review of repair quality (Section~\ref{sec:eval-r3}) is stratified by canonical category. Per-category fix rates are reported below.
+
+\begin{table}[H]
+\centering
+\caption{Repair generation rate by vulnerability type (\texttt{qwen3:8b+RAG}, 25-sample manual review).}
+\label{tab:r3-by-type-app}
+\footnotesize
+\begin{tabular}{@{}lrr@{}}
+\toprule
+\textbf{Vulnerability Type} & \textbf{Samples} & \textbf{Fix Rate (\%)} \\
+\midrule
+SQL Injection       & 5 & 100 \\
+Command Injection   & 3 & 100 \\
+Path Traversal      & 3 & 100 \\
+XSS                 & 4 & 75  \\
+SSRF                & 2 & 50  \\
+Prototype Pollution & 2 & 0   \\
+Race Condition      & 2 & 0   \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Residual Zero-Recall Categories}
+\label{app:failure-modes}
+
+Section~\ref{sec:eval-error-analysis} discusses the three canonical categories that remain at 0\,\% recall under \texttt{qwen3:8b+RAG} after canonical matching. The per-category counts and dominant failure mode are reproduced here.
+
+\begin{table}[H]
+\centering
+\caption{Residual zero-recall categories after canonical matching (\texttt{qwen3:8b+RAG}, 3-run pooled).}
+\label{tab:failure-modes-app}
+\footnotesize
+\begin{tabular}{@{}lccp{6.5cm}@{}}
+\toprule
+\textbf{Canonical category} & \textbf{Expected $n$} & \textbf{TP} & \textbf{Dominant failure mode} \\
+\midrule
+improper-auth      & 9  & 0 & Cross-category mislabel: model emits 9 \emph{auth-bypass} findings on these cases, so the issue \emph{is} detected but binned in a sibling canonical category. \\
+input-validation   & 27 & 0 & Genuine miss: most cases are real-world library code (lodash, mongoose, moment) where the validation gap is implicit; the model produces no output flagged as input-validation. \\
+weak-encryption    & 3  & 0 & Small sample of insufficient-key-length cases; the model labels the underlying weakness but the canonical taxonomy separates weak-encryption from weak-crypto. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Inter-Run Confidence Gate Sweep}
+\label{app:r1-confidence-sweep}
+
+The full sweep underlying the gated-vs-ungated comparison in Section~\ref{sec:eval-r1-confidence} is reproduced below.
+
+\begin{table}[H]
+\centering
+\caption{Confidence-gate effect on the headline \texttt{qwen3:8b+RAG} configuration. At threshold $\geq 0.67$, only findings emitted by $\geq 2$ of the 3 runs survive.}
+\label{tab:r1-confidence-sweep-app}
+\footnotesize
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+\textbf{Threshold} & \textbf{F1} & \textbf{Precision} & \textbf{Recall} & \textbf{FPR} \\
+\midrule
+$0.0$  (no gate)         & 71.43 & 72.46 & 70.42 & 10.00 \\
+$0.67$ ($\geq 2/3$ runs) & \textbf{74.07} & \textbf{78.13} & 70.42 & 10.00 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Held-Out Threshold Validation}
+\label{app:r1-heldout}
+
+The TRAIN-selected threshold ($\geq 0.67$) applied to the frozen 30-case TEST split (Section~\ref{sec:eval-r1-heldout}).
+
+\begin{table}[H]
+\centering
+\caption{Held-out validation: TRAIN-selected threshold applied to frozen TEST split (\texttt{qwen3:8b+RAG}, canonical matcher).}
+\label{tab:r1-heldout-app}
+\footnotesize
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+\textbf{Threshold (TEST, $n=30$)} & \textbf{F1} & \textbf{Precision} & \textbf{Recall} & \textbf{FPR} \\
+\midrule
+$0.0$ (no gate)         & 60.00 & 63.16 & 57.14 & 0.00 \\
+$0.67$ (selected)       & \textbf{63.16} & \textbf{70.59} & 57.14 & \textbf{0.00} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{External Corpus vs Curated 101-Case Comparison}
+\label{app:r1-external-corpus}
+
+Side-by-side comparison underlying Section~\ref{sec:eval-r1-external-corpus}.
+
+\begin{table}[H]
+\centering
+\caption{\texttt{qwen3:8b+RAG} on the external corpus and the curated 101-case corpus, both under the same headline configuration (3 runs, gate $\geq 0.67$).}
+\label{tab:r1-external-corpus-app}
+\footnotesize
+\begin{tabular}{@{}lrrrrrr@{}}
+\toprule
+\textbf{Corpus} & \textbf{F1} & \textbf{Precision} & \textbf{Recall} & \textbf{FPR} & \textbf{Stage~1 med. (ms)} & \textbf{Auto-app.} \\
+\midrule
+External (15 cases)         & 63.64 & 63.64 & 63.64 & 25.00 & 1\,496 & 100.00\,\% \\
+Curated (101 cases)         & 74.07 & 78.13 & 70.42 & 10.00 & 2\,216 & 90.32\,\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{NodeGoat Whole-Project Scan: Inline vs Audit Scope}
+\label{app:r1-realworld-nodegoat}
+
+Per-scope file counts, analysis units, and detection counts underlying Section~\ref{sec:eval-r1-realworld}.
+
+\begin{table}[H]
+\centering
+\caption{NodeGoat whole-project scan under both scopes (\texttt{qwen3:8b+RAG}).}
+\label{tab:r1-realworld-nodegoat-app}
+\footnotesize
+\begin{tabular}{@{}lrr@{}}
+\toprule
+\textbf{Quantity} & \textbf{Inline (function scope)} & \textbf{Audit (AST + LLM)} \\
+\midrule
+Source files scanned                   & 26                & 6 (the documented-vuln files)\\
+Analysis units                         & 85 function chunks & 6 whole files \\
+Wall-clock duration                    & 884.5\,s          & 117.2\,s \\
+Stage~0 (AST) detections               & ---               & 10 \\
+Stage~1 (LLM) findings                 & 14                & 14 \\
+Recall against 7 documented entries    & 3 / 7 (42.9\,\%)  & \textbf{6 / 7 (85.7\,\%)} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Latency for Fastest, Headline, and Slowest Configurations}
+\label{app:r4-latency}
+
+Detailed per-statistic latency (Section~\ref{sec:eval-r4}) for the fastest LLM configuration, the headline configuration, and the slowest LLM configuration, alongside the SAST baselines. The full ten-configuration breakdown follows in Section~\ref{app:full-latency}.
+
+\begin{table}[H]
+\centering
+\caption{End-to-end latency for the fastest, headline, and slowest LLM configurations (milliseconds, pooled over 303 evaluations per model$\times$mode), with the three SAST baselines for reference.}
+\label{tab:r4-latency-app}
+\footnotesize
+\begin{tabular}{@{}llrrrr@{}}
+\toprule
+\textbf{Model} & \textbf{Mode} & \textbf{Median} & \textbf{Mean} & \textbf{p95} & \textbf{p99} \\
+\midrule
+\texttt{gemma3:1b} & LLM+RAG  & 1\,019 & 1\,454 & 5\,672 & 6\,554 \\
+\texttt{qwen3:8b}  & LLM+RAG  & 2\,216 & 1\,892 & 4\,327 & 5\,106 \\
+\texttt{codellama} & LLM+RAG  & 3\,529 & 5\,251 & 10\,099 & 16\,005 \\
+\midrule
+\texttt{semgrep}         & baseline & 63 & 63 & --- & --- \\
+\texttt{codeql}          & baseline & 182 & 182 & --- & --- \\
+\texttt{eslint-security} & baseline & 1 & 1 & --- & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Detailed Case Studies}
+\label{appendix:case-studies}
+
+This section walks five representative outcomes from the evaluation --- true positive with effective repair, false positive on secure code, false negative on a context-dependent pattern, partial repair, and a multi-CWE finding --- and shows how the measured aggregate metrics translate into per-case IDE behavior.
+
+\subsection{Case 1: True Positive with Effective Repair}
+\label{sec:case-tp-good}
+SQL injection in an Express route detected by \texttt{qwen3:8b+RAG}.
+\begin{lstlisting}[caption={SQL injection vulnerability (CWE-89) and the model's repair}]
+// Vulnerable
+app.get('/user/:id', (req, res) => {
+  const userId = req.params.id;
+  const query = `SELECT * FROM users WHERE id = ${userId}`;
+  db.query(query, (err, results) => res.json(results[0]));
+});
+// Model output: {"cwe":"CWE-89","lineStart":3,"lineEnd":3,
+//   "fixedCode":"const query = 'SELECT * FROM users WHERE id = ?';\ndb.query(query, [userId], ...)"}
+\end{lstlisting}
+Clean true positive with correct location and CWE, minimal parameterized repair, intent preserved. Low-friction remediation that developers can apply immediately.
+
+\subsection{Case 2: False Positive (Over-Sensitivity)}
+\label{sec:case-fp}
+Secure username sanitization flagged by \texttt{gemma3:4b} (LLM-only).
+\begin{lstlisting}[caption={Secure input validation flagged as CWE-94}]
+function sanitizeUsername(username) {
+  const sanitized = username.replace(/[^a-zA-Z0-9_]/g, '');
+  if (sanitized.length < 3 || sanitized.length > 20) throw new Error('...');
+  return sanitized;
+}
+// Model output: {"cwe":"CWE-94","message":"Potential code injection in replace()"}
+\end{lstlisting}
+The whitelist regex and length checks are appropriate; the CWE label is mismatched. Illustrates the high-FPR behavior of smaller configurations (Section~\ref{sec:eval-r1}) and the triage overhead it imposes on developers.
+
+\subsection{Case 3: False Negative}
+\label{sec:case-fn}
+Prototype pollution missed by \texttt{CodeLlama} (LLM-only).
+\begin{lstlisting}[caption={Prototype pollution (CWE-1321) returning empty findings}]
+function mergeConfig(target, source) {
+  for (let key in source) target[key] = source[key];
+  return target;
+}
+mergeConfig(globalConfig, JSON.parse(req.body.config));
+// Model output: []
+\end{lstlisting}
+Attacker-controlled \texttt{\_\_proto\_\_} keys are not flagged. A robust output would suggest guarded assignment (\texttt{Object.prototype.hasOwnProperty.call(source, key)}); demonstrates the recall limits of weaker model families.
+
+\subsection{Case 4: Detection with Partial Repair}
+\label{sec:case-repair-partial}
+Path traversal detected; repair is only partial.
+\begin{lstlisting}[caption={Path traversal (CWE-22) with under-specified repair}]
+app.get('/download', (req, res) => {
+  const filepath = path.join(__dirname, 'uploads', req.query.file);
+  res.download(filepath);
+});
+// Model output: {"cwe":"CWE-22","fixedCode":"const filename = path.basename(req.query.file);"}
+\end{lstlisting}
+\texttt{path.basename()} reduces traversal but not authorization; allowlist checks remain. Shows why repairs are advisory and require project-specific review (Section~\ref{sec:eval-r3}).
+
+\subsection{Case 5: Multi-CWE Detection}
+\label{sec:case-multi-cwe}
+Hard-coded admin token plus command injection in one endpoint, both detected by \texttt{qwen3:8b+RAG}.
+\begin{lstlisting}[caption={Two findings from one handler (CWE-798 + CWE-78)}]
+app.post('/admin/exec', (req, res) => {
+  if (req.headers['x-auth-token'] === 'admin123') { // CWE-798
+    exec(req.body.command, (err, out) => res.send(out)); // CWE-78
+  } else res.status(401).send('Unauthorized');
+});
+// Model output: [{"cwe":"CWE-798","lineStart":3},{"cwe":"CWE-78","lineStart":4}]
+\end{lstlisting}
+Both issues are correctly separated, which matters for IDE diagnostics and prioritization. The credential fix is straightforward; command-execution remediation is design-sensitive.
+
+The five cases align with the quantitative results in Chapter~\ref{chap:evaluation}: strong model-dependent variation, persistent false-positive pressure in some modes, and a consistent need for developer oversight on repairs.
