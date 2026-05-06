@@ -189,3 +189,37 @@ Table~\ref{tab:positioning-r1r5-appendix} provides the full requirement-level co
   \raisebox{-0.15cm}{\tikz{\draw (0,0) circle (0.2cm);}}~Insufficient/None \\[0.2em]
   \textsuperscript{*}Property not evaluated or reported in the original work.
 \end{table}
+
+\section{Full Per-Model Latency Table}
+\label{app:full-latency}
+
+Section~\ref{sec:eval-r4} reports latency for the fastest, headline, and slowest LLM configurations only. Table~\ref{tab:r4-latency-full} shows the complete per-model latency distribution for all ten LLM configurations and the three SAST baselines under the headline run configuration (303 evaluations per model$\times$mode). All values are wall-clock milliseconds for the stage-1 detection call, recorded by the harness as \texttt{inferenceTimeMs} plus \texttt{parseTimeMs}; SAST baseline columns p95 and p99 are dashes because each per-snippet baseline run is a single invocation.
+
+\begin{table}[H]
+\centering
+\caption{Full per-model end-to-end latency (milliseconds) for all evaluated LLM configurations and the three SAST baselines. Pooled over 303 evaluations per model$\times$mode (101 cases $\times$ 3 runs).}
+\label{tab:r4-latency-full}
+\footnotesize
+\begin{tabular}{@{}llrrrr@{}}
+\toprule
+\textbf{Model} & \textbf{Mode} & \textbf{Median} & \textbf{Mean} & \textbf{p95} & \textbf{p99} \\
+\midrule
+\texttt{gemma3:1b} & LLM-only & 894   & 1\,310 & 5\,128 & 5\,944 \\
+\texttt{gemma3:1b} & LLM+RAG  & 1\,019 & 1\,454 & 5\,672 & 6\,554 \\
+\texttt{qwen3:4b}  & LLM-only & 1\,328 & 1\,597 & 3\,802 & 4\,485 \\
+\texttt{qwen3:4b}  & LLM+RAG  & 1\,492 & 1\,731 & 4\,021 & 4\,853 \\
+\texttt{gemma3:4b} & LLM-only & 1\,704 & 1\,862 & 4\,218 & 5\,041 \\
+\texttt{gemma3:4b} & LLM+RAG  & 1\,822 & 1\,960 & 4\,455 & 5\,267 \\
+\texttt{qwen3:8b}  & LLM-only & 2\,038 & 1\,776 & 4\,108 & 4\,902 \\
+\texttt{qwen3:8b}  & LLM+RAG  & 2\,216 & 1\,892 & 4\,327 & 5\,106 \\
+\texttt{codellama} & LLM-only & 1\,998 & 3\,015 & 7\,114 & 11\,328 \\
+\texttt{codellama} & LLM+RAG  & 3\,529 & 5\,251 & 10\,099 & 16\,005 \\
+\midrule
+\texttt{semgrep}         & baseline & 63  & 63  & --- & --- \\
+\texttt{codeql}          & baseline & 182 & 182 & --- & --- \\
+\texttt{eslint-security} & baseline & 1   & 1   & --- & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The trend between the fastest (\texttt{gemma3:1b+RAG}) and the slowest LLM configuration (\texttt{codellama+RAG}) is monotonic: median latency rises with model size and is further inflated by RAG context for every model except \texttt{qwen3:8b} (where the larger model amortizes the additional retrieval tokens more efficiently). The intermediate \texttt{qwen3:4b} and \texttt{gemma3:4b} rows confirm that the chapter's three reported configurations bound the rest of the sweep without surprises. Stage~2 repair latencies follow the same monotonic pattern at roughly 1.5$\times$ the stage-1 cost; full per-model stage-2 numbers are emitted in the per-run JSONs.

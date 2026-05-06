@@ -11,7 +11,7 @@ Code Guardian relies on a strict output contract so findings can be converted in
 \paragraph{Stage~1 (detection).}
 The detection call returns an object with an \texttt{issues} array. Each issue carries a vulnerability \texttt{type}, a coarse \texttt{severity}, a 1-based snippet-relative line range, and a short \texttt{message}. Repair text is \emph{not} requested at this stage.
 
-\begin{lstlisting}[language=Java, caption={Stage-1 detection schema (conceptual)}, label={lst:appendix-stage1-schema}]
+\begin{lstlisting}[language=Java, caption={Stage~1 detection schema (conceptual)}, label={lst:appendix-stage1-schema}]
 {
   "issues": [
     {
@@ -26,9 +26,9 @@ The detection call returns an object with an \texttt{issues} array. Each issue c
 \end{lstlisting}
 
 \paragraph{Stage~2 (repair).}
-For each confirmed Stage-1 finding the harness issues a dedicated repair call. The schema constrains the response to executable code in a typed language field, so prose paraphrases of the fix cannot satisfy the contract.
+For each confirmed Stage~1 finding the harness issues a dedicated repair call. The schema constrains the response to executable code in a typed language field, so prose paraphrases of the fix cannot satisfy the contract.
 
-\begin{lstlisting}[language=Java, caption={Stage-2 repair schema (conceptual)}, label={lst:appendix-stage2-schema}]
+\begin{lstlisting}[language=Java, caption={Stage~2 repair schema (conceptual)}, label={lst:appendix-stage2-schema}]
 {
   "code": "/* repaired snippet */",
   "language": "javascript"
@@ -77,6 +77,66 @@ The prototype exposes the following main commands via the Command Palette:
   \item \textbf{View cache statistics}: inspects the analysis cache and supports clearing/resetting statistics.
   \item \textbf{Workspace security dashboard}: performs a batch scan and displays an aggregate dashboard.
 \end{itemize}
+
+\section{Retrieval and Indexing Parameters}
+\label{app:retrieval-params}
+
+The RAG manager uses LangChain's recursive text splitter to chunk knowledge entries, embeds them through the local \texttt{nomic-embed-text} Ollama model (768-dimensional vectors, 137M parameters), and persists them in a local HNSW index built via \texttt{hnswlib-node}. The parameters used in the evaluated configuration are reproduced in Table~\ref{tab:app-retrieval-params}.
+
+\begin{table}[H]
+\centering
+\caption{Retrieval and indexing parameters used in the evaluated configuration.}
+\label{tab:app-retrieval-params}
+\footnotesize
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{p{0.30\textwidth}p{0.18\textwidth}X}
+\toprule
+\textbf{Parameter} & \textbf{Value} & \textbf{Notes} \\
+\midrule
+Embedding model              & \texttt{nomic-embed-text}  & 768-dim, served via Ollama on \texttt{localhost:11434} \\
+Chunk size (characters)      & 1\,000                     & Recursive text splitter; balances semantic coherence and retrieval recall \\
+Chunk overlap (characters)   & 200                        & Preserves cross-chunk continuity for short-form CWE/OWASP entries \\
+HNSW \texttt{M}              & 16                         & Out-degree of each node in the navigable small-world graph \\
+HNSW \texttt{efConstruction} & 200                        & Candidate list size during index construction; trades build time for recall \\
+HNSW \texttt{efSearch}       & 50                         & Candidate list size at query time; sets the recall/latency point at retrieval \\
+Distance metric              & cosine                     & Matches the embedding model's training objective \\
+Top-$k$ (runtime default)    & 3                          & Used in the inline IDE diagnostics path \\
+Top-$k$ (evaluation harness) & 5                          & Used in the headline evaluation runs reported in Chapter~\ref{chap:evaluation} \\
+Index persistence path       & \path{rag-store/hnsw.bin}  & Per-extension storage; rebuilt on corpus change \\
+Knowledge corpus signature   & Ed25519 over SHA-256 manifest & Verified at load time (Section~\ref{sec:impl-corpus-signing}) \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+The HNSW parameters follow the defaults recommended by Malkov and Yashunin~\cite{malkov2018hnsw} for medium-sized corpora; the corpus is on the order of 10\textsuperscript{2}--10\textsuperscript{3} chunks at the evaluated scale, so larger \texttt{M} or \texttt{efConstruction} values offer no measurable recall gain. The \texttt{efSearch} value of 50 was selected to keep retrieval latency below approximately 120\,ms on the locked hardware profile, which falls inside the budget shared with prompt assembly under stage-1 detection.
+
+\section{Retry and Backoff Policy}
+\label{app:retry-policy}
+
+Stage~1 detection and stage-2 repair calls share a single bounded retry policy designed to absorb transient model-warm-up and short-lived network contention without inflating interactive latency. Table~\ref{tab:app-retry-params} reproduces the policy parameters used in the evaluated configuration.
+
+\begin{table}[H]
+\centering
+\caption{Retry and backoff parameters for stage-1 and stage-2 Ollama calls.}
+\label{tab:app-retry-params}
+\footnotesize
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{p{0.30\textwidth}p{0.18\textwidth}X}
+\toprule
+\textbf{Parameter} & \textbf{Value} & \textbf{Notes} \\
+\midrule
+Max attempts (per call)     & 3                  & Covers most warm-up failures without long stalls \\
+Initial backoff             & 500\,ms            & First retry after a transient error \\
+Backoff multiplier          & 2$\times$          & Exponential schedule \\
+Max backoff cap             & 4\,000\,ms         & Bounds worst-case wait between retries \\
+Per-call timeout            & 30\,000\,ms        & Matches harness \texttt{timeoutMs} setting \\
+Retryable errors            & timeouts, 5xx, ECONNRESET, ECONNREFUSED, model-not-loaded & Non-retryable: 4xx and JSON-schema-violation responses \\
+Inter-request delay         & 500\,ms            & Harness only; sequential pacing to avoid local-Ollama saturation under load \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+The cap of three attempts is deliberately conservative for an interactive IDE pipeline: a fully-failed worst-case stage-1 call therefore costs the per-call timeout plus two backoff intervals (approximately 30\,s + 500\,ms + 1\,000\,ms), after which the analyzer surfaces a user-visible failure and returns an empty issue list. JSON-schema-violation responses are not retried because the underlying defect is prompt- or model-side rather than transient; defensive parsing handles the rare residual.
 
 \section{Evaluation Harness Location}
 \label{app:eval-harness}

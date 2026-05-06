@@ -60,7 +60,7 @@ Figure~\ref{fig:bpmn} illustrates the two dominant analysis workflows; interacti
 \subsection{Sequence Diagrams: Concrete Detection Flows}
 \label{sec:sequence-diagrams}
 
-Three sequence diagrams capture the dominant interaction patterns. Inline mode with a cache hit (Figure~\ref{fig:seq-inline-cached}) returns previously-stored findings without invoking the model, which is the cheap path that absorbs most repeated keystrokes. Audit mode with RAG (Figure~\ref{fig:seq-audit-rag}) embeds the snippet, performs vector search (top-$k=3$ at runtime, $k=5$ in the evaluated setting), injects retrieved CWE/OWASP chunks, runs two detection passes with seeds 42 and 137 plus consensus filtering (runtime default; the headline evaluation configuration uses three passes), and finally generates repairs in a separate Stage-2 pass. Real-time detection (Figure~\ref{fig:seq-realtime-debounced}) layers an 800\,ms debounce timer over the inline path so continuous typing collapses into a single analysis.
+Three sequence diagrams capture the dominant interaction patterns. Inline mode with a cache hit (Figure~\ref{fig:seq-inline-cached}) returns previously-stored findings without invoking the model, which is the cheap path that absorbs most repeated keystrokes. Audit mode with RAG (Figure~\ref{fig:seq-audit-rag}) embeds the snippet, performs vector search (top-$k=3$ at runtime, $k=5$ in the evaluated setting), injects retrieved CWE/OWASP chunks, runs two detection passes with seeds 42 and 137 plus consensus filtering (runtime default; the headline evaluation configuration uses three passes), and finally generates repairs in a separate Stage~2 pass. Real-time detection (Figure~\ref{fig:seq-realtime-debounced}) layers an 800\,ms debounce timer over the inline path so continuous typing collapses into a single analysis.
 
 \begin{figure}[H]
   \centering
@@ -72,7 +72,7 @@ Three sequence diagrams capture the dominant interaction patterns. Inline mode w
 \begin{figure}[H]
   \centering
   \safeincludegraphics[width=0.95\textwidth]{images/seq_audit_rag.drawio.pdf}
-  \caption{Audit mode with RAG: vector search, two-pass consensus detection (runtime default; the eval headline uses three passes), then Stage-2 repair generation.}
+  \caption{Audit mode with RAG: vector search, two-pass consensus detection (runtime default; the eval headline uses three passes), then Stage~2 repair generation.}
   \label{fig:seq-audit-rag}
 \end{figure}
 

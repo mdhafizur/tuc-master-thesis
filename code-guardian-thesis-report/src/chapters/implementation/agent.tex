@@ -13,8 +13,8 @@ Code Guardian extracts the smallest useful unit of code for interactive analysis
 
 The analyzer performs local inference through Ollama and runs the detect-then-repair pipeline as two separate calls, each constrained by its own structured-output schema (Section~\ref{sec:impl-pipeline}). Stage~1 returns an \texttt{issues} array with the detection-side fields shown in Listing~\ref{lst:cg-issue-schema}; Stage~2 issues a per-finding repair call that returns a structured \texttt{\{code, language\}} object, and the validated repair is attached to the corresponding issue under \texttt{suggestedFix} before rendering.
 
-\begin{lstlisting}[caption={Stage-1 detection schema and the post-stage-2 in-IDE issue shape}, label={lst:cg-issue-schema}]
-// Stage-1 detection schema (LLM-emitted)
+\begin{lstlisting}[caption={Stage~1 detection schema and the post-stage-2 in-IDE issue shape}, label={lst:cg-issue-schema}]
+// Stage~1 detection schema (LLM-emitted)
 interface DetectionIssue {
   type: string;        // canonical category, e.g. "sql-injection"
   severity: string;    // coarse: "low" | "medium" | "high" | "critical"
@@ -23,11 +23,11 @@ interface DetectionIssue {
   message: string;
 }
 
-// In-IDE issue after Stage-2 repair attachment
+// In-IDE issue after Stage~2 repair attachment
 interface SecurityIssue extends DetectionIssue {
   confidence?: number;        // [0,1], inter-run agreement
   detectionSource?: 'llm' | 'ast' | 'hybrid';
-  suggestedFix?: string;      // attached from Stage-2 {code, language}
+  suggestedFix?: string;      // attached from Stage~2 {code, language}
   autoApplicable?: boolean;   // result of @babel/parser syntax check
 }
 \end{lstlisting}

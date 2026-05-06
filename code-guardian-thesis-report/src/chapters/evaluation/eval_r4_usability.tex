@@ -5,7 +5,7 @@ This section evaluates usability through end-to-end latency measurements. The th
 
 \subsection{Latency Across Configurations}
 
-Table~\ref{tab:r4-latency} shows latency statistics for the fastest LLM configuration, the headline configuration, and the slowest LLM configuration alongside the SAST baselines; the per-model results for the seven configurations omitted here follow the same monotonic trend between these two endpoints and are available in the run JSONs alongside the harness output.
+Table~\ref{tab:r4-latency} shows latency statistics for the fastest LLM configuration, the headline configuration, and the slowest LLM configuration alongside the SAST baselines. The per-model results for the seven configurations omitted here follow the same monotonic trend between these endpoints; the full ten-configuration table is reproduced in Appendix~\ref{app:full-latency} (Table~\ref{tab:r4-latency-full}).
 
 \begin{table}[H]
 \centering
@@ -28,7 +28,7 @@ Table~\ref{tab:r4-latency} shows latency statistics for the fastest LLM configur
 \end{table}
 
 \paragraph{Headline configuration.}
-\texttt{qwen3:8b+RAG} runs at stage-1 detection median 2\,216\,ms (mean 1\,892\,ms, p95 4\,327\,ms). The mean sits below the median because the per-call latency distribution is bimodal: 103 of the 303 stage-1 calls (34\,\%) return an empty findings array \texttt{[]} and complete in under 500\,ms (a short-output decode path), while the remaining 200 calls produce non-empty JSON findings and run in the 1.5--3.5\,s steady-state band. The median therefore better describes the latency a developer experiences \emph{when} the model has something to flag, while the mean is pulled toward the fast empty-response cluster. The pipeline is split into two Ollama calls: stage-1 emits detections only ($\{$message, type, line range, severity$\}$), and a stage-2 call per detected finding produces a structured \texttt{\{code, language\}} repair (median 3\,320\,ms per fix, p95 6\,240\,ms). Stage-2 cost is incurred only when a finding triggers a quick-fix surface, so it does not appear in the inline-diagnostics latency that users see when typing.
+\texttt{qwen3:8b+RAG} runs at stage-1 detection median 2\,216\,ms (mean 1\,892\,ms, p95 4\,327\,ms). The mean sits below the median because the per-call latency distribution is bimodal: 103 of the 303 stage-1 calls (34\,\%) return an empty findings array \texttt{[]} and complete in under 500\,ms (a short-output decode path), while the remaining 200 calls produce non-empty JSON findings and run in the 1.5--3.5\,s steady-state band. The median therefore better describes the latency a developer experiences \emph{when} the model has something to flag, while the mean is pulled toward the fast empty-response cluster. The pipeline is split into two Ollama calls: stage-1 emits detections only ($\{$message, type, line range, severity$\}$), and a stage-2 call per detected finding produces a structured \texttt{\{code, language\}} repair (median 3\,320\,ms per fix, p95 6\,240\,ms). Stage~2 cost is incurred only when a finding triggers a quick-fix surface, so it does not appear in the inline-diagnostics latency that users see when typing.
 
 SAST baselines remain orders of magnitude faster than every LLM configuration. Among LLM configurations the headline \texttt{qwen3:8b+RAG} sits in the upper-middle of the LLM range; smaller models such as \texttt{gemma3:1b+RAG} (1\,019\,ms) are noticeably faster but trade detection quality.
 
@@ -70,7 +70,7 @@ The best-accuracy configuration (\texttt{qwen3:8b+RAG}, stage-1 detection median
 Based on the R4 evaluation scale (Table~\ref{tab:r4-usability-thresholds}), the best configuration (\texttt{qwen3:8b+RAG}) maps as follows:
 
 \begin{itemize}
-  \item Stage-1 detection median = 2\,216\,ms ($\leq 5$\,s; within the High threshold for the \emph{on-demand / audit} band).
+  \item Stage~1 detection median = 2\,216\,ms ($\leq 5$\,s; within the High threshold for the \emph{on-demand / audit} band).
   \item p95 = 4\,327\,ms (still $\leq 5$\,s, so the slow-tail behavior does not break the High band).
   \item For full-file scans (multiple functions), aggregate latency scales roughly linearly and typically reaches 8--20\,s, falling in the Medium range.
 \end{itemize}
@@ -87,4 +87,4 @@ The High rating applies to the on-demand / audit workflow band ($\leq 5$\,s per 
 \end{tabular}
 \end{center}
 
-Individual function analysis completes within the on-demand threshold for stage-1 detection (2\,216\,ms median). Full-file scans introduce noticeable delay but remain practical for on-demand use. Stage-2 quick-fix repair adds median 3\,320\,ms when a finding triggers it, also within the on-demand band.
+Individual function analysis completes within the on-demand threshold for stage-1 detection (2\,216\,ms median). Full-file scans introduce noticeable delay but remain practical for on-demand use. Stage~2 quick-fix repair adds median 3\,320\,ms when a finding triggers it, also within the on-demand band.
