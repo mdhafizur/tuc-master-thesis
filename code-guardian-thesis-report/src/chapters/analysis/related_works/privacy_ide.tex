@@ -8,4 +8,28 @@ Local deployment, however, is not a complete security solution. Moving inference
 
 A second practical boundary concerns \emph{mixed connectivity}. Many systems operate with local inference but optional online knowledge refresh. This hybrid pattern can preserve source-code privacy while still introducing supply-chain and provenance risks if external knowledge sources are not validated. Privacy-preserving design should therefore separate code-bearing data paths from public-metadata update paths and make this separation visible to users.
 
-Copilot leads on usability (R4) but sends code to the cloud (R5 fail); Snyk Code's local mode achieves good consistency and usability but offers no repairs (R3); Semgrep is fully local but lacks contextual reasoning. The combination of local privacy, contextual LLM reasoning, and repair generation in one IDE-integrated tool remains the unmet gap, as shown in the unified comparison in Appendix~\ref{appendix:positioning-table}.
+\subsubsection{Evaluation Against Requirements}
+\label{subsubsec:eval-privacy-ide}
+
+Table~\ref{tab:eval-privacy-ide} evaluates the IDE-integrated and locally-deployable security tools discussed above against requirements R1--R5.
+
+\begin{table}[H]
+  \centering
+  \caption{Evaluation of privacy-preserving and IDE-integrated approaches against requirements R1--R5.}
+  \label{tab:eval-privacy-ide}
+  \footnotesize
+  \renewcommand{\arraystretch}{1.4}
+  \begin{tabular}{|p{3.5cm}|c|c|c|c|c|}
+    \hline
+    \textbf{Solution} & \textbf{R1} & \textbf{R2} & \textbf{R3} & \textbf{R4} & \textbf{R5} \\
+    \hline
+    GitHub Copilot~\cite{chen2021codex}     & \rmed    & \rmedlow & \rmedlow & \rfull & \rnone \\
+    \hline
+    Snyk Code (local)~\cite{snykDocs}       & \rmed    & \rfull   & \rnone   & \rfull & \rmed  \\
+    \hline
+    Semgrep~\cite{semgrepDocs}              & \rmedlow & \rfull   & \rnone   & \rfull & \rfull \\
+    \hline
+  \end{tabular}
+\end{table}
+
+Copilot leads on usability (R4) but sends code to the cloud, fully failing R5. Snyk Code's local mode reaches high consistency and usability but offers no repair generation (R3). Semgrep is fully local with the strongest privacy posture but its rule-based detection sits at medium-low accuracy (R1) and offers no contextual reasoning. The combination of local privacy, contextual LLM reasoning, repair generation, and IDE integration in a single tool remains the unmet gap, as shown in the unified comparison in Appendix~\ref{appendix:positioning-table}.

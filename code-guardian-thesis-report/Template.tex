@@ -104,6 +104,13 @@
   \IfFileExists{#2}{\includegraphics[#1]{#2}}{\fbox{Missing image}}%
 }
 
+% --- Requirement-rating circles (Huzefa style: high / medium / medium-low / low / none) ---
+\newcommand{\rfull}{\raisebox{-0.18cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.22cm);}}}
+\newcommand{\rmed}{\raisebox{-0.18cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.22cm) arc (90:-150:0.22cm) -- cycle; \draw (0,0) circle (0.22cm);}}}
+\newcommand{\rmedlow}{\raisebox{-0.18cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.22cm) arc (90:-90:0.22cm) -- cycle; \draw (0,0) circle (0.22cm);}}}
+\newcommand{\rlow}{\raisebox{-0.18cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.22cm) arc (90:-30:0.22cm) -- cycle; \draw (0,0) circle (0.22cm);}}}
+\newcommand{\rnone}{\raisebox{-0.18cm}{\tikz{\draw (0,0) circle (0.22cm);}}}
+
 \makeindex
 
 \begin{document}

@@ -20,4 +20,30 @@ In response, contemporary approaches increasingly combine learned models with au
 
 Repair suggestion quality is also connected to the broader literature on automated program repair. Classic systems such as GenProg and subsequent patch-learning approaches show both the promise of automation and the difficulty of evaluating patch correctness beyond passing tests \cite{weimer2009genprog,monperrus2014critique}. Modern neural repair work moves the field from heuristic search to sequence-to-sequence and edit-decoder formulations \cite{chen2019sequencer,zhu2021recoder}, and ensemble or zero-shot approaches further demonstrate that pretrained code models can generate plausible patches without task-specific fine-tuning \cite{lutellier2020coconut,xia2022alpharepair}. For IDE-integrated security assistance, these findings motivate presenting repairs as \emph{optional} quick fixes, requiring explicit developer review and preserving responsibility for functional correctness.
 
-LLM-based approaches improve accuracy (R1) through contextual reasoning but suffer weaker consistency (R2) and, for cloud-hosted tools such as Copilot, fail on privacy (R5); a unified requirement-level comparison across all reviewed approaches is in Appendix~\ref{appendix:positioning-table}. The gap across all approaches is the combination of local privacy, contextual reasoning, and repair generation in a single IDE-integrated tool.
+\subsubsection{Evaluation Against Requirements}
+\label{subsubsec:eval-llm}
+
+Table~\ref{tab:eval-llm} evaluates the LLM-based detection and repair systems discussed above against requirements R1--R5.
+
+\begin{table}[H]
+  \centering
+  \caption{Evaluation of LLM-based vulnerability detection and repair solutions against requirements R1--R5.}
+  \label{tab:eval-llm}
+  \footnotesize
+  \renewcommand{\arraystretch}{1.4}
+  \begin{tabular}{|p{3.5cm}|c|c|c|c|c|}
+    \hline
+    \textbf{Solution} & \textbf{R1} & \textbf{R2} & \textbf{R3} & \textbf{R4} & \textbf{R5} \\
+    \hline
+    GitHub Copilot~\cite{chen2021codex} & \rmed    & \rmedlow & \rmedlow & \rfull & \rnone \\
+    \hline
+    IRIS~\cite{li2025iris}              & \rmed    & \rmedlow & \rmedlow & \rnone & \rnone \\
+    \hline
+    SecRepair~\cite{islam2024secrepair} & \rmedlow & \rmedlow & \rmedlow & \rnone & \rnone \\
+    \hline
+    CWEval~\cite{peng2025cweval}        & \rmed    & \rfull   & \rnone   & \rnone & \rnone \\
+    \hline
+  \end{tabular}
+\end{table}
+
+LLM-based approaches lift accuracy (R1) into the medium band through contextual reasoning, and IRIS demonstrates that combining a static analyzer with the LLM can extend that lift further. Repair quality (R3) reaches medium-low for Copilot, IRIS, and SecRepair --- repairs are produced but quality is not consistent --- whereas CWEval is a methodological benchmark that does not generate repairs at all. Consistency (R2) is held back by sampling variance and free-form output: only CWEval, which constrains models with rule scoring, reaches high. Usability (R4) is high only for Copilot, which is IDE-integrated by construction; the research prototypes are batch-evaluated and do not report IDE latency. Privacy (R5) fails for all reviewed approaches: Copilot transmits source code to cloud servers, and the research prototypes assume cloud-hosted models. The full cross-paradigm comparison is in Appendix~\ref{appendix:positioning-table}. The gap across all approaches is the combination of local privacy, contextual reasoning, and repair generation in a single IDE-integrated tool.

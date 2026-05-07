@@ -17,4 +17,26 @@ From an engineering perspective, RAG design involves a three-way trade-off among
 
 These trade-offs motivate model-specific calibration rather than one global RAG configuration. The same retrieval setup can improve one model while degrading another, depending on how each model integrates external context under strict output constraints. This observation is central to the ablation design in this thesis.
 
-RAG improves accuracy (R1) and, when curated as in RESCUE, repair quality (R3), but neither approach provides IDE integration (R4) or guaranteed privacy (R5); a full requirement comparison is in Appendix~\ref{appendix:positioning-table}. The key insight is that RAG is a useful augmentation, not a standalone solution.
+\subsubsection{Evaluation Against Requirements}
+\label{subsubsec:eval-rag}
+
+Table~\ref{tab:eval-rag} evaluates the RAG approaches discussed above against requirements R1--R5. Vanilla RAG denotes the generic Lewis-style pipeline with off-the-shelf retrievers (BM25 or DPR) over uncurated security text; RESCUE is its curated, security-tuned successor.
+
+\begin{table}[H]
+  \centering
+  \caption{Evaluation of RAG approaches for secure coding against requirements R1--R5.}
+  \label{tab:eval-rag}
+  \footnotesize
+  \renewcommand{\arraystretch}{1.4}
+  \begin{tabular}{|p{3.5cm}|c|c|c|c|c|}
+    \hline
+    \textbf{Solution} & \textbf{R1} & \textbf{R2} & \textbf{R3} & \textbf{R4} & \textbf{R5} \\
+    \hline
+    Vanilla RAG~\cite{lewis2020rag} & \rmedlow & \rmed & \rlow  & \rnone & \rnone \\
+    \hline
+    RESCUE~\cite{shi2025rescue}     & \rmed    & \rmed & \rfull & \rnone & \rnone \\
+    \hline
+  \end{tabular}
+\end{table}
+
+Both approaches reach medium consistency (R2), reflecting that retrieval grounding reduces but does not eliminate sampling variance. Accuracy (R1) and repair quality (R3) depend sharply on what is retrieved: vanilla RAG over generic security prose lifts both modestly, while RESCUE's curated hierarchical guidance reaches high repair quality by mapping vulnerability classes to concrete fix patterns. Neither approach addresses IDE integration (R4) or runtime privacy (R5) --- both are evaluated as offline batch pipelines on cloud infrastructure. The full cross-paradigm comparison is in Appendix~\ref{appendix:positioning-table}. The key insight is that RAG is a useful augmentation, not a standalone solution.
