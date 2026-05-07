@@ -27,23 +27,27 @@ Table~\ref{tab:eval-llm} evaluates the LLM-based detection and repair systems di
 
 \begin{table}[H]
   \centering
-  \caption{Evaluation of LLM-based vulnerability detection and repair solutions against requirements R1--R5.}
+  \caption{Evaluation of LLM-based vulnerability detection and repair solutions against requirements R1--R5. Empty circles for the research-paper systems indicate that the requirement is not addressed by the work, not that the work fails to satisfy it.}
   \label{tab:eval-llm}
   \footnotesize
   \renewcommand{\arraystretch}{1.4}
-  \begin{tabular}{|p{3.5cm}|c|c|c|c|c|}
+  \begin{tabular}{|p{4.2cm}|c|c|c|c|c|}
     \hline
     \textbf{Solution} & \textbf{R1} & \textbf{R2} & \textbf{R3} & \textbf{R4} & \textbf{R5} \\
     \hline
-    GitHub Copilot~\cite{chen2021codex} & \rmed    & \rmedlow & \rmedlow & \rfull & \rnone \\
+    GitHub Copilot~\cite{chen2021codex}     & \rmed    & \rmedlow & \rmedlow & \rfull & \rnone \\
     \hline
-    IRIS~\cite{li2025iris}              & \rmed    & \rmedlow & \rmedlow & \rnone & \rnone \\
+    IRIS~\cite{li2025iris}                  & \rmed    & \rmedlow & \rmedlow & \rnone & \rnone \\
     \hline
-    SecRepair~\cite{islam2024secrepair} & \rmedlow & \rmedlow & \rmedlow & \rnone & \rnone \\
+    SecRepair~\cite{islam2024secrepair}     & \rmedlow & \rmedlow & \rmedlow & \rnone & \rnone \\
     \hline
-    CWEval~\cite{peng2025cweval}        & \rmed    & \rfull   & \rnone   & \rnone & \rnone \\
+    CWEval~\cite{peng2025cweval}            & \rmed    & \rfull   & \rnone   & \rnone & \rnone \\
+    \hline
+    VulDeePecker~\cite{li2018vuldeepecker}  & \rmedlow & \rmed    & \rnone   & \rnone & \rnone \\
+    \hline
+    Devign~\cite{zhou2019devign}            & \rmed    & \rmed    & \rnone   & \rnone & \rnone \\
     \hline
   \end{tabular}
 \end{table}
 
-LLM-based approaches lift accuracy (R1) into the medium band through contextual reasoning, and IRIS demonstrates that combining a static analyzer with the LLM can extend that lift further. Repair quality (R3) reaches medium-low for Copilot, IRIS, and SecRepair --- repairs are produced but quality is not consistent --- whereas CWEval is a methodological benchmark that does not generate repairs at all. Consistency (R2) is held back by sampling variance and free-form output: only CWEval, which constrains models with rule scoring, reaches high. Usability (R4) is high only for Copilot, which is IDE-integrated by construction; the research prototypes are batch-evaluated and do not report IDE latency. Privacy (R5) fails for all reviewed approaches: Copilot transmits source code to cloud servers, and the research prototypes assume cloud-hosted models. The full cross-paradigm comparison is in Appendix~\ref{appendix:positioning-table}. The gap across all approaches is the combination of local privacy, contextual reasoning, and repair generation in a single IDE-integrated tool.
+LLM-based approaches and their pre-LLM deep-learning predecessors (VulDeePecker, Devign) lift accuracy (R1) into the medium band through contextual reasoning, and IRIS demonstrates that combining a static analyzer with the LLM can extend that lift further. Repair quality (R3) reaches medium-low for Copilot, IRIS, and SecRepair --- repairs are produced but quality is not consistent --- while CWEval, VulDeePecker, and Devign are detection-only and do not generate repairs at all. Consistency (R2) is held back by sampling variance and free-form output for the LLM systems; the deep-learning predecessors reach medium because deterministic inference removes sampling variance but free-form output is replaced by classifier scores rather than structured findings. Usability (R4) is high only for Copilot, which is IDE-integrated by construction; the research prototypes are batch-evaluated and do not report IDE latency. Privacy (R5) fails for the cloud-hosted Copilot and is not addressed by any of the research-paper systems, which assume cloud-hosted models or unspecified deployment. The full cross-paradigm comparison is in Appendix~\ref{appendix:positioning-table}. The gap across all approaches is the combination of local privacy, contextual reasoning, and repair generation in a single IDE-integrated tool.

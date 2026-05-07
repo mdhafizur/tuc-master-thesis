@@ -17,21 +17,27 @@ Table~\ref{tab:eval-sast} evaluates the three SAST tools discussed above against
 
 \begin{table}[H]
   \centering
-  \caption{Evaluation of traditional SAST solutions against requirements R1--R5.}
+  \caption{Evaluation of traditional SAST solutions against requirements R1--R5. Empty circles for the research-paper systems indicate that the requirement is not addressed by the work, not that the work fails to satisfy it.}
   \label{tab:eval-sast}
   \footnotesize
   \renewcommand{\arraystretch}{1.4}
-  \begin{tabular}{|p{3.5cm}|c|c|c|c|c|}
+  \begin{tabular}{|p{4.2cm}|c|c|c|c|c|}
     \hline
     \textbf{Solution} & \textbf{R1} & \textbf{R2} & \textbf{R3} & \textbf{R4} & \textbf{R5} \\
     \hline
-    Semgrep         & \rmedlow & \rfull & \rnone & \rfull & \rfull \\
+    Semgrep~\cite{semgrepDocs}                 & \rmedlow & \rfull & \rnone   & \rfull & \rfull \\
     \hline
-    CodeQL          & \rmed    & \rfull & \rnone & \rfull & \rfull \\
+    CodeQL~\cite{codeqlDocs}                   & \rmed    & \rfull & \rnone   & \rfull & \rfull \\
     \hline
-    ESLint security & \rlow    & \rfull & \rnone & \rfull & \rfull \\
+    ESLint security                            & \rlow    & \rfull & \rnone   & \rfull & \rfull \\
+    \hline
+    Coverity~\cite{bessey2010billion}          & \rmed    & \rfull & \rnone   & \rnone & \rnone \\
+    \hline
+    Code Property Graph~\cite{yamaguchi2014cpg}& \rmed    & \rfull & \rnone   & \rnone & \rnone \\
+    \hline
+    FlowDroid~\cite{arzt2014flowdroid}         & \rmed    & \rfull & \rnone   & \rnone & \rnone \\
     \hline
   \end{tabular}
 \end{table}
 
-All three tools score high on consistency (R2), usability (R4), and privacy (R5), reflecting deterministic execution, low latency, and on-device operation. Accuracy (R1) varies with rule sophistication: CodeQL's data-flow queries reach medium, Semgrep's pattern matching sits at medium-low, and ESLint security plugins remain low because they target style and obvious-sink rules rather than security-flow analysis. None provide actionable repair guidance (R3), leaving developers to design fixes manually. The full cross-paradigm comparison is in Appendix~\ref{appendix:positioning-table}. These limitations motivate approaches that keep deterministic checks as guardrails while adding more flexible reasoning and repair generation closer to the developer workflow.
+The three deployable tools (Semgrep, CodeQL, ESLint security) score high on consistency (R2), usability (R4), and privacy (R5), reflecting deterministic execution, low latency, and on-device operation. Accuracy (R1) varies with rule sophistication: CodeQL's data-flow queries reach medium, Semgrep's pattern matching sits at medium-low, and ESLint security plugins remain low because they target style and obvious-sink rules rather than security-flow analysis. The three research-grade systems (Coverity, Code Property Graph, FlowDroid) demonstrate medium R1 accuracy through richer data- and taint-flow representations, but neither IDE integration nor deployment privacy is part of their published evaluation, so R4 and R5 are not addressed. None of the six provide actionable repair guidance (R3), leaving developers to design fixes manually. The full cross-paradigm comparison is in Appendix~\ref{appendix:positioning-table}. These limitations motivate approaches that keep deterministic checks as guardrails while adding more flexible reasoning and repair generation closer to the developer workflow.
