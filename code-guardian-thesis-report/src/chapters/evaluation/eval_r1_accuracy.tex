@@ -89,7 +89,7 @@ Across configurations, retrieval augmentation has model-specific effects. F1 lif
     symbolic x coords={gemma3:1b, gemma3:4b, qwen3:4b, qwen3:8b, codellama},
     xtick=data,
     xticklabel style={font=\small},
-    ymin=0, ymax=75,
+    ymin=0, ymax=90,
     ytick={0,10,20,30,40,50,60,70},
     ymajorgrids=true,
     grid style={line width=0.3pt, draw=gray!30},
@@ -188,7 +188,7 @@ Per-canonical-category recall on \texttt{qwen3:8b+RAG} (3-runs pooled, categorie
 \label{fig:r1-category}
 \end{figure}
 
-Section~\ref{sec:eval-error-analysis} shows a substantial share of this gap is a labeling artifact rather than detection failure: the auth-bypass canonical category, for instance, absorbs nine model findings on cases the dataset labels \emph{improper-auth}, which simultaneously show up as nine false positives on auth-bypass and nine misses on improper-auth.
+Section~\ref{sec:eval-error-analysis} shows a substantial share of this gap is a labeling artifact rather than detection failure: the auth-bypass canonical category, for instance, absorbs nine model findings on cases the dataset labels \emph{improper-auth}, which simultaneously show up as nine false positives on auth-bypass and nine misses on improper-auth. Per-category sample sizes are small for several buckets: the 100\,\% recall on weak-encryption (n=3) carries a one-sided 95\,\% binomial lower bound of only 36.8\,\%, while the larger buckets (XSS n=30, path traversal n=27) bound at 90.5\,\% and 89.6\,\% respectively. Per-category recall should therefore be read as a directional signal, not a precise estimate, on the smaller buckets.
 
 \subsection{Qualitative Error Analysis on Zero-Recall Categories}
 \label{sec:eval-error-analysis}

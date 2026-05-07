@@ -8,9 +8,7 @@ For Code Guardian, R3 means repairs should target the affected code region, use 
 
 Repair quality is measured along two complementary axes. The first is a qualitative manual review on a sampled subset, scoring each repair on whether it addresses the reported vulnerability type, follows recognized secure-coding patterns, and is presented as syntactically applicable code rather than prose guidance. The second is the deterministic, fleet-wide \emph{auto-applicable rate}: the fraction of generated \texttt{suggestedFix} strings that syntactically parse as JavaScript or TypeScript without errors. The manual review captures \emph{decision-support quality} (would a developer benefit from reading this?); the auto-applicable rate captures \emph{automation quality} (could the IDE quick-fix surface insert this without further editing?). Both are reported in Chapter~\ref{chap:evaluation}.
 
-The threshold scale for R3 below combines them: the rate qualifier targets the manual-review proportion, with the auto-applicable rate reported as a secondary signal in the corresponding evaluation section. Unlike R1 and R2, which use four levels, a coarser three-level scale is appropriate here because repair quality is partly qualitative and fine-grained distinctions are not reliable on small reviewer samples. Table~\ref{tab:r3-repair-thresholds} shows this scale.
-
-\begin{table}[H]
+\begin{table}[!htbp]
   \centering
   \caption{Evaluation scale for R3: Repair Quality (example thresholds).}
   \label{tab:r3-repair-thresholds}
@@ -31,3 +29,5 @@ The threshold scale for R3 below combines them: the rate qualifier targets the m
     \bottomrule
   \end{tabularx}
 \end{table}
+
+The threshold scale for R3 (Table~\ref{tab:r3-repair-thresholds}) combines them: the rate qualifier targets the manual-review proportion, with the auto-applicable rate reported as a secondary signal in the corresponding evaluation section. Unlike R1 and R2, which use four levels, a coarser three-level scale is appropriate here because repair quality is partly qualitative and fine-grained distinctions are not reliable on small reviewer samples.

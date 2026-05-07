@@ -53,9 +53,9 @@ The main threat addressed is unintended disclosure of proprietary code through e
     \toprule
     Threat class & Assumption / attack path & Design response in this thesis \\
     \midrule
-    Source-code exfiltration & External API calls could expose proprietary code or derived context. & Local inference only; a synchronous egress gate (Section~\ref{sec:impl-network-policy}) blocks every non-loopback connection by default. \\
-    Prompt injection & Attacker-controlled code/comments attempt to override analysis instructions \cite{owaspLLMTop10_2023}. & Strict JSON-mode contract for both detection and repair, defensive parsing, and user approval before applying any fix (Section~\ref{sec:eval-r5-prompt-injection}). \\
-    Retrieval poisoning & Low-quality or malicious knowledge entries reduce grounding quality. & Local curated knowledge corpus verified at load time against an Ed25519-signed SHA-256 manifest with bound provenance (Section~\ref{sec:impl-corpus-signing}). \\
+    Source-code exfiltration & External API calls could expose proprietary code or derived context. & Local inference only; a synchronous egress gate blocks every non-loopback connection by default. \\
+    Prompt injection & Attacker-controlled code/comments attempt to override analysis instructions \cite{owaspLLMTop10_2023}. & Strict JSON-mode contract for both detection and repair, defensive parsing, and user approval before applying any fix. \\
+    Retrieval poisoning & Low-quality or malicious knowledge entries reduce grounding quality. & Local curated knowledge corpus verified at load time against an Ed25519-signed SHA-256 manifest with bound provenance. \\
     Local host compromise & Malware or untrusted local users access local code, prompts, or caches. & Out of scope; assumes trusted host and OS-level hardening. \\
     \bottomrule
  \end{tabularx}
