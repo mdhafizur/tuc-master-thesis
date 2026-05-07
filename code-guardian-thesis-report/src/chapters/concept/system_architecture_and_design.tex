@@ -1,7 +1,7 @@
 \section{System Architecture and Design}
 \label{sec:system-architecture}
 
-This section presents the high-level architecture of Code Guardian using C4-style views (context, containers, and process). The goal is to make the privacy boundary and the main data flows explicit: code stays on-device, local inference is performed through a localhost LLM backend, and retrieval (when enabled) is backed by a local knowledge base and vector index.
+This section presents the high-level architecture of Code Guardian using the C4 model, which structures architectural documentation into hierarchical levels: \emph{context} (the system boundary, the developer, and any external actors), \emph{containers} (the major internal components and their interactions), and \emph{process} (the dynamic execution flow that ties the components together). These three views provide a comprehensive understanding of how the conceptual design translates into a deployable architecture and make the privacy boundary explicit at every level: code stays on-device, local inference is performed through a localhost LLM backend, and retrieval (when enabled) is backed by a local knowledge base and vector index. A fourth subsection adds concrete sequence diagrams for the dominant interaction patterns.
 
 \subsection{Context View: System Boundary and External Interactions}
 \label{subsec:context-view}
@@ -48,7 +48,25 @@ Figure~\ref{fig:c4-container} summarizes the main internal containers and their 
 \subsection{Process View: End-to-End Workflows}
 \label{subsec:process-view}
 
-Figure~\ref{fig:bpmn} illustrates the two dominant analysis workflows; interactive Q\&A and workspace scan extend the on-demand path with the same backend pipeline. \emph{Real-time diagnostics} debounce document-change events for 800\,ms, extract the innermost enclosing function at the cursor, invoke the analyzer within size limits, parse and cache the JSON findings, and surface repair suggestions as quick fixes. \emph{On-demand file diagnostics} run the analyzer over the full document subject to a size guard. \emph{Interactive analysis and contextual Q\&A} open a WebView, stream Markdown responses from the local model, and optionally inject retrieved knowledge to ground explanations. \emph{Workspace scan} enumerates JS/TS files (excluding dependencies, skipping very large files), analyzes each locally, aggregates by severity heuristic, and renders the results in a dashboard. The audit-mode AST+LLM hybrid (described in Chapter~\ref{chap:implementation}) extends the on-demand path with a deterministic AST stage that runs in parallel with the LLM and is not depicted in the BPMN. Across all workflows source code is sent only to localhost; the optional metadata refresh fetches public CVE/CWE/OWASP records without source content and can be disabled for fully offline operation.
+Figure~\ref{fig:bpmn} illustrates the dynamic execution flow that connects the components. The four detection workflows (real-time, on-demand file, interactive Q\&A, workspace scan) share the same backend pipeline; they differ only in the trigger and the output surface. The common pipeline proceeds through seven stages.
+
+\textbf{Trigger.} Inline detection listens to \texttt{onDidChangeText} document events; on-demand workflows are dispatched from the command palette or a selection action; the workspace scan iterates over filtered \texttt{*.js / *.ts / *.tsx / *.jsx} files. The trigger determines only \emph{when} the pipeline runs, not \emph{how}.
+
+\textbf{Debouncing.} The inline workflow inserts an 800\,ms debounce timer between the trigger and the rest of the pipeline so continuous typing collapses into a single analysis. Other workflows skip this stage because they are explicitly user-initiated.
+
+\textbf{Scope extraction.} Context extraction selects the analysis unit: the innermost enclosing function for inline detection, an explicit user selection, the active document, or each enumerated file in the workspace. A size guard skips snippets that exceed the model's reliable prompt range.
+
+\textbf{Cache lookup.} The pipeline consults the analysis cache keyed by snippet hash. A hit short-circuits straight to diagnostic rendering, which is what makes repeated edits cheap on the inline path.
+
+\textbf{Retrieval (optional).} When RAG is enabled and the cache misses, the retrieval component embeds the snippet locally, queries the local HNSW index, and injects the top-$k$ matching CWE / OWASP / CVE entries as additional prompt context. When RAG is disabled, this stage is skipped.
+
+\textbf{Detection passes and consensus.} The analyzer invokes the local model under JSON-mode decoding with a fixed schema, repeats the call with different seeds, and aggregates the per-pass findings into consensus-scored issues. An opt-in confidence gate suppresses low-agreement findings before stage-2.
+
+\textbf{Repair generation (on demand per finding).} Each surviving finding triggers a separate stage-2 prompt that returns one structured \texttt{\{code, language\}} patch. Stage-2 runs only on consensus-filtered findings, which keeps repair cost proportional to load-bearing detections.
+
+\textbf{Diagnostic rendering.} The pipeline maps snippet-relative line ranges back to document ranges, writes the result to the analysis cache, and surfaces findings through VS Code diagnostics, the Problems panel, and Quick Fix actions. The workspace-scan workflow additionally aggregates per-file findings into the dashboard view.
+
+The audit-mode hybrid (described in Chapter~\ref{chap:implementation}) extends the on-demand path with a deterministic AST sink scanner that runs in parallel with the LLM stage and unions the findings. Across all workflows source code is sent only to localhost; the optional metadata-refresh path fetches public CVE / CWE / OWASP records without source content and can be disabled for fully offline operation.
 
 \begin{sidewaysfigure}
   \centering

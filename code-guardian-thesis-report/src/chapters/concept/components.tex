@@ -1,19 +1,73 @@
 \section{System Components}
 \label{sec:system-components}
 
-The Code Guardian prototype decomposes into a small set of components, each motivated by a specific design pressure derived from R1--R5. This section names them and states the rationale for each; the implementation detail (parameters, defensive-parsing logic, cache keys, retry policy) lives in Chapter~\ref{chap:implementation}, Section~\ref{sec:impl-components} and the appendices.
+The Code Guardian system decomposes into five components, each motivated by a specific design pressure derived from R1--R5. This section characterises the responsibilities of each component, the requirement it primarily addresses, and the design rationale behind its inclusion. The components are presented in the order in which they touch a request: context extraction selects what to analyse, knowledge retrieval grounds the analysis, vulnerability detection produces structured findings, repair generation turns findings into developer-controlled patches, and the supporting subsystems orchestrate the data and metadata that flow around them. Implementation-level detail (parameters, defensive-parsing logic, cache keys, retry policy) is deferred to Chapter~\ref{chap:implementation}; this section stays at the level of conceptual contract.
 
-\paragraph{Context extraction (\ref{subsec:impl-context}).}
-Real-time feedback in the IDE requires an analysis unit that is small enough to fit interactive latency budgets (R4) and large enough to support contextual reasoning (R1). Code Guardian therefore selects the smallest enclosing function as the default scope, with explicit selection, file, and workspace scopes for deeper inspection. Function scope keeps prompt size predictable; deeper program context (cross-file flows) is named as future work.
+\subsection{Context Extraction}
+\label{subsec:context-extraction}
 
-\paragraph{Knowledge retrieval (RAG) (\ref{subsec:impl-rag-knowledge}).}
-A standalone LLM hallucinates vulnerability types and misclassifies severity \cite{ji2023hallucination}. Retrieval grounds reasoning in curated CWE and OWASP guidance \cite{lewis2020rag,karpukhin2020dpr} that evolves independently of model parameters. The corpus is local; only public metadata refresh (CVE/NVD summaries) ever leaves the device, satisfying R5 by separating code-bearing data paths from public-metadata update paths.
+The context-extraction component selects the analysis unit from the developer's editor state. It accepts a text-document URI and a cursor position, walks the TypeScript AST, and returns the smallest enclosing function together with snippet-relative line offsets and metadata for downstream localisation.
 
-\paragraph{Vulnerability detection (\ref{subsec:impl-analyzer}).}
-The detection component is the load-bearing element for R1 (accuracy) and R2 (consistency). It enforces a strict JSON output contract with format-level decoding, runs deterministic inference with multi-pass consensus filtering, and emits each finding with snippet-relative line indices. Detection and repair are split into two stages so each prompt focuses on a single task --- a separation that also preserves R3 by letting repair generation run only on findings the consensus filter accepts.
+\textbf{Design considerations.} Real-time feedback in the IDE requires an analysis unit that is small enough to fit interactive latency budgets (R4) and large enough to support contextual reasoning (R1). The function boundary is the natural compromise: it is a syntactically meaningful unit; it bounds prompt size predictably (\textasciitilde2\,000 characters in the empirically chosen guard); and it preserves the local data-flow context within which most function-level vulnerabilities are decidable. A size guard skips unusually large functions to bound worst-case latency.
 
-\paragraph{Repair generation and IDE integration.}
-Repair suggestions are decision support, not autonomous edits. Each confirmed finding triggers a dedicated repair call returning a structured fix; the IDE integration layer surfaces the result as a Quick Fix that the developer can preview, apply, or discard --- preserving developer control (R3) and reversibility through the editor undo stack. IDE triggers (debounced edits, manual commands, workspace scans) are deliberately diverse so the system fits into both flow-state coding and explicit audit work (R4).
+\textbf{Design rationale.} Function-level scope keeps prompt-construction time predictable and isolates the analysis from cross-file evidence the model cannot see. Cross-file flows (validation in another module, framework-level middleware) are out of scope for the inline path and are handled either by the workspace-scan workflow or named as future work. The extractor also exposes an explicit-selection mode (any user-selected range), a file-level mode (the full active document under a 20\,000-character guard), and a workspace-level mode (filtered by file size and dependency-folder exclusions) so deeper inspection remains available on demand.
 
-\paragraph{Supporting subsystems.}
-Model management (runtime model switching), the analysis cache (LRU + TTL), the workspace dashboard (issue density and severity heuristics), and the vulnerability-data manager (cached public metadata) round out the component set. Each is independently testable and replaceable, which keeps the privacy boundary checkable in isolation. The next section explains how these components are orchestrated into workflows for real-time feedback, on-demand inspection, and batch scans.
+\subsection{Knowledge Retrieval (RAG)}
+\label{subsec:knowledge-retrieval}
+
+The knowledge-retrieval component grounds model reasoning in curated security guidance. It accepts a code snippet, embeds it locally, performs a vector search over a local HNSW index, and returns the top-$k$ matching CWE, OWASP, and CVE entries as additional prompt context. The store is on-device; only optional metadata-refresh paths fetch public CVE/NVD summaries from external services.
+
+\textbf{Design considerations.} A standalone language model can hallucinate vulnerability types, misclassify severity, and produce inconsistent results across repeated analyses \cite{ji2023hallucination}. Retrieval-augmented generation grounds reasoning in external knowledge that evolves independently of model parameters and is auditable, while preserving the privacy boundary because both the embedding model and the index run locally \cite{lewis2020rag,karpukhin2020dpr}.
+
+\textbf{Design rationale.} Retrieval is a configurable option, not a mandatory step. Empirical results in this thesis show that retrieval lifts some model families and degrades others (Section~\ref{sec:eval-r1}), so the design exposes RAG as a per-model knob rather than baking it into the pipeline. The privacy contract is enforced by the component boundary itself: the embedding step and the vector search reach only loopback addresses, and the optional refresh path fetches public metadata only --- it never sends a snippet, an embedding, or a finding to an external service. This separation between code-bearing data paths and public-metadata paths is the load-bearing element for R5.
+
+\subsection{Vulnerability Detection}
+\label{subsec:vulnerability-detection}
+
+The vulnerability-detection component is the load-bearing element for R1 (accuracy) and R2 (consistency). It accepts a code snippet plus optional retrieved context, prompts the local model under a strict JSON-mode contract, runs multiple seeded passes, and emits each finding as an inter-run-confidence-scored, snippet-line-relative issue record.
+
+\textbf{Processing approach.} Detection runs at \texttt{temperature=0} with JSON-mode decoding (\texttt{format='json'}) so the sampler emits only schema-conformant JSON, eliminating parse failures from malformed responses. The prompt is then run multiple times with different seeds (the runtime defaults to two passes; the evaluation harness uses three). Findings that match across passes (by canonical type and line range) accumulate inter-pass agreement; an opt-in confidence gate suppresses single-pass findings before stage-2 repair generation. If the gate would empty the result set, the system falls back to the first pass to avoid silent suppression.
+
+\textbf{Design rationale.} Detection is split from repair generation deliberately. Coupling both tasks into a single prompt biases the model toward producing a plausible fix rather than accurately classifying the issue (Section~\ref{sec:concept-derivation}). Separating them lets the detection prompt focus on the single optimisation target of accurate, reproducible classification, which improves R1 directly and makes R2 measurable. Promoting agreement from a binary keep-or-drop decision to an explicit per-finding confidence value is the second design choice: it converts the precision/recall trade-off from a fixed design constant into a developer-configurable knob.
+
+\subsection{Repair Generation and IDE Integration}
+\label{subsec:repair-ide}
+
+The repair-generation component takes each consensus-filtered finding and produces a single targeted patch under a strict \texttt{\{code, language\}} schema. Each patch is exposed through the IDE-integration surface as a VS Code Quick Fix that the developer can preview, apply, or discard; applying a patch always integrates with the editor undo stack.
+
+\textbf{Design considerations.} Repair suggestions are decision support, not autonomous edits. The hard constraint is that the developer keeps control: no patch is ever applied without explicit accept (R3). The structural \texttt{\{code, language\}} contract (rather than free-text guidance) is what makes the patch machine-applicable; the IDE Quick Fix surface is what makes the application reviewable.
+
+\textbf{Design rationale.} Stage-2 runs only on findings that survive the consensus filter, which keeps repair cost proportional to the load-bearing detections. Each Quick Fix carries the original finding metadata so the developer can see why the patch is suggested before applying it. The IDE triggers are deliberately diverse (debounced edits, manual commands, workspace scans) so the pipeline fits both flow-state coding and explicit audit work, addressing R4 across distinct usage modes.
+
+\subsection{Supporting Subsystems}
+\label{subsec:supporting-subsystems}
+
+Four supporting subsystems round out the component set: the model manager, the analysis cache, the workspace dashboard, and the vulnerability-data manager.
+
+\textbf{Roles.} The \emph{model manager} owns runtime model selection and connection management with the local Ollama backend, including health checks and graceful fallback. The \emph{analysis cache} is an LRU+TTL store keyed by snippet hash that lets repeated analyses return instantly without re-invoking the model, which is critical for the debounced inline path (R4). The \emph{workspace dashboard} aggregates per-file findings across a workspace scan into an issue-density view with severity heuristics, intended for prioritisation rather than as a formal risk score. The \emph{vulnerability-data manager} caches public CVE / OWASP / CWE metadata locally with periodic refresh; it is the only component that touches the network in non-loopback mode, and the egress gate forces every fetch through an explicit allow-list.
+
+\textbf{Design rationale.} Each subsystem is independently testable and replaceable, which keeps the privacy boundary checkable in isolation (R5): a regression in any single subsystem cannot silently widen the egress surface. The cache is what makes interactive latency tolerable on repeated edits; the dashboard is what makes the workspace-scan workflow useful as a triage tool; the model manager is what lets the same pipeline serve very different model profiles (small-and-fast vs.\ large-and-accurate) without code changes.
+
+\subsection{Component Interfaces and Data Flow}
+\label{subsec:component-interfaces}
+
+Table~\ref{tab:concept-component-interfaces} summarises the input/output contract of each component. By making these contracts explicit, the architecture supports component-level analysis, isolated improvement, and substitution of individual stages without affecting downstream behaviour. The next section orchestrates these components into the four detection workflows that the developer actually interacts with.
+
+\begin{table}[!htbp]
+  \centering
+  \caption{Code Guardian component interfaces and data flow. Reading top to bottom traces a request from the cursor position to the rendered diagnostic and Quick Fix.}
+  \label{tab:concept-component-interfaces}
+  \footnotesize
+  \renewcommand{\arraystretch}{1.3}
+  \begin{tabularx}{\textwidth}{p{0.20\textwidth}p{0.30\textwidth}X}
+    \toprule
+    \textbf{Component} & \textbf{Input} & \textbf{Output} \\
+    \midrule
+    Context Extraction & Document URI + cursor position (or selection / file / workspace scope) & Code snippet + line-offset metadata + scope kind \\
+    Knowledge Retrieval (RAG) & Code snippet & Top-$k$ retrieved CWE / OWASP / CVE entries with similarity scores (or empty if RAG disabled) \\
+    Vulnerability Detection & Code snippet + optional retrieved context & JSON array of findings: type, severity, snippet-relative line range, description, inter-run confidence \\
+    Repair Generation & Single confirmed finding + originating snippet & Structured \texttt{\{code, language\}} patch keyed to the finding \\
+    IDE Integration & Findings + patches + line-offset metadata & VS Code diagnostics, Problems-panel entries, Quick Fix actions, dashboard tiles \\
+    \bottomrule
+  \end{tabularx}
+\end{table}

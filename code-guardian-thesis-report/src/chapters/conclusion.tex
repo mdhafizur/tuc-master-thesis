@@ -64,7 +64,28 @@ The headline configuration (\texttt{qwen3:8b+RAG}, three runs, gate $\geq 0.67$)
 \paragraph{Deviations from the approved task.}
 A subset of mechanisms named in the registered task description was scoped down or replaced during execution. The approved task specified evaluation on \emph{Juliet} and \emph{OWASP Benchmark} (40--50 CWE-mapped cases). Both suites are real but neither targets JavaScript: Juliet is published by NIST in C/C++ and Java only, and the OWASP Benchmark Project is a Java application. The delivered evaluation therefore substitutes two CWE-mapped JavaScript corpora: the curated 101-case primary corpus (71 vulnerable + 30 secure) and an additional 15-case external corpus drawn from OWASP NodeGoat, OWASP Juice Shop, and three named CVEs. The substitution preserves the property the named benchmarks provide (CWE-mapped, vulnerability-tagged samples drawn from authoritative sources) in the language the detector targets. The substitution penalty is measured in Section~\ref{sec:eval-r1-external-corpus}: under the headline configuration the external corpus reaches F1 63.64\,\% versus the curated headline's 74.07\,\%, an approximately 10-point gap concentrated in framework-level weakness classes that the function-level scope does not see. These deviations were discussed with the supervisor during the implementation phase.
 
+\section{Critical Consideration of the Work}
+\label{sec:conclusion-critical}
+
+Beyond the named limitations above, several decisions made during the work would benefit from reconsideration if the project were to be repeated. This section records them honestly so that follow-on work can avoid the same compromises rather than inherit them silently.
+
+\paragraph{Corpus authorship and the taxonomy that scores it.}
+The 101-case curated corpus and the 26-class canonical taxonomy were both authored by the candidate, and both shape the headline numbers. Three mitigations are in place (snapshot-tested taxonomy, held-out 71/30 split, raw per-canonical-category counts emitted in every run JSON), but the cleaner design would have been a corpus drawn entirely from external authoritative sources and a taxonomy ratified by a second independent reviewer before any model was scored. Re-running the evaluation under those conditions is the single change most likely to alter the headline F1 figure.
+
+\paragraph{Single-rater R3 review.}
+The 25-sample manual review of repair quality was performed by one reviewer without inter-rater reliability measurement. The auto-applicable rate on the full $n=279$ stage-2 output backstops the manual numbers with a deterministic, fleet-wide signal, but a two-rater protocol with Cohen's $\kappa$ on a 10-case overlap would have made the qualitative ratings defensible in their own right rather than merely indicative. The cost of recruiting a second rater for that overlap was underestimated at the time the evaluation was scoped.
+
+\paragraph{No cloud-LLM upper bound.}
+The thesis claims that a local 8B-parameter model lands in the same precision class as cloud LLMs on focused vulnerability detection, but the comparison is against published results on different datasets and scopes (IRIS on whole-repository Java, CWEval on context-rich function tasks). A single run of \texttt{gpt-4o-mini} or \texttt{claude-haiku} on the same 101 cases --- explicitly framed as ``comparator only, not benchmarked under privacy constraints'' --- would have made the precision-band claim a measured comparison rather than an indirect one. The privacy boundary did not require this measurement to be skipped; the project simply did not budget time for it.
+
+\paragraph{Hardware concentration.}
+All measurements were taken on a single Apple M4 Max profile. The deployment profiles in Section~\ref{sec:conclusion-implications} are framed as ``indicated by measurement under a specific hardware profile'' for exactly this reason, but a small replication run on a Linux x86 workstation and a low-end laptop would have separated hardware-dependent latency from intrinsic model latency, and would have made the workflow-band assignments more robust to the hardware the developer actually owns.
+
+\paragraph{What would not be changed.}
+The two-stage detect-then-repair pipeline, the strict JSON-mode contract, the per-finding inter-run confidence value, and the egress gate were the load-bearing decisions for R1, R2, R3, and R5 respectively, and the evaluation supports each one in isolation. None would be revisited if the project were repeated. The areas above are where a second iteration would invest, not where the current design would be replaced.
+
 \section{Implications for Practice}
+\label{sec:conclusion-implications}
 
 Table~\ref{tab:conclusion-deployment-profiles} summarizes practical deployment profiles indicated by the measured results on the locked Apple M4 Max profile (Appendix~\ref{appendix:experimental-results}). The profiles describe what the measurements support; they are not unconditional recommendations and would need re-validation on different hardware or different corpus characteristics.
 
