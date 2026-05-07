@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { analyzeAndReportDiagnosticsFromText } from './diagnostic';
-import { provideFixes, registerSecureFixPreviewCommand } from './actions';
+import { provideFixes, registerSecureFixCommands } from './actions';
 import { getEnclosingFunction } from './functionExtractor';
 import { analyzeCode } from './analyzer';
 import { showModelSelector, setSelectedModel, getCurrentModel, getAvailableModels } from './modelManager';
@@ -92,10 +92,52 @@ export function activate(context: vscode.ExtensionContext) {
 
     /**
      * Real-time analysis: Analyze the function under cursor as the user types.
-     * Uses debouncing to avoid excessive analysis calls during rapid typing.
+     * Uses debouncing AND per-document in-flight gating: while an Ollama call
+     * is running for a given document, newer keystrokes only update the
+     * "queued" snapshot. When the in-flight call completes, the latest queued
+     * snapshot runs next. This prevents stacking parallel Ollama requests on
+     * top of a serial GPU queue (which manifests as 30 s timeouts on later
+     * passes).
      */
     let debounceTimer: NodeJS.Timeout | undefined;
     const DEBOUNCE_DELAY = 800; // milliseconds
+
+    type QueuedSnapshot = { code: string; lineOffset: number };
+    type DocAnalysisState = { inFlight: boolean; queued?: QueuedSnapshot };
+    const docAnalysisStates = new Map<string, DocAnalysisState>();
+
+    const runAnalysisLoop = async (doc: vscode.TextDocument, initial: QueuedSnapshot) => {
+        const docKey = doc.uri.toString();
+        let state = docAnalysisStates.get(docKey);
+        if (!state) {
+            state = { inFlight: false };
+            docAnalysisStates.set(docKey, state);
+        }
+        if (state.inFlight) {
+            // Coalesce: latest snapshot wins. The currently-running call will
+            // pick this up when it finishes.
+            state.queued = initial;
+            return;
+        }
+        state.inFlight = true;
+        try {
+            let next: QueuedSnapshot | undefined = initial;
+            while (next) {
+                const current = next;
+                await analyzeAndReportDiagnosticsFromText(
+                    current.code,
+                    doc,
+                    diagnosticCollection,
+                    current.lineOffset,
+                    ragManager
+                );
+                next = state.queued;
+                state.queued = undefined;
+            }
+        } finally {
+            state.inFlight = false;
+        }
+    };
 
     const debouncedAnalysis = (doc: vscode.TextDocument, position: vscode.Position) => {
         if (debounceTimer) {
@@ -106,13 +148,10 @@ export function activate(context: vscode.ExtensionContext) {
             const funcCodeData = getEnclosingFunction(doc, position);
 
             if (funcCodeData && funcCodeData.code.length < 2000) {
-                analyzeAndReportDiagnosticsFromText(
-                    funcCodeData.code,
-                    doc,
-                    diagnosticCollection,
-                    funcCodeData.startLine,
-                    ragManager
-                );
+                void runAnalysisLoop(doc, {
+                    code: funcCodeData.code,
+                    lineOffset: funcCodeData.startLine
+                });
             } else {
                 logger.warn('Skipping function analysis due to size or extraction failure.');
             }
@@ -163,8 +202,10 @@ export function activate(context: vscode.ExtensionContext) {
         )
     );
 
-    // Phase 5: Register the secure-fix preview command + ephemeral diff content provider.
-    registerSecureFixPreviewCommand(context);
+    // Phase 5: Register the secure-fix apply + preview commands and the
+    // ephemeral diff content provider. The lazy repair path needs access to
+    // the same lazily-initialized RAG manager the analyzer uses.
+    registerSecureFixCommands(context, initializeRAGIfNeeded);
 
     /**
      * Manual command: Analyze selected text or current line using LLM (AI).

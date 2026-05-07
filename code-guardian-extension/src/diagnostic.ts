@@ -34,14 +34,19 @@ export async function analyzeAndReportDiagnosticsFromText(
 		logger.debug(`Issue ${i + 1}: [L${issue.startLine}-${issue.endLine}] ${issue.message} | Fix: ${issue.suggestedFix ? 'YES' : 'NO'}`);
 	});
 
+	// The model can hallucinate line numbers that exceed the analyzed snippet's
+	// actual length (seen in the wild: endLine: 20 on a 5-line function). Cap
+	// at the last snippet line in document space so the squiggle never bleeds
+	// past the function we asked the model about.
+	const snippetLineCount = code.split('\n').length;
+	const snippetLastLine = lineOffset + snippetLineCount - 1;
+
 	const diagnostics: vscode.Diagnostic[] = issues.map(issue => {
-		/**
-		 * Adjust line numbers based on offset (e.g., if this is a function extracted from the middle of the file).
-		 * - LLM returns 1-based line numbers.
-		 * - VS Code expects 0-based line numbers.
-		 */
-		const startLine = Math.max(0, Math.min(doc.lineCount - 1, lineOffset + issue.startLine - 1));
-		const endLine = Math.max(0, Math.min(doc.lineCount - 1, lineOffset + issue.endLine - 1));
+		// LLM returns 1-based, VS Code expects 0-based. Clamp to both the
+		// document's bounds and the snippet's bounds.
+		const upperBound = Math.min(doc.lineCount - 1, snippetLastLine);
+		const startLine = Math.max(lineOffset, Math.min(upperBound, lineOffset + issue.startLine - 1));
+		const endLine = Math.max(startLine, Math.min(upperBound, lineOffset + issue.endLine - 1));
 
 		// Create positions for the range of the issue
 		const start = new vscode.Position(startLine, 0);
@@ -63,10 +68,13 @@ export async function analyzeAndReportDiagnosticsFromText(
 		// Set the source to identify our diagnostics
 		diag.source = 'CodeGuardian';
 
-		// If the LLM suggests a fix, attach it as a quick fix option
+		// Mark the diagnostic as fixable so the lightbulb appears. On the real-time
+		// path the fix isn't pre-generated (Stage 2 is skipped to avoid spamming
+		// Ollama on every keystroke); the code-action provider lazy-generates it
+		// when the user opens the lightbulb. Pre-generated fixes (file-scope scans)
+		// are still attached so Apply / Preview can use them without a round-trip.
+		diag.code = 'codeSecurity.fixSuggestion';
 		if (issue.suggestedFix) {
-			diag.code = 'codeSecurity.fixSuggestion';
-
 			diag.relatedInformation = [
 				new vscode.DiagnosticRelatedInformation(
 					new vscode.Location(doc.uri, range),

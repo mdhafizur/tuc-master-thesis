@@ -1,17 +1,128 @@
 import * as vscode from 'vscode';
+import { generateFunctionRepair } from './analyzer';
+import { getCurrentModel } from './modelManager';
+import { RAGManager } from './ragManager';
+import { getEnclosingFunction } from './functionExtractor';
+import { getLogger } from './logger';
 
 /**
- * Provides quick fix actions for security issues detected by the analyzer.
- * These are shown in the lightbulb (💡) menu in VS Code when diagnostics are available.
+ * Quick-fix actions for security diagnostics. Apply / Preview both replace the
+ * ENTIRE enclosing function (not just the diagnostic's line range) using a
+ * whole-function rewrite from the LLM. Function-level replacement avoids the
+ * "echoed context" and "dropped wrapper" failure modes that surgical line
+ * replacements suffer from — the function is the unit of context, so the
+ * model has nothing outside it to leak in.
  *
- * Two actions are surfaced per applicable diagnostic:
- *   - "Apply Secure Fix" — auto-replaces the vulnerable range with the fix
- *   - "Preview Secure Fix (diff)" — opens a side-by-side diff before any change
- *     so the developer can review what would be applied (Phase 5 R4 polish).
+ * The repair is generated lazily the first time the user opens the lightbulb
+ * on a diagnostic and cached per (uri, function-range, issue-message) so the
+ * second invocation (e.g. Preview then Apply) doesn't re-issue the LLM call.
  */
+
+type RagProvider = () => Promise<RAGManager | undefined>;
+
+interface CachedRepair {
+	functionRange: vscode.Range;
+	rewrittenFunction: string;
+}
+
+const repairCache = new Map<string, CachedRepair>();
+
+function repairKey(uri: vscode.Uri, functionRange: vscode.Range, message: string): string {
+	const r = `${functionRange.start.line}:${functionRange.start.character}-${functionRange.end.line}:${functionRange.end.character}`;
+	return `${uri.toString()}|${r}|${message}`;
+}
+
+/**
+ * Resolves the function enclosing a diagnostic and produces (or returns from
+ * cache) a rewritten version that fixes the reported vulnerability.
+ */
+async function getOrGenerateFunctionRepair(
+	document: vscode.TextDocument,
+	diagnosticRange: vscode.Range,
+	message: string,
+	getRag: RagProvider
+): Promise<CachedRepair | undefined> {
+	const logger = getLogger();
+	logger.info(`SecureFix: looking up enclosing function at ${diagnosticRange.start.line}:${diagnosticRange.start.character} for "${message}"`);
+
+	// The diagnostic range is line-based, so its start often lands on a column
+	// that's BEFORE the actual function's start offset (e.g. column 0 of an
+	// `app.get("/x", (req,res) => { … })` line is on `app`, but the arrow
+	// function node starts at `(req`). And the model can put the range on the
+	// declaration line itself, which is technically outside the function body.
+	// Walk a sequence of positions through the range until the AST recognizes
+	// one as inside a function.
+	const candidates: vscode.Position[] = [];
+	const seenKeys = new Set<string>();
+	const pushPos = (p: vscode.Position) => {
+		const key = `${p.line}:${p.character}`;
+		if (!seenKeys.has(key)) {
+			seenKeys.add(key);
+			candidates.push(p);
+		}
+	};
+	for (let line = diagnosticRange.start.line; line <= diagnosticRange.end.line; line++) {
+		if (line < 0 || line >= document.lineCount) {
+			continue;
+		}
+		const textLine = document.lineAt(line);
+		pushPos(new vscode.Position(line, textLine.firstNonWhitespaceCharacterIndex));
+		pushPos(textLine.range.end);
+	}
+	pushPos(diagnosticRange.start);
+	pushPos(diagnosticRange.end);
+
+	let enclosing: ReturnType<typeof getEnclosingFunction> = null;
+	for (const pos of candidates) {
+		enclosing = getEnclosingFunction(document, pos);
+		if (enclosing) {
+			logger.info(`SecureFix: enclosing-function lookup succeeded at ${pos.line}:${pos.character}`);
+			break;
+		}
+	}
+	if (!enclosing) {
+		logger.warn(`SecureFix: no enclosing function found for diagnostic at ${diagnosticRange.start.line}:${diagnosticRange.start.character}`);
+		vscode.window.showWarningMessage(
+			'Code Guardian could not locate an enclosing function for this issue.'
+		);
+		return undefined;
+	}
+
+	logger.info(`SecureFix: enclosing function spans ${enclosing.range.start.line}-${enclosing.range.end.line} (${enclosing.code.length} chars)`);
+
+	const key = repairKey(document.uri, enclosing.range, message);
+	const cached = repairCache.get(key);
+	if (cached) {
+		logger.info('SecureFix: reusing cached repair');
+		return cached;
+	}
+
+	const model = getCurrentModel();
+	const ragManager = await getRag();
+
+	logger.info(`SecureFix: requesting function repair from model ${model}`);
+	const rewritten = await vscode.window.withProgress(
+		{
+			location: vscode.ProgressLocation.Window,
+			title: '🛡️ Code Guardian: rewriting function with secure fix…'
+		},
+		() => generateFunctionRepair(model, enclosing.code, message, ragManager)
+	);
+
+	if (!rewritten) {
+		logger.warn(`SecureFix: function repair returned no fix for "${message}"`);
+		return undefined;
+	}
+
+	logger.info(`SecureFix: received rewrite (${rewritten.length} chars)`);
+	const result: CachedRepair = { functionRange: enclosing.range, rewrittenFunction: rewritten };
+	repairCache.set(key, result);
+	return result;
+}
+
 export function provideFixes(): vscode.CodeActionProvider {
 	return {
-		provideCodeActions(document, range, context) {
+		provideCodeActions(document, _range, context) {
 			const actions: vscode.CodeAction[] = [];
 
 			for (const diagnostic of context.diagnostics) {
@@ -19,27 +130,22 @@ export function provideFixes(): vscode.CodeActionProvider {
 					continue;
 				}
 
-				const fixText = diagnostic.relatedInformation?.[0]?.message ?? '';
-				if (!fixText) {
-					continue;
-				}
-
-				// Action 1: direct apply (existing behavior)
 				const apply = new vscode.CodeAction('💡 Apply Secure Fix', vscode.CodeActionKind.QuickFix);
 				apply.diagnostics = [diagnostic];
 				apply.isPreferred = true;
-				const edit = new vscode.WorkspaceEdit();
-				edit.replace(document.uri, diagnostic.range, fixText);
-				apply.edit = edit;
+				apply.command = {
+					title: 'Apply Secure Fix',
+					command: 'codeSecurity.applySecureFix',
+					arguments: [document.uri, diagnostic.range, diagnostic.message]
+				};
 				actions.push(apply);
 
-				// Action 2: preview as side-by-side diff before applying
 				const preview = new vscode.CodeAction('🔍 Preview Secure Fix (diff)', vscode.CodeActionKind.QuickFix);
 				preview.diagnostics = [diagnostic];
 				preview.command = {
 					title: 'Preview Secure Fix',
 					command: 'codeSecurity.previewSecureFix',
-					arguments: [document.uri, diagnostic.range, fixText]
+					arguments: [document.uri, diagnostic.range, diagnostic.message]
 				};
 				actions.push(preview);
 			}
@@ -49,24 +155,50 @@ export function provideFixes(): vscode.CodeActionProvider {
 	};
 }
 
-/**
- * Registers the `codeSecurity.previewSecureFix` command. Builds two ephemeral
- * documents (the original vulnerable slice and the proposed fix) and opens
- * VS Code's built-in diff editor between them. Nothing is written to the user's
- * file unless they then explicitly invoke the apply action.
- */
-export function registerSecureFixPreviewCommand(context: vscode.ExtensionContext): void {
+export function registerSecureFixCommands(
+	context: vscode.ExtensionContext,
+	getRag: RagProvider
+): void {
 	const provider = new SecureFixDiffContentProvider();
 	context.subscriptions.push(
 		vscode.workspace.registerTextDocumentContentProvider(SecureFixDiffContentProvider.scheme, provider)
 	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand(
+			'codeSecurity.applySecureFix',
+			async (uri: vscode.Uri, diagnosticRange: vscode.Range, message: string) => {
+				const logger = getLogger();
+				logger.info(`SecureFix: applySecureFix invoked for ${uri.toString()}`);
+				const document = await vscode.workspace.openTextDocument(uri);
+				const repair = await getOrGenerateFunctionRepair(document, diagnosticRange, message, getRag);
+				if (!repair) {
+					vscode.window.showWarningMessage('Code Guardian could not generate a secure fix for this function.');
+					return;
+				}
+				const edit = new vscode.WorkspaceEdit();
+				edit.replace(uri, repair.functionRange, repair.rewrittenFunction);
+				const ok = await vscode.workspace.applyEdit(edit);
+				logger.info(`SecureFix: applyEdit returned ${ok}`);
+				if (!ok) {
+					vscode.window.showWarningMessage('Code Guardian: the workspace rejected the edit. Is the file saved / writable?');
+				}
+			}
+		)
+	);
+
 	context.subscriptions.push(
 		vscode.commands.registerCommand(
 			'codeSecurity.previewSecureFix',
-			async (uri: vscode.Uri, range: vscode.Range, fixText: string) => {
+			async (uri: vscode.Uri, diagnosticRange: vscode.Range, message: string) => {
 				const document = await vscode.workspace.openTextDocument(uri);
-				const originalSlice = document.getText(range);
-				const id = provider.register(originalSlice, fixText);
+				const repair = await getOrGenerateFunctionRepair(document, diagnosticRange, message, getRag);
+				if (!repair) {
+					vscode.window.showWarningMessage('Code Guardian could not generate a secure fix for this function.');
+					return;
+				}
+				const originalFunction = document.getText(repair.functionRange);
+				const id = provider.register(originalFunction, repair.rewrittenFunction);
 				const leftUri = SecureFixDiffContentProvider.uri(id, 'original');
 				const rightUri = SecureFixDiffContentProvider.uri(id, 'fix');
 				await vscode.commands.executeCommand(
@@ -94,7 +226,6 @@ class SecureFixDiffContentProvider implements vscode.TextDocumentContentProvider
 	public register(original: string, fix: string): string {
 		const id = String(this.nextId++);
 		this.store.set(id, { original, fix });
-		// Keep at most ~32 previews in memory.
 		if (this.store.size > 32) {
 			const oldestKey = this.store.keys().next().value;
 			if (oldestKey !== undefined) {

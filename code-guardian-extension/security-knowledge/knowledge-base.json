@@ -16,7 +16,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:45.936Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:45.936Z",
     "source": "cwe",
     "deprecated": false
   },
@@ -36,7 +36,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:45.938Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:45.938Z",
     "source": "cwe",
     "deprecated": false
   },
@@ -56,7 +56,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:45.938Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:45.938Z",
     "source": "cwe",
     "deprecated": false
   },
@@ -76,7 +76,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:45.938Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:45.938Z",
     "source": "cwe",
     "deprecated": false
   },
@@ -96,7 +96,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:45.939Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:45.939Z",
     "source": "cwe",
     "deprecated": false
   },
@@ -116,7 +116,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:45.940Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:45.940Z",
     "source": "cwe",
     "deprecated": false
   },
@@ -136,7 +136,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:45.940Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:45.940Z",
     "source": "cwe",
     "deprecated": false
   },
@@ -154,7 +154,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:45.940Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:45.940Z",
     "source": "cwe",
     "deprecated": false
   },
@@ -173,7 +173,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:45.940Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:45.940Z",
     "source": "cwe",
     "deprecated": false
   },
@@ -192,7 +192,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:45.940Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:45.940Z",
     "source": "cwe",
     "deprecated": false
   },
@@ -211,7 +211,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:45.940Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:45.940Z",
     "source": "cwe",
     "deprecated": false
   },
@@ -230,7 +230,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:45.940Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:45.940Z",
     "source": "cwe",
     "deprecated": false
   },
@@ -249,7 +249,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:45.940Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:45.940Z",
     "source": "cwe",
     "deprecated": false
   },
@@ -268,7 +268,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:45.940Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:45.940Z",
     "source": "cwe",
     "deprecated": false
   },
@@ -288,7 +288,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:45.940Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:45.940Z",
     "source": "cwe",
     "deprecated": false
   },
@@ -307,7 +307,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:45.936Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:45.936Z",
     "source": "owasp",
     "deprecated": false
   },
@@ -327,7 +327,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:45.936Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:45.936Z",
     "source": "owasp",
     "deprecated": false
   },
@@ -348,7 +348,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:45.936Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:45.936Z",
     "source": "owasp",
     "deprecated": false
   },
@@ -367,7 +367,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:45.936Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:45.936Z",
     "source": "owasp",
     "deprecated": false
   },
@@ -386,7 +386,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:45.936Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:45.936Z",
     "source": "owasp",
     "deprecated": false
   },
@@ -405,7 +405,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:45.936Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:45.936Z",
     "source": "owasp",
     "deprecated": false
   },
@@ -424,7 +424,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:45.936Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:45.936Z",
     "source": "owasp",
     "deprecated": false
   },
@@ -444,7 +444,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:45.936Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:45.936Z",
     "source": "owasp",
     "deprecated": false
   },
@@ -464,7 +464,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:45.936Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:45.936Z",
     "source": "owasp",
     "deprecated": false
   },
@@ -483,7 +483,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:45.936Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:45.936Z",
     "source": "owasp",
     "deprecated": false
   },
@@ -500,7 +500,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -517,7 +517,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -534,7 +534,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -551,7 +551,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -568,7 +568,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -585,7 +585,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -602,7 +602,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -619,7 +619,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -636,7 +636,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -653,7 +653,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -670,7 +670,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -687,7 +687,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -704,7 +704,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -721,7 +721,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -738,7 +738,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -755,7 +755,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -772,7 +772,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -789,7 +789,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -806,7 +806,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -823,7 +823,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -840,7 +840,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -857,7 +857,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -874,7 +874,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -891,7 +891,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -908,7 +908,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -925,7 +925,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -942,7 +942,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -959,7 +959,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -976,7 +976,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -993,7 +993,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1010,7 +1010,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1027,7 +1027,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1044,7 +1044,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1061,7 +1061,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1078,7 +1078,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1095,7 +1095,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1112,7 +1112,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1129,7 +1129,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1146,7 +1146,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1163,7 +1163,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1180,7 +1180,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1197,7 +1197,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1214,7 +1214,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1231,7 +1231,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1248,7 +1248,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1265,7 +1265,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1282,7 +1282,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1299,7 +1299,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1316,7 +1316,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1333,7 +1333,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1350,7 +1350,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1367,7 +1367,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1384,7 +1384,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1401,7 +1401,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1418,7 +1418,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1435,7 +1435,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1452,7 +1452,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1469,7 +1469,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1486,7 +1486,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1503,7 +1503,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1520,7 +1520,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1537,7 +1537,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1554,7 +1554,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1571,7 +1571,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1588,7 +1588,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1605,7 +1605,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1622,7 +1622,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1640,7 +1640,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1657,7 +1657,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1674,7 +1674,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1691,7 +1691,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1708,7 +1708,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1725,7 +1725,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1742,7 +1742,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1759,7 +1759,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1776,7 +1776,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1793,7 +1793,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1810,7 +1810,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1827,7 +1827,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1844,7 +1844,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1861,7 +1861,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1878,7 +1878,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1895,7 +1895,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1912,7 +1912,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1929,7 +1929,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1946,7 +1946,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1963,7 +1963,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1980,7 +1980,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -1997,7 +1997,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -2014,7 +2014,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -2031,7 +2031,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -2048,7 +2048,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -2065,7 +2065,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -2082,7 +2082,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -2099,7 +2099,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -2116,7 +2116,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -2133,7 +2133,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -2150,7 +2150,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -2167,7 +2167,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -2184,7 +2184,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:47.156Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:47.156Z",
     "source": "nvd",
     "deprecated": false
   },
@@ -2201,7 +2201,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:13:14.000Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:13:14.000Z",
     "source": "custom",
     "deprecated": false
   },
@@ -2218,7 +2218,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T18:37:43.000Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T18:37:43.000Z",
     "source": "custom",
     "deprecated": false
   },
@@ -2235,7 +2235,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T18:21:20.000Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T18:21:20.000Z",
     "source": "custom",
     "deprecated": false
   },
@@ -2252,7 +2252,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T17:49:29.000Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T17:49:29.000Z",
     "source": "custom",
     "deprecated": false
   },
@@ -2269,7 +2269,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T17:43:55.000Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T17:43:55.000Z",
     "source": "custom",
     "deprecated": false
   },
@@ -2286,7 +2286,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T12:51:29.000Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T12:51:29.000Z",
     "source": "custom",
     "deprecated": false
   },
@@ -2303,7 +2303,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T12:42:10.000Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T12:42:10.000Z",
     "source": "custom",
     "deprecated": false
   },
@@ -2320,7 +2320,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T16:27:10.000Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T16:27:10.000Z",
     "source": "custom",
     "deprecated": false
   },
@@ -2337,7 +2337,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T16:26:20.000Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T16:26:20.000Z",
     "source": "custom",
     "deprecated": false
   },
@@ -2354,7 +2354,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:16:00.000Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:16:00.000Z",
     "source": "custom",
     "deprecated": false
   },
@@ -2371,7 +2371,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T16:26:08.000Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T16:26:08.000Z",
     "source": "custom",
     "deprecated": false
   },
@@ -2388,7 +2388,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T18:21:40.000Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T18:21:40.000Z",
     "source": "custom",
     "deprecated": false
   },
@@ -2405,7 +2405,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:14:00.000Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:14:00.000Z",
     "source": "custom",
     "deprecated": false
   },
@@ -2422,7 +2422,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T16:24:37.000Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T16:24:37.000Z",
     "source": "custom",
     "deprecated": false
   },
@@ -2439,7 +2439,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T18:22:00.000Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T18:22:00.000Z",
     "source": "custom",
     "deprecated": false
   },
@@ -2456,7 +2456,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:14:10.000Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:14:10.000Z",
     "source": "custom",
     "deprecated": false
   },
@@ -2473,7 +2473,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T16:25:35.000Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T16:25:35.000Z",
     "source": "custom",
     "deprecated": false
   },
@@ -2490,7 +2490,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T16:25:55.000Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T16:25:55.000Z",
     "source": "custom",
     "deprecated": false
   },
@@ -2507,7 +2507,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-18T20:22:12.000Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-18T20:22:12.000Z",
     "source": "custom",
     "deprecated": false
   },
@@ -2524,7 +2524,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-18T19:49:28.000Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-18T19:49:28.000Z",
     "source": "custom",
     "deprecated": false
   },
@@ -2543,7 +2543,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:46.661Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:46.661Z",
     "source": "custom",
     "deprecated": false
   },
@@ -2562,7 +2562,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:46.661Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:46.661Z",
     "source": "custom",
     "deprecated": false
   },
@@ -2581,7 +2581,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:46.661Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:46.661Z",
     "source": "custom",
     "deprecated": false
   },
@@ -2601,7 +2601,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:46.661Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:46.661Z",
     "source": "custom",
     "deprecated": false
   },
@@ -2621,7 +2621,7 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:46.661Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:46.661Z",
     "source": "custom",
     "deprecated": false
   },
@@ -2641,619 +2641,8 @@
     ],
     "version": "1.0",
     "createdAt": "2026-03-19T19:42:46.661Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
+    "updatedAt": "2026-03-19T19:42:46.661Z",
     "source": "custom",
-    "deprecated": false
-  },
-  {
-    "id": "cs-input-validation",
-    "title": "Input Validation Cheat Sheet",
-    "content": "Input validation is performed to ensure only properly formed data enters the workflow. Syntactic validation enforces correct syntax (e.g., SSN, date), while semantic validation enforces correctness of values in context (e.g., start date before end date).\n\nMitigation:\n1. Validate on server side, never trust client validation alone\n2. Use allowlists over denylists for input patterns\n3. Validate data type, length, range, and format\n4. Canonicalize input before validation\n5. Use established validation libraries (Joi, Yup, Zod)\n\nExamples:\nconst schema = Joi.object({email: Joi.string().email().required()}); // Schema validation\nconst {error, value} = schema.validate(req.body); // Validate input\nif (!/^[a-zA-Z0-9]+$/.test(input)) throw new Error(\"Invalid\"); // Allowlist\nconst sanitized = validator.escape(input); // Sanitize output\n\nReferences:\nhttps://cheatsheetseries.owasp.org/cheatsheets/Input_Validation_Cheat_Sheet.html",
-    "category": "general-security",
-    "severity": "high",
-    "owasp": "A03:2021",
-    "tags": [
-      "input-validation",
-      "sanitization",
-      "allowlist",
-      "schema-validation"
-    ],
-    "version": "1.0",
-    "createdAt": "2026-03-19T20:49:20.444Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
-    "source": "cheatsheet",
-    "deprecated": false
-  },
-  {
-    "id": "cs-authentication",
-    "title": "Authentication Cheat Sheet",
-    "content": "Authentication is the process of verifying that an individual or entity is who they claim to be. Proper implementation prevents unauthorized access.\n\nMitigation:\n1. Use bcrypt/Argon2/PBKDF2 for password hashing (cost factor >= 12)\n2. Implement account lockout after failed attempts (5-10 attempts)\n3. Use multi-factor authentication for sensitive operations\n4. Implement secure password recovery flows\n5. Use constant-time comparison for credential verification\n\nExamples:\nconst hash = await bcrypt.hash(password, 12); // Strong hashing\nconst match = await bcrypt.compare(input, hash); // Timing-safe\nspeakeasy.totp.verify({secret, token}); // TOTP 2FA\npassport.authenticate(\"local\", {failureFlash: true}); // Framework auth\n\nReferences:\nhttps://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html",
-    "category": "cryptography",
-    "severity": "high",
-    "owasp": "A07:2021",
-    "tags": [
-      "authentication",
-      "password-hashing",
-      "mfa",
-      "bcrypt",
-      "login"
-    ],
-    "version": "1.0",
-    "createdAt": "2026-03-19T20:49:20.444Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
-    "source": "cheatsheet",
-    "deprecated": false
-  },
-  {
-    "id": "cs-session-management",
-    "title": "Session Management Cheat Sheet",
-    "content": "Session management refers to the process of securely handling multiple requests from a single user. Weak session management can lead to account hijacking.\n\nMitigation:\n1. Generate session IDs with crypto.randomBytes(32)\n2. Regenerate session ID after login (prevent fixation)\n3. Set cookie flags: Secure, HttpOnly, SameSite=Strict\n4. Implement idle timeout (15-30 min) and absolute timeout (4-8 hours)\n5. Invalidate session on logout server-side\n\nExamples:\napp.use(session({secret: crypto.randomBytes(64).toString(\"hex\"), resave: false}));\nreq.session.regenerate(cb); // Regenerate after login\ncookie: {secure: true, httpOnly: true, sameSite: \"strict\", maxAge: 3600000}\nreq.session.destroy(cb); // Proper logout\n\nReferences:\nhttps://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html",
-    "category": "general-security",
-    "severity": "high",
-    "owasp": "A07:2021",
-    "tags": [
-      "session",
-      "cookies",
-      "session-fixation",
-      "timeout",
-      "logout"
-    ],
-    "version": "1.0",
-    "createdAt": "2026-03-19T20:49:20.444Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
-    "source": "cheatsheet",
-    "deprecated": false
-  },
-  {
-    "id": "cs-xss-prevention",
-    "title": "XSS Prevention Cheat Sheet",
-    "content": "Cross-Site Scripting prevention requires context-aware output encoding. Data must be encoded differently depending on where it is inserted in the HTML document.\n\nMitigation:\n1. HTML encode user data in HTML body context\n2. JavaScript encode user data in script context\n3. URL encode user data in URL parameters\n4. CSS encode user data in style context\n5. Implement Content Security Policy (CSP) headers\n\nExamples:\nelement.innerHTML = userInput; // XSS vulnerable\nelement.textContent = userInput; // Safe - auto-encodes\nconst clean = DOMPurify.sanitize(html); // Safe HTML rendering\nres.setHeader(\"Content-Security-Policy\", \"script-src 'self'\"); // CSP\n\nReferences:\nhttps://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html",
-    "category": "injection",
-    "severity": "high",
-    "cwe": "CWE-79",
-    "owasp": "A03:2021",
-    "tags": [
-      "xss",
-      "output-encoding",
-      "csp",
-      "dompurify",
-      "sanitization"
-    ],
-    "version": "1.0",
-    "createdAt": "2026-03-19T20:49:20.444Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
-    "source": "cheatsheet",
-    "deprecated": false
-  },
-  {
-    "id": "cs-sql-injection-prevention",
-    "title": "SQL Injection Prevention Cheat Sheet",
-    "content": "SQL injection prevention requires parameterized queries (prepared statements) as the primary defense. No amount of escaping is as reliable as parameterization.\n\nMitigation:\n1. Use parameterized queries / prepared statements (primary defense)\n2. Use stored procedures with parameterized inputs\n3. Validate input against allowlists\n4. Escape all user-supplied input (secondary defense only)\n5. Use ORM frameworks with proper configuration\n\nExamples:\ndb.query(\"SELECT * FROM users WHERE id = \" + id); // VULNERABLE\ndb.query(\"SELECT * FROM users WHERE id = ?\", [id]); // Safe\nknex(\"users\").where({id: id}); // Safe ORM query\nUser.findOne({where: {id: id}}); // Safe Sequelize query\n\nReferences:\nhttps://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet.html",
-    "category": "injection",
-    "severity": "high",
-    "cwe": "CWE-89",
-    "owasp": "A03:2021",
-    "tags": [
-      "sql-injection",
-      "parameterized-queries",
-      "prepared-statements",
-      "orm"
-    ],
-    "version": "1.0",
-    "createdAt": "2026-03-19T20:49:20.444Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
-    "source": "cheatsheet",
-    "deprecated": false
-  },
-  {
-    "id": "cs-csrf-prevention",
-    "title": "CSRF Prevention Cheat Sheet",
-    "content": "Cross-Site Request Forgery forces an end user to execute unwanted actions on a web application in which they are currently authenticated.\n\nMitigation:\n1. Use synchronizer token pattern (CSRF tokens)\n2. Set SameSite cookie attribute to Strict or Lax\n3. Verify Origin and Referer headers\n4. Use custom request headers for AJAX\n5. Implement double-submit cookie pattern\n\nExamples:\napp.use(csurf()); // CSRF middleware\nres.render(\"form\", {csrfToken: req.csrfToken()}); // Token in form\ncookie: {sameSite: \"strict\"} // SameSite protection\nif (req.headers.origin !== expectedOrigin) return res.sendStatus(403); // Origin check\n\nReferences:\nhttps://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html",
-    "category": "web-security",
-    "severity": "medium",
-    "cwe": "CWE-352",
-    "owasp": "A01:2021",
-    "tags": [
-      "csrf",
-      "tokens",
-      "samesite",
-      "origin-validation"
-    ],
-    "version": "1.0",
-    "createdAt": "2026-03-19T20:49:20.444Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
-    "source": "cheatsheet",
-    "deprecated": false
-  },
-  {
-    "id": "cs-file-upload",
-    "title": "File Upload Cheat Sheet",
-    "content": "File upload functionality carries significant risk. Uploaded files may contain malicious content, exploit vulnerabilities, or consume excessive resources.\n\nMitigation:\n1. Validate file type by content (magic bytes), not just extension\n2. Generate random filenames, never use user-provided names\n3. Store uploads outside web root\n4. Set maximum file size limits\n5. Scan uploaded files for malware\n\nExamples:\nfile.mv(\"./public/\" + file.name); // Path traversal + web shell risk\nconst name = crypto.randomUUID() + \".png\"; file.mv(path.join(safeDir, name));\nconst magic = Buffer.from(await file.data.slice(0, 4)); // Check magic bytes\nupload.limits({fileSize: 5 * 1024 * 1024}); // 5MB limit\n\nReferences:\nhttps://cheatsheetseries.owasp.org/cheatsheets/File_Upload_Cheat_Sheet.html",
-    "category": "path-traversal",
-    "severity": "high",
-    "cwe": "CWE-434",
-    "owasp": "A04:2021",
-    "tags": [
-      "file-upload",
-      "validation",
-      "magic-bytes",
-      "web-shell"
-    ],
-    "version": "1.0",
-    "createdAt": "2026-03-19T20:49:20.444Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
-    "source": "cheatsheet",
-    "deprecated": false
-  },
-  {
-    "id": "cs-http-security-headers",
-    "title": "HTTP Security Headers Cheat Sheet",
-    "content": "HTTP security headers provide an additional layer of security by restricting behaviors that the browser and server can follow.\n\nMitigation:\n1. Content-Security-Policy: Prevent XSS and data injection\n2. Strict-Transport-Security: Force HTTPS connections\n3. X-Content-Type-Options: nosniff - Prevent MIME sniffing\n4. X-Frame-Options: DENY - Prevent clickjacking\n5. Referrer-Policy: no-referrer - Limit information leakage\n\nExamples:\napp.use(helmet()); // Sets all security headers at once\nres.setHeader(\"Content-Security-Policy\", \"default-src 'self'\");\nres.setHeader(\"Strict-Transport-Security\", \"max-age=31536000; includeSubDomains\");\nres.setHeader(\"X-Content-Type-Options\", \"nosniff\");\n\nReferences:\nhttps://cheatsheetseries.owasp.org/cheatsheets/HTTP_Headers_Cheat_Sheet.html",
-    "category": "general-security",
-    "severity": "medium",
-    "owasp": "A05:2021",
-    "tags": [
-      "security-headers",
-      "csp",
-      "hsts",
-      "helmet",
-      "clickjacking"
-    ],
-    "version": "1.0",
-    "createdAt": "2026-03-19T20:49:20.444Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
-    "source": "cheatsheet",
-    "deprecated": false
-  },
-  {
-    "id": "cs-jwt-security",
-    "title": "JSON Web Token Security Cheat Sheet",
-    "content": "JWTs are commonly used for authentication and authorization. Improper implementation can lead to token forgery, information leakage, and authentication bypass.\n\nMitigation:\n1. Use strong signing algorithms (RS256/ES256, avoid none/HS256 with weak secrets)\n2. Validate all claims: exp, iss, aud, nbf\n3. Use short expiration times (15 min for access tokens)\n4. Store tokens securely (HttpOnly cookies, not localStorage)\n5. Implement token revocation / blacklisting\n\nExamples:\njwt.verify(token, secret); // Always verify before trusting\njwt.sign(payload, key, {algorithm: \"RS256\", expiresIn: \"15m\"});\nif (decoded.iss !== expectedIssuer) throw new Error(); // Validate issuer\n// Never store JWT in localStorage - use HttpOnly cookies\n\nReferences:\nhttps://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_for_Java_Cheat_Sheet.html",
-    "category": "authentication",
-    "severity": "high",
-    "owasp": "A02:2021",
-    "tags": [
-      "jwt",
-      "authentication",
-      "token-security",
-      "signing",
-      "authorization"
-    ],
-    "version": "1.0",
-    "createdAt": "2026-03-19T20:49:20.444Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
-    "source": "cheatsheet",
-    "deprecated": false
-  },
-  {
-    "id": "cs-error-handling",
-    "title": "Error Handling Cheat Sheet",
-    "content": "Improper error handling can introduce security vulnerabilities by revealing internal information, creating denial of service conditions, or leading to unexpected application states.\n\nMitigation:\n1. Use generic error messages for users, detailed logs for developers\n2. Never expose stack traces, SQL queries, or paths in responses\n3. Implement global error handlers\n4. Log errors with context but without sensitive data\n5. Return consistent error response formats\n\nExamples:\ncatch(e) { res.json({error: e.stack}); } // Information leak\ncatch(e) { logger.error(e); res.json({error: \"Something went wrong\"}); } // Safe\napp.use((err, req, res, next) => { res.status(500).json({error: \"Internal error\"}); });\nprocess.on(\"uncaughtException\", (err) => { logger.fatal(err); process.exit(1); });\n\nReferences:\nhttps://cheatsheetseries.owasp.org/cheatsheets/Error_Handling_Cheat_Sheet.html",
-    "category": "general-security",
-    "severity": "medium",
-    "cwe": "CWE-209",
-    "owasp": "A05:2021",
-    "tags": [
-      "error-handling",
-      "logging",
-      "stack-trace",
-      "information-disclosure"
-    ],
-    "version": "1.0",
-    "createdAt": "2026-03-19T20:49:20.444Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
-    "source": "cheatsheet",
-    "deprecated": false
-  },
-  {
-    "id": "cs-logging",
-    "title": "Logging Cheat Sheet",
-    "content": "Application logging should be consistent, cover security-relevant events, and be protected from tampering. Logs are critical for incident detection and forensics.\n\nMitigation:\n1. Log authentication events (success and failure)\n2. Log authorization failures and access control events\n3. Sanitize log inputs to prevent log injection\n4. Never log sensitive data (passwords, tokens, PII)\n5. Use structured logging formats (JSON) for parsing\n\nExamples:\nlogger.info(\"Login failed\", {username, ip, timestamp}); // Structured\nconsole.log(\"Password: \" + password); // NEVER log credentials\nlogger.warn(\"Unauthorized access\", {userId, resource, action});\nconst sanitized = input.replace(/[\\n\\r]/g, \"\"); logger.info(sanitized); // Prevent injection\n\nReferences:\nhttps://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html",
-    "category": "injection",
-    "severity": "medium",
-    "cwe": "CWE-117",
-    "owasp": "A09:2021",
-    "tags": [
-      "logging",
-      "audit",
-      "log-injection",
-      "monitoring",
-      "incident-response"
-    ],
-    "version": "1.0",
-    "createdAt": "2026-03-19T20:49:20.444Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
-    "source": "cheatsheet",
-    "deprecated": false
-  },
-  {
-    "id": "cs-secrets-management",
-    "title": "Secrets Management Cheat Sheet",
-    "content": "Secrets (API keys, passwords, tokens, certificates) must be managed securely throughout their lifecycle — generation, storage, distribution, rotation, and revocation.\n\nMitigation:\n1. Never hardcode secrets in source code\n2. Use environment variables or secret management services\n3. Add secret files to .gitignore\n4. Rotate secrets regularly\n5. Use tools like git-secrets to prevent accidental commits\n\nExamples:\nconst key = \"sk-abc123\"; // NEVER hardcode\nconst key = process.env.API_KEY; // Environment variable\nconst key = await secretManager.getSecret(\"api-key\"); // Secret manager\n// .gitignore: .env, *.pem, *secret*, credentials.json\n\nReferences:\nhttps://cheatsheetseries.owasp.org/cheatsheets/Secrets_Management_Cheat_Sheet.html",
-    "category": "authentication",
-    "severity": "high",
-    "cwe": "CWE-798",
-    "owasp": "A07:2021",
-    "tags": [
-      "secrets",
-      "api-keys",
-      "environment-variables",
-      "gitignore",
-      "key-rotation"
-    ],
-    "version": "1.0",
-    "createdAt": "2026-03-19T20:49:20.444Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
-    "source": "cheatsheet",
-    "deprecated": false
-  },
-  {
-    "id": "capec-66",
-    "title": "CAPEC-66: SQL Injection",
-    "content": "An attacker sends SQL commands to a database through the application by manipulating input to include SQL syntax. This occurs when user input is incorporated into SQL queries without proper sanitization.\n\nMitigation:\nAttack Flow: Attacker identifies input fields → crafts SQL payload → application concatenates into query → database executes malicious SQL\nDefense: Use parameterized queries exclusively. ORMs like Sequelize/Knex handle this automatically.\n\nExamples:\n// Attack: input = \"' OR 1=1 --\"\ndb.query(\"SELECT * FROM users WHERE name = '\" + input + \"'\"); // Dumps all users\n// Defense:\ndb.query(\"SELECT * FROM users WHERE name = ?\", [input]); // Parameterized\n\nReferences:\nhttps://capec.mitre.org/data/definitions/66.html",
-    "category": "injection",
-    "severity": "high",
-    "cwe": "CWE-89",
-    "owasp": "A03:2021",
-    "tags": [
-      "capec",
-      "sql-injection",
-      "attack-pattern",
-      "database"
-    ],
-    "version": "1.0",
-    "createdAt": "2026-03-19T20:49:20.445Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
-    "source": "capec",
-    "deprecated": false
-  },
-  {
-    "id": "capec-86",
-    "title": "CAPEC-86: XSS via HTTP Headers",
-    "content": "An attacker injects malicious content into HTTP response headers that are reflected in the page, exploiting applications that include header values in responses without encoding.\n\nMitigation:\nAttack Flow: Attacker crafts request with malicious header values → server reflects headers in response body → browser executes injected script\nDefense: Never reflect HTTP headers in HTML. Encode all dynamic content.\n\nExamples:\n// Attack: User-Agent header containing <script>alert(1)</script>\nres.send(\"Your browser: \" + req.headers[\"user-agent\"]); // XSS\n// Defense:\nres.send(\"Your browser: \" + encodeHTML(req.headers[\"user-agent\"]));\n\nReferences:\nhttps://capec.mitre.org/data/definitions/86.html",
-    "category": "injection",
-    "severity": "high",
-    "cwe": "CWE-79",
-    "owasp": "A03:2021",
-    "tags": [
-      "capec",
-      "xss",
-      "http-headers",
-      "header-injection"
-    ],
-    "version": "1.0",
-    "createdAt": "2026-03-19T20:49:20.445Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
-    "source": "capec",
-    "deprecated": false
-  },
-  {
-    "id": "capec-88",
-    "title": "CAPEC-88: OS Command Injection",
-    "content": "An attacker executes system commands by injecting OS command separators (;, |, &&, ||, backticks) into application inputs that are passed to shell commands.\n\nMitigation:\nAttack Flow: Attacker identifies input used in shell command → injects command separator → application executes arbitrary OS command\nDefense: Use execFile() instead of exec(). Never pass user input to shell commands.\n\nExamples:\n// Attack: host = \"google.com; rm -rf /\"\nexec(\"ping \" + host); // Executes rm -rf /\n// Defense:\nexecFile(\"ping\", [\"-c\", \"1\", host]); // No shell interpretation\n\nReferences:\nhttps://capec.mitre.org/data/definitions/88.html",
-    "category": "injection",
-    "severity": "high",
-    "cwe": "CWE-78",
-    "owasp": "A03:2021",
-    "tags": [
-      "capec",
-      "command-injection",
-      "shell",
-      "exec",
-      "os-command"
-    ],
-    "version": "1.0",
-    "createdAt": "2026-03-19T20:49:20.445Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
-    "source": "capec",
-    "deprecated": false
-  },
-  {
-    "id": "capec-126",
-    "title": "CAPEC-126: Path Traversal",
-    "content": "An adversary uses path manipulation to access files and directories outside the intended directory. By using ../ sequences or absolute paths, attackers can read sensitive system files.\n\nMitigation:\nAttack Flow: Attacker sends path with ../../etc/passwd → application uses path in file operation → sensitive file is read/written\nDefense: Use path.resolve() and verify the result is within the allowed directory.\n\nExamples:\n// Attack: filename = \"../../../etc/passwd\"\nfs.readFile(\"./uploads/\" + filename); // Reads /etc/passwd\n// Defense:\nconst safe = path.resolve(uploadsDir, filename);\nif (!safe.startsWith(uploadsDir)) throw new Error(\"Path traversal\");\n\nReferences:\nhttps://capec.mitre.org/data/definitions/126.html",
-    "category": "path-traversal",
-    "severity": "high",
-    "cwe": "CWE-22",
-    "owasp": "A01:2021",
-    "tags": [
-      "capec",
-      "path-traversal",
-      "directory-traversal",
-      "file-access"
-    ],
-    "version": "1.0",
-    "createdAt": "2026-03-19T20:49:20.445Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
-    "source": "capec",
-    "deprecated": false
-  },
-  {
-    "id": "capec-242",
-    "title": "CAPEC-242: Code Injection",
-    "content": "An adversary exploits a weakness in input validation to inject code that is then executed by the application. In JavaScript, this primarily occurs through eval(), Function(), and similar constructs.\n\nMitigation:\nAttack Flow: Attacker identifies eval/Function usage → crafts input containing JS code → application executes attacker code with application privileges\nDefense: Never use eval() or new Function() with user input. Use JSON.parse() for data.\n\nExamples:\n// Attack: expression = \"process.exit(1)\"\neval(expression); // Crashes the server\nnew Function(\"return \" + expression)(); // Also dangerous\n// Defense: Use JSON.parse(), math.js, or expr-eval for safe evaluation\n\nReferences:\nhttps://capec.mitre.org/data/definitions/242.html",
-    "category": "injection",
-    "severity": "high",
-    "cwe": "CWE-94",
-    "owasp": "A03:2021",
-    "tags": [
-      "capec",
-      "code-injection",
-      "eval",
-      "function-constructor",
-      "rce"
-    ],
-    "version": "1.0",
-    "createdAt": "2026-03-19T20:49:20.445Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
-    "source": "capec",
-    "deprecated": false
-  },
-  {
-    "id": "capec-460",
-    "title": "CAPEC-460: HTTP Parameter Pollution",
-    "content": "An attacker submits duplicate HTTP parameters to cause the web application to interpret them in unexpected ways, potentially bypassing validation or WAF rules.\n\nMitigation:\nAttack Flow: Attacker sends duplicate parameters (?id=1&id=2) → server and application may handle differently → validation bypass possible\nDefense: Explicitly select first/last parameter value. Use strict parameter parsing.\n\nExamples:\n// Attack: /transfer?amount=100&amount=10000 (duplicate param)\n// Express takes last value by default for req.query\nconst amount = Array.isArray(req.query.amount) ? req.query.amount[0] : req.query.amount;\n// Validate: typeof req.query.param === \"string\" before using\n\nReferences:\nhttps://capec.mitre.org/data/definitions/460.html",
-    "category": "general-security",
-    "severity": "medium",
-    "cwe": "CWE-235",
-    "owasp": "A03:2021",
-    "tags": [
-      "capec",
-      "hpp",
-      "parameter-pollution",
-      "validation-bypass"
-    ],
-    "version": "1.0",
-    "createdAt": "2026-03-19T20:49:20.445Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
-    "source": "capec",
-    "deprecated": false
-  },
-  {
-    "id": "capec-62",
-    "title": "CAPEC-62: Cross Site Request Forgery",
-    "content": "An attacker crafts a malicious web page that sends authenticated requests to a vulnerable application, causing the victim to perform unintended actions.\n\nMitigation:\nAttack Flow: Attacker hosts page with hidden form/JS → victim visits while logged in → browser sends authenticated request → action performed without consent\nDefense: CSRF tokens, SameSite cookies, Origin header validation.\n\nExamples:\n// Attack page: <img src=\"https://bank.com/transfer?to=attacker&amount=1000\">\n// Defense: Require CSRF token\napp.use(csurf({cookie: {sameSite: \"strict\"}}));\n<input type=\"hidden\" name=\"_csrf\" value=\"<%= csrfToken %>\">\n\nReferences:\nhttps://capec.mitre.org/data/definitions/62.html",
-    "category": "authentication",
-    "severity": "medium",
-    "cwe": "CWE-352",
-    "owasp": "A01:2021",
-    "tags": [
-      "capec",
-      "csrf",
-      "cross-site",
-      "request-forgery",
-      "authentication"
-    ],
-    "version": "1.0",
-    "createdAt": "2026-03-19T20:49:20.445Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
-    "source": "capec",
-    "deprecated": false
-  },
-  {
-    "id": "capec-664",
-    "title": "CAPEC-664: Server-Side Request Forgery (SSRF)",
-    "content": "An adversary exploits a server-side application to make HTTP requests to an arbitrary domain, typically targeting internal services not directly accessible from the internet.\n\nMitigation:\nAttack Flow: Attacker provides URL to internal service → server fetches URL → attacker accesses internal APIs, metadata endpoints, or cloud credentials\nDefense: Validate URLs, block private IP ranges, use allowlists.\n\nExamples:\n// Attack: url = \"http://169.254.169.254/latest/meta-data/\" (AWS metadata)\nfetch(req.body.url); // SSRF to cloud metadata\n// Defense: Block private ranges\nif (isPrivateIP(new URL(url).hostname)) throw new Error(\"Blocked\");\n\nReferences:\nhttps://capec.mitre.org/data/definitions/664.html",
-    "category": "general-security",
-    "severity": "high",
-    "cwe": "CWE-918",
-    "owasp": "A10:2021",
-    "tags": [
-      "capec",
-      "ssrf",
-      "internal-network",
-      "cloud-metadata",
-      "aws"
-    ],
-    "version": "1.0",
-    "createdAt": "2026-03-19T20:49:20.445Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
-    "source": "capec",
-    "deprecated": false
-  },
-  {
-    "id": "node-child-process",
-    "title": "Node.js Child Process Security",
-    "content": "The child_process module allows spawning OS processes. Using exec() or spawn() with shell:true passes input through the system shell, enabling command injection.\n\nMitigation:\n1. Use execFile() or spawn() without shell:true\n2. Never pass user input to exec()\n3. Validate and sanitize all arguments\n4. Use allowlists for allowed commands\n5. Run child processes with minimal privileges\n\nExamples:\nexec(\"convert \" + filename); // Command injection via filename\nexecFile(\"convert\", [filename]); // Safe - no shell\nspawn(\"ls\", [\"-la\", dir], {shell: true}); // shell:true is dangerous\nspawn(\"ls\", [\"-la\", dir]); // Safe without shell\n\nReferences:\nhttps://nodejs.org/api/child_process.html#child-process",
-    "category": "injection",
-    "severity": "high",
-    "cwe": "CWE-78",
-    "tags": [
-      "nodejs",
-      "child-process",
-      "exec",
-      "spawn",
-      "command-injection"
-    ],
-    "version": "1.0",
-    "createdAt": "2026-03-19T20:49:20.446Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
-    "source": "nodejs",
-    "deprecated": false
-  },
-  {
-    "id": "node-path-security",
-    "title": "Node.js Path and File System Security",
-    "content": "Node.js file system operations using user-controlled paths can lead to path traversal, allowing attackers to read or write arbitrary files.\n\nMitigation:\n1. Use path.resolve() and verify result is within allowed directory\n2. Use path.basename() to strip directory components\n3. Never use user input directly in fs operations\n4. Set chroot or restrict access to specific directories\n5. Validate file extensions against allowlist\n\nExamples:\nfs.readFileSync(req.query.file); // Path traversal\nconst safe = path.join(baseDir, path.basename(req.query.file));\nif (!path.resolve(safe).startsWith(path.resolve(baseDir))) throw new Error();\nfs.readFileSync(safe); // Validated path\n\nReferences:\nhttps://nodejs.org/api/path.html",
-    "category": "path-traversal",
-    "severity": "high",
-    "cwe": "CWE-22",
-    "tags": [
-      "nodejs",
-      "path-traversal",
-      "file-system",
-      "fs",
-      "path-resolve"
-    ],
-    "version": "1.0",
-    "createdAt": "2026-03-19T20:49:20.446Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
-    "source": "nodejs",
-    "deprecated": false
-  },
-  {
-    "id": "node-env-security",
-    "title": "Node.js Environment and Configuration Security",
-    "content": "Mismanaged environment variables and configurations can expose secrets, enable debug modes in production, or weaken security settings.\n\nMitigation:\n1. Use .env files with dotenv, add .env to .gitignore\n2. Validate required env vars at startup\n3. Never log environment variables containing secrets\n4. Set NODE_ENV=production in production\n5. Use different secrets for each environment\n\nExamples:\nconst secret = \"hardcoded_secret\"; // Never hardcode\nconst secret = process.env.JWT_SECRET; if (!secret) throw new Error(\"Missing JWT_SECRET\");\nif (process.env.NODE_ENV !== \"production\") { app.use(morgan(\"dev\")); }\nrequire(\"dotenv\").config(); // Load .env file\n\nReferences:\nhttps://nodejs.org/en/learn/getting-started/nodejs-the-difference-between-development-and-production",
-    "category": "authentication",
-    "severity": "high",
-    "cwe": "CWE-798",
-    "tags": [
-      "nodejs",
-      "environment",
-      "dotenv",
-      "configuration",
-      "secrets"
-    ],
-    "version": "1.0",
-    "createdAt": "2026-03-19T20:49:20.446Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
-    "source": "nodejs",
-    "deprecated": false
-  },
-  {
-    "id": "node-express-security",
-    "title": "Express.js Security Best Practices",
-    "content": "Express.js applications require specific security configurations including body parsing limits, security headers, CORS, and proper error handling.\n\nMitigation:\n1. Use helmet() for security headers\n2. Limit body size: express.json({limit: \"100kb\"})\n3. Configure CORS with specific origins\n4. Disable X-Powered-By header\n5. Use rate limiting middleware\n\nExamples:\napp.use(helmet()); // Security headers\napp.use(express.json({limit: \"100kb\"})); // Body size limit\napp.use(cors({origin: \"https://myapp.com\"})); // Specific CORS\napp.use(rateLimit({windowMs: 15*60*1000, max: 100})); // Rate limiting\napp.disable(\"x-powered-by\"); // Hide Express\n\nReferences:\nhttps://expressjs.com/en/advanced/best-practice-security.html",
-    "category": "web-security",
-    "severity": "high",
-    "owasp": "A05:2021",
-    "tags": [
-      "express",
-      "helmet",
-      "cors",
-      "rate-limiting",
-      "security-headers"
-    ],
-    "version": "1.0",
-    "createdAt": "2026-03-19T20:49:20.446Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
-    "source": "nodejs",
-    "deprecated": false
-  },
-  {
-    "id": "node-crypto-security",
-    "title": "Node.js Cryptography Best Practices",
-    "content": "Node.js crypto module provides cryptographic functionality. Using weak algorithms, predictable random values, or improper key management undermines security.\n\nMitigation:\n1. Use crypto.randomBytes() for random values, never Math.random()\n2. Use AES-256-GCM for symmetric encryption\n3. Use bcrypt/Argon2 for password hashing, not SHA/MD5\n4. Use crypto.timingSafeEqual() for comparing secrets\n5. Generate IVs/nonces for each encryption operation\n\nExamples:\ncrypto.createHash(\"md5\"); // Weak - do not use\ncrypto.createHash(\"sha256\"); // Better for checksums\nawait bcrypt.hash(password, 12); // For passwords\ncrypto.createCipheriv(\"aes-256-gcm\", key, crypto.randomBytes(16)); // Strong encryption\n\nReferences:\nhttps://nodejs.org/api/crypto.html",
-    "category": "cryptography",
-    "severity": "high",
-    "cwe": "CWE-327",
-    "owasp": "A02:2021",
-    "tags": [
-      "nodejs",
-      "cryptography",
-      "bcrypt",
-      "aes",
-      "random"
-    ],
-    "version": "1.0",
-    "createdAt": "2026-03-19T20:49:20.446Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
-    "source": "nodejs",
-    "deprecated": false
-  },
-  {
-    "id": "node-nosql-injection",
-    "title": "NoSQL Injection in Node.js",
-    "content": "NoSQL databases like MongoDB are vulnerable to injection when user input is passed directly as query operators ($gt, $ne, $regex) without validation.\n\nMitigation:\n1. Validate input types (ensure strings are strings, not objects)\n2. Use mongoose schema validation\n3. Sanitize query operators from user input\n4. Use mongo-sanitize or express-mongo-sanitize\n5. Never build queries from raw user objects\n\nExamples:\n// Attack: {\"username\": {\"$gt\": \"\"}, \"password\": {\"$gt\": \"\"}}\ndb.users.findOne({username: req.body.username}); // NoSQL injection if body is object\napp.use(mongoSanitize()); // Strip $ operators from input\nif (typeof req.body.username !== \"string\") throw new Error(); // Type check\n\nReferences:\nhttps://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/07-Input_Validation_Testing/05.6-Testing_for_NoSQL_Injection",
-    "category": "injection",
-    "severity": "high",
-    "cwe": "CWE-943",
-    "owasp": "A03:2021",
-    "tags": [
-      "nosql",
-      "mongodb",
-      "injection",
-      "mongoose",
-      "query-operators"
-    ],
-    "version": "1.0",
-    "createdAt": "2026-03-19T20:49:20.446Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
-    "source": "nodejs",
-    "deprecated": false
-  },
-  {
-    "id": "node-event-loop-dos",
-    "title": "Node.js Event Loop Blocking and DoS",
-    "content": "CPU-intensive or synchronous operations block the Node.js event loop, causing denial of service for all connected clients. This includes large JSON parsing, regex matching, and crypto operations.\n\nMitigation:\n1. Avoid synchronous I/O in request handlers\n2. Use worker threads for CPU-intensive work\n3. Set timeouts on all async operations\n4. Limit request body and JSON payload sizes\n5. Use streaming for large data processing\n\nExamples:\nconst data = fs.readFileSync(largeFile); // Blocks event loop\nconst data = await fs.promises.readFile(largeFile); // Non-blocking\nJSON.parse(hugeString); // Can block with very large input\napp.use(express.json({limit: \"1mb\"})); // Limit payload size\n\nReferences:\nhttps://nodejs.org/en/learn/asynchronous-work/dont-block-the-event-loop",
-    "category": "general-security",
-    "severity": "medium",
-    "cwe": "CWE-400",
-    "tags": [
-      "nodejs",
-      "event-loop",
-      "dos",
-      "blocking",
-      "performance"
-    ],
-    "version": "1.0",
-    "createdAt": "2026-03-19T20:49:20.446Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
-    "source": "nodejs",
-    "deprecated": false
-  },
-  {
-    "id": "node-npm-security",
-    "title": "npm Package Security",
-    "content": "npm packages are a major attack vector. Supply chain attacks, typosquatting, and vulnerable dependencies can compromise applications.\n\nMitigation:\n1. Run npm audit regularly\n2. Use package-lock.json and verify integrity\n3. Review new dependencies before adding\n4. Use npm ci in CI/CD (uses lockfile exactly)\n5. Consider using Socket.dev or Snyk for monitoring\n\nExamples:\nnpm audit // Check for known vulnerabilities\nnpm audit fix // Auto-fix compatible updates\nnpm ci // Clean install from lockfile (CI/CD)\nnpx is-my-node-vulnerable // Check Node.js version security\n\nReferences:\nhttps://docs.npmjs.com/auditing-package-dependencies-for-security-vulnerabilities",
-    "category": "path-traversal",
-    "severity": "high",
-    "cwe": "CWE-829",
-    "owasp": "A06:2021",
-    "tags": [
-      "npm",
-      "supply-chain",
-      "audit",
-      "dependencies",
-      "lockfile"
-    ],
-    "version": "1.0",
-    "createdAt": "2026-03-19T20:49:20.446Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
-    "source": "nodejs",
-    "deprecated": false
-  },
-  {
-    "id": "node-template-injection",
-    "title": "Server-Side Template Injection (SSTI) in Node.js",
-    "content": "Template engines (EJS, Pug, Handlebars) can be exploited if user input is embedded in templates without proper sandboxing, leading to remote code execution.\n\nMitigation:\n1. Never pass user input as template source\n2. Use template data binding, not string concatenation\n3. Enable sandbox/strict mode in template engines\n4. Escape all user data in templates\n5. Use logic-less templates (Mustache) for user content\n\nExamples:\nejs.render(req.body.template); // SSTI - user controls template\nejs.render(template, {data: req.body.data}); // Safe - user data as context\nres.render(\"page\", {name: userInput}); // Safe - framework handles escaping\n// Never: res.send(ejs.render(\"<%= \" + userInput + \" %>\"));\n\nReferences:\nhttps://portswigger.net/web-security/server-side-template-injection",
-    "category": "injection",
-    "severity": "high",
-    "cwe": "CWE-94",
-    "owasp": "A03:2021",
-    "tags": [
-      "ssti",
-      "template-injection",
-      "ejs",
-      "pug",
-      "rce"
-    ],
-    "version": "1.0",
-    "createdAt": "2026-03-19T20:49:20.446Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
-    "source": "nodejs",
-    "deprecated": false
-  },
-  {
-    "id": "node-clickjacking",
-    "title": "Clickjacking Prevention",
-    "content": "Clickjacking tricks users into clicking on something different from what they perceive, by overlaying transparent iframes on legitimate UI elements.\n\nMitigation:\n1. Set X-Frame-Options: DENY or SAMEORIGIN\n2. Use CSP frame-ancestors directive\n3. Implement frame-busting scripts as fallback\n4. Use helmet() which sets X-Frame-Options automatically\n5. Consider SameSite cookies to limit cross-origin framing\n\nExamples:\napp.use(helmet.frameguard({action: \"deny\"})); // Prevent framing\nres.setHeader(\"X-Frame-Options\", \"DENY\"); // Manual header\nres.setHeader(\"Content-Security-Policy\", \"frame-ancestors 'none'\"); // CSP approach\n// helmet() sets this automatically along with other security headers\n\nReferences:\nhttps://owasp.org/www-community/attacks/Clickjacking",
-    "category": "general-security",
-    "severity": "medium",
-    "cwe": "CWE-1021",
-    "owasp": "A05:2021",
-    "tags": [
-      "clickjacking",
-      "x-frame-options",
-      "csp",
-      "iframe",
-      "ui-redressing"
-    ],
-    "version": "1.0",
-    "createdAt": "2026-03-19T20:49:20.446Z",
-    "updatedAt": "2026-05-06T18:59:15.722Z",
-    "source": "nodejs",
     "deprecated": false
   }
 ]

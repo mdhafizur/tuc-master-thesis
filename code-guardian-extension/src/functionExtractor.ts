@@ -2,11 +2,15 @@ import * as ts from 'typescript';
 import * as vscode from 'vscode';
 
 /**
- * Represents the extracted function's code and its starting line number in the document.
+ * Represents the extracted function's code, the document range it occupies,
+ * and its starting line number. `range` is the precise span of the function
+ * (start of the function node to its end) — used by the function-level repair
+ * applier to replace the whole function in one WorkspaceEdit.
  */
 export interface ExtractedFunction {
 	code: string;
 	startLine: number;
+	range: vscode.Range;
 }
 
 /**
@@ -68,13 +72,15 @@ export function getEnclosingFunction(
 			(a.end - a.pos) <= (b.end - b.pos) ? a : b
 		);
 
-		// Get the line number (0-based) where the function starts
-		const startLine = doc.positionAt(targetFn.getStart()).line;
-
-		// Extract the function code block from the full text
+		const startPos = doc.positionAt(targetFn.getStart());
+		const endPos = doc.positionAt(targetFn.getEnd());
 		const code = sourceCode.slice(targetFn.getStart(), targetFn.getEnd());
 
-		return { code, startLine };
+		return {
+			code,
+			startLine: startPos.line,
+			range: new vscode.Range(startPos, endPos)
+		};
 	}
 
 	// No function-like block found at the cursor location

@@ -234,11 +234,29 @@ async function singleAnalysisPass(
 
 	for (let attempt = 1; attempt <= RETRY_CONFIG.maxAttempts; attempt++) {
 		try {
+			// Constrained JSON Schema. `format: 'json'` only forces "valid JSON"
+			// and lets each model invent its own field names — CodeLlama:7b for
+			// example tends to emit {message, severity, line, column, ...}, which
+			// looks plausible but doesn't match what downstream code expects. A
+			// schema pins both the shape (array of issues) and the field names.
+			const DETECTION_SCHEMA = {
+				type: 'array',
+				items: {
+					type: 'object',
+					properties: {
+						message: { type: 'string' },
+						startLine: { type: 'number' },
+						endLine: { type: 'number' }
+					},
+					required: ['message', 'startLine', 'endLine']
+				}
+			} as const;
+
 			const res = await Promise.race([
 				ollama.chat({
 					model,
 					messages,
-					format: 'json',
+					format: DETECTION_SCHEMA,
 					options: { temperature: 0, seed, num_ctx: numCtx }
 				}),
 				new Promise<never>((_, reject) =>
@@ -279,16 +297,46 @@ async function singleAnalysisPass(
 				parsed = JSON.parse(raw.slice(jsonStart, jsonEnd + 1));
 			}
 
+			// Coerces a single-issue object to {message, startLine, endLine} no
+			// matter which line-field convention the model picked. CodeLlama:7b
+			// uses `line`; some prompts elicit `lineStart`/`lineEnd`; others use
+			// `start_line`/`end_line`. We accept any of those.
+			const toIssue = (item: any): { message: string; startLine: number; endLine: number; suggestedFix?: string } | null => {
+				if (!item || typeof item !== 'object' || typeof item.message !== 'string') {
+					return null;
+				}
+				const start =
+					typeof item.startLine === 'number' ? item.startLine :
+					typeof item.lineStart === 'number' ? item.lineStart :
+					typeof item.start_line === 'number' ? item.start_line :
+					typeof item.line === 'number' ? item.line :
+					undefined;
+				const end =
+					typeof item.endLine === 'number' ? item.endLine :
+					typeof item.lineEnd === 'number' ? item.lineEnd :
+					typeof item.end_line === 'number' ? item.end_line :
+					typeof item.line === 'number' ? item.line :
+					start;
+				if (typeof start !== 'number' || typeof end !== 'number') {
+					return null;
+				}
+				return {
+					message: item.message,
+					startLine: start,
+					endLine: end,
+					suggestedFix: typeof item.suggestedFix === 'string' ? item.suggestedFix : undefined
+				};
+			};
+
 			// If the model returned a JSON object wrapping an array, extract it
 			if (parsed && !Array.isArray(parsed) && typeof parsed === 'object') {
 				// Look for the first array property (e.g., "issues", "vulnerabilities", "results")
 				const arrayProp = Object.values(parsed).find(v => Array.isArray(v));
 				if (arrayProp) {
 					parsed = arrayProp;
-				} else if (typeof parsed.message === 'string'
-						&& typeof parsed.startLine === 'number'
-						&& typeof parsed.endLine === 'number') {
-					// Single-issue object — wrap as a one-element array
+				} else if (toIssue(parsed)) {
+					// Single-issue object — wrap as a one-element array. Tolerates any
+					// of the line-field conventions handled by toIssue().
 					parsed = [parsed];
 				} else {
 					throw new AnalysisError(
@@ -307,18 +355,13 @@ async function singleAnalysisPass(
 
 			// Validate and sanitize each issue object
 			const validated: SecurityIssue[] = parsed
-				.filter((item: any) =>
-					item &&
-					typeof item === 'object' &&
-					typeof item.message === 'string' &&
-					typeof item.startLine === 'number' &&
-					typeof item.endLine === 'number'
-				)
-				.map((item: any) => ({
+				.map(toIssue)
+				.filter((item: any): item is { message: string; startLine: number; endLine: number; suggestedFix?: string } => item !== null)
+				.map((item) => ({
 					message: item.message,
 					startLine: Math.max(1, Math.round(item.startLine)),
 					endLine: Math.max(1, Math.round(item.endLine)),
-					suggestedFix: typeof item.suggestedFix === 'string' ? item.suggestedFix : undefined
+					suggestedFix: item.suggestedFix
 				}));
 
 			if (validated.length === 0 && parsed.length > 0) {
@@ -489,6 +532,11 @@ function sanitizeRepair(
 	// Strip ```lang ... ``` fences if present.
 	text = text.replace(/^\s*```(?:[a-zA-Z]+)?\s*\n?/, '').replace(/\n?```\s*$/, '');
 
+	// Models sometimes leak JSON-encoded backslash escapes for forward slashes
+	// into the JS source ("\/var\/data" instead of "/var/data"). JS string
+	// literals don't require / to be escaped, so collapse them back.
+	text = text.replace(/\\\//g, '/');
+
 	let lines = text.split('\n');
 
 	const before: string[] = [];
@@ -526,6 +574,23 @@ function sanitizeRepair(
 		lines.pop();
 	}
 
+	// Re-align indentation to the original. WorkspaceEdit.replace runs over a
+	// range starting at column 0, so the fix must carry the same leading
+	// whitespace the vulnerable lines had — models routinely drop it despite the
+	// prompt. Strip the fix's own minimum indent and prepend the original's.
+	if (lines.length > 0) {
+		const originalIndent = (allLines[startLine - 1] ?? '').match(/^[\t ]*/)?.[0] ?? '';
+		const nonEmpty = lines.filter(l => l.trim().length > 0);
+		if (nonEmpty.length > 0) {
+			const minFixIndent = Math.min(
+				...nonEmpty.map(l => (l.match(/^[\t ]*/)?.[0].length ?? 0))
+			);
+			lines = lines.map(line =>
+				line.trim().length === 0 ? '' : originalIndent + line.slice(minFixIndent)
+			);
+		}
+	}
+
 	return lines.join('\n');
 }
 
@@ -534,7 +599,7 @@ function sanitizeRepair(
  * This second-stage prompt focuses purely on fix generation, producing higher-quality repairs
  * than asking the model to detect and fix simultaneously.
  */
-async function generateRepair(
+export async function generateRepair(
 	model: string,
 	code: string,
 	issue: SecurityIssue,
@@ -653,6 +718,118 @@ Output the JSON object {code, language} where "code" is the replacement for the 
 }
 
 /**
+ * Generates a whole-function rewrite that fixes a reported vulnerability.
+ * Used by the IDE's Apply / Preview quick-fixes: instead of asking the model
+ * for a surgical line-range replacement (which it routinely fails by echoing
+ * surrounding context, dropping wrappers, or producing fragments), we ask for
+ * a full function rewrite and replace the entire function range. The function
+ * itself is the unit of context, so there is no "context echo" failure mode.
+ */
+export async function generateFunctionRepair(
+	model: string,
+	functionCode: string,
+	issueMessage: string,
+	ragManager?: RAGManager
+): Promise<string | undefined> {
+	const logger = getLogger();
+
+	let systemPrompt = `Secure code repair at function granularity. Output ONLY a JSON object {"code": "...", "language": "javascript" | "typescript"}.
+
+Rules:
+- "code" MUST be the COMPLETE rewritten function — same signature, same external behavior, vulnerability removed.
+- Begin "code" at the same construct the input begins with (e.g. function/arrow/method declaration). Do NOT include any code from outside the function body.
+- Preserve the function's original indentation style line-for-line.
+- Use established secure patterns (parameterized queries, input validation, safe APIs, allowlists) appropriate to the reported vulnerability.
+- "code" must contain only executable code — no prose, no explanation, no markdown fences.
+- "language" reflects the source language of the snippet.`;
+
+	const userPrompt = `Vulnerability: ${issueMessage}
+
+REWRITE THIS FUNCTION TO REMOVE THE VULNERABILITY:
+${functionCode}
+
+Output the JSON object {code, language} where "code" is the entire rewritten function.`;
+
+	if (ragManager) {
+		try {
+			const enhanced = await ragManager.generateEnhancedPrompt(systemPrompt, functionCode);
+			if (enhanced !== systemPrompt) {
+				systemPrompt = enhanced;
+			}
+		} catch {
+			// Continue with standard prompt
+		}
+	}
+
+	const REPAIR_SCHEMA = {
+		type: 'object',
+		properties: {
+			code: { type: 'string' },
+			language: { type: 'string', enum: ['javascript', 'typescript'] }
+		},
+		required: ['code']
+	} as const;
+
+	try {
+		const res = await Promise.race([
+			ollama.chat({
+				model,
+				messages: [
+					{ role: 'system', content: systemPrompt },
+					{ role: 'user', content: userPrompt }
+				],
+				format: REPAIR_SCHEMA,
+				options: { temperature: 0, seed: 42 }
+			}),
+			new Promise<never>((_, reject) =>
+				setTimeout(() => reject(new Error('Function repair generation timed out')), 30000)
+			)
+		]);
+
+		const raw = res.message.content.trim();
+		const parsed = JSON.parse(raw);
+
+		const pickCode = (): string | undefined => {
+			if (parsed && typeof parsed.code === 'string' && parsed.code.trim().length > 0) {
+				return parsed.code;
+			}
+			const firstString = Object.values(parsed).find(v => typeof v === 'string' && (v as string).trim().length > 0);
+			return typeof firstString === 'string' ? firstString : undefined;
+		};
+
+		const candidate = pickCode();
+		if (!candidate) {
+			return undefined;
+		}
+		return sanitizeFunctionRepair(candidate);
+	} catch (error) {
+		logger.debug(`Function repair generation failed: ${error}`);
+		return undefined;
+	}
+}
+
+/**
+ * Lighter-weight sanitizer for whole-function repairs. Strips markdown fences,
+ * normalizes JSON-encoded slash escapes, and trims surrounding blank lines.
+ * No context-stripping is needed because the function itself is the unit of
+ * replacement — there is no "surrounding context" the model could echo.
+ */
+function sanitizeFunctionRepair(rawCode: string): string {
+	let text = rawCode;
+	text = text.replace(/^\s*```(?:[a-zA-Z]+)?\s*\n?/, '').replace(/\n?```\s*$/, '');
+	text = text.replace(/\\\//g, '/');
+
+	const lines = text.split('\n');
+	while (lines.length > 0 && lines[0].trim() === '') {
+		lines.shift();
+	}
+	while (lines.length > 0 && lines[lines.length - 1].trim() === '') {
+		lines.pop();
+	}
+	return lines.join('\n');
+}
+
+/**
  * Analyzes the provided code snippet using an LLM with multi-pass consensus filtering
  * and two-stage repair generation.
  *
@@ -756,6 +933,16 @@ Rules:
 	}
 
 	if (gated.length === 0) {
+		cache.set(code, model, gated, ragEnabled);
+		return gated;
+	}
+
+	// On the real-time inline path we skip Stage 2 entirely — repairs would be
+	// 1 extra Ollama call per issue on every keystroke-debounced re-analysis.
+	// Instead the code-action provider lazy-generates the fix when the user
+	// actually opens the lightbulb. Full-file scans still pre-generate so the
+	// dashboard / workspace results have repairs and `autoApplicable` ready.
+	if (scope === 'function') {
 		cache.set(code, model, gated, ragEnabled);
 		return gated;
 	}
