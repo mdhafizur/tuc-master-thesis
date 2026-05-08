@@ -198,22 +198,22 @@ Section~\ref{sec:eval-r4} reports latency for the fastest, headline, and slowest
 
 \begin{table}[H]
 \centering
-\caption{Full per-model end-to-end latency (milliseconds) for all evaluated LLM configurations and the three SAST baselines. Pooled over 303 evaluations per model$\times$mode (101 cases $\times$ 3 runs).}
+\caption{Full per-model end-to-end latency (milliseconds) for all evaluated LLM configurations and the three SAST baselines. Pooled over 303 evaluations per model$\times$mode (101 cases $\times$ 3 runs). The nine non-headline LLM rows are taken from the Apr-25 ablation run (\texttt{evaluation-2026-04-25T11-44-45-606Z-ablation-baselines.json}); the \texttt{qwen3:8b+RAG} row is taken from the dedicated Phase-1 b3 rerun (\texttt{evaluation-phase1-b3-2026-04-28-qwen3-8b-rag.json}) used as the headline configuration.}
 \label{tab:r4-latency-full}
 \footnotesize
 \begin{tabular}{@{}llrrrr@{}}
 \toprule
 \textbf{Model} & \textbf{Mode} & \textbf{Median} & \textbf{Mean} & \textbf{p95} & \textbf{p99} \\
 \midrule
-\texttt{gemma3:1b} & LLM-only & 894   & 1\,310 & 5\,128 & 5\,944 \\
+\texttt{gemma3:1b} & LLM-only & 1\,215 & 1\,377 & 2\,709 & 3\,133 \\
 \texttt{gemma3:1b} & LLM+RAG  & 1\,019 & 1\,454 & 5\,672 & 6\,554 \\
-\texttt{qwen3:4b}  & LLM-only & 1\,328 & 1\,597 & 3\,802 & 4\,485 \\
-\texttt{qwen3:4b}  & LLM+RAG  & 1\,492 & 1\,731 & 4\,021 & 4\,853 \\
-\texttt{gemma3:4b} & LLM-only & 1\,704 & 1\,862 & 4\,218 & 5\,041 \\
-\texttt{gemma3:4b} & LLM+RAG  & 1\,822 & 1\,960 & 4\,455 & 5\,267 \\
-\texttt{qwen3:8b}  & LLM-only & 2\,038 & 1\,776 & 4\,108 & 4\,902 \\
+\texttt{qwen3:4b}  & LLM-only & 1\,305 & 1\,538 & 2\,869 & 4\,232 \\
+\texttt{qwen3:4b}  & LLM+RAG  & 1\,328 & 1\,572 & 2\,953 & 3\,805 \\
+\texttt{gemma3:4b} & LLM-only & 2\,550 & 3\,220 & 6\,468 & 12\,039 \\
+\texttt{gemma3:4b} & LLM+RAG  & 2\,077 & 2\,714 & 5\,461 & 6\,578 \\
+\texttt{qwen3:8b}  & LLM-only & 1\,534 & 1\,798 & 4\,662 & 6\,027 \\
 \texttt{qwen3:8b}  & LLM+RAG  & 2\,216 & 1\,892 & 4\,327 & 5\,106 \\
-\texttt{codellama} & LLM-only & 1\,998 & 3\,015 & 7\,114 & 11\,328 \\
+\texttt{codellama} & LLM-only & 2\,024 & 2\,390 & 6\,617 & 8\,476 \\
 \texttt{codellama} & LLM+RAG  & 3\,529 & 5\,251 & 10\,099 & 16\,005 \\
 \midrule
 \texttt{semgrep}         & baseline & 63  & 63  & --- & --- \\
@@ -223,7 +223,7 @@ Section~\ref{sec:eval-r4} reports latency for the fastest, headline, and slowest
 \end{tabular}
 \end{table}
 
-The trend between the fastest (\texttt{gemma3:1b+RAG}) and the slowest LLM configuration (\texttt{codellama+RAG}) is monotonic: median latency rises with model size and is further inflated by RAG context for every model except \texttt{qwen3:8b} (where the larger model amortizes the additional retrieval tokens more efficiently). The intermediate \texttt{qwen3:4b} and \texttt{gemma3:4b} rows confirm that the chapter's three reported configurations bound the rest of the sweep without surprises. Stage~2 repair latencies follow the same monotonic pattern at roughly 1.5$\times$ the stage-1 cost; full per-model stage-2 numbers are emitted in the per-run JSONs.
+The fastest LLM configuration (\texttt{gemma3:1b+RAG}, 1\,019\,ms median) and the slowest (\texttt{codellama+RAG}, 3\,529\,ms median) bracket a roughly 3.5$\times$ range. RAG affects the medians asymmetrically across model sizes: the smaller \texttt{gemma3:1b} and \texttt{gemma3:4b} configurations decode faster with RAG context (1\,215 $\rightarrow$ 1\,019\,ms and 2\,550 $\rightarrow$ 2\,077\,ms respectively, plausibly because the longer prompt nudges the decoder toward fewer empty-array outputs that re-enter the slow-tail), whereas the larger \texttt{qwen3:8b} and \texttt{codellama} configurations decode slower with RAG (1\,534 $\rightarrow$ 2\,216\,ms and 2\,024 $\rightarrow$ 3\,529\,ms), as expected from the additional prefill tokens dominating the per-call cost. Stage~2 repair latencies follow the same per-call cost structure at roughly 1.5$\times$ the stage-1 cost; full per-model stage-2 numbers are emitted in the per-run JSONs.
 
 \section{Full Per-Configuration Detection Accuracy}
 \label{app:r1-full-detection}
@@ -232,7 +232,7 @@ Section~\ref{sec:eval-r1} reports F1 across all 13 configurations as a visual ra
 
 \begin{table}[H]
 \centering
-\caption{Detection accuracy across all configurations using canonical-taxonomy matching (Section~\ref{sec:eval-metrics}). 71 vulnerable + 30 secure samples, 3 runs each ($n = 303$ evaluations per model$\times$mode). FPR is at the secure-sample level (FP if any issue is emitted in any run).}
+\caption{Detection accuracy across all configurations using canonical-taxonomy matching (Section~\ref{sec:eval-metrics}). 71 vulnerable + 30 secure samples, 3 runs each ($n = 303$ evaluations per model$\times$mode). FPR is at the secure-sample level (FP if any issue is emitted in any run). The nine non-headline LLM rows are rescored from the Apr-25 ablation run; the \texttt{qwen3:8b+RAG} row is from the dedicated Phase-1 b3 rerun used as the headline configuration. Both source JSONs are rescored under the same canonical taxonomy via \texttt{rescore-metrics.js}.}
 \label{tab:eval-r1-all-app}
 \footnotesize
 \begin{tabular}{@{}llrrrr@{}}
@@ -276,7 +276,7 @@ Median per-inference latency on this sample was 11\,238\,ms; this is higher than
 The byte-identity result is stronger than the literature typically reports for local LLM inference, where floating-point scheduling on the GPU is expected to introduce minor non-determinism. The 100\,\% byte-identity result on Apple M4 Max suggests Ollama's CPU/Metal kernel scheduling is deterministic under \texttt{temperature=0} on this hardware. Re-runs on different hardware would re-execute the same harness and produce a comparable report; the figure reported here applies to the configuration this thesis was evaluated on, not as a hardware-independent constant.
 
 \paragraph{Relationship to inter-run agreement.}
-The reproducibility harness uses \emph{identical} seeds across all three runs (seed 42 for each), while the main evaluation (Section~\ref{sec:eval-r2}) uses \emph{different} seeds per run (42, 137, 200) to create meaningful consensus diversity. The 100\,\% byte-identity reported here confirms that the model is perfectly deterministic under a fixed seed; the 87.6\,\% inter-run agreement reported in Section~\ref{sec:eval-r2} reflects the genuine sampling variation that arises when different seeds are used, which is the signal the multi-pass consensus filter is designed to exploit. The two measurements are therefore compatible and complementary, not contradictory.
+The reproducibility harness and the main evaluation (Section~\ref{sec:eval-r2}) both use a fixed seed (\texttt{seed = 42}) across all three runs, as configured in \texttt{evaluate-models.js}. The 100\,\% byte-identity reported here therefore propagates directly to the main evaluation: every per-case issue set is identical across the three runs, so inter-run detection agreement is 100\,\% on the full 101-case corpus as well, and the multi-pass consensus filter does not contribute discriminative signal under this protocol. Per-run seed rotation (e.g.\ seeds $\{42, 137, 200\}$) would introduce sampling diversity that the consensus filter could then exploit; that variant is not part of the evaluated configuration and is left to future work (Chapter~\ref{chap:future-work}).
 
 \section{Per-Vulnerability-Type Repair Generation Rate}
 \label{app:r3-by-type}
@@ -358,8 +358,8 @@ The TRAIN-selected threshold ($\geq 0.67$) applied to the frozen 30-case TEST sp
 \toprule
 \textbf{Threshold (TEST, $n=30$)} & \textbf{F1} & \textbf{Precision} & \textbf{Recall} & \textbf{FPR} \\
 \midrule
-$0.0$ (no gate)         & 60.00 & 63.16 & 57.14 & 0.00 \\
-$0.67$ (selected)       & \textbf{63.16} & \textbf{70.59} & 57.14 & \textbf{0.00} \\
+$0.0$ (no gate)         & 57.89 & 64.71 & 52.38 & 0.00 \\
+$0.67$ (selected)       & \textbf{61.11} & \textbf{73.33} & 52.38 & \textbf{0.00} \\
 \bottomrule
 \end{tabular}
 \end{table}

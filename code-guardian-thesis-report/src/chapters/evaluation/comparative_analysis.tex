@@ -23,9 +23,9 @@ Table~\ref{tab:eval-compliance} maps the headline configuration (\texttt{qwen3:8
     Canonical F1 71.43\% / precision 72.46\% / recall 70.42\% / FPR 10.00\%. With confidence gate $\geq 0.67$: F1 74.07\%, precision 78.13\%. Three of four sub-metrics meet the High threshold; F1 sits just below it. \\
     \midrule
     R2 &
-    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-150:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
-    Medium &
-    JSON parse 100\%, detection agreement 87.6\%. Structured output fully stable; detection mostly stable. \\
+    \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} &
+    High (under fixed-seed decoding) &
+    JSON parse 100\%, inter-run detection / label / severity agreement 100\% under the locked-seed protocol (Section~\ref{sec:eval-r2}). Output is fully stable for the evaluated configuration; the consensus filter would only contribute discriminative signal under per-run seed rotation. \\
     \midrule
     R3 &
     \raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-90:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &

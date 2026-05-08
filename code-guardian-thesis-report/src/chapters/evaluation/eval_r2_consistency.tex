@@ -1,94 +1,37 @@
 \section{R2: Consistency}
 \label{sec:eval-r2}
 
-This section evaluates detection consistency: whether the system produces stable, well-formed output across repeated analyses of the same code. The metrics are JSON parse success rate, inter-run detection agreement, and label stability, as defined in Section~\ref{sec:r2-consistency}.
+This section evaluates detection consistency: whether the system produces stable, well-formed output across repeated analyses of the same code. The metrics are JSON parse success rate, inter-run detection agreement, and label/severity stability, as defined in Section~\ref{sec:r2-consistency}.
 
 \subsection{Structured Output Stability}
 
-JSON parse success measures how often the system returns valid, schema-compliant output the IDE can process; a parse failure makes the result unusable regardless of semantic quality. All \texttt{qwen3} models achieve $\geq 98.8\%$ parse success, with \texttt{qwen3:8b} reaching $100.0\%$ in both modes thanks to JSON-mode decoding enforcement. Smaller models drop below 96\% (\texttt{gemma3:1b}: 95.6\% / 94.7\% LLM-only / +RAG), and RAG slightly reduces parse rates across all models due to increased prompt complexity. \texttt{codellama} sits at 96.5\% / 95.3\%. Figure~\ref{fig:r2-json-parse} compares the rates by model and mode.
-
-\begin{figure}[H]
-\centering
-\begin{tikzpicture}
-  \begin{axis}[
-    width=14cm,
-    height=6cm,
-    ybar,
-    bar width=10pt,
-    ylabel={JSON Parse Success Rate (\%)},
-    ylabel style={font=\small\bfseries},
-    xlabel={Model},
-    xlabel style={font=\small\bfseries},
-    symbolic x coords={gemma3:1b, gemma3:4b, qwen3:4b, qwen3:8b, codellama},
-    xtick=data,
-    xticklabel style={font=\small},
-    ymin=80, ymax=115,
-    ytick={80,85,90,95,100},
-    ymajorgrids=true,
-    grid style={line width=0.3pt, draw=gray!30},
-    legend style={
-      at={(0.5,-0.20)},
-      anchor=north,
-      legend columns=2,
-      font=\small,
-    },
-    enlarge x limits=0.15,
-    nodes near coords,
-    nodes near coords style={font=\scriptsize, rotate=90, anchor=west},
-  ]
-
-  \addplot[fill=blue!60, draw=blue!80!black] coordinates {
-    (gemma3:1b, 95.6)
-    (gemma3:4b, 97.3)
-    (qwen3:4b, 99.1)
-    (qwen3:8b, 100.0)
-    (codellama, 96.5)
-  };
-  \addlegendentry{LLM-only}
-
-  \addplot[fill=orange!60, draw=orange!80!black] coordinates {
-    (gemma3:1b, 94.7)
-    (gemma3:4b, 96.8)
-    (qwen3:4b, 98.8)
-    (qwen3:8b, 100.0)
-    (codellama, 95.3)
-  };
-  \addlegendentry{LLM+RAG}
-
-  \end{axis}
-\end{tikzpicture}
-\caption{JSON parse success rate by model and mode. Larger models produce more reliably structured output; RAG adds slight overhead that marginally reduces parse success in smaller models.}
-\label{fig:r2-json-parse}
-\end{figure}
+JSON parse success measures how often the system returns valid, schema-compliant output the IDE can process; a parse failure makes the result unusable regardless of semantic quality. Across the full ten-configuration sweep (303 inferences each, $n = 3\,030$), every LLM configuration reaches \textbf{100\,\% parse success}. The harness records zero schema-rejection failures in any configuration. The internal parser-path breakdown shows that 7 of the 10 configurations have all 303 outputs decode directly through Ollama's structured-output schema (\texttt{content\_direct\_array}); the other 3 (\texttt{gemma3:1b} LLM-only and +RAG, \texttt{qwen3:8b+RAG}, \texttt{codellama+RAG}) wrap the array in a single-key object on a small fraction of outputs (3--18 of 303), which the harness's post-processing extractor recovers without rejection. The end-to-end parse rate is therefore 100\,\% across the sweep, and JSON-mode decoding plus the response schema is the operative stability mechanism rather than the lexical structure of the model's raw output.
 
 \subsection{Inter-Run Detection Agreement}
 
-Because each vulnerable sample was evaluated 3 times, the harness measures how often all 3 runs agree on the detection decision. \texttt{qwen3:8b+RAG} shows the highest agreement at 87.6\% (roughly 62 of 71 samples unanimous); \texttt{gemma3:1b} sits at 71.7--73.5\%, and \texttt{codellama} ranges from 74.3 to 77.0\%. RAG slightly improves agreement for \texttt{qwen3} models but slightly reduces it for \texttt{codellama} and \texttt{gemma3}, consistent with the accuracy findings.
+Each vulnerable sample was evaluated three times under deterministic decoding (\texttt{temperature = 0}, fixed seed = 42; the seed configuration is documented in \texttt{evaluate-models.js}). Under this protocol, the three runs are byte-identical on the locked Apple~M4~Max profile (the dedicated reproducibility harness in Section~\ref{sec:eval-reproducibility-metric} reports \texttt{byteIdentityRate} = 100\,\% on its 10-case subset). A direct comparison of the three \texttt{detectedIssues} arrays per case confirms the same property at the full corpus level: for every LLM configuration in the ablation sweep, all 101 cases produce identical issue sets across the three runs (101 / 101 unanimous), so inter-run detection agreement is 100\,\%. The multi-pass consensus filter described in Section~\ref{sec:impl-pipeline} therefore does not contribute discriminative signal under the fixed-seed protocol used for the headline evaluation; it would only become active if the per-run seed were rotated, which is left to future work (Chapter~\ref{chap:future-work}).
 
 \subsection{Label and Severity Stability}
 
-Among samples detected in all 3 runs, \texttt{qwen3:8b+RAG} achieves 91\% CWE label agreement and 85\% severity agreement, while the weakest configuration (\texttt{gemma3:1b}) drops to 65\% and 58\% respectively. Severity is consistently less stable than CWE labels because it requires contextual inference rather than pattern recognition. Larger, instruction-tuned models are more stable across both dimensions.
-
-\paragraph{By vulnerability category and against SAST.}
-Consistency varies by category: well-known patterns like SQL injection and XSS reach above 90\% inter-run agreement on \texttt{qwen3:8b} because detection relies on clear lexical signals, while prototype pollution and race conditions drop below 70\%. SAST baselines (Semgrep, CodeQL) are fully deterministic and trivially achieve 100\% on every consistency metric, at the cost of rigid pattern matching --- the trade-off between LLM flexibility and SAST determinism is the core architectural consideration.
+Among samples detected in all three runs, every LLM configuration also achieves 100\,\% agreement on the issue \texttt{type} label and the \texttt{severity} field, which follows directly from the byte-identity property: identical raw output implies identical parsed fields. Severity is therefore as stable as detection itself in this configuration; deviations would only appear once seed rotation introduced raw-output variation. SAST baselines (Semgrep, CodeQL) are deterministic by construction and trivially achieve 100\,\% on every consistency metric, at the cost of rigid pattern matching. The trade-off between LLM flexibility and SAST determinism is the core architectural consideration; under fixed-seed decoding the LLM side closes the determinism gap entirely on this corpus.
 
 \subsection{Level Mapping}
 
 Based on the R2 evaluation scale (Table~\ref{tab:r2-consistency-thresholds}), the best configuration (\texttt{qwen3:8b+RAG}) maps as follows:
 
 \begin{itemize}
-  \item JSON parse success rate = 100\% $\rightarrow$ perfect (JSON-mode decoding)
-  \item Inter-run detection agreement = 87.6\% $\rightarrow$ falls in $[0.75, 0.90)$
-  \item Label agreement = 91\% $\rightarrow$ falls in $[0.80, 1.00)$ range
+  \item JSON parse success rate = 100\,\% $\rightarrow$ meets the High threshold ($\geq 99\,\%$).
+  \item Inter-run detection agreement = 100\,\% $\rightarrow$ meets the High threshold ($\geq 90\,\%$).
+  \item Label / severity agreement = 100\,\% $\rightarrow$ meets the High threshold ($\geq 90\,\%$).
 \end{itemize}
 
-The JSON parse rate meets the High threshold, but detection agreement falls in the Medium range. The binding constraint is detection agreement.
+All three sub-metrics meet the High threshold under the locked-seed protocol. The result is conditioned on the seed-fixed decoding configuration shipped with the evaluation harness; under seed rotation the agreement rates would drop and the binding constraint would shift to the lowest of the three.
 
 \begin{center}
 \begin{tabular}{cc}
-\raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) -- (90:0.35cm) arc (90:-150:0.35cm) -- cycle; \draw (0,0) circle (0.35cm);}} &
-\textbf{R2 Level: Medium consistency.} \\
+\raisebox{-0.3cm}{\tikz{\filldraw[fill=black] (0,0) circle (0.35cm);}} &
+\textbf{R2 Level: High consistency (under fixed-seed decoding).} \\
 \end{tabular}
 \end{center}
 
-Output is mostly stable with occasional deviations. Suitable for on-demand or audit-mode workflows where sporadic variation is tolerable.
+Output is fully stable across repeated analyses of the same code under the evaluated configuration. Suitable for always-on IDE use as long as the locked-seed decoding profile is preserved; sporadic variation is expected if the per-run seed is rotated to probe sampling diversity.

@@ -39,9 +39,15 @@ The technical scope includes local LLM inference via Ollama, function-level code
 
 The evaluation is limited to the accuracy, consistency, and latency of the structured output produced from code snippets in a controlled test harness. This thesis does not cover areas such as multi-language support beyond JavaScript/TypeScript, real-time collaborative editing, endpoint hardening, hardware-level attacks, or enterprise identity and network controls. Optional knowledge-base refresh may fetch \emph{public} vulnerability metadata (for example CVE/CWE descriptions) and can be disabled for fully offline operation.
 
-The thesis addresses three research questions, referenced throughout as RQ1--RQ3 (\label{sec:intro-rqs}). \textbf{RQ1 (Feasibility):} To what extent can a locally deployed LLM integrated into VS Code provide useful vulnerability detection and repair suggestions without transmitting source code to external services? \textbf{RQ2 (Grounding):} How does retrieval-augmented prompting influence detection quality compared to an LLM-only configuration, and to what extent is that effect uniform across model families? \textbf{RQ3 (Practicality):} What performance mechanisms (scoping, caching, debouncing) are necessary to make LLM-based security feedback usable within interactive IDE workflows?
+\subsection{Research Questions}
+\label{sec:intro-rqs}
 
-The main threat addressed is unintended disclosure of proprietary code through external analysis services (\label{sec:intro-threat-model}). Local inference reduces this risk surface but does not remove all security risks. Table~\ref{tab:intro-threat-model} summarizes the threat classes considered, the attack path each assumes, and the design response carried into the chapters that follow.
+The thesis addresses three research questions, referenced throughout as RQ1--RQ3. \textbf{RQ1 (Feasibility):} To what extent can a locally deployed LLM integrated into VS Code provide useful vulnerability detection and repair suggestions without transmitting source code to external services? \textbf{RQ2 (Grounding):} How does retrieval-augmented prompting influence detection quality compared to an LLM-only configuration, and to what extent is that effect uniform across model families? \textbf{RQ3 (Practicality):} What performance mechanisms (scoping, caching, debouncing) are necessary to make LLM-based security feedback usable within interactive IDE workflows?
+
+\subsection{Threat Model}
+\label{sec:intro-threat-model}
+
+The main threat addressed is unintended disclosure of proprietary code through external analysis services. Local inference reduces this risk surface but does not remove all security risks. Table~\ref{tab:intro-threat-model} summarizes the threat classes considered, the attack path each assumes, and the design response carried into the chapters that follow.
 
 \begin{table}[H]
   \centering
