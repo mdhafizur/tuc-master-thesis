@@ -11,6 +11,7 @@ LLM-based approaches dominate the SAST baselines on recall-driven F1; \texttt{qw
 
 \begin{figure}[H]
 \centering
+\resizebox{\textwidth}{!}{%
 \begin{tikzpicture}
   \begin{axis}[
     width=15cm,
@@ -63,7 +64,7 @@ LLM-based approaches dominate the SAST baselines on recall-driven F1; \texttt{qw
   };
 
   \end{axis}
-\end{tikzpicture}
+\end{tikzpicture}}
 \caption{F1 scores across all configurations using canonical-taxonomy matching. LLM-based approaches dominate the SAST baselines on recall-driven F1; \texttt{qwen3:8b+RAG} achieves the highest score (71.43\,\%) at 10\,\% FPR.}
 \label{fig:r1-f1-comparison}
 \end{figure}
@@ -136,6 +137,7 @@ Per-canonical-category recall on \texttt{qwen3:8b+RAG} (3-runs pooled, categorie
 
 \begin{figure}[H]
 \centering
+\resizebox{\textwidth}{!}{%
 \begin{tikzpicture}
   \begin{axis}[
     width=15cm,
@@ -183,8 +185,8 @@ Per-canonical-category recall on \texttt{qwen3:8b+RAG} (3-runs pooled, categorie
   };
 
   \end{axis}
-\end{tikzpicture}
-\caption{Per-canonical-category recall for \texttt{qwen3:8b+RAG} on the 3-runs-per-sample evaluation ($n$ counts pooled vulnerable evaluations across runs). Per-category figures are taken from the Apr-25 ablation run (\texttt{evaluation-2026-04-25T11-44-45-606Z-ablation-baselines.json}), which emits \texttt{perCategoryMetrics} for every configuration; the Phase-1 b3 rerun used for the headline aggregate metrics does not re-emit per-category breakdowns, so the same model$\times$mode pair is read from the ablation pass for this figure. Injection-style and prototype-pollution categories are detected at 90--100\,\%, while improper-auth, input-validation, and weak-encryption score 0\,\%. Section~\ref{sec:eval-error-analysis} analyses how much of this gap reflects true detection failure versus label mismatch.}
+\end{tikzpicture}}
+\caption{Per-canonical-category recall for \texttt{qwen3:8b+RAG} on the 3-runs-per-sample evaluation ($n$ counts pooled vulnerable evaluations across runs). Per-category figures are taken from the Apr-25 ablation run, which emits \texttt{perCategoryMetrics} for every configuration; the Phase-1 b3 rerun used for the headline aggregate metrics does not re-emit per-category breakdowns, so the same model$\times$mode pair is read from the ablation pass for this figure. Injection-style and prototype-pollution categories are detected at 90--100\,\%, while improper-auth, input-validation, and weak-encryption score 0\,\%. Section~\ref{sec:eval-error-analysis} analyses how much of this gap reflects true detection failure versus label mismatch.}
 \label{fig:r1-category}
 \end{figure}
 

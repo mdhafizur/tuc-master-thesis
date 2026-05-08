@@ -7,6 +7,7 @@ Of the 25 reviewed samples, 19 (76\%) included a repair suggestion. Among those 
 
 \begin{figure}[H]
 \centering
+\resizebox{\textwidth}{!}{%
 \begin{tikzpicture}
   \begin{axis}[
     width=13cm,
@@ -39,7 +40,7 @@ Of the 25 reviewed samples, 19 (76\%) included a repair suggestion. Among those 
   };
 
   \end{axis}
-\end{tikzpicture}
+\end{tikzpicture}}
 \caption{Repair quality breakdown for \texttt{qwen3:8b+RAG} (25 manually reviewed samples). Most repairs are semantically correct and strategy-aligned, but less than half contain directly executable code; the auto-applicable rate on the full $n=279$ stage-2 output (Section~\ref{sec:eval-r3-auto-applicable}) reaches 90.32\,\% under the structured \texttt{\{code, language\}} schema.}
 \label{fig:r3-repair-breakdown}
 \end{figure}

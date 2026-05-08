@@ -12,6 +12,8 @@ This chapter consolidates the headline outcomes, names the residual limitations 
 
 \textbf{Reproducible evaluation harness.} The repository ships a documented harness with the 101-case curated corpus, a 15-case external corpus drawn from NodeGoat, Juice Shop, and three named CVEs, three SAST baselines (Semgrep, CodeQL, ESLint), and a deterministic per-repair syntax validator that scales R3 beyond manual review.
 
+\textbf{Requirements-driven design.} Five requirements shaped the system end-to-end: R1 accuracy, R2 consistency, R3 repair quality, R4 usability, and R5 privacy. The pipeline, prompt contracts, evaluation harness, and deployment profiles are all organised around these five axes, and the per-requirement evidence is consolidated in the cross-requirement synthesis (Section~\ref{sec:eval-cross-requirement}).
+
 \section{Key Findings}
 \label{sec:conclusion-key-findings}
 
@@ -57,7 +59,7 @@ Table~\ref{tab:conclusion-deployment-profiles} summarizes deployment profiles in
     Use case & Config & Advantage & Main risk & Alert noise management \\
     \midrule
     Fast inline & \texttt{gemma3:1b+RAG} & Lowest LLM FPR among small models (23.33\%); fastest median (\textasciitilde1\,019\,ms) & Low recall (40.85\%) & Optional lightweight hints with light triage \\
-    Audit-focused & \texttt{qwen3:4b} (LLM-only) & Highest LLM recall (78.87\%); F1 66.14\%; \textasciitilde1.3\,s median & FPR 90\% & Use in explicit scan mode with manual triage \\
+    High-recall reference (not a deployment profile) & \texttt{qwen3:4b} (LLM-only) & Highest LLM recall (78.87\%); F1 66.14\%; \textasciitilde1.3\,s median & FPR 90\% places this configuration below the R1 \emph{Insufficient} floor & Reported as a recall ceiling reference; not recommended for deployment \\
     Best overall local run & \texttt{qwen3:8b+RAG} & F1 71.43\%, precision 72.46\%, FPR 10.00\%, stage-1 detection median 2\,216\,ms; with confidence gate $\geq 0.67$ precision rises to 78.13\% (F1 74.07\%) & Inference cost dominates more than 99\% of latency & Indicated default for quality-oriented local analysis under this hardware profile \\
     Hybrid low-noise & Semgrep + \texttt{qwen3:8b+RAG} (opt-in fusion) & Promotes corroborated findings to confidence~1.0 / \texttt{hybrid} source; uses Semgrep's 6.67\% FPR as a high-precision overlay & Fusion fires only for the small share Semgrep itself flags (recall 12.68\%) & Use SAST corroboration as visible-confidence overlay \\
     \bottomrule
