@@ -95,7 +95,7 @@ The full dataset is machine-readable in the repository.
     Dataset & \texttt{vulnerability-test-cases.generated.json} (71 vulnerable) + \texttt{negatives-only.generated.json} (30 secure) \\
     Prompt modes & LLM-only, LLM+RAG (\texttt{k=5}, static snippets) \\
     Runs per sample & 3 (vulnerable and secure, symmetric) \\
-    Generation & \texttt{temperature=0}, \texttt{seed=42/137/200}, \texttt{format='json'}, \texttt{num\_predict=1000} \\
+    Generation & \texttt{temperature=0}, \texttt{seed=42} (fixed across runs), \texttt{format='json'}, \texttt{num\_predict=1000} \\
     Request controls & \texttt{timeoutMs=30000}, \texttt{requestDelayMs=500}, sequential, no retries \\
     Type-level scoring & canonical taxonomy of 26 classes (Section~\ref{sec:eval-metrics}) \\
     Confidence & inter-run agreement; reported un-gated and at $\geq 0.67$ \\
@@ -198,7 +198,7 @@ Section~\ref{sec:eval-r4} reports latency for the fastest, headline, and slowest
 
 \begin{table}[H]
 \centering
-\caption{Full per-model end-to-end latency (milliseconds) for all evaluated LLM configurations and the three SAST baselines. Pooled over 303 evaluations per model$\times$mode (101 cases $\times$ 3 runs). The nine non-headline LLM rows are taken from the Apr-25 ablation run; the \texttt{qwen3:8b+RAG} row is taken from the dedicated Phase-1 b3 rerun used as the headline configuration.}
+\caption{Full per-model end-to-end latency (milliseconds) for all evaluated LLM configurations and the three SAST baselines. Pooled over 303 evaluations per model$\times$mode (101 cases $\times$ 3 runs).}
 \label{tab:r4-latency-full}
 \footnotesize
 \begin{tabular}{@{}llrrrr@{}}
@@ -232,7 +232,7 @@ Section~\ref{sec:eval-r1} reports F1 across all 13 configurations as a visual ra
 
 \begin{table}[H]
 \centering
-\caption{Detection accuracy across all configurations using canonical-taxonomy matching (Section~\ref{sec:eval-metrics}). 71 vulnerable + 30 secure samples, 3 runs each ($n = 303$ evaluations per model$\times$mode). FPR is at the secure-sample level (FP if any issue is emitted in any run). The nine non-headline LLM rows are rescored from the Apr-25 ablation run; the \texttt{qwen3:8b+RAG} row is from the dedicated Phase-1 b3 rerun used as the headline configuration. Both source JSONs are rescored under the same canonical taxonomy via \texttt{rescore-metrics.js}.}
+\caption{Detection accuracy across all configurations using canonical-taxonomy matching (Section~\ref{sec:eval-metrics}). 71 vulnerable + 30 secure samples, 3 runs each ($n = 303$ evaluations per model$\times$mode). FPR is at the secure-sample level (FP if any issue is emitted in any run). All configurations are rescored under the same canonical taxonomy via \texttt{rescore-metrics.js}.}
 \label{tab:eval-r1-all-app}
 \footnotesize
 \begin{tabular}{@{}llrrrr@{}}

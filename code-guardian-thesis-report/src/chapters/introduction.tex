@@ -72,14 +72,16 @@ The main threat addressed is unintended disclosure of proprietary code through e
 
 The main objective of this thesis is to design and evaluate an IDE-integrated assistant --- called Code Guardian --- that provides contextual vulnerability detection and repair suggestions while preserving source-code confidentiality. The system aims to overcome the limitations of existing approaches by combining local LLM inference with retrieval-augmented generation in a privacy-preserving architecture that runs entirely on the developer's machine.
 
-To achieve this goal, the following three specific objectives are defined:
+To achieve this goal, the following four specific objectives are defined:
 
 \begin{enumerate}
   \item \textbf{Design a privacy-preserving VS Code extension for local vulnerability analysis} that separates the process into a two-stage pipeline: detection followed by developer-controlled repair suggestion. The extension enforces structured JSON output for machine-checkable diagnostics, integrates an optional RAG module backed by curated security knowledge (CWE descriptions, OWASP guidance), and implements performance mechanisms --- function-level scoping, LRU caching, and debounced triggering --- for practical IDE interaction latency.
 
-  \item \textbf{Evaluate system performance across local model configurations} using a documented evaluation harness with 101 test cases spanning 14 CWE categories. Five local models are tested in both LLM-only and LLM+RAG modes, reporting precision, recall, F1, false-positive rate, JSON parse success, and end-to-end latency. Results from all configurations are compared to identify the most effective trade-off between detection quality, output robustness, and response time.
+  \item \textbf{Add a hybrid AST + LLM audit mode for whole-project scans} that runs a deterministic AST sink scanner in parallel with the LLM and unions the findings, broadening recall on real-world code beyond what function-level inline detection can reach.
 
-  \item \textbf{Assess the practical impact of retrieval-augmented prompting} by comparing LLM-only and LLM+RAG configurations to determine whether grounding model reasoning in external security knowledge improves detection quality and explanation grounding, or whether the added retrieval context introduces noise that degrades specific model configurations.
+  \item \textbf{Build a reproducible evaluation harness} with a documented test corpus (101 curated cases plus a 15-case external corpus drawn from OWASP NodeGoat, OWASP Juice Shop, and three named CVEs), three SAST baselines (Semgrep, CodeQL, ESLint), and a deterministic per-repair syntax validator. Five local models are tested in both LLM-only and LLM+RAG modes, reporting precision, recall, F1, false-positive rate, JSON parse success, end-to-end latency, and the auto-applicable repair rate.
+
+  \item \textbf{Enforce and verify the privacy and reproducibility envelope} through a synchronous egress gate that blocks every non-loopback connection by default, an Ed25519-signed SHA-256 corpus manifest verified at load time, and a containerised harness with an automated egress and source-leak harness that confirms zero non-loopback transmission on every run.
 \end{enumerate}
 
 These objectives guide the development and validation of a system that is not only technically functional but also practical for interactive developer workflows.

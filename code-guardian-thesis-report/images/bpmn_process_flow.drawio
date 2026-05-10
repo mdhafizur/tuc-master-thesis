@@ -7,17 +7,17 @@
 
         <!-- POOL -->
         <mxCell id="pool" parent="1" style="shape=swimlane;startSize=28;horizontal=0;swimlaneFillColor=#ffffff;fontSize=18;fontStyle=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;" value="Code Guardian Analysis" vertex="1">
-          <mxGeometry x="40" y="40" width="3540" height="780" as="geometry" />
+          <mxGeometry x="40" y="40" width="3540" height="680" as="geometry" />
         </mxCell>
 
         <!-- LANE: Developer -->
         <mxCell id="lane-dev" parent="pool" style="shape=swimlane;horizontal=0;startSize=28;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;fontSize=16;" value="Developer (User)" vertex="1">
-          <mxGeometry x="28" y="0" width="3512" height="160" as="geometry" />
+          <mxGeometry x="28" y="0" width="3512" height="200" as="geometry" />
         </mxCell>
 
         <!-- LANE: Code Guardian System -->
         <mxCell id="lane-sys" parent="pool" style="shape=swimlane;horizontal=0;startSize=28;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;fontSize=16;" value="Code Guardian System" vertex="1">
-          <mxGeometry x="28" y="160" width="3512" height="592" as="geometry" />
+          <mxGeometry x="28" y="200" width="3512" height="480" as="geometry" />
         </mxCell>
 
         <!-- ============ DEVELOPER LANE ============ -->
@@ -331,7 +331,7 @@
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <!-- Real-time: g-trigger top → debounce → join -->
+        <!-- Real-time: g-trigger top &#x2192; debounce &#x2192; join -->
         <mxCell id="sf-tr-rt" parent="1" edge="1" source="g-trigger" target="ev-debounce" style="endArrow=block;html=1;strokeWidth=1.5;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=0.5;exitY=0;entryX=0;entryY=0.5;fontSize=13;labelBackgroundColor=#FFFFFF;" value="real-time">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
@@ -344,7 +344,7 @@
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <!-- Workspace: g-trigger bottom → workspace iter → join -->
+        <!-- Workspace: g-trigger bottom &#x2192; workspace iter &#x2192; join -->
         <mxCell id="sf-tr-ws" parent="1" edge="1" source="g-trigger" target="t-ws-iter" style="endArrow=block;html=1;strokeWidth=1.5;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=0.5;exitY=1;entryX=0;entryY=0.5;fontSize=13;labelBackgroundColor=#FFFFFF;" value="workspace">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
@@ -352,22 +352,22 @@
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <!-- Join → Extract -->
+        <!-- Join &#x2192; Extract -->
         <mxCell id="sf-join-extract" parent="1" edge="1" source="g-trigger-join" target="t-extract" style="endArrow=block;html=1;strokeWidth=1.5;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <!-- Extract → cache -->
+        <!-- Extract &#x2192; cache -->
         <mxCell id="sf-extract-cache" parent="1" edge="1" source="t-extract" target="g-cache" style="endArrow=block;html=1;strokeWidth=1.5;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <!-- Cache miss → RAG -->
+        <!-- Cache miss &#x2192; RAG -->
         <mxCell id="sf-cache-rag" parent="1" edge="1" source="g-cache" target="g-rag" style="endArrow=block;html=1;strokeWidth=1.5;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;fontSize=13;labelBackgroundColor=#FFFFFF;" value="miss">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <!-- Cache hit → render (route at y=400, in proper gap above main row) -->
+        <!-- Cache hit &#x2192; render (route at y=400, in proper gap above main row) -->
         <mxCell id="sf-cache-hit" parent="1" edge="1" source="g-cache" target="t-render" style="endArrow=block;html=1;strokeWidth=1.5;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=0.5;exitY=0;entryX=0.5;entryY=0;fontSize=13;labelBackgroundColor=#FFFFFF;" value="hit">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
@@ -377,7 +377,7 @@
           </mxGeometry>
         </mxCell>
 
-        <!-- RAG yes → vector search -->
+        <!-- RAG yes &#x2192; vector search -->
         <mxCell id="sf-rag-yes" parent="1" edge="1" source="g-rag" target="t-vector" style="endArrow=block;html=1;strokeWidth=1.5;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=0.5;exitY=0;entryX=0;entryY=0.5;fontSize=13;labelBackgroundColor=#FFFFFF;" value="yes">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
@@ -441,7 +441,7 @@
         </mxCell>
 
         <!-- ============ MESSAGE FLOWS (cross-lane, dashed) ============ -->
-        <mxCell id="mf-trigger-recv" parent="1" edge="1" source="t-trigger" target="ev-recv" style="endArrow=open;startArrow=oval;startFill=0;html=1;strokeWidth=1.5;strokeColor=#000000;dashed=1;dashPattern=8 5;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=0;exitY=1;entryX=0.5;entryY=0;fontSize=13;labelBackgroundColor=#FFFFFF;" value="trigger (type)">
+        <mxCell id="mf-trigger-recv" parent="1" edge="1" source="t-trigger" target="ev-recv" style="endArrow=open;startArrow=oval;startFill=0;html=1;strokeWidth=1.5;strokeColor=#000000;dashed=1;dashPattern=8 5;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=0;exitY=1;entryX=0.5;entryY=0;fontSize=13;labelBackgroundColor=#FFFFFF;" value="trigger">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="mf-render-wait" parent="1" edge="1" source="t-render" target="ev-wait" style="endArrow=open;startArrow=oval;startFill=0;html=1;strokeWidth=1.5;strokeColor=#000000;dashed=1;dashPattern=8 5;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=0.5;exitY=0;entryX=0.5;entryY=1;fontSize=13;labelBackgroundColor=#FFFFFF;" value="diagnostics">
