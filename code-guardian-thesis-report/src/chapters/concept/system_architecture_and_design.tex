@@ -18,12 +18,14 @@ Figure~\ref{fig:c4-context} positions Code Guardian within its operational envir
 
 \textbf{Optional external data.} Code Guardian may optionally fetch \emph{public vulnerability metadata} to refresh the knowledge base (e.g., CVE records from the NVD API). This traffic does not include user source code and can be disabled by running in offline mode. After a refresh, cached knowledge can be reused without network access. This separation preserves the core privacy goal (no source-code exfiltration, R5) while still allowing the knowledge base to evolve over time.
 
-\begin{figure}[H]
+\begin{sidewaysfigure}
   \centering
-  \safeincludegraphics[width=1\linewidth]{images/c4_context.drawio.pdf}
+  \safeincludegraphics[width=\linewidth]{images/c4_context.drawio.pdf}
   \caption{C4 Context diagram showing Code Guardian within its operational environment. The system communicates with VS Code (IDE platform), Ollama (local LLM on localhost:11434), and a local vector database, all within the privacy boundary (green dashed). CVE/NVD APIs (gold, dashed) are the only optional external connection and do not receive source code.}
   \label{fig:c4-context}
-\end{figure}
+\end{sidewaysfigure}
+
+\FloatBarrier
 
 \subsection{Container View: Internal Component Structure}
 \label{subsec:container-view}
@@ -44,6 +46,8 @@ Figure~\ref{fig:c4-container} summarizes the main internal containers and their 
   \caption{C4 Container diagram showing internal components. The VS Code Extension handles triggers, caching, and UI rendering. The Local Analysis Backend performs LLM inference with JSON-mode and multi-pass consensus filtering, RAG orchestration, and Stage~2 repair generation. Vector Database and Result Cache are local data stores. All source code stays within the system boundary.}
   \label{fig:c4-container}
 \end{sidewaysfigure}
+
+\FloatBarrier
 
 \subsection{Process View: End-to-End Workflows}
 \label{subsec:process-view}
@@ -71,9 +75,11 @@ The audit-mode hybrid (described in Chapter~\ref{chap:implementation}) extends t
 \begin{sidewaysfigure}
   \centering
   \safeincludegraphics[width=\linewidth]{images/bpmn_process_flow.drawio.pdf}
-  \caption{BPMN process view of Code Guardian's inline analysis workflow with two swim lanes (Developer, Code Guardian System). The workflow starts when the developer types or saves source code, sending an \texttt{onChange} message into the system. After an 800\,ms debounce timer the system extracts the function scope and reaches an exclusive cache-hit gateway: a hit short-circuits straight to rendering, a miss reaches a second gateway for the optional RAG branch (vector search and prompt augmentation when enabled). LLM Stage~1 inference, JSON parsing with cache write, and IDE diagnostic rendering follow, after which a message flow returns the findings to the developer for review and quick-fix application.}
+  \caption{BPMN process view of Code Guardian's detection-and-repair pipeline across two swim lanes.}
   \label{fig:bpmn}
 \end{sidewaysfigure}
+
+\FloatBarrier
 
 \subsection{Sequence Diagrams: Concrete Detection Flows}
 \label{sec:sequence-diagrams}

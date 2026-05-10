@@ -12,8 +12,7 @@ Finally, many SAST tools provide limited remediation guidance, requiring develop
 
 \subsubsection{Evaluation Against Requirements}
 \label{subsubsec:eval-sast}
-
-Table~\ref{tab:eval-sast} evaluates the three SAST tools discussed above against requirements R1--R5 using the visual scale defined in Section~\ref{sec:requirements}.
+The three deployable tools (Semgrep, CodeQL, ESLint security) score high on consistency (R2), usability (R4), and privacy (R5), reflecting deterministic execution, low latency, and on-device operation. Accuracy (R1) varies with rule sophistication: CodeQL's data-flow queries reach medium, Semgrep's pattern matching sits at medium-low, and ESLint security plugins remain low because they target style and obvious-sink rules rather than security-flow analysis. The three research-grade systems (Coverity, Code Property Graph, FlowDroid) demonstrate medium R1 accuracy through richer data- and taint-flow representations, but neither IDE integration nor deployment privacy is part of their published evaluation, so R4 and R5 are not addressed. None of the six provide actionable repair guidance (R3), leaving developers to design fixes manually. The full cross-paradigm comparison is in Appendix~\ref{appendix:positioning-table}. These limitations motivate approaches that keep deterministic checks as guardrails while adding more flexible reasoning and repair generation closer to the developer workflow. Table~\ref{tab:eval-sast} evaluates the three SAST tools discussed above against requirements R1--R5 using the visual scale defined in Section~\ref{sec:requirements}.
 
 \begin{table}[H]
   \centering
@@ -40,4 +39,3 @@ Table~\ref{tab:eval-sast} evaluates the three SAST tools discussed above against
   \end{tabular}
 \end{table}
 
-The three deployable tools (Semgrep, CodeQL, ESLint security) score high on consistency (R2), usability (R4), and privacy (R5), reflecting deterministic execution, low latency, and on-device operation. Accuracy (R1) varies with rule sophistication: CodeQL's data-flow queries reach medium, Semgrep's pattern matching sits at medium-low, and ESLint security plugins remain low because they target style and obvious-sink rules rather than security-flow analysis. The three research-grade systems (Coverity, Code Property Graph, FlowDroid) demonstrate medium R1 accuracy through richer data- and taint-flow representations, but neither IDE integration nor deployment privacy is part of their published evaluation, so R4 and R5 are not addressed. None of the six provide actionable repair guidance (R3), leaving developers to design fixes manually. The full cross-paradigm comparison is in Appendix~\ref{appendix:positioning-table}. These limitations motivate approaches that keep deterministic checks as guardrails while adding more flexible reasoning and repair generation closer to the developer workflow.

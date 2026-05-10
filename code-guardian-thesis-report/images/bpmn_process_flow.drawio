@@ -1,187 +1,507 @@
 <mxfile host="Electron">
   <diagram name="BPMN Process Flow">
-    <mxGraphModel dx="1800" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1700" pageHeight="700" math="0" shadow="0">
+    <mxGraphModel dx="2400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="3620" pageHeight="840" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
 
         <!-- POOL -->
-        <mxCell id="pool" parent="1" style="shape=swimlane;startSize=20;horizontal=0;swimlaneFillColor=#ffffff;fontSize=13;fontStyle=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;" value="Code Guardian Analysis" vertex="1">
-          <mxGeometry x="40" y="80" width="1620" height="500" as="geometry" />
+        <mxCell id="pool" parent="1" style="shape=swimlane;startSize=28;horizontal=0;swimlaneFillColor=#ffffff;fontSize=18;fontStyle=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;" value="Code Guardian Analysis" vertex="1">
+          <mxGeometry x="40" y="40" width="3540" height="780" as="geometry" />
         </mxCell>
 
         <!-- LANE: Developer -->
-        <mxCell id="lane-dev" parent="pool" style="shape=swimlane;horizontal=0;startSize=20;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;fontSize=12;" value="Developer" vertex="1">
-          <mxGeometry x="20" y="0" width="1600" height="140" as="geometry" />
+        <mxCell id="lane-dev" parent="pool" style="shape=swimlane;horizontal=0;startSize=28;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;fontSize=16;" value="Developer (User)" vertex="1">
+          <mxGeometry x="28" y="0" width="3512" height="160" as="geometry" />
         </mxCell>
 
         <!-- LANE: Code Guardian System -->
-        <mxCell id="lane-sys" parent="pool" style="shape=swimlane;horizontal=0;startSize=20;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;fontSize=12;" value="Code Guardian System" vertex="1">
-          <mxGeometry x="20" y="140" width="1600" height="360" as="geometry" />
+        <mxCell id="lane-sys" parent="pool" style="shape=swimlane;horizontal=0;startSize=28;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;fontSize=16;" value="Code Guardian System" vertex="1">
+          <mxGeometry x="28" y="160" width="3512" height="592" as="geometry" />
         </mxCell>
 
-        <!-- DEVELOPER LANE NODES -->
-        <!-- Start event (thin circle) -->
-        <mxCell id="ev-start" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;" value="" vertex="1">
-          <mxGeometry x="100" y="170" width="40" height="40" as="geometry" />
+        <!-- ============ DEVELOPER LANE ============ -->
+        <!-- Tasks at y=120 h=90; events at y=135 60x60 -->
+
+        <mxCell id="ev-start" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2;" value="" vertex="1">
+          <mxGeometry x="90" y="135" width="60" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="ev-start-lbl" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=11;" value="Edit code" vertex="1">
-          <mxGeometry x="80" y="215" width="80" height="20" as="geometry" />
+        <mxCell id="ev-start-lbl" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=14;" value="Open project" vertex="1">
+          <mxGeometry x="60" y="200" width="120" height="22" as="geometry" />
         </mxCell>
 
-        <!-- User task: Edit code -->
-        <mxCell id="t-edit" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=1;fontSize=12;" value="&#x1F464;  Type / save&#xa;source code" vertex="1">
-          <mxGeometry x="200" y="160" width="140" height="60" as="geometry" />
+        <mxCell id="t-edit" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=1.5;fontSize=16;" value="&#x1F464;  Edit code" vertex="1">
+          <mxGeometry x="190" y="120" width="180" height="90" as="geometry" />
         </mxCell>
 
-        <!-- User task: Review diagnostics -->
-        <mxCell id="t-review" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=1;fontSize=12;" value="&#x1F464;  Review findings,&#xa;apply quick fix" vertex="1">
-          <mxGeometry x="1380" y="160" width="160" height="60" as="geometry" />
+        <mxCell id="t-trigger" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=1.5;fontSize=16;" value="&#x1F464;  Trigger analysis&#xa;(type / scan / select / audit)" vertex="1">
+          <mxGeometry x="410" y="120" width="260" height="90" as="geometry" />
         </mxCell>
 
-        <!-- End event (thick circle) -->
-        <mxCell id="ev-end" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=3.5;" value="" vertex="1">
-          <mxGeometry x="1580" y="170" width="40" height="40" as="geometry" />
+        <mxCell id="ev-wait" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2;fontSize=22;align=center;verticalAlign=middle;" value="&#x2709;" vertex="1">
+          <mxGeometry x="2900" y="135" width="60" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="ev-end-lbl" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=11;" value="Done" vertex="1">
-          <mxGeometry x="1560" y="215" width="80" height="20" as="geometry" />
-        </mxCell>
-
-        <!-- SYSTEM LANE NODES -->
-
-        <!-- Receive message event (thin circle with envelope) -->
-        <mxCell id="ev-recv" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;fontSize=14;align=center;verticalAlign=middle;" value="&#x2709;" vertex="1">
-          <mxGeometry x="200" y="290" width="40" height="40" as="geometry" />
-        </mxCell>
-        <mxCell id="ev-recv-lbl" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=11;" value="Document&#xa;change" vertex="1">
-          <mxGeometry x="180" y="335" width="80" height="30" as="geometry" />
+        <mxCell id="ev-wait-lbl" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=14;" value="Diagnostics&#xa;received" vertex="1">
+          <mxGeometry x="2870" y="200" width="120" height="36" as="geometry" />
         </mxCell>
 
-        <!-- Timer intermediate event (clock face) -->
-        <mxCell id="ev-timer" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;fontSize=14;align=center;verticalAlign=middle;" value="&#x29D6;" vertex="1">
-          <mxGeometry x="290" y="290" width="40" height="40" as="geometry" />
-        </mxCell>
-        <mxCell id="ev-timer-lbl" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=11;" value="Debounce&#xa;800 ms" vertex="1">
-          <mxGeometry x="270" y="335" width="80" height="30" as="geometry" />
+        <mxCell id="t-review" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=1.5;fontSize=16;" value="&#x1F464;  Review&#xa;findings" vertex="1">
+          <mxGeometry x="3000" y="120" width="170" height="90" as="geometry" />
         </mxCell>
 
-        <!-- Script task: Extract function scope -->
-        <mxCell id="t-extract" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=1;fontSize=12;" value="&#x1F4C4;  Extract function&#xa;scope" vertex="1">
-          <mxGeometry x="380" y="280" width="140" height="60" as="geometry" />
+        <mxCell id="g-action" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2;fontSize=24;align=center;verticalAlign=middle;" value="&#xD7;" vertex="1">
+          <mxGeometry x="3210" y="135" width="60" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="g-action-lbl" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=14;" value="Apply fix?" vertex="1">
+          <mxGeometry x="3180" y="200" width="120" height="22" as="geometry" />
         </mxCell>
 
-        <!-- XOR Gateway: Cache hit? -->
-        <mxCell id="g-cache" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;fontSize=14;align=center;verticalAlign=middle;" value="&#xD7;" vertex="1">
-          <mxGeometry x="570" y="290" width="40" height="40" as="geometry" />
-        </mxCell>
-        <mxCell id="g-cache-lbl" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=11;" value="Cache hit?" vertex="1">
-          <mxGeometry x="550" y="335" width="80" height="20" as="geometry" />
+        <mxCell id="t-applyfix" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=1.5;fontSize=16;" value="&#x1F464;  Apply quick&#xa;fix" vertex="1">
+          <mxGeometry x="3300" y="120" width="170" height="90" as="geometry" />
         </mxCell>
 
-        <!-- XOR Gateway: RAG enabled? -->
-        <mxCell id="g-rag" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;fontSize=14;align=center;verticalAlign=middle;" value="&#xD7;" vertex="1">
-          <mxGeometry x="690" y="290" width="40" height="40" as="geometry" />
+        <mxCell id="ev-end" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=4;" value="" vertex="1">
+          <mxGeometry x="3510" y="135" width="60" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="g-rag-lbl" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=11;" value="RAG enabled?" vertex="1">
-          <mxGeometry x="660" y="335" width="100" height="20" as="geometry" />
-        </mxCell>
-
-        <!-- Service task: Vector search (RAG branch) -->
-        <mxCell id="t-rag" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=1;fontSize=12;" value="&#x2699;  Vector search&#xa;(top-k)" vertex="1">
-          <mxGeometry x="780" y="400" width="140" height="60" as="geometry" />
+        <mxCell id="ev-end-lbl" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=14;" value="Done" vertex="1">
+          <mxGeometry x="3480" y="200" width="120" height="22" as="geometry" />
         </mxCell>
 
-        <!-- Service task: LLM Stage 1 inference -->
-        <mxCell id="t-llm" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=1;fontSize=12;" value="&#x2699;  LLM Stage 1&#xa;inference" vertex="1">
-          <mxGeometry x="970" y="280" width="140" height="60" as="geometry" />
+        <!-- ============ SYSTEM LANE ============ -->
+        <!-- Layout (proper gaps ~25-30px):
+             Above row tasks y=305 h=70; events y=310 60x60. Bottom 375.
+             Cache-hit route at y=400 (25px below above row).
+             Main row tasks y=425 h=80; events y=435 60x60. Bottom 505.
+             Main-row event labels y=515 h=36. Bottom 551.
+             Below row tasks y=580 h=80; events y=590 60x60. Bottom 660.
+             Below-row event labels y=670 h=36. Bottom 706.
+             Legend y=735 h=60. Bottom 795. -->
+
+        <!-- Receive event -->
+        <mxCell id="ev-recv" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2;fontSize=22;align=center;verticalAlign=middle;" value="&#x2709;" vertex="1">
+          <mxGeometry x="90" y="435" width="60" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="ev-recv-lbl" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=14;" value="Trigger&#xa;received" vertex="1">
+          <mxGeometry x="60" y="515" width="120" height="36" as="geometry" />
         </mxCell>
 
-        <!-- Script task: Parse JSON & cache -->
-        <mxCell id="t-parse" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=1;fontSize=12;" value="&#x1F4C4;  Parse JSON,&#xa;cache result" vertex="1">
-          <mxGeometry x="1160" y="280" width="140" height="60" as="geometry" />
+        <!-- 4-way XOR Gateway: Trigger type? -->
+        <mxCell id="g-trigger" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2;fontSize=24;align=center;verticalAlign=middle;" value="&#xD7;" vertex="1">
+          <mxGeometry x="200" y="435" width="60" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="g-trigger-lbl" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=14;" value="Trigger&#xa;type?" vertex="1">
+          <mxGeometry x="170" y="515" width="120" height="36" as="geometry" />
         </mxCell>
 
-        <!-- Service task: Render diagnostics -->
-        <mxCell id="t-render" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=1;fontSize=12;" value="&#x2699;  Render IDE&#xa;diagnostics" vertex="1">
-          <mxGeometry x="1350" y="280" width="140" height="60" as="geometry" />
+        <!-- Real-time branch: timer (above row, y=310 60x60) -->
+        <mxCell id="ev-debounce" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2;fontSize=22;align=center;verticalAlign=middle;" value="&#x29D6;" vertex="1">
+          <mxGeometry x="320" y="310" width="60" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="ev-debounce-lbl" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=14;" value="Debounce&#xa;800 ms" vertex="1">
+          <mxGeometry x="290" y="265" width="120" height="36" as="geometry" />
         </mxCell>
 
-        <!-- End event (thick circle) for system lane -->
-        <mxCell id="ev-end-sys" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=3.5;" value="" vertex="1">
-          <mxGeometry x="1530" y="290" width="40" height="40" as="geometry" />
+        <!-- Workspace branch: iterate (below row) -->
+        <mxCell id="t-ws-iter" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=1.5;fontSize=15;" value="&#x1F4C4;  Iterate workspace&#xa;files (*.js / *.ts)" vertex="1">
+          <mxGeometry x="280" y="580" width="220" height="80" as="geometry" />
+        </mxCell>
+        <!-- MI marker for workspace iteration (bottom of box) -->
+        <mxCell id="mi-ws-line1" parent="1" style="endArrow=none;html=1;strokeWidth=2.5;strokeColor=#000000;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="382" y="638" as="sourcePoint" />
+            <mxPoint x="382" y="657" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="mi-ws-line2" parent="1" style="endArrow=none;html=1;strokeWidth=2.5;strokeColor=#000000;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="638" as="sourcePoint" />
+            <mxPoint x="390" y="657" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="mi-ws-line3" parent="1" style="endArrow=none;html=1;strokeWidth=2.5;strokeColor=#000000;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="398" y="638" as="sourcePoint" />
+            <mxPoint x="398" y="657" as="targetPoint" />
+          </mxGeometry>
         </mxCell>
 
-        <!-- SEQUENCE FLOWS (solid, within lanes) -->
-        <mxCell id="sf-start" parent="1" edge="1" source="ev-start" target="t-edit" style="endArrow=block;html=1;strokeWidth=1;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;">
+        <!-- Trigger join XOR -->
+        <mxCell id="g-trigger-join" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2;fontSize=24;align=center;verticalAlign=middle;" value="&#xD7;" vertex="1">
+          <mxGeometry x="540" y="435" width="60" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Extract scope (main row task y=425 h=80) -->
+        <mxCell id="t-extract" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=1.5;fontSize=15;" value="&#x1F4C4;  Extract scope&#xa;(function / file / selection)" vertex="1">
+          <mxGeometry x="640" y="425" width="240" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Cache hit gateway -->
+        <mxCell id="g-cache" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2;fontSize=24;align=center;verticalAlign=middle;" value="&#xD7;" vertex="1">
+          <mxGeometry x="920" y="435" width="60" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="g-cache-lbl" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=14;" value="Cache&#xa;hit?" vertex="1">
+          <mxGeometry x="890" y="515" width="120" height="36" as="geometry" />
+        </mxCell>
+
+        <!-- RAG enabled gateway -->
+        <mxCell id="g-rag" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2;fontSize=24;align=center;verticalAlign=middle;" value="&#xD7;" vertex="1">
+          <mxGeometry x="1020" y="435" width="60" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="g-rag-lbl" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=14;" value="RAG&#xa;enabled?" vertex="1">
+          <mxGeometry x="990" y="515" width="120" height="36" as="geometry" />
+        </mxCell>
+
+        <!-- Vector search (RAG branch, above row y=305 h=70) -->
+        <mxCell id="t-vector" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;strokeWidth=1.5;fontSize=15;" value="&#x2699;  RAG Agent:&#xa;Vector search (top-k)" vertex="1">
+          <mxGeometry x="1100" y="305" width="220" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- Build prompt (script task) -->
+        <mxCell id="t-buildprompt" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=1.5;fontSize=15;" value="&#x1F4C4;  Build prompt&#xa;(JSON-mode schema)" vertex="1">
+          <mxGeometry x="1340" y="425" width="200" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- LLM Stage 1 (multi-instance) -->
+        <mxCell id="t-llm" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;strokeWidth=1.5;fontSize=15;" value="&#x2699;  LLM Agent:&#xa;Stage 1 detection" vertex="1">
+          <mxGeometry x="1580" y="425" width="200" height="80" as="geometry" />
+        </mxCell>
+        <!-- MI marker for Stage 1 (bottom of box: box ends 505) -->
+        <mxCell id="mi-llm-line1" parent="1" style="endArrow=none;html=1;strokeWidth=2.5;strokeColor=#000000;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1672" y="486" as="sourcePoint" />
+            <mxPoint x="1672" y="503" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="mi-llm-line2" parent="1" style="endArrow=none;html=1;strokeWidth=2.5;strokeColor=#000000;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1680" y="486" as="sourcePoint" />
+            <mxPoint x="1680" y="503" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="mi-llm-line3" parent="1" style="endArrow=none;html=1;strokeWidth=2.5;strokeColor=#000000;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1688" y="486" as="sourcePoint" />
+            <mxPoint x="1688" y="503" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="mi-llm-lbl" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=13;fontStyle=2;" value="N seeds" vertex="1">
+          <mxGeometry x="1640" y="515" width="120" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Parse JSON -->
+        <mxCell id="t-parse" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=1.5;fontSize=15;" value="&#x1F4C4;  Parse JSON&#xa;output" vertex="1">
+          <mxGeometry x="1820" y="425" width="180" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- JSON valid gateway -->
+        <mxCell id="g-json" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2;fontSize=24;align=center;verticalAlign=middle;" value="&#xD7;" vertex="1">
+          <mxGeometry x="2040" y="435" width="60" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="g-json-lbl" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=14;" value="Schema&#xa;valid?" vertex="1">
+          <mxGeometry x="2010" y="515" width="120" height="36" as="geometry" />
+        </mxCell>
+
+        <!-- JSON-fail terminate end (below row y=590 60x60) -->
+        <mxCell id="ev-end-jsonfail" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=4;" value="" vertex="1">
+          <mxGeometry x="2040" y="590" width="60" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="ev-end-jsonfail-inner" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#000000;strokeColor=#000000;" value="" vertex="1">
+          <mxGeometry x="2055" y="605" width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="ev-end-jsonfail-lbl" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=14;" value="Drop pass&#xa;(parse fail)" vertex="1">
+          <mxGeometry x="2010" y="670" width="120" height="36" as="geometry" />
+        </mxCell>
+
+        <!-- Aggregate consensus -->
+        <mxCell id="t-consensus" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=1.5;fontSize=15;" value="&#x1F4C4;  Aggregate&#xa;multi-pass consensus" vertex="1">
+          <mxGeometry x="2140" y="425" width="220" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Confidence gate -->
+        <mxCell id="g-conf" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2;fontSize=24;align=center;verticalAlign=middle;" value="&#xD7;" vertex="1">
+          <mxGeometry x="2400" y="435" width="60" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="g-conf-lbl" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=14;" value="High&#xa;confidence?" vertex="1">
+          <mxGeometry x="2370" y="515" width="120" height="36" as="geometry" />
+        </mxCell>
+
+        <!-- Suppress low-conf terminate end -->
+        <mxCell id="ev-end-low" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=4;" value="" vertex="1">
+          <mxGeometry x="2400" y="590" width="60" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="ev-end-low-inner" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#000000;strokeColor=#000000;" value="" vertex="1">
+          <mxGeometry x="2415" y="605" width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="ev-end-low-lbl" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=14;" value="Suppress&#xa;low-conf finding" vertex="1">
+          <mxGeometry x="2360" y="670" width="140" height="36" as="geometry" />
+        </mxCell>
+
+        <!-- Stage 2 repair (multi-instance) -->
+        <mxCell id="t-stage2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;strokeWidth=1.5;fontSize=15;" value="&#x2699;  LLM Agent:&#xa;Stage 2 repair" vertex="1">
+          <mxGeometry x="2500" y="425" width="200" height="80" as="geometry" />
+        </mxCell>
+        <!-- MI marker for Stage 2 -->
+        <mxCell id="mi-s2-line1" parent="1" style="endArrow=none;html=1;strokeWidth=2.5;strokeColor=#000000;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="2592" y="486" as="sourcePoint" />
+            <mxPoint x="2592" y="503" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="mi-s2-line2" parent="1" style="endArrow=none;html=1;strokeWidth=2.5;strokeColor=#000000;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="2600" y="486" as="sourcePoint" />
+            <mxPoint x="2600" y="503" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="mi-s2-line3" parent="1" style="endArrow=none;html=1;strokeWidth=2.5;strokeColor=#000000;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="2608" y="486" as="sourcePoint" />
+            <mxPoint x="2608" y="503" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="mi-s2-lbl" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=13;fontStyle=2;" value="per finding" vertex="1">
+          <mxGeometry x="2540" y="515" width="120" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- AST validity gateway -->
+        <mxCell id="g-ast" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2;fontSize=24;align=center;verticalAlign=middle;" value="&#xD7;" vertex="1">
+          <mxGeometry x="2740" y="435" width="60" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="g-ast-lbl" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=14;" value="AST&#xa;syntax OK?" vertex="1">
+          <mxGeometry x="2710" y="515" width="120" height="36" as="geometry" />
+        </mxCell>
+
+        <!-- Mark fix unavailable (below row, AST-fail branch) -->
+        <mxCell id="t-marknofix" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=1.5;fontSize=15;" value="&#x1F4C4;  Mark fix&#xa;unavailable" vertex="1">
+          <mxGeometry x="2700" y="580" width="180" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Map ranges -->
+        <mxCell id="t-map" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=1.5;fontSize=15;" value="&#x1F4C4;  Map snippet&#xa;ranges &#x2192; document" vertex="1">
+          <mxGeometry x="2900" y="425" width="220" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Render diagnostics + write cache -->
+        <mxCell id="t-render" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=1.5;fontSize=15;" value="&#x2699;  Render IDE diagnostics&#xa;+ write cache" vertex="1">
+          <mxGeometry x="3160" y="425" width="240" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- System end event -->
+        <mxCell id="ev-end-sys" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=4;" value="" vertex="1">
+          <mxGeometry x="3440" y="435" width="60" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="ev-end-sys-lbl" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=14;" value="Diagnostics&#xa;delivered" vertex="1">
+          <mxGeometry x="3410" y="515" width="120" height="36" as="geometry" />
+        </mxCell>
+
+        <!-- ============ SEQUENCE FLOWS ============ -->
+        <!-- Dev lane -->
+        <mxCell id="sf-dev1" parent="1" edge="1" source="ev-start" target="t-edit" style="endArrow=block;html=1;strokeWidth=1.5;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-
-        <mxCell id="sf-recv-timer" parent="1" edge="1" source="ev-recv" target="ev-timer" style="endArrow=block;html=1;strokeWidth=1;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;">
+        <mxCell id="sf-dev2" parent="1" edge="1" source="t-edit" target="t-trigger" style="endArrow=block;html=1;strokeWidth=1.5;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-
-        <mxCell id="sf-timer-extract" parent="1" edge="1" source="ev-timer" target="t-extract" style="endArrow=block;html=1;strokeWidth=1;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;">
+        <mxCell id="sf-dev3" parent="1" edge="1" source="t-trigger" target="ev-wait" style="endArrow=block;html=1;strokeWidth=1.5;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-
-        <mxCell id="sf-extract-cache" parent="1" edge="1" source="t-extract" target="g-cache" style="endArrow=block;html=1;strokeWidth=1;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;">
+        <mxCell id="sf-dev4" parent="1" edge="1" source="ev-wait" target="t-review" style="endArrow=block;html=1;strokeWidth=1.5;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-
-        <mxCell id="sf-cache-rag" parent="1" edge="1" source="g-cache" target="g-rag" style="endArrow=block;html=1;strokeWidth=1;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;fontSize=11;labelBackgroundColor=#FFFFFF;" value="miss">
+        <mxCell id="sf-dev5" parent="1" edge="1" source="t-review" target="g-action" style="endArrow=block;html=1;strokeWidth=1.5;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-
-        <!-- Cache HIT branch: gateway top → over → render -->
-        <mxCell id="sf-cache-hit" parent="1" edge="1" source="g-cache" target="t-render" style="endArrow=block;html=1;strokeWidth=1;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=0.5;exitY=0;entryX=0.5;entryY=0;fontSize=11;labelBackgroundColor=#FFFFFF;" value="hit">
+        <mxCell id="sf-dev6" parent="1" edge="1" source="g-action" target="t-applyfix" style="endArrow=block;html=1;strokeWidth=1.5;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;fontSize=13;labelBackgroundColor=#FFFFFF;" value="yes">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sf-dev7" parent="1" edge="1" source="t-applyfix" target="ev-end" style="endArrow=block;html=1;strokeWidth=1.5;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sf-dev8" parent="1" edge="1" source="g-action" target="ev-end" style="endArrow=block;html=1;strokeWidth=1.5;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=0.5;exitY=0;entryX=0.5;entryY=0;fontSize=13;labelBackgroundColor=#FFFFFF;" value="dismiss">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
-              <mxPoint x="590" y="245" />
-              <mxPoint x="1420" y="245" />
+              <mxPoint x="3240" y="100" />
+              <mxPoint x="3540" y="100" />
             </Array>
           </mxGeometry>
         </mxCell>
 
-        <!-- RAG YES branch: down to vector search → up to LLM -->
-        <mxCell id="sf-rag-yes" parent="1" edge="1" source="g-rag" target="t-rag" style="endArrow=block;html=1;strokeWidth=1;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=0.5;exitY=1;entryX=0;entryY=0.5;fontSize=11;labelBackgroundColor=#FFFFFF;" value="yes">
+        <!-- System lane -->
+        <mxCell id="sf-sys1" parent="1" edge="1" source="ev-recv" target="g-trigger" style="endArrow=block;html=1;strokeWidth=1.5;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <mxCell id="sf-rag-llm" parent="1" edge="1" source="t-rag" target="t-llm" style="endArrow=block;html=1;strokeWidth=1;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=1;exitY=0.5;entryX=0.5;entryY=1;">
+        <!-- Real-time: g-trigger top → debounce → join -->
+        <mxCell id="sf-tr-rt" parent="1" edge="1" source="g-trigger" target="ev-debounce" style="endArrow=block;html=1;strokeWidth=1.5;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=0.5;exitY=0;entryX=0;entryY=0.5;fontSize=13;labelBackgroundColor=#FFFFFF;" value="real-time">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sf-rt-join" parent="1" edge="1" source="ev-debounce" target="g-trigger-join" style="endArrow=block;html=1;strokeWidth=1.5;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=1;exitY=0.5;entryX=0.5;entryY=0;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <!-- RAG NO branch: straight to LLM -->
-        <mxCell id="sf-rag-no" parent="1" edge="1" source="g-rag" target="t-llm" style="endArrow=block;html=1;strokeWidth=1;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;fontSize=11;labelBackgroundColor=#FFFFFF;" value="no">
+        <!-- On-demand / interactive: straight horizontal -->
+        <mxCell id="sf-tr-od" parent="1" edge="1" source="g-trigger" target="g-trigger-join" style="endArrow=block;html=1;strokeWidth=1.5;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;fontSize=13;labelBackgroundColor=#FFFFFF;" value="on-demand / interactive">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <mxCell id="sf-llm-parse" parent="1" edge="1" source="t-llm" target="t-parse" style="endArrow=block;html=1;strokeWidth=1;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;">
+        <!-- Workspace: g-trigger bottom → workspace iter → join -->
+        <mxCell id="sf-tr-ws" parent="1" edge="1" source="g-trigger" target="t-ws-iter" style="endArrow=block;html=1;strokeWidth=1.5;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=0.5;exitY=1;entryX=0;entryY=0.5;fontSize=13;labelBackgroundColor=#FFFFFF;" value="workspace">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sf-ws-join" parent="1" edge="1" source="t-ws-iter" target="g-trigger-join" style="endArrow=block;html=1;strokeWidth=1.5;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=1;exitY=0.5;entryX=0.5;entryY=1;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <mxCell id="sf-parse-render" parent="1" edge="1" source="t-parse" target="t-render" style="endArrow=block;html=1;strokeWidth=1;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;">
+        <!-- Join → Extract -->
+        <mxCell id="sf-join-extract" parent="1" edge="1" source="g-trigger-join" target="t-extract" style="endArrow=block;html=1;strokeWidth=1.5;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <mxCell id="sf-render-end" parent="1" edge="1" source="t-render" target="ev-end-sys" style="endArrow=block;html=1;strokeWidth=1;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;">
+        <!-- Extract → cache -->
+        <mxCell id="sf-extract-cache" parent="1" edge="1" source="t-extract" target="g-cache" style="endArrow=block;html=1;strokeWidth=1.5;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <!-- MESSAGE FLOWS (dashed, between lanes) -->
-        <!-- Edit code → Document change (down) -->
-        <mxCell id="mf-edit-recv" parent="1" edge="1" source="t-edit" target="ev-recv" style="endArrow=open;startArrow=oval;startFill=0;html=1;strokeWidth=1;strokeColor=#000000;dashed=1;dashPattern=6 4;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=0.5;exitY=1;entryX=0.5;entryY=0;fontSize=11;labelBackgroundColor=#FFFFFF;" value="onChange">
+        <!-- Cache miss → RAG -->
+        <mxCell id="sf-cache-rag" parent="1" edge="1" source="g-cache" target="g-rag" style="endArrow=block;html=1;strokeWidth=1.5;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;fontSize=13;labelBackgroundColor=#FFFFFF;" value="miss">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <!-- Render diagnostics → Review (up) -->
-        <mxCell id="mf-render-review" parent="1" edge="1" source="t-render" target="t-review" style="endArrow=open;startArrow=oval;startFill=0;html=1;strokeWidth=1;strokeColor=#000000;dashed=1;dashPattern=6 4;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=0.5;exitY=0;entryX=0.5;entryY=1;fontSize=11;labelBackgroundColor=#FFFFFF;" value="diagnostics">
+        <!-- Cache hit → render (route at y=400, in proper gap above main row) -->
+        <mxCell id="sf-cache-hit" parent="1" edge="1" source="g-cache" target="t-render" style="endArrow=block;html=1;strokeWidth=1.5;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=0.5;exitY=0;entryX=0.5;entryY=0;fontSize=13;labelBackgroundColor=#FFFFFF;" value="hit">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="950" y="400" />
+              <mxPoint x="3280" y="400" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- RAG yes → vector search -->
+        <mxCell id="sf-rag-yes" parent="1" edge="1" source="g-rag" target="t-vector" style="endArrow=block;html=1;strokeWidth=1.5;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=0.5;exitY=0;entryX=0;entryY=0.5;fontSize=13;labelBackgroundColor=#FFFFFF;" value="yes">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sf-vector-bp" parent="1" edge="1" source="t-vector" target="t-buildprompt" style="endArrow=block;html=1;strokeWidth=1.5;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=1;exitY=0.5;entryX=0.5;entryY=0;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sf-rag-no" parent="1" edge="1" source="g-rag" target="t-buildprompt" style="endArrow=block;html=1;strokeWidth=1.5;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;fontSize=13;labelBackgroundColor=#FFFFFF;" value="no">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <!-- Review → End (sequence in dev lane) -->
-        <mxCell id="sf-review-end" parent="1" edge="1" source="t-review" target="ev-end" style="endArrow=block;html=1;strokeWidth=1;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;">
+        <mxCell id="sf-bp-llm" parent="1" edge="1" source="t-buildprompt" target="t-llm" style="endArrow=block;html=1;strokeWidth=1.5;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;">
           <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="sf-llm-parse" parent="1" edge="1" source="t-llm" target="t-parse" style="endArrow=block;html=1;strokeWidth=1.5;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="sf-parse-json" parent="1" edge="1" source="t-parse" target="g-json" style="endArrow=block;html=1;strokeWidth=1.5;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="sf-json-yes" parent="1" edge="1" source="g-json" target="t-consensus" style="endArrow=block;html=1;strokeWidth=1.5;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;fontSize=13;labelBackgroundColor=#FFFFFF;" value="yes">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sf-json-no" parent="1" edge="1" source="g-json" target="ev-end-jsonfail" style="endArrow=block;html=1;strokeWidth=1.5;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=0.5;exitY=1;entryX=0.5;entryY=0;fontSize=13;labelBackgroundColor=#FFFFFF;" value="no">
+          <mxGeometry x="0.6" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="sf-cons-conf" parent="1" edge="1" source="t-consensus" target="g-conf" style="endArrow=block;html=1;strokeWidth=1.5;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="sf-conf-yes" parent="1" edge="1" source="g-conf" target="t-stage2" style="endArrow=block;html=1;strokeWidth=1.5;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;fontSize=13;labelBackgroundColor=#FFFFFF;" value="yes">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sf-conf-no" parent="1" edge="1" source="g-conf" target="ev-end-low" style="endArrow=block;html=1;strokeWidth=1.5;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=0.5;exitY=1;entryX=0.5;entryY=0;fontSize=13;labelBackgroundColor=#FFFFFF;" value="no">
+          <mxGeometry x="0.6" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="sf-s2-ast" parent="1" edge="1" source="t-stage2" target="g-ast" style="endArrow=block;html=1;strokeWidth=1.5;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="sf-ast-yes" parent="1" edge="1" source="g-ast" target="t-map" style="endArrow=block;html=1;strokeWidth=1.5;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;fontSize=13;labelBackgroundColor=#FFFFFF;" value="yes">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sf-ast-no" parent="1" edge="1" source="g-ast" target="t-marknofix" style="endArrow=block;html=1;strokeWidth=1.5;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=0.5;exitY=1;entryX=0.5;entryY=0;fontSize=13;labelBackgroundColor=#FFFFFF;" value="no">
+          <mxGeometry x="0.6" relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sf-marknofix-map" parent="1" edge="1" source="t-marknofix" target="t-map" style="endArrow=block;html=1;strokeWidth=1.5;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=1;exitY=0.5;entryX=0.5;entryY=1;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="sf-map-render" parent="1" edge="1" source="t-map" target="t-render" style="endArrow=block;html=1;strokeWidth=1.5;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="sf-render-end" parent="1" edge="1" source="t-render" target="ev-end-sys" style="endArrow=block;html=1;strokeWidth=1.5;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- ============ MESSAGE FLOWS (cross-lane, dashed) ============ -->
+        <mxCell id="mf-trigger-recv" parent="1" edge="1" source="t-trigger" target="ev-recv" style="endArrow=open;startArrow=oval;startFill=0;html=1;strokeWidth=1.5;strokeColor=#000000;dashed=1;dashPattern=8 5;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=0;exitY=1;entryX=0.5;entryY=0;fontSize=13;labelBackgroundColor=#FFFFFF;" value="trigger (type)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="mf-render-wait" parent="1" edge="1" source="t-render" target="ev-wait" style="endArrow=open;startArrow=oval;startFill=0;html=1;strokeWidth=1.5;strokeColor=#000000;dashed=1;dashPattern=8 5;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=0.5;exitY=0;entryX=0.5;entryY=1;fontSize=13;labelBackgroundColor=#FFFFFF;" value="diagnostics">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- ============ LEGEND ============ -->
+        <mxCell id="legend-box" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fafafa;strokeColor=#999999;strokeWidth=1;fontSize=14;dashed=1;dashPattern=2 3;" value="" vertex="1">
+          <mxGeometry x="80" y="735" width="980" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=14;fontStyle=1;" value="Legend" vertex="1">
+          <mxGeometry x="92" y="740" width="80" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-io" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=1;fontSize=12;" value="" vertex="1">
+          <mxGeometry x="92" y="767" width="28" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-io-lbl" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=14;" value="I/O / data / user task" vertex="1">
+          <mxGeometry x="128" y="767" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-llm" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;strokeWidth=1;fontSize=12;" value="" vertex="1">
+          <mxGeometry x="320" y="767" width="28" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-llm-lbl" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=14;" value="LLM / retrieval task" vertex="1">
+          <mxGeometry x="356" y="767" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-mi-line1" parent="1" style="endArrow=none;html=1;strokeWidth=2.5;strokeColor=#000000;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="540" y="767" as="sourcePoint" />
+            <mxPoint x="540" y="787" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="legend-mi-line2" parent="1" style="endArrow=none;html=1;strokeWidth=2.5;strokeColor=#000000;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="548" y="767" as="sourcePoint" />
+            <mxPoint x="548" y="787" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="legend-mi-line3" parent="1" style="endArrow=none;html=1;strokeWidth=2.5;strokeColor=#000000;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="556" y="767" as="sourcePoint" />
+            <mxPoint x="556" y="787" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="legend-mi-lbl" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=14;" value="multi-instance" vertex="1">
+          <mxGeometry x="566" y="767" width="160" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-gw" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;fontSize=12;align=center;verticalAlign=middle;" value="&#xD7;" vertex="1">
+          <mxGeometry x="710" y="767" width="20" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-gw-lbl" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=14;" value="XOR gateway" vertex="1">
+          <mxGeometry x="736" y="767" width="140" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-term" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=3;" value="" vertex="1">
+          <mxGeometry x="870" y="767" width="20" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-term-inner" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#000000;strokeColor=#000000;" value="" vertex="1">
+          <mxGeometry x="876" y="773" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-term-lbl" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=14;" value="terminate event" vertex="1">
+          <mxGeometry x="896" y="767" width="160" height="20" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>

@@ -1,32 +1,15 @@
-The four paradigm-level evaluations in Sections~\ref{subsubsec:eval-sast}--\ref{subsubsec:eval-privacy-ide} reveal a consistent pattern: each paradigm covers a different subset of R1--R5, but no paradigm covers the full set on its own.
+The four paradigm-level evaluations in Sections~\ref{subsubsec:eval-sast}--\ref{subsubsec:eval-privacy-ide} reveal a consistent pattern: each paradigm covers a different subset of R1--R5, but no paradigm covers the full set. Three properties are reliably achieved by at least one mature approach. Consistency (R2) reaches the high band for every deterministic tool (Semgrep, CodeQL, ESLint, Snyk) and rises to medium for LLM and RAG approaches once retrieval grounding stabilizes outputs. Usability (R4) reaches the high band for every IDE-integrated tool (Copilot, Snyk, Semgrep) and is absent for batch research prototypes (IRIS, SecRepair, RESCUE, CWEval) regardless of detection quality. Privacy (R5) reaches the high band for fully local SAST tools, sits at medium for Snyk Code's local mode, and is absent for every cloud-hosted system.
 
-\paragraph{What scores high across paradigms.}
-Three properties are reliably achieved by at least one mature approach:
-\begin{itemize}
-  \item \textbf{Consistency (R2)} is high for every deterministic tool (Semgrep, CodeQL, ESLint, Snyk) and reaches medium for the LLM and RAG approaches once retrieval grounding stabilizes outputs.
-  \item \textbf{Usability (R4)} is high for every IDE-integrated tool (Copilot, Snyk, Semgrep), and absent for every batch research prototype (IRIS, SecRepair, RESCUE, CWEval) regardless of detection quality.
-  \item \textbf{Privacy (R5)} is high for fully local SAST tools (Semgrep, CodeQL, ESLint), medium for Snyk Code's local mode, and absent for every cloud-hosted system (Copilot, IRIS, SecRepair, RESCUE, CWEval).
-\end{itemize}
+Two properties remain unmet across the board. Accuracy (R1) above the medium band is reached by no reviewed system: SAST sits at low or medium-low because pattern matching cannot reason about context; LLM systems reach medium with hallucination risk; RAG lifts medium-low to medium when retrieved context is curated. Repair guidance (R3) is absent for SAST and reaches at most medium-low for LLM and RAG paradigms; RESCUE's curated repair-pattern retrieval is the partial exception but only inside an offline batch pipeline that fails R4 and R5. Specifically, no reviewed system simultaneously achieves contextual LLM reasoning, repair generation, IDE integration, and on-device privacy: SAST covers the last two; cloud LLM assistants cover the first three but fail privacy; research prototypes cover the first two but neither integration nor privacy. Appendix~\ref{appendix:positioning-table} (Table~\ref{tab:positioning-r1r5-appendix}) makes this gap visible at a glance.
 
-\paragraph{Where every paradigm falls short.}
-Two properties are not reached by any reviewed approach in combination with the others:
-\begin{itemize}
-  \item \textbf{Accuracy (R1) above the medium band} is reached by no reviewed system on its own. SAST tools sit at low or medium-low because pattern matching cannot reason about context; LLM systems reach medium because contextual reasoning helps but introduces hallucinations; RAG lifts medium-low to medium when the retrieved context is curated, but no paradigm reaches the high band.
-  \item \textbf{Repair guidance (R3)} is either absent (SAST: none; CWEval: not in scope) or reaches at most medium-low for the LLM and RAG paradigms, with the partial exception of RESCUE's curated repair-pattern retrieval which reaches high but only inside an offline batch pipeline.
-\end{itemize}
-
-\paragraph{The unmet combination.}
-Specifically, no reviewed system simultaneously achieves all four of the following: (1)~contextual LLM reasoning, (2)~repair generation, (3)~IDE integration, and (4)~on-device privacy. SAST tools cover (3) and (4) but not (1) or (2). Cloud LLM assistants cover (1), (2), and (3) but fail (4). Research prototypes cover (1) and (2) but neither (3) nor (4). Local-only SAST tools cover (3) and (4) but not (1) or (2). The cross-paradigm comparison in Appendix~\ref{appendix:positioning-table} (Table~\ref{tab:positioning-r1r5-appendix}) makes this gap visible at a glance: the four columns most relevant to the unmet combination (R1 reasoning depth, R3 repair quality, R4 IDE latency, R5 privacy) are simultaneously high for no single reviewed approach.
-
-\paragraph{Positioning of this thesis.}
-Code Guardian targets exactly this unmet combination. It runs LLM inference and retrieval on-device through Ollama and a local HNSW vector store; integrates as a native VS Code extension that returns structured JSON findings into the diagnostic surface; generates one repair per detected finding through a separate Stage~2 call under a strict \texttt{\{code, language\}} schema; and evaluates the result with a local harness that uses the same dataset and scoring logic to score Semgrep, CodeQL, and ESLint as deterministic baselines. The positioning claim is not that local LLMs outperform cloud assistants on every metric, but that they enable a \emph{different deployment envelope}: privacy-preserving IDE assistance with explicit control over model choice, retrieval strategy, and output contracts. Table~\ref{tab:positioning-comparison} situates this envelope against the dominant alternatives on the design dimensions that distinguish them.
+Code Guardian targets exactly this unmet combination. It runs LLM inference and retrieval on-device through Ollama and a local HNSW vector store; integrates as a native VS Code extension that returns structured JSON findings into the diagnostic surface; generates one repair per detected finding through a separate Stage~2 call under a strict \texttt{\{code, language\}} schema; and evaluates the result with a local harness that scores Semgrep, CodeQL, and ESLint as deterministic baselines under the same dataset and scoring logic. The positioning claim is not that local LLMs outperform cloud assistants on every metric, but that they enable a \emph{different deployment envelope}: privacy-preserving IDE assistance with explicit control over model choice, retrieval strategy, and output contracts. Table~\ref{tab:positioning-comparison} situates this envelope against the dominant alternatives.
 
 \begin{table}[H]
   \centering
-  \caption{Positioning of Code Guardian against representative security-assistance approaches across the design dimensions that distinguish them.}
+  \caption{Positioning of Code Guardian against representative security-assistance approaches.}
   \label{tab:positioning-comparison}
   \footnotesize
-  \renewcommand{\arraystretch}{1.15}
+  \renewcommand{\arraystretch}{1.05}
   \begin{tabularx}{\textwidth}{p{0.18\textwidth}XXXXX}
     \toprule
     Approach & Privacy & Contextual reasoning & Repair suggestions & IDE integration & Output contract \\
@@ -40,5 +23,4 @@ Code Guardian targets exactly this unmet combination. It runs LLM inference and 
   \end{tabularx}
 \end{table}
 
-\paragraph{Concrete mechanisms relative to prior work.}
-Relative to existing work, this thesis introduces five mechanisms not jointly applied by any reviewed approach. First, structured-output robustness is treated as a first-class requirement (strict JSON contract with format-level enforcement and defensive parsing). Second, multi-pass consensus filtering with seeded passes suppresses sampling-variance false positives. Third, deterministic inference controls (\texttt{temperature=0}, fixed seed, JSON-mode decoding) address output instability. Fourth, RAG is treated as a model-dependent intervention measured per model rather than assumed universal. Fifth, a unified local evaluation harness compares against Semgrep, CodeQL, and ESLint under the same dataset and scoring logic. Together these mechanisms compose into five broader deliverables described in the conclusion: a privacy-preserving extension architecture, the two-stage detection-then-repair pipeline, the multi-pass consensus filter and confidence gate, the hybrid AST+LLM audit pipeline, and the reproducible evaluation harness.
+Five mechanisms set this thesis apart from the reviewed work: a strict JSON output contract with format-level enforcement and defensive parsing; multi-pass consensus filtering with seeded passes to suppress sampling-variance false positives; deterministic inference controls (\texttt{temperature=0}, fixed seed, JSON-mode decoding); RAG treated as a model-dependent intervention measured per model rather than assumed universal; and a unified local evaluation harness against Semgrep, CodeQL, and ESLint under the same dataset and scoring logic.
