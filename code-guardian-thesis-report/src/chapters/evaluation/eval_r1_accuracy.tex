@@ -125,7 +125,7 @@ Across configurations, retrieval augmentation has model-specific effects. F1 lif
 
   \end{axis}
 \end{tikzpicture}
-\caption{RAG ablation: F1 comparison by model (canonical-taxonomy matching). RAG lifts \texttt{qwen3:8b} ($+3.91$), is roughly neutral on \texttt{gemma3} models, slightly degrades \texttt{qwen3:4b} ($-5.22$), and severely degrades \texttt{codellama} ($-29.89$).}
+\caption[RAG ablation: F1 comparison by model.]{RAG ablation: F1 comparison by model (canonical-taxonomy matching). RAG lifts \texttt{qwen3:8b} ($+3.91$), is roughly neutral on \texttt{gemma3} models, slightly degrades \texttt{qwen3:4b} ($-5.22$), and severely degrades \texttt{codellama} ($-29.89$).}
 \label{fig:r1-rag-ablation}
 \end{figure}
 
@@ -186,7 +186,7 @@ Per-canonical-category recall on \texttt{qwen3:8b+RAG} (3-runs pooled, categorie
 
   \end{axis}
 \end{tikzpicture}}
-\caption{Per-canonical-category recall for \texttt{qwen3:8b+RAG} on the 3-runs-per-sample evaluation ($n$ counts pooled vulnerable evaluations across runs). Per-category figures are taken from the Apr-25 ablation run, which emits \texttt{perCategoryMetrics} for every configuration; the Phase-1 b3 rerun used for the headline aggregate metrics does not re-emit per-category breakdowns, so the same model$\times$mode pair is read from the ablation pass for this figure. Injection-style and prototype-pollution categories are detected at 90--100\,\%, while improper-auth, input-validation, and weak-encryption score 0\,\%. Section~\ref{sec:eval-error-analysis} analyses how much of this gap reflects true detection failure versus label mismatch.}
+\caption[Per-canonical-category recall for the headline configuration.]{Per-canonical-category recall for \texttt{qwen3:8b+RAG} on the 3-runs-per-sample evaluation ($n$ counts pooled vulnerable evaluations across runs). Injection-style and prototype-pollution categories are detected at 90--100\,\%, while improper-auth, input-validation, and weak-encryption score 0\,\%. Section~\ref{sec:eval-error-analysis} analyses how much of this gap reflects true detection failure versus label mismatch.}
 \label{fig:r1-category}
 \end{figure}
 

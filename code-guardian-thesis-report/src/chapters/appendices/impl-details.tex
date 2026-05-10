@@ -180,7 +180,7 @@ Detection and repair workflows produced no outbound requests; communication stay
 \begin{figure}[H]
   \centering
   \safeincludegraphics[width=0.95\textwidth]{images/privacy_boundary.drawio.pdf}
-  \caption{Local privacy boundary for code analysis workflows. The IDE workspace, extension process, local backend, Ollama runtime, and vector store all reside inside the local trust boundary; source files, extracted snippets, prompts, responses, and embeddings never cross it. The only outbound channel is the public-metadata refresh, which carries no user code and is gated by \texttt{enableExternalDataFetch} (default \texttt{false}).}
+  \caption[Local privacy boundary for code analysis workflows.]{Local privacy boundary for code analysis workflows. The IDE workspace, extension process, local backend, Ollama runtime, and vector store all reside inside the local trust boundary; source files, extracted snippets, prompts, responses, and embeddings never cross it. The only outbound channel is the public-metadata refresh, which carries no user code and is gated by \texttt{enableExternalDataFetch} (default \texttt{false}).}
   \label{fig:privacy-boundary}
 \end{figure}
 

@@ -198,7 +198,7 @@ Section~\ref{sec:eval-r4} reports latency for the fastest, headline, and slowest
 
 \begin{table}[H]
 \centering
-\caption{Full per-model end-to-end latency (milliseconds) for all evaluated LLM configurations and the three SAST baselines. Pooled over 303 evaluations per model$\times$mode (101 cases $\times$ 3 runs).}
+\caption[Full per-model end-to-end latency for all evaluated configurations.]{Full per-model end-to-end latency (milliseconds) for all evaluated LLM configurations and the three SAST baselines. Pooled over 303 evaluations per model$\times$mode (101 cases $\times$ 3 runs).}
 \label{tab:r4-latency-full}
 \footnotesize
 \begin{tabular}{@{}llrrrr@{}}
@@ -232,7 +232,7 @@ Section~\ref{sec:eval-r1} reports F1 across all 13 configurations as a visual ra
 
 \begin{table}[H]
 \centering
-\caption{Detection accuracy across all configurations using canonical-taxonomy matching (Section~\ref{sec:eval-metrics}). 71 vulnerable + 30 secure samples, 3 runs each ($n = 303$ evaluations per model$\times$mode). FPR is at the secure-sample level (FP if any issue is emitted in any run). All configurations are rescored under the same canonical taxonomy via \texttt{rescore-metrics.js}.}
+\caption[Detection accuracy across all configurations under canonical-taxonomy matching.]{Detection accuracy across all configurations using canonical-taxonomy matching (Section~\ref{sec:eval-metrics}). 71 vulnerable + 30 secure samples, 3 runs each ($n = 303$ evaluations per model$\times$mode). FPR is at the secure-sample level (FP if any issue is emitted in any run). All configurations are rescored under the same canonical taxonomy via \texttt{rescore-metrics.js}.}
 \label{tab:eval-r1-all-app}
 \footnotesize
 \begin{tabular}{@{}llrrrr@{}}
@@ -331,7 +331,7 @@ The full sweep underlying the gated-vs-ungated comparison in Section~\ref{sec:ev
 
 \begin{table}[H]
 \centering
-\caption{Confidence-gate effect on the headline \texttt{qwen3:8b+RAG} configuration. At threshold $\geq 0.67$, only findings emitted by $\geq 2$ of the 3 runs survive.}
+\caption[Confidence-gate effect on the headline configuration.]{Confidence-gate effect on the headline \texttt{qwen3:8b+RAG} configuration. At threshold $\geq 0.67$, only findings emitted by $\geq 2$ of the 3 runs survive.}
 \label{tab:r1-confidence-sweep-app}
 \footnotesize
 \begin{tabular}{@{}lrrrr@{}}
@@ -351,7 +351,7 @@ The TRAIN-selected threshold ($\geq 0.67$) applied to the frozen 30-case TEST sp
 
 \begin{table}[H]
 \centering
-\caption{Held-out validation: TRAIN-selected threshold applied to frozen TEST split (\texttt{qwen3:8b+RAG}, canonical matcher).}
+\caption[Held-out validation: TRAIN threshold on frozen TEST split.]{Held-out validation: TRAIN-selected threshold applied to frozen TEST split (\texttt{qwen3:8b+RAG}, canonical matcher).}
 \label{tab:r1-heldout-app}
 \footnotesize
 \begin{tabular}{@{}lrrrr@{}}
@@ -371,7 +371,7 @@ Side-by-side comparison underlying Section~\ref{sec:eval-r1-external-corpus}.
 
 \begin{table}[H]
 \centering
-\caption{\texttt{qwen3:8b+RAG} on the external corpus and the curated 101-case corpus, both under the same headline configuration (3 runs, gate $\geq 0.67$).}
+\caption[Headline configuration on external corpus vs. curated 101-case corpus.]{\texttt{qwen3:8b+RAG} on the external corpus and the curated 101-case corpus, both under the same headline configuration (3 runs, gate $\geq 0.67$).}
 \label{tab:r1-external-corpus-app}
 \footnotesize
 \begin{tabular}{@{}lrrrrrr@{}}
@@ -415,7 +415,7 @@ Detailed per-statistic latency (Section~\ref{sec:eval-r4}) for the fastest LLM c
 
 \begin{table}[H]
 \centering
-\caption{End-to-end latency for the fastest, headline, and slowest LLM configurations (milliseconds, pooled over 303 evaluations per model$\times$mode), with the three SAST baselines for reference.}
+\caption[End-to-end latency: fastest, headline, and slowest configurations.]{End-to-end latency for the fastest, headline, and slowest LLM configurations (milliseconds, pooled over 303 evaluations per model$\times$mode), with the three SAST baselines for reference.}
 \label{tab:r4-latency-app}
 \footnotesize
 \begin{tabular}{@{}llrrrr@{}}

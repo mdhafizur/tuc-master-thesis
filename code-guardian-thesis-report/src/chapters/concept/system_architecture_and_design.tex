@@ -21,7 +21,7 @@ Figure~\ref{fig:c4-context} positions Code Guardian within its operational envir
 \begin{sidewaysfigure}
   \centering
   \safeincludegraphics[width=\linewidth]{images/c4_context.drawio.pdf}
-  \caption{C4 Context diagram showing Code Guardian within its operational environment. The system communicates with VS Code (IDE platform), Ollama (local LLM on localhost:11434), and a local vector database, all within the privacy boundary (green dashed). CVE/NVD APIs (gold, dashed) are the only optional external connection and do not receive source code.}
+  \caption[C4 Context diagram for Code Guardian.]{C4 Context diagram showing Code Guardian within its operational environment. The system communicates with VS Code (IDE platform), Ollama (local LLM on localhost:11434), and a local vector database, all within the privacy boundary (green dashed). CVE/NVD APIs (gold, dashed) are the only optional external connection and do not receive source code.}
   \label{fig:c4-context}
 \end{sidewaysfigure}
 
@@ -41,7 +41,7 @@ When RAG is enabled, the \textbf{RAG manager} maintains a local knowledge base (
 \begin{sidewaysfigure}
   \centering
   \safeincludegraphics[width=1\linewidth]{images/c4_container.drawio.pdf}
-  \caption{C4 Container diagram showing internal components. The VS Code Extension handles triggers, caching, and UI rendering. The Local Analysis Backend performs LLM inference with JSON-mode and multi-pass consensus filtering, RAG orchestration, and Stage~2 repair generation. Vector Database and Result Cache are local data stores. All source code stays within the system boundary.}
+  \caption[C4 Container diagram for Code Guardian.]{C4 Container diagram showing internal components. The VS Code Extension handles triggers, caching, and UI rendering. The Local Analysis Backend performs LLM inference with JSON-mode and multi-pass consensus filtering, RAG orchestration, and Stage~2 repair generation. Vector Database and Result Cache are local data stores. All source code stays within the system boundary.}
   \label{fig:c4-container}
 \end{sidewaysfigure}
 
