@@ -6,7 +6,7 @@ The chapter addresses these pressures by separating the runtime substrate from t
 
 The remainder of this chapter is organised as follows. Section~\ref{sec:impl-tech-stack} describes the technology stack and the rationale behind each choice (TypeScript, VS Code Extension API, Ollama, HNSWlib, LangChain, etc.). Section~\ref{sec:impl-pipeline} presents the detection and repair pipeline as it executes at runtime, including the AST+LLM audit hybrid. Section~\ref{sec:impl-components} describes the implementation of each conceptual component named in Section~\ref{sec:system-components}: context extraction, analyzer, RAG manager, analysis cache, model manager, and workspace scanner. Section~\ref{sec:impl-ui} covers the user-interface surfaces. Section~\ref{sec:impl-safety-privacy} concludes with the privacy-enforcement mechanisms.
 
-Empirical validation of these implementation choices is deferred to Chapter~\ref{chap:evaluation}, which measures detection accuracy, consistency, repair quality, latency, and privacy guarantees against the requirements defined in Chapter~\ref{chap:analysis}.
+Empirical validation of these implementation choices against the requirements defined in Chapter~\ref{chap:analysis} measures detection accuracy, consistency, repair quality, latency, and privacy guarantees.
 
 \input{src/chapters/implementation/tech_stack}
 
@@ -21,4 +21,4 @@ Empirical validation of these implementation choices is deferred to Chapter~\ref
 \section{Summary}
 \label{sec:impl-summary}
 
-This chapter realised the Code Guardian concept as a deployable VS Code extension running entirely on the developer's machine. The technology stack (TypeScript, Ollama, HNSWlib, LangChain, \texttt{@babel/parser}) keeps every code-bearing data path on loopback, and the two-stage detect-then-repair pipeline is gated by debouncing, scope guards, LRU caching, and an AST+LLM hybrid for whole-project audits. Findings surface through VS Code diagnostics, Quick Fix actions, a workspace dashboard, and a contextual Q\&A WebView; a synchronous egress gate, a signed knowledge corpus, and a syntactic auto-applicability bar tie the implementation back to the threat model. Chapter~\ref{chap:evaluation} measures how well this implementation satisfies the R1--R5 thresholds.
+This chapter realised the Code Guardian concept as a deployable VS Code extension running entirely on the developer's machine. The technology stack (TypeScript, Ollama, HNSWlib, LangChain, \texttt{@babel/parser}) keeps every code-bearing data path on loopback, and the two-stage detect-then-repair pipeline is gated by debouncing, scope guards, LRU caching, and an AST+LLM hybrid for whole-project audits. Findings surface through VS Code diagnostics, Quick Fix actions, a workspace dashboard, and a contextual Q\&A WebView; a synchronous egress gate, a signed knowledge corpus, and a syntactic auto-applicability bar tie the implementation back to the threat model.

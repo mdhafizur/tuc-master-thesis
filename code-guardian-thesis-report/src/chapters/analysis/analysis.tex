@@ -52,7 +52,7 @@ The following subsections define each requirement in detail and map it to measur
   \end{tabularx}
 \end{table}
 
-Every measure is computed by the harness from per-case logs; only the R3 manual-review portion is explicitly hand-aggregated. The reporting of each measure against its requirement appears in Chapter~\ref{chap:evaluation}.
+Every measure is computed by the harness from per-case logs; only the R3 manual-review portion is explicitly hand-aggregated.
 
 \subsection{R1: Accuracy}\vspace{-2mm}
 \input{src/chapters/analysis/requirements/r1}
@@ -95,4 +95,4 @@ This section reviews prior work on SAST, LLM-based security assistance, retrieva
 
 This chapter derived five requirements (R1 Accuracy, R2 Consistency, R3 Repair Quality, R4 Usability, R5 Privacy) from the problem statement and reviewed four representative paradigms against them: traditional SAST, LLM-based vulnerability detection and repair, retrieval-augmented generation for secure coding, and privacy-preserving IDE-integrated tools. Each paradigm was rated against R1--R5 using a visual scoring scale, and the per-paradigm matrices were consolidated in the cross-paradigm positioning analysis.
 
-The consistent finding is that no single existing approach satisfies all five requirements simultaneously: SAST tools deliver R2, R4, and R5 but trail on R1 and offer no R3 repair guidance; cloud LLM assistants close R1 and R3 but fail R5; research prototypes reach R1 and R3 but lack R4 and assume cloud deployment. The unmet combination --- contextual LLM reasoning, repair generation, IDE integration, and on-device privacy in one tool --- defines the design space the next chapter operates in. Chapter~\ref{chap:concept} derives the Code Guardian concept from these requirements and the gap analysis, mapping each architectural decision to the R1--R5 it primarily addresses.
+The consistent finding is that no single existing approach satisfies all five requirements simultaneously: SAST tools deliver R2, R4, and R5 but trail on R1 and offer no R3 repair guidance; cloud LLM assistants close R1 and R3 but fail R5; research prototypes reach R1 and R3 but lack R4 and assume cloud deployment. The unmet combination --- contextual LLM reasoning, repair generation, IDE integration, and on-device privacy in one tool --- defines the design space the next chapter operates in.

@@ -9,8 +9,7 @@ This appendix gathers the prompt contract, runtime guardrails, configuration kno
 
 Code Guardian relies on a strict output contract so findings can be converted into IDE diagnostics reliably. Detection and repair run as two separate Ollama calls, each constrained by its own structured-output schema enforced via \texttt{format='json'} (Section~\ref{sec:impl-pipeline}).
 
-\paragraph{Stage~1 (detection).}
-The detection call returns an object with an \texttt{issues} array. Each issue carries a vulnerability \texttt{type}, a coarse \texttt{severity}, a 1-based snippet-relative line range, and a short \texttt{message}. Repair text is \emph{not} requested at this stage.
+The \textbf{stage~1 detection} call returns an object with an \texttt{issues} array. Each issue carries a vulnerability \texttt{type}, a coarse \texttt{severity}, a 1-based snippet-relative line range, and a short \texttt{message}. Repair text is \emph{not} requested at this stage.
 
 \begin{lstlisting}[language=Java, caption={Stage~1 detection schema (conceptual)}, label={lst:appendix-stage1-schema}]
 {
@@ -26,8 +25,7 @@ The detection call returns an object with an \texttt{issues} array. Each issue c
 }
 \end{lstlisting}
 
-\paragraph{Stage~2 (repair).}
-For each confirmed Stage~1 finding the harness issues a dedicated repair call. The schema constrains the response to executable code in a typed language field, so prose paraphrases of the fix cannot satisfy the contract.
+For each confirmed Stage~1 finding the harness issues a dedicated \textbf{stage~2 repair} call. The schema constrains the response to executable code in a typed language field, so prose paraphrases of the fix cannot satisfy the contract.
 
 \begin{lstlisting}[language=Java, caption={Stage~2 repair schema (conceptual)}, label={lst:appendix-stage2-schema}]
 {

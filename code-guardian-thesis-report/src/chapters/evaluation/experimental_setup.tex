@@ -5,24 +5,18 @@ All experiments run locally through the Code Guardian evaluation harness, which 
 
 Three \textbf{SAST baselines} run through the same harness against per-snippet temporary workspaces: Semgrep with the registry packs \path{p/security-audit}, \path{p/javascript}, \path{p/typescript}, and \path{p/owasp-top-ten}; CodeQL with the \path{javascript-security-and-quality} suite; and ESLint with \path{eslint-plugin-security}. Per-snippet workspaces keep baseline execution repeatable but omit broader project context, and outputs are normalised into the same per-finding schema; vulnerability \texttt{type} for baseline findings is inferred from rule identifiers, messages, and CWE metadata, which introduces a construct-validity limitation when metadata is missing or mismatched. For \textbf{comparability} across runs the harness keeps dataset artifacts, decoding and runtime limits, scoring logic, and execution-order policy fixed; local inference remains sensitive to transient system load, so reported values are descriptive measurements for the documented environment rather than hardware-independent constants.
 
-\subsection{Benchmark Substitution}
+\subsection{Benchmark Substitution and Real-World Slice}
 \label{sec:eval-benchmark-substitution}
+\label{sec:eval-realworld}
 
 The approved task description names \emph{Juliet} and \emph{OWASP Benchmark} (40--50 CWE-mapped cases). Both are real but neither targets JavaScript: Juliet is published by NIST in C/C++ and Java only, and the OWASP Benchmark Project is a Java application. There is no first-party JavaScript port of either, and running this thesis's JS/TS detector against C/C++ or Java would not be meaningful. The thesis therefore evaluates on two CWE-mapped JavaScript corpora: the curated 101-case primary corpus (71 vulnerable + 30 secure) of Section~\ref{sec:eval-dataset}, and an additional 15-case external corpus (under \texttt{evaluation/datasets/external/}) drawn from OWASP NodeGoat, OWASP Juice Shop, and three named CVEs (CVE-2022-24999, CVE-2021-23337, CVE-2022-24771). Per-case provenance --- source URL and (where applicable) upstream commit --- is recorded in \texttt{evaluation/datasets/SOURCES.md} and bound into the signed corpus manifest (Section~\ref{sec:impl-corpus-signing}) so it cannot be silently rewritten.
 
-\subsection{Real-World Project Slice}
-\label{sec:eval-realworld}
-
 The task additionally names ``one actively maintained real-world JavaScript/TypeScript project with documented vulnerabilities and verified patches''. This thesis selects \emph{OWASP NodeGoat}, an actively-maintained OWASP reference application whose per-lesson \texttt{tutorial/} directory documents vulnerable code paths and verified patches. The whole-project runner (\texttt{evaluation/run-realworld.js}) walks the project, slices each file by function, applies the same analyzer pipeline used for the curated corpus, and computes per-CWE recall against \texttt{evaluation/realworld/nodegoat-vulnerabilities.json}.
-
-\subsection{Containerised Execution}
-\label{sec:eval-container}
-
-A Dockerfile pins Node.js 20.19.0-alpine, installs the locked dependency set via \texttt{npm ci}, copies the harness, the signed RAG corpus, and the corpus public key into the image, and compiles the extension at build time. A \texttt{docker-compose.yml} brings up Ollama and the harness on an isolated user-defined bridge with explicit CPU and memory limits (8 cores, 16\,GB) so resource measurements are comparable across hosts. The compose stack binds Ollama to loopback only, satisfying the network-isolation arm of the threat model.
 
 \subsection{Reproducibility Snapshot and Run Configuration}
 \label{sec:eval-refined-config}
+\label{sec:eval-container}
 
 The harness uses \texttt{runsPerSample=3} symmetrically for both groups (213 vulnerable + 90 secure = 303 invocations per model$\times$mode). Precision and recall are computed over the 213 vulnerable evaluations under canonical type-level matching; FPR is computed at sample level over the 30 secure samples (a sample is FP if any of its 3 runs flags an issue); latency and parse-success rates are pooled across all 303. Parse failures are scored as producing no issues, which lowers recall on vulnerable samples. The canonical-matching metrics and the confidence gate are post-hoc transformations of the recorded per-finding outputs, so threshold sweeps do not require re-invoking the model.
 
-The full run configuration --- dataset paths, generation parameters (\texttt{temperature=0}, seeds 42/137/200, \texttt{num\_predict=1000}), request controls, software versions, and hardware profile --- is documented in Table~\ref{tab:eval-reproducibility} in Appendix~\ref{appendix:eval-details}.
+For container-level reproducibility, a Dockerfile pins Node.js 20.19.0-alpine, installs the locked dependency set via \texttt{npm ci}, copies the harness, the signed RAG corpus, and the corpus public key into the image, and compiles the extension at build time. A \texttt{docker-compose.yml} brings up Ollama and the harness on an isolated user-defined bridge with explicit CPU and memory limits (8 cores, 16\,GB) so resource measurements are comparable across hosts. The compose stack binds Ollama to loopback only, satisfying the network-isolation arm of the threat model. The full run configuration --- dataset paths, generation parameters (\texttt{temperature=0}, seeds 42/137/200, \texttt{num\_predict=1000}), request controls, software versions, and hardware profile --- is documented in Table~\ref{tab:eval-reproducibility} in Appendix~\ref{appendix:eval-details}.

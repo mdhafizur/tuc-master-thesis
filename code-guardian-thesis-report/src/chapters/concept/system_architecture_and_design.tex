@@ -58,7 +58,7 @@ The \textbf{trigger} stage decides when the pipeline runs. Inline detection list
 
 The \textbf{analyzer} then invokes the local model under JSON-mode decoding with a fixed schema, repeats the call with different seeds, and aggregates the per-pass findings into consensus-scored issues. An opt-in confidence gate suppresses low-agreement findings before stage-2. Each surviving finding triggers a separate stage-2 prompt that returns one structured \texttt{\{code, language\}} patch; stage-2 runs only on consensus-filtered findings, which keeps repair cost proportional to load-bearing detections. Finally, the pipeline maps snippet-relative line ranges back to document ranges, writes the result to the analysis cache, and surfaces findings through VS Code diagnostics, the Problems panel, and Quick Fix actions. The workspace-scan workflow additionally aggregates per-file findings into the dashboard view.
 
-The audit-mode hybrid (described in Chapter~\ref{chap:implementation}) extends the on-demand path with a deterministic AST sink scanner that runs in parallel with the LLM stage and unions the findings. Across all workflows source code is sent only to localhost; the optional metadata-refresh path fetches public CVE / CWE / OWASP records without source content and can be disabled for fully offline operation.
+The audit-mode hybrid extends the on-demand path with a deterministic AST sink scanner that runs in parallel with the LLM stage and unions the findings. Across all workflows source code is sent only to localhost; the optional metadata-refresh path fetches public CVE / CWE / OWASP records without source content and can be disabled for fully offline operation.
 
 \begin{sidewaysfigure}
   \centering
