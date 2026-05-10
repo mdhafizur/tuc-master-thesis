@@ -14,10 +14,10 @@ LLM-based approaches dominate the SAST baselines on recall-driven F1; \texttt{qw
 \resizebox{\textwidth}{!}{%
 \begin{tikzpicture}
   \begin{axis}[
-    width=15cm,
-    height=7cm,
+    width=18cm,
+    height=10cm,
     xbar,
-    bar width=8pt,
+    bar width=14pt,
     xlabel={F1 Score (\%)},
     xlabel style={font=\small\bfseries},
     ylabel style={font=\small\bfseries},
@@ -205,8 +205,7 @@ The two residual gaps differ in kind. Every \emph{improper-auth} case is detecte
 
 SAST tools show a different trade-off profile. Semgrep achieves the lowest FPR (6.67\%) but a low recall (12.68\% under canonical matching); CodeQL has higher FPR (53.33\%) with similar low recall (9.86\%); ESLint security plugins detect none of the test cases. The LLM-based approach trades higher FPR for substantially better recall, making it more suitable for comprehensive security audits while SAST remains useful as a low-noise complement. The hybrid SAST-fusion option (Section~\ref{sec:eval-refined-config}) operationalizes this complementarity by promoting LLM findings corroborated by Semgrep to confidence~$1.0$. FPR is computed at sample level over $n=30$ secure cases; the 95\% exact binomial CI for the headline 10\% FPR is $[2.1\%, 26.5\%]$, and for 100\%-FPR configurations the lower bound is 88.4\%.
 
-\paragraph{Fairness caveat on SAST baselines.}
-Semgrep, CodeQL, and ESLint were run on per-snippet temporary workspaces (Section~\ref{sec:eval-setup}), which is the only configuration that keeps the analysis scope comparable to the function-level scope of the LLM pipeline. In a full-project deployment SAST tools have access to cross-file data flow and project-level configuration, both of which are known to lift their recall on real codebases. The recall figures reported here therefore understate what each SAST baseline would achieve in production, and the comparison should be read as ``SAST under LLM-equivalent scope'' rather than ``SAST in its natural deployment profile.'' The conclusion that LLM-based detection has higher recall than SAST on the same scope is unaffected; the conclusion about the magnitude of the recall gap on a full-project deployment is not supported by this evaluation.
+A \textbf{fairness caveat} applies to these baselines. Semgrep, CodeQL, and ESLint were run on per-snippet temporary workspaces (Section~\ref{sec:eval-setup}), which is the only configuration that keeps the analysis scope comparable to the function-level scope of the LLM pipeline. In a full-project deployment SAST tools have access to cross-file data flow and project-level configuration, both of which are known to lift their recall on real codebases. The recall figures reported here therefore understate what each SAST baseline would achieve in production, and the comparison should be read as ``SAST under LLM-equivalent scope'' rather than ``SAST in its natural deployment profile.'' The conclusion that LLM-based detection has higher recall than SAST on the same scope is unaffected; the conclusion about the magnitude of the recall gap on a full-project deployment is not supported by this evaluation.
 
 \subsection{Inter-Run Confidence Gate}
 \label{sec:eval-r1-confidence}

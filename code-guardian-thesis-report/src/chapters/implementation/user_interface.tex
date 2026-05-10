@@ -8,46 +8,39 @@ Code Guardian is designed to integrate security feedback into the existing Visua
 
 Detected issues are rendered as standard VS Code diagnostics. This provides familiar affordances: squiggles in the editor, a centralized list in the Problems panel, and hover tooltips that summarize the finding. This presentation supports R4 by making explanations available at the point of code, without requiring context switching.
 
-\paragraph{Real-time behavior.}
-For JavaScript and TypeScript documents, diagnostics can be produced during normal editing via a debounced trigger. To preserve responsiveness, the default real-time scope is the enclosing function at the cursor, and unusually large functions are skipped. Developers can therefore treat Code Guardian feedback similarly to linting warnings: it appears close to the code being written and is automatically updated as the local scope changes.
+For JavaScript and TypeScript documents, diagnostics are produced during normal editing via a \textbf{debounced trigger}. To preserve responsiveness, the default real-time scope is the enclosing function at the cursor, and unusually large functions are skipped. Developers can therefore treat Code Guardian feedback similarly to linting warnings: it appears close to the code being written and is automatically updated as the local scope changes.
 
 \subsection{Quick Fixes for Repair Suggestions}
 \label{subsec:ui-quickfix}
 
 When a finding includes a suggested fix, Code Guardian offers a \textit{Quick Fix} action. Fix application is always user-initiated and confirmed, which preserves developer control and reduces the risk of unintended behavior changes (R5). Fixes integrate with the editor undo stack so developers can revert and iterate.
 
-\paragraph{Developer control.}
-The prototype does not apply patches automatically. Instead, suggested fixes are attached to diagnostics and surfaced through the standard lightbulb UI. This design reflects the practical risk that an LLM-generated patch may be security-improving but behavior-changing; keeping the developer in the loop is therefore essential for safe adoption.
+The prototype does \textbf{not apply patches automatically}. Suggested fixes are attached to diagnostics and surfaced through the standard lightbulb UI, reflecting the practical risk that an LLM-generated patch may be security-improving but behavior-changing; keeping the developer in the loop is therefore essential for safe adoption.
 
-\paragraph{Interaction contract for fixes.}
-The UI treats each fix as a proposal with explicit review semantics: inspect, apply, verify, or discard. This interaction contract reduces automation surprise and makes remediation decisions auditable in normal editor history. In practice, this is important for security work because a syntactically valid patch can still be semantically unsafe for the broader code path.
+The UI treats each fix as a \textbf{proposal with explicit review semantics}: inspect, apply, verify, or discard. This interaction contract reduces automation surprise and makes remediation decisions auditable in normal editor history. In practice, this matters for security work because a syntactically valid patch can still be semantically unsafe for the broader code path.
 
 \subsection{Interactive Analysis View and Contextual Q\&A}
 \label{subsec:ui-webview}
 
 For deeper inspection, the extension provides WebView-based views. A selection analysis view presents the model output in a dedicated panel for longer explanations and follow-up questions (e.g., ``why is this vulnerable?'', ``what is the safer alternative?''). In addition, Code Guardian provides a contextual Q\&A view in which the developer can select files or folders as context and ask security-related questions about a codebase segment. Both views support switching the local model at runtime and (when enabled) benefit from retrieval-augmented grounding.
 
-\paragraph{Model controls inside WebViews.}
-The WebView views include a model selector that lists locally available Ollama models and supports refreshing the list at runtime. This enables quick comparison of smaller models (fast feedback) versus larger models (more detailed explanations) without restarting the extension.
+The WebView views include a \textbf{model selector} that lists locally available Ollama models and supports refreshing the list at runtime. This enables quick comparison of smaller models (fast feedback) versus larger models (more detailed explanations) without restarting the extension.
 
 \subsection{Workspace Security Dashboard}
 \label{subsec:ui-dashboard}
 
 The workspace dashboard aggregates findings across the codebase. It provides a severity breakdown and highlights the most vulnerable files, enabling developers to prioritize remediation work. This mode is complementary to inline diagnostics: it supports periodic security reviews and progress tracking after fixes.
 
-\paragraph{Score and prioritization.}
-To support triage, the dashboard computes a coarse security score based on issue density and severity heuristics, and surfaces the files with the highest concentration of findings. The score is intended as a prioritization aid rather than a formal risk metric; the underlying findings should still be inspected and validated by the developer.
+To support triage, the dashboard computes a coarse \textbf{security score} based on issue density and severity heuristics, and surfaces the files with the highest concentration of findings. The score is intended as a prioritization aid rather than a formal risk metric; the underlying findings should still be inspected and validated by the developer.
 
-\paragraph{Triage workflow support.}
-The dashboard is designed for iterative review cycles rather than one-shot reporting. Developers can jump from aggregate views to file-level findings, apply fixes, and rescan to observe trend changes. This feedback loop helps convert raw detection output into actionable remediation planning at repository scale.
+The dashboard is designed for \textbf{iterative review cycles} rather than one-shot reporting. Developers can jump from aggregate views to file-level findings, apply fixes, and rescan to observe trend changes. This feedback loop helps convert raw detection output into actionable remediation planning at repository scale.
 
 \subsection{Model and RAG Controls}
 \label{subsec:ui-controls}
 
 Because Code Guardian is intended to run on developer hardware with varying resource constraints, model selection is exposed as a first-class UI feature. The extension provides commands to list available local Ollama models and switch the active model without restarting the extension. RAG can be toggled through settings and is also surfaced as a lightweight status indicator to make the current analysis mode explicit during development sessions. This transparency supports detection consistency (R2) and reduces user confusion about why results differ across runs.
 
-\paragraph{RAG and cache management.}
-The prototype also exposes maintenance commands for (i) updating vulnerability metadata used for the local knowledge base, (ii) rebuilding or searching the knowledge base, and (iii) inspecting and clearing the analysis cache. These controls help developers validate performance improvements (cache hit rates) and keep the retrieval corpus current without sacrificing source-code privacy.
+The prototype also exposes \textbf{maintenance commands} for (i) updating vulnerability metadata used for the local knowledge base, (ii) rebuilding or searching the knowledge base, and (iii) inspecting and clearing the analysis cache. These controls help developers validate performance improvements (cache hit rates) and keep the retrieval corpus current without sacrificing source-code privacy.
 
 \subsection{Human Factors and Safe Adoption}
 \label{subsec:ui-human-factors}

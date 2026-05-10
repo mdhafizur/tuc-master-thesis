@@ -10,10 +10,10 @@ Of the 25 reviewed samples, 19 (76\%) included a repair suggestion. Among those 
 \resizebox{\textwidth}{!}{%
 \begin{tikzpicture}
   \begin{axis}[
-    width=13cm,
-    height=5.5cm,
+    width=18cm,
+    height=7cm,
     xbar,
-    bar width=12pt,
+    bar width=16pt,
     xlabel={Percentage (\%)},
     xlabel style={font=\small\bfseries},
     symbolic y coords={
@@ -51,11 +51,9 @@ Repair effectiveness varies sharply by vulnerability category. Injection-style v
 
 \subsection{Representative Examples}
 
-\paragraph{True positive with correct repair (SQL injection).}
-The system correctly identified an unsanitized \texttt{req.query} value concatenated into a SQL string. The suggested fix replaced string concatenation with a parameterized query using \texttt{db.query("SELECT * FROM users WHERE id = ?", [req.query.id])}, which directly addresses the root cause.
+A representative \textbf{true positive with a correct repair} comes from the SQL injection class: the system correctly identified an unsanitized \texttt{req.query} value concatenated into a SQL string, and the suggested fix replaced string concatenation with a parameterized query using \texttt{db.query("SELECT * FROM users WHERE id = ?", [req.query.id])}, which directly addresses the root cause.
 
-\paragraph{False positive with misleading repair.}
-A secure \texttt{execFile} call with a hardcoded command was flagged as a command injection risk. The repair suggested replacing it with \texttt{spawn} and input validation, which is unnecessary since the original code does not use user-controlled input.
+A representative \textbf{false positive with a misleading repair} comes from a secure \texttt{execFile} call with a hardcoded command that was flagged as a command injection risk. The repair suggested replacing it with \texttt{spawn} and input validation, which is unnecessary since the original code does not use user-controlled input.
 
 \subsection{Level Mapping}
 
@@ -80,7 +78,7 @@ This falls in the $[50\%, 75\%)$ range.
 
 Most fixes target the right issue but may use generic patterns or need minor edits before applying.
 
-\paragraph{Limitations of R3 assessment.} All repair assessments were performed by a single reviewer on 25 samples. Inter-rater reliability was not measured, which limits the generalizability of the quality ratings. A two-rater protocol with Cohen's $\kappa$ would strengthen R3 evidence in future evaluations. Additionally, the sample size is small relative to the full dataset; expanding the reviewed set would improve confidence in per-category fix rates.
+A \textbf{limitation of the R3 assessment} is its scope: all repair assessments were performed by a single reviewer on 25 samples. Inter-rater reliability was not measured, which limits the generalizability of the quality ratings. A two-rater protocol with Cohen's $\kappa$ would strengthen R3 evidence in future evaluations. Additionally, the sample size is small relative to the full dataset; expanding the reviewed set would improve confidence in per-category fix rates.
 
 \subsection{Auto-Applicable Rate}
 \label{sec:eval-r3-auto-applicable}
@@ -91,5 +89,4 @@ Repairs are produced by a dedicated stage-2 call per detected finding (mirroring
 
 Across the full \texttt{qwen3:8b+RAG} evaluation (279 stage-2 repairs from 213 vulnerable evaluations under three-pass consensus and the inter-run confidence gate at $\geq 0.67$), \textbf{252 (90.32\,\%) auto-applied} cleanly through the syntax validator. The denominator is 279 rather than the 297 \texttt{stage2CallsTotal} reported in the run JSON because the validator counts only stage-2 outputs that emit a non-empty \texttt{suggestedFix} field (\texttt{repair-validator.js}, \texttt{aggregateAutoApplicable}); 18 of the 297 successful stage-2 calls returned an empty or absent fix string and are therefore excluded from the rate computation rather than counted as auto-applicable failures. Under the stricter convention that scores empty fixes as failures, the rate becomes $252 / 297 = 84.85\,\%$; both conventions are reported here so the reader can pick the bar that matches their workflow (auto-applicability of \emph{generated} fixes vs.\ auto-applicability across \emph{all} stage-2 invocations including model abstentions). The 27 remaining rejections are all real fragments of code that fail to parse for a structural reason: mid-statement truncations by \texttt{num\_predict} (e.g.\ \texttt{connection.query(sql, [user, pass], (error, results) => \{} with no closing brace) and unterminated regular-expression literals. No rejections come from prose-language openings.
 
-\paragraph{Interpretation.}
-The auto-applicable rate measures whether the IDE quick-fix surface could insert each repair without further editing --- a deterministic alternative to the similarity-based metrics (cosine, BLEU, CodeBERTScore) that SecRepair~\cite[\S III-C3]{islam2024secrepair} identifies as ``fundamentally inadequate'' for security correctness. The 9.68\,\% residual is a model-emit defect (truncation, unterminated literal), not a prompting defect. The thesis reports both the manual review (\emph{decision-support quality}: prose fixes that describe the right strategy count) and the auto-applicable rate (\emph{automation quality}: only IDE-insertable fixes count), so a reader can pick the bar that matches their workflow.
+The \textbf{auto-applicable rate} measures whether the IDE quick-fix surface could insert each repair without further editing --- a deterministic alternative to the similarity-based metrics (cosine, BLEU, CodeBERTScore) that SecRepair~\cite[\S III-C3]{islam2024secrepair} identifies as ``fundamentally inadequate'' for security correctness. The 9.68\,\% residual is a model-emit defect (truncation, unterminated literal), not a prompting defect. The thesis reports both the manual review (\emph{decision-support quality}: prose fixes that describe the right strategy count) and the auto-applicable rate (\emph{automation quality}: only IDE-insertable fixes count), so a reader can pick the bar that matches their workflow.
