@@ -21,10 +21,10 @@ export async function analyzeAndReportDiagnosticsFromText(
 	lineOffset: number = 0, // Used to shift line numbers if analyzing a sub-block
 	ragManager?: RAGManager,
 	scope: AnalysisScope = 'function'
-) {
+): Promise<number> {
 	const logger = getLogger();
 
-	if (!code) { return; }; // Skip analysis if no code is provided
+	if (!code) { return 0; }; // Skip analysis if no code is provided
 
 	// Run the LLM analysis and retrieve detected security issues
 	const issues: SecurityIssue[] = await analyzeCodeWithLLM(code, undefined, ragManager, scope);
@@ -88,4 +88,5 @@ export async function analyzeAndReportDiagnosticsFromText(
 
 	// Apply all diagnostics to the document
 	collection.set(doc.uri, diagnostics);
+	return diagnostics.length;
 }

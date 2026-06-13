@@ -2,13 +2,21 @@ import * as vscode from 'vscode';
 import { analyzeAndReportDiagnosticsFromText } from './diagnostic';
 import { provideFixes, registerSecureFixCommands } from './actions';
 import { getEnclosingFunction } from './functionExtractor';
-import { analyzeCode } from './analyzer';
 import { showModelSelector, setSelectedModel, getCurrentModel, getAvailableModels } from './modelManager';
 import { getContextualQnAWebviewContent } from './webview';
+import {
+    runSecurityAgent,
+    runChat,
+    applyProposedEdit,
+    previewProposedEdit,
+    AgentDiffContentProvider,
+    ProposedEdit
+} from './agent';
 import { RAGManager } from './ragManager';
 import { getAnalysisCache, disposeAnalysisCache } from './analysisCache';
-import { WorkspaceScanner } from './workspaceScanner';
+import { WorkspaceScanner, WorkspaceSummary } from './workspaceScanner';
 import { getDashboardHTML } from './dashboardWebview';
+import { getKnowledgeBaseHTML, getVulnerabilityStatsHTML } from './knowledgeWebview';
 import { getLogger } from './logger';
 
 /**
@@ -40,7 +48,9 @@ export function activate(context: vscode.ExtensionContext) {
      * off construction; later calls return the in-flight or completed promise.
      */
     const initializeRAGIfNeeded = (): Promise<RAGManager | undefined> => {
-        if (!isRAGEnabled) {
+        // Read the setting live so toggling at runtime takes effect without a reload.
+        const enabled = vscode.workspace.getConfiguration('codeGuardian').get<boolean>('enableRAG', true);
+        if (!enabled) {
             return Promise.resolve(undefined);
         }
         if (ragInitPromise) {
@@ -89,6 +99,27 @@ export function activate(context: vscode.ExtensionContext) {
     updateStatusBar();
     ragStatusBar.show();
     context.subscriptions.push(ragStatusBar);
+
+    /**
+     * Applies a RAG enable/disable change live — no window reload needed. When
+     * enabling, it (re)loads the knowledge base; when disabling, it drops the
+     * manager so the analyzer falls back to standard mode immediately. All
+     * analysis paths read the `ragManager` closure variable / initializeRAGIfNeeded
+     * at call time, so updating them here is enough.
+     */
+    const applyRagSetting = async (enabled: boolean): Promise<void> => {
+        if (enabled) {
+            ragInitPromise = undefined; // allow re-initialization
+            await vscode.window.withProgress(
+                { location: vscode.ProgressLocation.Window, title: '🧠 Code Guardian: loading RAG knowledge base…' },
+                () => initializeRAGIfNeeded()
+            );
+        } else {
+            ragManager = undefined;
+            ragInitPromise = undefined;
+        }
+        updateStatusBar();
+    };
 
     /**
      * Real-time analysis: Analyze the function under cursor as the user types.
@@ -173,20 +204,51 @@ export function activate(context: vscode.ExtensionContext) {
     /**
      * Manual command: Analyze the full file from Command Palette.
      */
-    const fullScanCommand = vscode.commands.registerCommand('codeSecurity.analyzeFullFile', () => {
+    const fullScanCommand = vscode.commands.registerCommand('codeSecurity.analyzeFullFile', async () => {
         const editor = vscode.window.activeTextEditor;
-        if (!editor) { return; };
-
-        const doc = editor.document;
-        const fullText = doc.getText();
-
-        if (fullText.length > 20000) {
-            vscode.window.showWarningMessage('File too large for full security analysis.');
+        if (!editor) {
+            vscode.window.showWarningMessage('Open a file to analyze.');
             return;
         }
 
-        analyzeAndReportDiagnosticsFromText(fullText, doc, diagnosticCollection, 0, ragManager, 'file');
-        vscode.window.showInformationMessage('🔍 Analyzing full file for security issues...');
+        const doc = editor.document;
+        if (doc.languageId !== 'javascript' && doc.languageId !== 'typescript') {
+            vscode.window.showWarningMessage('Code Guardian analyzes JavaScript and TypeScript files.');
+            return;
+        }
+
+        const fullText = doc.getText();
+        if (!fullText.trim()) {
+            vscode.window.showWarningMessage('The file is empty.');
+            return;
+        }
+        if (fullText.length > 20000) {
+            vscode.window.showWarningMessage('File too large for full security analysis (limit 20,000 characters). Try analyzing a selection instead.');
+            return;
+        }
+
+        await vscode.window.withProgress(
+            {
+                location: vscode.ProgressLocation.Notification,
+                title: '🔍 Code Guardian: analyzing full file for security issues…',
+                cancellable: false
+            },
+            async () => {
+                try {
+                    const count = await analyzeAndReportDiagnosticsFromText(
+                        fullText, doc, diagnosticCollection, 0, ragManager, 'file'
+                    );
+                    if (count > 0) {
+                        vscode.window.showWarningMessage(`🛡️ Code Guardian found ${count} potential security issue${count === 1 ? '' : 's'} in ${doc.fileName.split(/[/\\]/).pop()}.`);
+                    } else {
+                        vscode.window.showInformationMessage('✅ Code Guardian found no security issues in this file.');
+                    }
+                } catch (err) {
+                    logger.error('Full-file analysis failed', err);
+                    vscode.window.showErrorMessage(`Code Guardian analysis failed: ${err instanceof Error ? err.message : String(err)}`);
+                }
+            }
+        );
     });
     context.subscriptions.push(fullScanCommand);
 
@@ -227,12 +289,18 @@ export function activate(context: vscode.ExtensionContext) {
             return;
         }
 
-        // Wait for RAG to finish loading so the first invocation actually uses
-        // the knowledge base instead of silently falling back to standard mode.
-        const rag = await initializeRAGIfNeeded();
-        const analysisMode = rag ? '🧠 RAG-enhanced' : '🤖 standard';
-        vscode.window.showInformationMessage(`🤖 Analyzing selected code with AI (${analysisMode})...`);
-        analyzeCode(selectedText, context, rag);
+        // Reuse the security chat: open the panel seeded with this file as context
+        // and an initial question scoped to the selected lines, then auto-run it.
+        const startLine = selection.start.line + 1;
+        const endLine = (selectedText && !selection.isEmpty) ? selection.end.line + 1 : selection.active.line + 1;
+        const filePath = editor.document.uri.fsPath;
+        const question = `Analyze lines ${startLine}-${endLine} of ${editor.document.fileName.split(/[/\\]/).pop()} for security vulnerabilities and propose fixes:\n\n\`\`\`${editor.document.languageId}\n${selectedText}\n\`\`\``;
+
+        openSecurityChat({
+            initialContext: editor.document.uri.scheme === 'file' ? [filePath] : [],
+            initialQuestion: question,
+            autoSend: true
+        });
     });
     context.subscriptions.push(selectionAnalysisCommand);
 
@@ -311,13 +379,23 @@ export function activate(context: vscode.ExtensionContext) {
     /**
      * Manual command: Contextual Q&A webview for codebase/folder/file questions.
      */
-    const contextualQnACommand = vscode.commands.registerCommand('codeSecurity.contextualQnA', async () => {
+    // Shared diff provider backing the agent's "Preview fix" previews (registered once).
+    const agentDiffProvider = new AgentDiffContentProvider();
+    context.subscriptions.push(
+        vscode.workspace.registerTextDocumentContentProvider(AgentDiffContentProvider.scheme, agentDiffProvider)
+    );
+
+    /**
+     * Opens the Code Guardian security chat (the agentic Contextual Q&A panel).
+     * Shared by the "Contextual Q&A" and "Analyze Selection" commands. Optionally
+     * seeds the panel with starting context and an initial question to auto-run.
+     */
+    function openSecurityChat(seed?: { initialContext?: string[]; initialQuestion?: string; autoSend?: boolean }) {
         const currentModel = getCurrentModel();
 
-        // Create a webview panel for context-based Q&A
         const panel = vscode.window.createWebviewPanel(
             'codeSecurityContextualQnA',
-            '💬 Code Guardian: Contextual Q&A',
+            '🛡️ Code Guardian: Security Assistant',
             vscode.ViewColumn.Beside,
             {
                 enableScripts: true,
@@ -329,13 +407,31 @@ export function activate(context: vscode.ExtensionContext) {
         // Track active model for this session
         let activeModel = currentModel;
 
+        // Edits the agent has proposed this session, keyed by id, so the webview's
+        // Apply/Preview buttons can act on them.
+        const sessionEdits = new Map<string, ProposedEdit>();
+
+        // Running conversation so follow-up questions keep their context.
+        const conversationHistory: { role: string; content: string }[] = [];
+        let turnCounter = 0;
+
         // Initial HTML for the webview
         panel.webview.html = getContextualQnAWebviewContent(panel, context, activeModel);
 
         // Listen for messages from the webview (file/folder selection, questions)
         panel.webview.onDidReceiveMessage(async (message) => {
             logger.info('Received message from webview:', message);
-            if (message.type === 'selectContext') {
+            if (message.type === 'webviewReady') {
+                // The webview is initialized; deliver any seed (context + question).
+                if (seed && (seed.initialContext?.length || seed.initialQuestion)) {
+                    panel.webview.postMessage({
+                        type: 'seed',
+                        context: seed.initialContext ?? [],
+                        question: seed.initialQuestion ?? '',
+                        autoSend: Boolean(seed.autoSend)
+                    });
+                }
+            } else if (message.type === 'selectContext') {
                 logger.info('Processing selectContext message');
                 // Show file/folder picker and send result back
                 let uris = await vscode.window.showOpenDialog({
@@ -368,181 +464,127 @@ export function activate(context: vscode.ExtensionContext) {
                     vscode.window.showErrorMessage(`Failed to refresh models: ${error}`);
                 }
             } else if (message.type === 'askQuestion') {
-                // Gather the selected context (files/folders), read their contents,
-                // and send to your LLM backend for analysis/answering.
+                // Drive the agentic loop: the model reads/searches the workspace on
+                // demand and may propose fixes, instead of stuffing pre-read files
+                // into a single prompt.
                 const contextUris: string[] = message.context || [];
                 const requestedModel = message.model || activeModel;
-
-                // Update active model if user selected a different one
                 if (requestedModel !== activeModel) {
                     activeModel = requestedModel;
                 }
 
-                let contextContents: { path: string, content: string }[] = [];
+                const question = (message.question || '').trim()
+                    || 'Perform a comprehensive security analysis of the selected context and propose fixes for the issues you find.';
 
-                // Helper: Check if file should be analyzed for security
-                function isSecurityRelevantFile(filePath: string): boolean {
-                    const securityRelevantExtensions = [
-                        '.js', '.ts', '.jsx', '.tsx', '.py', '.java', '.php', '.rb', '.go', '.rs', '.cpp', '.c', '.cs', '.swift',
-                        '.sql', '.json', '.yaml', '.yml', '.xml', '.env', '.config', '.conf', '.ini', '.properties',
-                        '.html', '.htm', '.jsp', '.asp', '.aspx', '.php', '.ejs', '.hbs', '.handlebars'
-                    ];
-                    const fileName = filePath.toLowerCase();
-                    return securityRelevantExtensions.some(ext => fileName.endsWith(ext)) ||
-                        fileName.includes('dockerfile') ||
-                        fileName.includes('docker-compose') ||
-                        fileName.includes('package.json') ||
-                        fileName.includes('requirements.txt') ||
-                        fileName.includes('pom.xml') ||
-                        fileName.includes('build.gradle') ||
-                        fileName.includes('makefile') ||
-                        fileName.includes('.gitignore') ||
-                        fileName.includes('readme');
-                }
+                turnCounter++;
 
-                // Helper: Recursively collect all files in a directory
-                async function collectFilesRecursively(dir: string): Promise<string[]> {
-                    let files: string[] = [];
-                    try {
-                        const entries = await vscode.workspace.fs.readDirectory(vscode.Uri.file(dir));
-                        for (const [name, type] of entries) {
-                            const fullPath = dir.endsWith('/') ? dir + name : dir + '/' + name;
-                            if (type & vscode.FileType.File) {
-                                if (isSecurityRelevantFile(fullPath)) {
-                                    files.push(fullPath);
-                                }
-                            } else if (type & vscode.FileType.Directory) {
-                                // Skip common non-security relevant directories
-                                if (!name.startsWith('.') && !['node_modules', 'dist', 'build', 'target', '__pycache__', '.git'].includes(name)) {
-                                    files = files.concat(await collectFilesRecursively(fullPath));
-                                }
-                            }
-                        }
-                    } catch (e) {
-                        logger.error(`Error reading directory ${dir}:`, e);
-                        files.push(`${dir} (Error reading: ${e})`);
-                    }
-                    return files;
-                }
-                for (const uri of contextUris) {
-                    logger.info(`Processing URI: ${uri}`);
-                    try {
-                        const fileStat = await vscode.workspace.fs.stat(vscode.Uri.file(uri));
-                        if (fileStat.type & vscode.FileType.File) {
-                            // Read file content
-                            if (isSecurityRelevantFile(uri)) {
-                                const fileData = await vscode.workspace.fs.readFile(vscode.Uri.file(uri));
-                                const content = Buffer.from(fileData).toString('utf8');
-                                contextContents.push({ path: uri, content: content });
-                                logger.info(`Added file: ${uri} (${content.length} chars)`);
-                            } else {
-                                logger.info(`Skipped non-security file: ${uri}`);
-                            }
-                        } else if (fileStat.type & vscode.FileType.Directory) {
-                            // Recursively read all files in the directory
-                            logger.info(`Scanning directory: ${uri}`);
-                            const allFiles = await collectFilesRecursively(uri);
-                            logger.info(`Found ${allFiles.length} security-relevant files in directory`);
-                            for (const filePath of allFiles) {
-                                if (filePath.includes('(Error reading:')) {
-                                    contextContents.push({ path: filePath, content: '' });
-                                    continue;
-                                }
-                                try {
-                                    const fileData = await vscode.workspace.fs.readFile(vscode.Uri.file(filePath));
-                                    const content = Buffer.from(fileData).toString('utf8');
-                                    contextContents.push({ path: filePath, content: content });
-                                    logger.info(`Added file: ${filePath} (${content.length} chars)`);
-                                } catch (e) {
-                                    contextContents.push({ path: filePath, content: `Error reading: ${e}` });
-                                    logger.error(`Error reading file ${filePath}:`, e);
-                                }
-                            }
-                        }
-                    } catch (e) {
-                        contextContents.push({ path: uri, content: `Error reading: ${e}` });
-                        logger.error(`Error processing URI ${uri}:`, e);
-                    }
-                }
+                // Route the turn by INTENT, not by whether context is attached:
+                // a message asking for analysis/detection/review/fix runs the agentic
+                // loop; anything else (e.g. "how are you") is a plain conversation.
+                // The webview can force a mode via message.mode (chat | analyze).
+                const analysisIntent = /\b(analy[sz]e?|analysis|scan|detect|inspect|audit|review|vulnerab|exploit|injection|xss|csrf|ssrf|insecure|sanitiz|hardcoded|secret|\bcwe\b|fix|patch|repair|remediat|harden|secure this)\b/i;
+                const useAgent = message.mode === 'analyze'
+                    || (message.mode !== 'chat' && analysisIntent.test(question));
 
-                logger.info(`Collected ${contextContents.length} files for analysis`);
-
-                // If no files were collected, inform the user
-                if (contextContents.length === 0) {
-                    panel.webview.postMessage({
-                        type: 'answer',
-                        answer: 'No security-relevant files found in the selected context. Please select folders/files containing code files (.js, .ts, .py, .java, .php, etc.) for security analysis.'
-                    });
-                    return;
-                }
-
-                // Compose a security-focused prompt for the LLM
-                const contextSummary = contextContents.map(f => {
-                    const truncatedContent = f.content.substring(0, 3000); // Increased limit for better context
-                    return `File: ${f.path}\n---\n${truncatedContent}${f.content.length > 3000 ? '\n... (truncated)' : ''}\n`;
-                }).join('\n');
-
-                const securityQuestion = message.question.trim() || 'Perform a comprehensive security analysis';
-                const prompt = `${contextSummary}\n\nSECURITY ANALYSIS REQUEST: ${securityQuestion}`;
-
-                // Call the LLM with the selected model
                 try {
-                    const ollama = await import('ollama');
+                    const ragManager = await initializeRAGIfNeeded();
 
-                    const response = await ollama.default.chat({
-                        model: activeModel,
-                        messages: [
-                            {
-                                role: 'system',
-                                content: `You are an expert cybersecurity analyst specializing in secure code review. Your task is to analyze the provided codebase for security vulnerabilities and weaknesses.
+                    let answer: string;
+                    let wireEdits: object[] = [];
 
-FOCUS AREAS:
-- SQL Injection vulnerabilities
-- Cross-Site Scripting (XSS) attacks  
-- Authentication and authorization flaws
-- Input validation issues
-- Cryptographic weaknesses
-- Insecure file operations
-- API security issues
-- Configuration vulnerabilities
-- Dependency security issues
-- Business logic flaws
+                    if (useAgent) {
+                        const result = await runSecurityAgent(
+                            question,
+                            contextUris,
+                            activeModel,
+                            ragManager,
+                            (step) => panel.webview.postMessage({ type: 'agentStep', step }),
+                            conversationHistory
+                        );
+                        answer = result.answer;
+                        // Re-key edits with session-unique ids (the agent numbers them
+                        // per-run, which would collide across turns) and store them.
+                        wireEdits = result.edits.map((e, i) => {
+                            e.id = `t${turnCounter}-e${i}`;
+                            sessionEdits.set(e.id, e);
+                            return {
+                                id: e.id,
+                                relativePath: e.relativePath,
+                                startLine: e.startLine,
+                                endLine: e.endLine,
+                                description: e.description,
+                                applicable: e.applicable,
+                                notApplicableReason: e.notApplicableReason
+                            };
+                        });
+                    } else {
+                        // Plain conversational reply — no tools, no investigation.
+                        answer = await runChat(question, activeModel, ragManager, conversationHistory);
+                    }
 
-ANALYSIS FORMAT:
-1. **CRITICAL VULNERABILITIES** - High-risk security issues that need immediate attention
-2. **MEDIUM RISK ISSUES** - Important security concerns that should be addressed
-3. **LOW RISK ISSUES** - Minor security improvements
-4. **SECURITY RECOMMENDATIONS** - Best practices and preventive measures
-
-For each issue found:
-- Specify the exact file and line number (if applicable)
-- Explain the security risk and potential impact
-- Provide concrete code examples for fixes
-- Rate the severity (Critical/High/Medium/Low)
-
-Be thorough, specific, and provide actionable recommendations.`
-                            },
-                            {
-                                role: 'user',
-                                content: prompt
-                            }
-                        ]
-                    });
+                    // Keep the conversation context bounded to the last few turns.
+                    conversationHistory.push({ role: 'user', content: question });
+                    conversationHistory.push({ role: 'assistant', content: answer });
+                    while (conversationHistory.length > 8) {
+                        conversationHistory.shift();
+                    }
 
                     panel.webview.postMessage({
                         type: 'answer',
-                        answer: response.message.content
+                        answer,
+                        edits: wireEdits
                     });
                 } catch (err) {
+                    logger.error('Contextual Q&A turn failed', err);
                     panel.webview.postMessage({
                         type: 'answer',
-                        answer: `Error analyzing with model ${activeModel}: ${err}`
+                        answer: `Error running the security assistant with model ${activeModel}: ${err instanceof Error ? err.message : String(err)}`,
+                        edits: []
                     });
+                }
+            } else if (message.type === 'previewEdit') {
+                const edit = sessionEdits.get(message.editId);
+                if (!edit) {
+                    vscode.window.showWarningMessage('That proposed edit is no longer available.');
+                    return;
+                }
+                try {
+                    await previewProposedEdit(edit, agentDiffProvider);
+                } catch (err) {
+                    vscode.window.showErrorMessage(`Could not preview the fix: ${err instanceof Error ? err.message : String(err)}`);
+                }
+            } else if (message.type === 'applyEdit') {
+                const edit = sessionEdits.get(message.editId);
+                if (!edit) {
+                    vscode.window.showWarningMessage('That proposed edit is no longer available.');
+                    return;
+                }
+                const confirm = await vscode.window.showWarningMessage(
+                    `Apply fix to ${edit.relativePath} (lines ${edit.startLine}-${edit.endLine})?`,
+                    { modal: true },
+                    'Apply'
+                );
+                if (confirm !== 'Apply') {
+                    return;
+                }
+                try {
+                    const ok = await applyProposedEdit(edit);
+                    panel.webview.postMessage({ type: 'editApplied', editId: edit.id, ok });
+                    if (ok) {
+                        vscode.window.showInformationMessage(`Applied fix to ${edit.relativePath}.`);
+                    } else {
+                        vscode.window.showWarningMessage('The workspace rejected the edit. Is the file writable?');
+                    }
+                } catch (err) {
+                    vscode.window.showErrorMessage(`Could not apply the fix: ${err instanceof Error ? err.message : String(err)}`);
                 }
             }
         });
-    });
-    context.subscriptions.push(contextualQnACommand);
+    }
+
+    context.subscriptions.push(
+        vscode.commands.registerCommand('codeSecurity.contextualQnA', () => openSecurityChat())
+    );
 
     /**
      * Manual command: RAG Knowledge Management
@@ -559,7 +601,7 @@ Be thorough, specific, and provide actionable recommendations.`
             
             if (enableRAG === 'Enable RAG') {
                 await vscode.workspace.getConfiguration('codeGuardian').update('enableRAG', true, vscode.ConfigurationTarget.Global);
-                vscode.window.showInformationMessage('RAG enabled! Please reload the extension to initialize the knowledge base.');
+                vscode.window.showInformationMessage('🧠 RAG enabled. Loading the knowledge base…');
                 return;
             } else if (enableRAG === 'Open Settings') {
                 vscode.commands.executeCommand('workbench.action.openSettings', 'codeGuardian.enableRAG');
@@ -568,90 +610,105 @@ Be thorough, specific, and provide actionable recommendations.`
             return;
         }
 
-        const options = [
-            'View Knowledge Base',
-            'Add Security Knowledge', 
-            'Rebuild Vector Store',
-            'Search Knowledge',
-            'Update Vulnerability Data',
-            'View Vulnerability Stats',
-            'Clear Vulnerability Cache',
-            'Toggle RAG On/Off'
+        const entryCount = ragManager.getKnowledgeBase().length;
+        const ragOn = vscode.workspace.getConfiguration('codeGuardian').get<boolean>('enableRAG', true);
+
+        interface RagMenuItem extends vscode.QuickPickItem { id: string; }
+        const menuItems: RagMenuItem[] = [
+            { id: 'view', label: '$(book) View Knowledge Base', description: `${entryCount} entries`, detail: 'Browse and search the security knowledge corpus' },
+            { id: 'search', label: '$(search) Search Knowledge', detail: 'Semantic vector search across the knowledge base' },
+            { id: 'add', label: '$(add) Add Security Knowledge', detail: 'Add a custom entry to the knowledge base' },
+            { id: 'rebuild', label: '$(sync) Rebuild Vector Store', detail: 'Re-embed and rebuild the HNSW index' },
+            { id: 'update', label: '$(cloud-download) Update Vulnerability Data', detail: 'Refresh from CWE, OWASP, CVE, and npm sources' },
+            { id: 'stats', label: '$(graph) View Vulnerability Stats', detail: 'Corpus size, last update, and cache status' },
+            { id: 'clear', label: '$(trash) Clear Vulnerability Cache', detail: 'Delete cached vulnerability data' },
+            { id: 'toggle', label: `$(circle-${ragOn ? 'large-filled' : 'large-outline'}) Toggle RAG ${ragOn ? 'Off' : 'On'}`, description: ragOn ? 'currently ON' : 'currently OFF', detail: 'Enable or disable retrieval-augmented analysis' }
         ];
 
-        const choice = await vscode.window.showQuickPick(options, {
-            placeHolder: 'Select RAG management action'
+        const picked = await vscode.window.showQuickPick(menuItems, {
+            title: '🧠 Manage RAG Knowledge Base',
+            placeHolder: 'Select a knowledge-base action'
         });
 
-        switch (choice) {
-            case 'Toggle RAG On/Off':
-                const currentStatus = isRAGEnabled ? 'enabled' : 'disabled';
-                const newStatus = !isRAGEnabled;
+        switch (picked?.id) {
+            case 'toggle': {
+                const liveStatus = vscode.workspace.getConfiguration('codeGuardian').get<boolean>('enableRAG', true);
+                const currentStatus = liveStatus ? 'enabled' : 'disabled';
+                const newStatus = !liveStatus;
                 const action = newStatus ? 'enable' : 'disable';
-                
+
                 const confirm = await vscode.window.showInformationMessage(
                     `RAG is currently ${currentStatus}. Do you want to ${action} it?`,
                     `${action.charAt(0).toUpperCase() + action.slice(1)} RAG`,
                     'Cancel'
                 );
-                
+
                 if (confirm?.includes('RAG')) {
+                    // The configuration listener applies this live — no reload needed.
                     await vscode.workspace.getConfiguration('codeGuardian').update('enableRAG', newStatus, vscode.ConfigurationTarget.Global);
-                    vscode.window.showInformationMessage(`RAG ${action}d! Please reload the extension for changes to take effect.`);
+                    vscode.window.showInformationMessage(`🧠 RAG ${action}d.`);
                 }
                 break;
+            }
 
-            case 'View Knowledge Base':
+            case 'view': {
                 const knowledge = ragManager.getKnowledgeBase();
-                const knowledgeInfo = knowledge.map(k => 
-                    `• ${k.title} (${k.severity}) - ${k.category} - ${k.tags.join(', ')}`
-                ).join('\n');
-                
-                vscode.window.showInformationMessage(
-                    `Knowledge Base (${knowledge.length} entries):\n\n${knowledgeInfo}`,
-                    { modal: true }
+                const kbPanel = vscode.window.createWebviewPanel(
+                    'codeGuardianKnowledgeBase',
+                    '🧠 RAG Knowledge Base',
+                    vscode.ViewColumn.Active,
+                    { enableScripts: true, retainContextWhenHidden: true }
                 );
+                kbPanel.webview.html = getKnowledgeBaseHTML(knowledge);
                 break;
+            }
 
-            case 'Add Security Knowledge':
+            case 'add':
+                const addTitle = 'Add Security Knowledge';
                 const title = await vscode.window.showInputBox({
+                    title: `${addTitle} (1/5) — Title`,
                     prompt: 'Enter security knowledge title',
-                    placeHolder: 'e.g., "CSRF Prevention Techniques"'
+                    placeHolder: 'e.g., "CSRF Prevention Techniques"',
+                    ignoreFocusOut: true
                 });
-                
+
                 if (!title) {
                     return;
                 }
 
                 const content = await vscode.window.showInputBox({
+                    title: `${addTitle} (2/5) — Content`,
                     prompt: 'Enter security knowledge content',
-                    placeHolder: 'Detailed explanation and prevention techniques...'
+                    placeHolder: 'Detailed explanation and prevention techniques...',
+                    ignoreFocusOut: true
                 });
-                
+
                 if (!content) {
                     return;
                 }
 
                 const category = await vscode.window.showQuickPick([
-                    'injection', 'cryptography', 'authentication', 'authorization', 
+                    'injection', 'cryptography', 'authentication', 'authorization',
                     'path-traversal', 'configuration', 'business-logic', 'other'
-                ], { placeHolder: 'Select category' });
-                
+                ], { title: `${addTitle} (3/5) — Category`, placeHolder: 'Select category', ignoreFocusOut: true });
+
                 if (!category) {
                     return;
                 }
 
                 const severity = await vscode.window.showQuickPick([
                     'high', 'medium', 'low'
-                ], { placeHolder: 'Select severity level' });
-                
+                ], { title: `${addTitle} (4/5) — Severity`, placeHolder: 'Select severity level', ignoreFocusOut: true });
+
                 if (!severity) {
                     return;
                 }
 
                 const tags = await vscode.window.showInputBox({
+                    title: `${addTitle} (5/5) — Tags`,
                     prompt: 'Enter tags (comma-separated)',
-                    placeHolder: 'csrf, web-security, token'
+                    placeHolder: 'csrf, web-security, token',
+                    ignoreFocusOut: true
                 });
 
                 try {
@@ -670,54 +727,90 @@ Be thorough, specific, and provide actionable recommendations.`
                 }
                 break;
 
-            case 'Rebuild Vector Store':
-                try {
-                    await ragManager.rebuildVectorStore();
-                } catch (error) {
-                    vscode.window.showErrorMessage(`❌ Failed to rebuild vector store: ${error}`);
-                }
+            case 'rebuild': {
+                const rag = ragManager;
+                await vscode.window.withProgress(
+                    { location: vscode.ProgressLocation.Notification, title: '🧠 Code Guardian: rebuilding vector store…', cancellable: false },
+                    async () => {
+                        try {
+                            await rag.rebuildVectorStore();
+                            vscode.window.showInformationMessage('✅ Vector store rebuilt.');
+                        } catch (error) {
+                            vscode.window.showErrorMessage(`❌ Failed to rebuild vector store: ${error}`);
+                        }
+                    }
+                );
                 break;
+            }
 
-            case 'Search Knowledge':
+            case 'search': {
                 const searchQuery = await vscode.window.showInputBox({
-                    prompt: 'Enter search query',
-                    placeHolder: 'e.g., "XSS prevention", "SQL injection", "crypto"'
+                    title: 'Search Knowledge Base',
+                    prompt: 'Enter a search query',
+                    placeHolder: 'e.g., "XSS prevention", "SQL injection", "crypto"',
+                    ignoreFocusOut: true
                 });
-                
+
                 if (!searchQuery) {
                     return;
                 }
 
                 try {
-                    const results = await ragManager.searchRelevantKnowledge(searchQuery, 5);
+                    const rag = ragManager;
+                    const results = await vscode.window.withProgress(
+                        { location: vscode.ProgressLocation.Window, title: '🔎 Searching knowledge base…' },
+                        () => rag.searchRelevantKnowledge(searchQuery, 10)
+                    );
+
                     if (results.length === 0) {
-                        vscode.window.showInformationMessage('No relevant knowledge found for your query.');
+                        vscode.window.showInformationMessage(`No relevant knowledge found for "${searchQuery}".`);
                         return;
                     }
 
-                    const searchResults = results.map((doc, index) => {
-                        const metadata = doc.metadata;
-                        return `${index + 1}. ${metadata.title} (${metadata.severity})\n   ${doc.pageContent.substring(0, 200)}...`;
-                    }).join('\n\n');
+                    // Map the retrieved chunks into the knowledge-card shape and reuse
+                    // the scrollable webview used by "View Knowledge Base".
+                    const mapped = results.map((doc, i) => {
+                        const m = doc.metadata || {};
+                        const tags = Array.isArray(m.tags) ? m.tags : (typeof m.tags === 'string' ? m.tags.split(',').map((t: string) => t.trim()) : []);
+                        return {
+                            id: String(m.id || `result-${i + 1}`),
+                            title: String(m.title || 'Untitled'),
+                            content: doc.pageContent || '',
+                            category: String(m.category || 'general'),
+                            severity: (m.severity === 'high' || m.severity === 'medium' || m.severity === 'low') ? m.severity : 'low',
+                            cwe: m.cwe ? String(m.cwe) : undefined,
+                            owasp: m.owasp ? String(m.owasp) : undefined,
+                            tags
+                        };
+                    });
 
-                    vscode.window.showInformationMessage(
-                        `Search Results (${results.length} found):\n\n${searchResults}`,
-                        { modal: true }
+                    const searchPanel = vscode.window.createWebviewPanel(
+                        'codeGuardianKnowledgeSearch',
+                        '🔎 Knowledge Search',
+                        vscode.ViewColumn.Active,
+                        { enableScripts: true, retainContextWhenHidden: true }
                     );
+                    searchPanel.webview.html = getKnowledgeBaseHTML(mapped, {
+                        heading: 'Search Results',
+                        icon: '🔎',
+                        noun: 'results',
+                        note: `for "${searchQuery}"`
+                    });
                 } catch (error) {
                     vscode.window.showErrorMessage(`❌ Search failed: ${error}`);
                 }
                 break;
+            }
 
-            case 'Update Vulnerability Data':
+            case 'update':
                 const updateChoice = await vscode.window.showQuickPick([
                     'Update All Sources',
                     'Update CWE Data Only',
                     'Update OWASP Top 10 Only',
                     'Update Latest CVEs Only',
                     'Update JavaScript Vulnerabilities Only'
-                ], { placeHolder: 'Select data source to update' });
-                
+                ], { title: 'Update Vulnerability Data', placeHolder: 'Select data source to update', ignoreFocusOut: true });
+
                 if (!updateChoice) {
                     return;
                 }
@@ -753,42 +846,32 @@ Be thorough, specific, and provide actionable recommendations.`
                 });
                 break;
 
-            case 'View Vulnerability Stats':
+            case 'stats':
                 try {
-                    if (!ragManager) {
-                        vscode.window.showErrorMessage('RAG Manager not initialized');
-                        return;
-                    }
-
                     const stats = await ragManager.getVulnerabilityDataStats();
-                    const cacheStatus = stats.cacheInfo.map(info => {
-                        const ageHours = Math.round(info.age / (1000 * 60 * 60));
-                        const sizeKB = Math.round(info.size / 1024);
-                        return `${info.file}: ${info.exists ? `${ageHours}h old, ${sizeKB}KB` : 'Not cached'}`;
-                    }).join('\n');
-
-                    const statsMessage = `📊 Vulnerability Data Statistics\n\n` +
-                        `Total Knowledge Entries: ${stats.totalKnowledge}\n` +
-                        `Vulnerability Data Entries: ${stats.vulnerabilityData}\n` +
-                        `Last Update: ${stats.lastUpdate || 'Never'}\n\n` +
-                        `Cache Status:\n${cacheStatus}`;
-
-                    vscode.window.showInformationMessage(statsMessage, { modal: true });
+                    const statsPanel = vscode.window.createWebviewPanel(
+                        'codeGuardianVulnStats',
+                        '📊 Vulnerability Data Statistics',
+                        vscode.ViewColumn.Active,
+                        { enableScripts: true, retainContextWhenHidden: true }
+                    );
+                    statsPanel.webview.html = getVulnerabilityStatsHTML(stats);
                 } catch (error) {
                     vscode.window.showErrorMessage(`❌ Failed to get vulnerability stats: ${error}`);
                 }
                 break;
 
-            case 'Clear Vulnerability Cache':
+            case 'clear':
                 const confirmClear = await vscode.window.showWarningMessage(
                     'This will clear all cached vulnerability data. Fresh data will be downloaded on next update.',
-                    'Clear Cache',
-                    'Cancel'
+                    { modal: true },
+                    'Clear Cache'
                 );
-                
+
                 if (confirmClear === 'Clear Cache') {
                     try {
                         await ragManager.clearVulnerabilityCache();
+                        vscode.window.showInformationMessage('✅ Vulnerability cache cleared.');
                     } catch (error) {
                         vscode.window.showErrorMessage(`❌ Failed to clear cache: ${error}`);
                     }
@@ -807,17 +890,10 @@ Be thorough, specific, and provide actionable recommendations.`
         const newStatus = !currentRAGStatus;
         const action = newStatus ? 'enabled' : 'disabled';
         
+        // Updating the setting fires the configuration listener below, which
+        // applies the change live (loads/drops the RAG manager). No reload needed.
         await currentConfig.update('enableRAG', newStatus, vscode.ConfigurationTarget.Global);
-        updateStatusBar();
-        
-        vscode.window.showInformationMessage(
-            `🧠 RAG ${action}! Reload the extension for changes to take effect.`,
-            'Reload Extension'
-        ).then(selection => {
-            if (selection === 'Reload Extension') {
-                vscode.commands.executeCommand('workbench.action.reloadWindow');
-            }
-        });
+        vscode.window.showInformationMessage(`🧠 RAG ${action}.`);
     });
     context.subscriptions.push(ragToggleCommand);
 
@@ -899,19 +975,9 @@ Be thorough, specific, and provide actionable recommendations.`
      */
     const configChangeListener = vscode.workspace.onDidChangeConfiguration(event => {
         if (event.affectsConfiguration('codeGuardian.enableRAG')) {
-            updateStatusBar();
-            
             const newRAGStatus = vscode.workspace.getConfiguration('codeGuardian').get<boolean>('enableRAG', true);
-            const statusMessage = newRAGStatus ? 'enabled' : 'disabled';
-            
-            vscode.window.showInformationMessage(
-                `🧠 RAG ${statusMessage}! Reload the extension for changes to take effect.`,
-                'Reload Extension'
-            ).then(selection => {
-                if (selection === 'Reload Extension') {
-                    vscode.commands.executeCommand('workbench.action.reloadWindow');
-                }
-            });
+            // Apply live — loads or drops the RAG manager without a window reload.
+            void applyRagSetting(newRAGStatus);
         }
     });
     context.subscriptions.push(configChangeListener);
@@ -996,11 +1062,7 @@ Be thorough, specific, and provide actionable recommendations.`
                         panel.dispose();
                         break;
                     case 'export':
-                        // TODO: Implement export functionality
-                        vscode.window.showInformationMessage('Export feature coming soon!');
-                        break;
-                    case 'settings':
-                        vscode.commands.executeCommand('workbench.action.openSettings', 'codeGuardian');
+                        await exportDashboardReport(summary, securityScore, securityGrade);
                         break;
                     case 'openFile':
                         const doc = await vscode.workspace.openTextDocument(message.filePath);
@@ -1011,6 +1073,179 @@ Be thorough, specific, and provide actionable recommendations.`
         });
     });
     context.subscriptions.push(workspaceDashboardCommand);
+}
+
+/**
+ * Exports the workspace security scan as a Markdown or JSON report.
+ * Lets the user pick a format, choose a destination via the save dialog,
+ * writes the file, and offers to open it.
+ */
+async function exportDashboardReport(
+    summary: WorkspaceSummary,
+    securityScore: number,
+    securityGrade: string
+): Promise<void> {
+    const logger = getLogger();
+
+    const format = await vscode.window.showQuickPick(
+        [
+            { label: '$(markdown) Markdown (.md)', value: 'md' as const, description: 'Human-readable report' },
+            { label: '$(json) JSON (.json)', value: 'json' as const, description: 'Machine-readable, full finding data' }
+        ],
+        { placeHolder: 'Choose the export format for the security report' }
+    );
+
+    if (!format) {
+        return; // user cancelled
+    }
+
+    const timestamp = new Date();
+    const fileStamp = timestamp.toISOString().slice(0, 19).replace(/[:T]/g, '-');
+    const defaultName = `code-guardian-report-${fileStamp}.${format.value}`;
+    const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri;
+    const defaultUri = workspaceFolder
+        ? vscode.Uri.joinPath(workspaceFolder, defaultName)
+        : vscode.Uri.file(defaultName);
+
+    const targetUri = await vscode.window.showSaveDialog({
+        defaultUri,
+        filters: format.value === 'md'
+            ? { 'Markdown': ['md'] }
+            : { 'JSON': ['json'] },
+        saveLabel: 'Export Report'
+    });
+
+    if (!targetUri) {
+        return; // user cancelled
+    }
+
+    const content = format.value === 'md'
+        ? buildMarkdownReport(summary, securityScore, securityGrade, timestamp)
+        : buildJsonReport(summary, securityScore, securityGrade, timestamp);
+
+    try {
+        await vscode.workspace.fs.writeFile(targetUri, Buffer.from(content, 'utf8'));
+        logger.success(`Exported security report to ${targetUri.fsPath}`);
+
+        const action = await vscode.window.showInformationMessage(
+            `Security report exported to ${vscode.workspace.asRelativePath(targetUri)}`,
+            'Open Report'
+        );
+        if (action === 'Open Report') {
+            const doc = await vscode.workspace.openTextDocument(targetUri);
+            await vscode.window.showTextDocument(doc);
+        }
+    } catch (error) {
+        const reason = error instanceof Error ? error.message : String(error);
+        logger.error('Failed to export security report', error);
+        vscode.window.showErrorMessage(`Failed to export security report: ${reason}`);
+    }
+}
+
+/**
+ * Builds a JSON report from the workspace summary (full finding data).
+ */
+function buildJsonReport(
+    summary: WorkspaceSummary,
+    securityScore: number,
+    securityGrade: string,
+    generatedAt: Date
+): string {
+    const report = {
+        tool: 'Code Guardian',
+        generatedAt: generatedAt.toISOString(),
+        securityScore,
+        securityGrade,
+        summary: {
+            totalFiles: summary.totalFiles,
+            scannedFiles: summary.scannedFiles,
+            totalIssues: summary.totalIssues,
+            criticalIssues: summary.criticalIssues,
+            highIssues: summary.highIssues,
+            mediumIssues: summary.mediumIssues,
+            lowIssues: summary.lowIssues,
+            totalLinesOfCode: summary.totalLinesOfCode,
+            scanDurationMs: summary.scanDuration
+        },
+        files: summary.fileResults
+            .filter(file => file.issues.length > 0)
+            .map(file => ({
+                path: file.relativePath,
+                linesOfCode: file.linesOfCode,
+                issues: file.issues.map(issue => ({
+                    message: issue.message,
+                    startLine: issue.startLine,
+                    endLine: issue.endLine,
+                    confidence: issue.confidence,
+                    detectionSource: issue.detectionSource,
+                    suggestedFix: issue.suggestedFix
+                }))
+            }))
+    };
+    return JSON.stringify(report, null, 2);
+}
+
+/**
+ * Builds a human-readable Markdown report from the workspace summary.
+ */
+function buildMarkdownReport(
+    summary: WorkspaceSummary,
+    securityScore: number,
+    securityGrade: string,
+    generatedAt: Date
+): string {
+    const lines: string[] = [];
+    lines.push('# Code Guardian — Security Report');
+    lines.push('');
+    lines.push(`- **Generated:** ${generatedAt.toISOString()}`);
+    lines.push(`- **Security score:** ${securityScore}/100 (Grade ${securityGrade})`);
+    lines.push(`- **Files scanned:** ${summary.scannedFiles} / ${summary.totalFiles}`);
+    lines.push(`- **Lines of code:** ${summary.totalLinesOfCode}`);
+    lines.push(`- **Scan duration:** ${(summary.scanDuration / 1000).toFixed(1)}s`);
+    lines.push('');
+    lines.push('## Summary');
+    lines.push('');
+    lines.push('| Severity | Count |');
+    lines.push('| --- | --- |');
+    lines.push(`| 🔴 Critical | ${summary.criticalIssues} |`);
+    lines.push(`| 🟠 High | ${summary.highIssues} |`);
+    lines.push(`| 🟡 Medium | ${summary.mediumIssues} |`);
+    lines.push(`| 🔵 Low | ${summary.lowIssues} |`);
+    lines.push(`| **Total** | **${summary.totalIssues}** |`);
+    lines.push('');
+
+    const filesWithIssues = summary.fileResults
+        .filter(file => file.issues.length > 0)
+        .sort((a, b) => b.issues.length - a.issues.length);
+
+    lines.push('## Findings');
+    lines.push('');
+    if (filesWithIssues.length === 0) {
+        lines.push('No security issues detected. 🎉');
+        return lines.join('\n') + '\n';
+    }
+
+    for (const file of filesWithIssues) {
+        lines.push(`### ${file.relativePath} (${file.issues.length})`);
+        lines.push('');
+        for (const issue of file.issues) {
+            const range = issue.startLine === issue.endLine
+                ? `L${issue.startLine}`
+                : `L${issue.startLine}-${issue.endLine}`;
+            const meta: string[] = [];
+            if (typeof issue.confidence === 'number') {
+                meta.push(`confidence ${(issue.confidence * 100).toFixed(0)}%`);
+            }
+            if (issue.detectionSource) {
+                meta.push(`source: ${issue.detectionSource}`);
+            }
+            const suffix = meta.length > 0 ? ` _(${meta.join(', ')})_` : '';
+            lines.push(`- **${range}** — ${issue.message}${suffix}`);
+        }
+        lines.push('');
+    }
+
+    return lines.join('\n') + '\n';
 }
 
 /**

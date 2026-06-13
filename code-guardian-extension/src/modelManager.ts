@@ -12,7 +12,7 @@ const DEFAULT_MODEL = 'codellama:7b';
  */
 const MODEL_CATEGORIES = {
     'Recommended for Code Analysis': [
-        'qwen3:8b', 'qwen2.5-coder:7b', 'gemma3:1b', 'codellama:7b'
+        'qwen3:8b', 'qwen2.5-coder:7b', 'gemma3:1b', 'codellama:7b', 'CyberCrew/notmythos-8b', 'monotykamary/whiterabbitneo-v1.5a'
     ],
     'Lightweight Models': [
         'gemma3:1b', 'qwen3:1.7b', 'qwen2.5-coder:0.5b', 'qwen2.5-coder:1.5b', 'gemma3:270m'
@@ -75,6 +75,13 @@ function getModelInfo(modelName: string): { category: string; description: strin
     } else if (modelName.includes('stable-code')) {
         category = 'StableCode';
         description = 'Stable and reliable code model';
+    } else if (modelName.toLowerCase().includes('notmythos')) {
+        category = 'CyberCrew';
+        description = 'Community security-focused coding model';
+    } else if (modelName.toLowerCase().includes('whiterabbitneo')) {
+        category = 'WhiteRabbitNeo';
+        description = 'Security-specialized model for offensive and defensive cyber tasks';
+        if (size === 'Unknown') { size = 'Large'; }
     }
 
     return { category, description, size };
@@ -479,7 +486,11 @@ function getPreDefinedModels() {
         { name: 'starcoder2:15b', description: 'Advanced', size: 'Large', details: 'Enhanced StarCoder capabilities' },
 
         // StableCode models
-        { name: 'stable-code:3b', description: 'Stable', size: 'Small', details: 'Reliable code generation' }
+        { name: 'stable-code:3b', description: 'Stable', size: 'Small', details: 'Reliable code generation' },
+
+        // Community security-focused models
+        { name: 'CyberCrew/notmythos-8b', description: 'Security specialist', size: 'Large', details: 'Community security-focused coding model' },
+        { name: 'monotykamary/whiterabbitneo-v1.5a', description: 'Security specialist', size: 'Large', details: 'Security-specialized model for offensive and defensive cyber tasks' }
     ];
 }
 

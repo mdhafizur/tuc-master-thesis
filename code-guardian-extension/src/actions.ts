@@ -130,24 +130,16 @@ export function provideFixes(): vscode.CodeActionProvider {
 					continue;
 				}
 
-				const apply = new vscode.CodeAction('💡 Apply Secure Fix', vscode.CodeActionKind.QuickFix);
-				apply.diagnostics = [diagnostic];
-				apply.isPreferred = true;
-				apply.command = {
-					title: 'Apply Secure Fix',
+				// A single Code Guardian quick-fix on the lightbulb.
+				const fix = new vscode.CodeAction('🛡️ Code Guardian: Fix', vscode.CodeActionKind.QuickFix);
+				fix.diagnostics = [diagnostic];
+				fix.isPreferred = true;
+				fix.command = {
+					title: 'Code Guardian: Fix',
 					command: 'codeSecurity.applySecureFix',
 					arguments: [document.uri, diagnostic.range, diagnostic.message]
 				};
-				actions.push(apply);
-
-				const preview = new vscode.CodeAction('🔍 Preview Secure Fix (diff)', vscode.CodeActionKind.QuickFix);
-				preview.diagnostics = [diagnostic];
-				preview.command = {
-					title: 'Preview Secure Fix',
-					command: 'codeSecurity.previewSecureFix',
-					arguments: [document.uri, diagnostic.range, diagnostic.message]
-				};
-				actions.push(preview);
+				actions.push(fix);
 			}
 
 			return actions;
