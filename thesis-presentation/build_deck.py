@@ -701,7 +701,7 @@ def slide_13_eval_setup():
     cw = (w - 2 * gap) / 3
     items = [
         ("📚", "Corpus",
-         "Curated JS / TS  ·  101 cases\n(71 vulnerable + 30 secure)\n14 CWE categories\n\nExternal:  15 cases from NodeGoat,\nJuice Shop, 3 named CVEs\n\nWhole-project scan:  OWASP NodeGoat"),
+         "Curated JS / TS  ·  101 cases\n(71 vulnerable + 30 secure)\n20 CWE categories\n\nExternal:  15 cases from NodeGoat,\nJuice Shop, 3 named CVEs\n\nWhole-project scan:  OWASP NodeGoat"),
         ("🧪", "Configurations",
          "5 Ollama models × {LLM-only, LLM+RAG}\n= 10 configurations\n\n+ 3 SAST baselines\n(Semgrep, CodeQL, ESLint)\n\n3 runs per sample  ·  deterministic\n→  303 invocations per config"),
         ("📐", "Statistical Discipline",

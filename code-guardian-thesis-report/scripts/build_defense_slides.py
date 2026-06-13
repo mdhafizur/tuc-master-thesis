@@ -252,7 +252,7 @@ add_bullets(
     [
         "Corpus.",
         ("Curated JS / TS  ·  101 cases (71 vulnerable + 30 secure)  ·  "
-         "14 CWE categories.", 1),
+         "20 CWE categories.", 1),
         ("External  ·  15 cases from OWASP NodeGoat, OWASP Juice Shop, "
          "three named CVEs.", 1),
         ("Whole-project scan against OWASP NodeGoat for end-to-end "
@@ -269,7 +269,7 @@ add_bullets(
     ],
     size=15,
 )
-set_notes(s, """The evaluation uses a curated JS/TS corpus of 101 cases — 71 vulnerable and 30 secure — across 14 CWE categories. Note: the original task description named Juliet and OWASP Benchmark; neither has a JavaScript port, so the substitution was agreed with the supervisor. Independent validation comes from 15 external cases drawn from NodeGoat, Juice Shop, and three named CVEs, plus a whole-project scan of NodeGoat. I evaluate 5 Ollama models in two modes — with and without RAG — giving 10 LLM configurations, plus three SAST baselines. Each runs three times under deterministic decoding for a total of 303 invocations per config. Statistical discipline: a held-out 71/30 split keeps threshold tuning off the test set, and I apply Bonferroni correction across paired model comparisons.""")
+set_notes(s, """The evaluation uses a curated JS/TS corpus of 101 cases — 71 vulnerable and 30 secure — across 20 CWE categories. Note: the original task description named Juliet and OWASP Benchmark; neither has a JavaScript port, so the substitution was agreed with the supervisor. Independent validation comes from 15 external cases drawn from NodeGoat, Juice Shop, and three named CVEs, plus a whole-project scan of NodeGoat. I evaluate 5 Ollama models in two modes — with and without RAG — giving 10 LLM configurations, plus three SAST baselines. Each runs three times under deterministic decoding for a total of 303 invocations per config. Statistical discipline: a held-out 71/30 split keeps threshold tuning off the test set, and I apply Bonferroni correction across paired model comparisons.""")
 
 # Slide 6 — R1: Detection accuracy + RAG ablation
 s = content_slide("Results — Detection Accuracy (R1)", 6, TOTAL)

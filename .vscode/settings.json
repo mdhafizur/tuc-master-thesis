@@ -1,0 +1,7 @@
+{
+  // Absolute path to the LibreOffice `soffice` binary, used by the
+  // "PPTX Viewer Pro" extension to render .pptx files. VS Code launched from
+  // the Dock does not inherit the shell PATH (where /opt/homebrew/bin/soffice
+  // lives), so the explicit path to the app binary is the reliable fix.
+  "pptxViewer.sofficePath": "/Applications/LibreOffice.app/Contents/MacOS/soffice"
+}

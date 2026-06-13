@@ -106,7 +106,7 @@ Right side callout: **"No existing tool satisfies privacy + repair + IDE-latency
 
 ### Slide 13 — Evaluation Setup
 **Layout:** Three cards.
-- **Corpus** — Curated JS/TS · **101 cases** (71 vulnerable + 30 secure) · 14 CWE categories. External: 15 cases from NodeGoat, Juice Shop, 3 named CVEs. Whole-project scan on OWASP NodeGoat.
+- **Corpus** — Curated JS/TS · **101 cases** (71 vulnerable + 30 secure) · 20 CWE categories. External: 15 cases from NodeGoat, Juice Shop, 3 named CVEs. Whole-project scan on OWASP NodeGoat.
 - **Configurations** — 5 Ollama models × {LLM-only, LLM+RAG} = 10 configurations + 3 SAST baselines. 3 runs each → **303 invocations per configuration.**
 - **Statistical discipline** — Held-out 71/30 test split · McNemar with Bonferroni · exact-binomial CIs.
 **Speaking anchor:** "Now the numbers."

@@ -1,365 +1,469 @@
 # Speaker Notes — Code Guardian Defense
 
-**Total budget:** 28 minutes talk + 2 minutes Q&A
-**Per-slide budget:** ~70 s on main slides, longer on results (~95 s) to let numbers land.
-**Voice:** flowing prose, no first person, plain English, short sentences. Avoid filler ("um," "so," "basically").
-**Posture:** never read the slide aloud. The slide is the *artefact*, your voice is the *narrative*.
+**Total budget:** 30 minutes talk + 20 minutes Q&A
+**Pace:** this script is written for **slow delivery — about 115 words per minute**, with deliberate pauses after every headline number. The whole spoken script is ~3,000 words ≈ **28 minutes including transitions and pauses**, leaving a 1–2 minute buffer inside the 30-minute slot. Do not speed up to "fit more in" — the fitting has already been done on paper.
+**Per-slide budget:** printed in each slide header as **seconds and words**. The seconds include the transition sentence. If a slide runs long in rehearsal, cut connective words — never numbers.
+**Pause cues:** *(pause)* = one slow breath, about two seconds. *(slow)* = drop to dictation speed for that one sentence. The pauses are content, not dead air — at a slow pace, silence after a number reads as confidence.
+**Voice:** warm but measured spoken prose — plain English, short complete sentences (see STORYTELLING_STYLE.md §2: not fragments, not run-ons). First-person singular is fine ("I checked," "I ran"); avoid first-person plural ("we built"). Avoid filler ("um," "so," "basically").
+**Posture:** never read the slide aloud. The slide is the *artefact*; your voice is the *story*.
 
 Each entry shows:
-- **[Time]** approximate budget for that slide
-- **VOICE** — the rough spoken text
+- **[Time · words]** — the budget for that slide, transition included
+- **VOICE** — the spoken text, with *(pause)* / *(slow)* cues in place
 - **TRANSITION** — the one sentence that lands on the next slide
 
-The transitions matter. They are what makes the talk feel like one argument rather than 24 separate ones.
+The transitions matter. They are what make the talk feel like one argument instead of 25 separate ones.
+
+**Pre-empts are already folded in.** Earlier versions kept PRE-EMPT lines as separate asides to weave in live. They are now written **inside the VOICE text** at the right spot, so the script is linear — just speak it. A tag under each block says which QA_PREP entry the folded sentence defuses. Don't say it twice. A choice you volunteer reads as confidence; the same choice defended under questioning reads as damage control.
+
+**Reserves are not spoken.** LIT-ANCHOR / RESERVE / SOURCE-NOTE lines are ammunition for Q&A only — drop them if (and only if) the matching challenge comes.
+
+**Tell it as one connected argument** (full rulebook: STORYTELLING_STYLE.md):
+- **The problem** — a false trade: *send your code off your machine, or work almost unprotected.* Plant it on slides 2–3.
+- **The solution** — slide 4: local, grounded, in the developer's hands.
+- **The surprise** — slide 16: retrieval was expected to help everywhere, and it did not. Slow down there more than anywhere else.
+- **The return** — slide 21 and the close: name the false trade again, then say Code Guardian refuses it.
+
+This is a defense, not a keynote — never let presentation outrun the evidence.
 
 ---
 
-## Slide 1 — Title  ·  [60 s]
+## Slide 1 — Title  ·  [55 s · ~95 words]
 
 **VOICE**
-"Good afternoon. The thesis is *Privacy-Preserving Source Code Vulnerability Detection and Repair using Retrieval-Augmented Local LLMs for Visual Studio Code*. The system is called Code Guardian. I'll first explain why a tool like this is needed, then show what it does, then go through what the numbers say. Total talk: about 28 minutes."
+"Good afternoon. Imagine you have just written code for a bank — or a hospital. You need the answer to one question: is it secure? *(pause)*
 
-*(Pause. Look at the panel. Move to next slide.)*
+Today, getting that answer means making a trade-off. By the end of this talk, I want to convince you it is a trade-off no developer should have to make.
 
-**TRANSITION** — "I'll start with the problem the tool addresses."
+The thesis is titled *Privacy-Preserving Source Code Vulnerability Detection and Repair using Retrieval-Augmented Local LLMs for Visual Studio Code*. The system is called Code Guardian. Three parts: why the tool is needed, what it does, and what the evaluation shows."
+
+*(Pause. Look at the panel. Move on.)*
+
+**TRANSITION** — "I'll start with the problem the tool solves."
 
 ---
 
-## Slide 2 — The Developer's Dilemma  ·  [40 s]
+## Slide 2 — The Developer's Dilemma  ·  [45 s · ~80 words]
 
 **VOICE**
-"A working developer today, writing JavaScript or TypeScript for a regulated industry, faces three problems at once. They can't paste sensitive code into a cloud LLM — that's a compliance breach. Their existing static-analysis tool keeps missing things. And when it does flag something, it gives a warning but no fix. This is the gap the thesis addresses."
+"Three problems arrive at once. First: sensitive code cannot be pasted into a cloud model without breaking compliance. Second: the local scanner keeps missing real bugs — so the vulnerability reaches production. Third: when a scanner does flag something, it only warns. The repair is still entirely your job. *(pause)*
 
-*(Let the image breathe. Don't list the bubbles aloud — they're on screen.)*
+No tool today solves all three. So the real question is the green one in the corner — what is the alternative? That is what this talk answers."
+
+*(Four bubbles on screen: three problems plus the green question. Gesture; don't enumerate.)*
 
 **TRANSITION** — "Let me make the cost concrete."
 
 ---
 
-## Slide 3 — Today You Pick: Send Code Away — or Get No Help  ·  [80 s]
+## Slide 3 — Today You Pick: Send Code Away — or Get No Help  ·  [65 s · ~120 words]
 
 **VOICE**
-"There are two existing options. On the left, cloud LLM assistants — Copilot, ChatGPT, Cursor. They give strong reasoning, but every request crosses the network. That's blocked outright in finance, healthcare, defence, and any air-gapped environment.
+"Today there are two options. On one side, the cloud assistants — Copilot, ChatGPT, Cursor. The reasoning is excellent. But every request leaves your machine — and in finance, healthcare, defence, or any air-gapped setting, that door is simply closed. *(pause)*
 
-On the right, local static-analysis tools — Semgrep, CodeQL, ESLint. These stay on the developer's machine, which is the right privacy posture. But their coverage is poor. On the JavaScript and TypeScript corpus used in this thesis, **Semgrep's canonical recall is 12.68 percent**. They also cannot generate fixes — only warnings.
+On the other side, the local scanners — Semgrep, CodeQL, ESLint. They stay on your machine, so privacy is complete. But they miss most of the bugs. On the JavaScript and TypeScript in this thesis, Semgrep's canonical recall is 12.68 percent. *(pause)* And they only warn. They never fix.
 
-So today the developer chooses: send code away, or get almost no help. Neither is acceptable."
+So here is the trade: send your code away, or work almost unprotected. *(slow — this is the through-line; plant it)* That is the whole menu. Neither side is good enough."
 
-**TRANSITION** — "Code Guardian is built to fill the gap between these two columns."
+**TRANSITION** — "So this thesis asks one question: why should that be the trade at all?"
 
 ---
 
-## Slide 4 — No Tool Combines All Three  ·  [60 s]
+## Slide 4 — No Tool Combines All Three  ·  [65 s · ~110 words]
 
 **VOICE**
-"The thesis claims three properties must hold together. **Local inference** — code never leaves the machine, and that boundary is verifiable. **Retrieval-augmented reasoning** — the LLM is grounded in CWE and OWASP knowledge, not just pattern matching. **Developer-controlled repair** — a structured fix is returned, and the developer applies it via a Quick Fix. No silent rewrites.
+"Removing that trade needs three things true at once. The tool must be **local** — code never leaves the machine, and you can prove it. It must be **grounded** — reasoning with real CWE and OWASP knowledge, not fixed patterns. And it must stay **in your hands** — it offers a fix, and you choose to apply it. Nothing is rewritten behind your back. *(pause)*
 
-No existing tool combines all three. This thesis builds and evaluates one."
+No existing tool delivers all three together. That is the gap this thesis closes.
 
-**TRANSITION** — "Before showing the system, here are the research questions and the five requirements I commit to."
+And the scope is JavaScript and TypeScript on purpose: the most-used stack on GitHub, and the place where local static analysis is weakest — so it is where a privacy-preserving tool helps most."
+
+**PRE-EMPT — folded in** — the last sentence defuses "why JS/TS?" (QA_PREP A.4).
+
+**LIT-ANCHOR** *(reserve — only if the IDE-integration gap is doubted in Q&A)* — "A 2025 survey of 58 LLM vulnerability studies found not one was wired into a developer's workflow — every one was evaluated offline. That's the gap this slide names." (Zhou et al., TOSEM 2025)  → *backs "in your hands"; QA_PREP J.1*
+
+**TRANSITION** — "Before the system, here are the research questions and the five requirements I commit to."
 
 ---
 
-## Slide 5 — Research Questions and Requirements  ·  [90 s]
+## Slide 5 — Research Questions and Requirements  ·  [75 s · ~130 words]
 
 **VOICE**
-"Three research questions. **RQ1** — can a local LLM on consumer hardware reach acceptable detection quality under a strict privacy envelope. **RQ2** — does grounding the LLM in retrieved CWE and OWASP knowledge improve detection. **RQ3** — is in-IDE latency acceptable for developer workflows.
+"Three research questions frame the work. RQ1 — can a local model, on a normal laptop, detect vulnerabilities well enough under a strict privacy envelope? RQ2 — does grounding it in retrieved CWE and OWASP knowledge actually help? RQ3 — is it fast enough inside the editor for real work? *(pause)*
 
-To answer them I commit to five requirements before evaluating anything. **R1** accuracy — precision, recall, F1. **R2** consistency — JSON parse rate, inter-run agreement. **R3** repair quality — both manual and automated. **R4** usability — latency, IDE integration. **R5** privacy — zero exfiltration, signed corpus.
+Before measuring anything, I fixed five requirements. R1 — accuracy: precision, recall, F1. R2 — consistency: valid, stable output. R3 — repair quality. R4 — usability: latency and IDE fit. R5 — privacy: nothing leaves the machine. *(pause)*
 
-Each requirement has a four-level threshold scale fixed in Chapter 2. That's the commitment device — I can't move the goalposts after seeing the numbers."
+Each requirement carries a fixed grading scale, written into the requirements chapter before any model ran. *(slow — look at the panel)* The bar was set before I saw a single result. It is the same bar before and after evaluation."
+
+**PRE-EMPT — folded in** — the last two sentences ARE the pre-empt; they disarm "how did you choose the thresholds?" (QA_PREP G.3). The level counts (R1/R2 four levels, R3/R4 three) are on the slide and appendix A8 — point if asked, don't recite.
 
 **TRANSITION** — "Where do existing systems sit against R1 to R5?"
 
 ---
 
-## Slide 6 — Three Existing Approaches  ·  [60 s]
+## Slide 6 — Three Existing Approaches  ·  [50 s · ~90 words]
 
 **VOICE**
-"The related work groups into three columns. **Cloud LLM assistants** — Copilot, ChatGPT, Cursor, Claude Code — strong on R1, R3, R4, but they fail R5 by construction. **Local SAST** — Semgrep, CodeQL, ESLint — strong on R2, R5, but weak on R1 and R3. **Academic LLM-for-security work** — IRIS, SecRepair, LLMSecGuard, RESCUE — varies, but none of them deliver everything together."
+"The related work falls into three camps. The **cloud assistants** — Copilot, ChatGPT, Cursor, Claude Code — strong on accuracy, repair, and usability, but they fail privacy by design. Every request leaves the machine. **Local static analysis** — Semgrep, CodeQL, ESLint — strong on consistency and privacy, weak on accuracy and repair. It matches patterns instead of reasoning, and it only warns. And the **academic systems** — IRIS, SecRepair, LLMSecGuard, RESCUE — each drops at least one of privacy, repair, or IDE speed. *(pause)* None brings them all together."
 
-**TRANSITION** — "When I map them against R1 to R5 in a matrix, the gap is unambiguous."
+**TRANSITION** — "Put them in a matrix against R1 to R5, and the gap is clear."
 
 ---
 
-## Slide 7 — No Tool Satisfies R1 + R3 + R5 Together  ·  [75 s]
+## Slide 7 — No Tool Satisfies R3 + R4 + R5 Together  ·  [55 s · ~95 words]
 
 **VOICE**
-"Reading across each row — Copilot satisfies R1, R3, R4, but fails R5. Semgrep and CodeQL satisfy R5 but fail R1 and R3. IRIS, even using GPT-4, fails on R3, R4, and R5 because it's a whole-repo batch tool. SecRepair is fine-tuning-based, batch, primarily C and C++.
+"Read across the rows. Copilot meets accuracy, consistency, and repair — partial on usability — and fails privacy. Semgrep and CodeQL meet privacy but fail accuracy and repair. IRIS, even with GPT-4 behind it, fails repair, usability, and privacy — it is a whole-repo batch tool. SecRepair fine-tunes a model, runs in batch, and targets mostly C and C++. *(pause)*
 
-The bottom row is Code Guardian — and that's the claim this talk defends. No existing tool delivers privacy, repair quality, and IDE-grade latency together."
+The bottom row is Code Guardian, and it is the claim this talk defends: no existing tool delivers privacy, repair, and IDE-grade speed at the same time."
+
+**LIT-ANCHOR** *(reserve — only if the bottom row is challenged in Q&A)* — "LLMSecGuard's own authors call IDE integration 'essential' — then leave it as future work. Code Guardian ships it." (Kavian et al., EASE 2024)  → *QA_PREP H.1*
+
+**SOURCE NOTE** *(point to the footnote only if asked — don't read it)* — the small line under the matrix says the High / Partial / Not-satisfied levels apply the fixed R1–R5 scales, with accuracy/repair thresholds from IR/SE work, latency from HCI response-time limits, and privacy as a checklist. Full table: **appendix A8** — put it up if the panel pushes on thresholds.  → *QA_PREP G.3*
 
 **TRANSITION** — "Now the system itself."
 
 ---
 
-## Slide 8 — One Pipeline, Four Developer Workflows  ·  [60 s]
+## Slide 8 — Proposed Workflow  ·  [45 s · ~80 words]
 
 **VOICE**
-"The extension supports four developer workflows. Real-time inline diagnostics — squiggles as you save. On-demand file scan — right-click. Interactive Q&A — a side panel for asking about a finding. And workspace audit — batch scanning the whole project.
+"The extension offers four ways to work: inline diagnostics as you save, a file scan on right-click, a side panel for asking about a finding, and a workspace audit for the whole project. Why four? Because the question 'is this secure?' arises at different moments — and each workflow meets it where it happens. *(pause)*
 
-All four hit the same two-stage pipeline. Detection, then optional repair. Everything in the dashed area runs on the developer's machine."
+One pipeline sits behind all four: detect, then repair. And everything inside the dashed line runs on your machine."
 
-**TRANSITION** — "The two stages in detail."
+**TRANSITION** — "Here are the two stages in detail."
 
 ---
 
-## Slide 9 — Two-Stage Local Pipeline  ·  [85 s]
+## Slide 9 — Two-Stage Local Pipeline  ·  [95 s · ~175 words]
 
 **VOICE**
-"**Stage one is detection.** A JSON-mode LLM call with a pinned schema. Optional RAG context — the top-k retrieved CWE or OWASP snippets. Three deterministic runs, seed 42, temperature zero. An inter-run confidence gate — two of three runs must agree before a finding is surfaced. The output is structured: category, severity, line range, evidence.
+"Two stages. The first finds the problem. The second repairs it. *(pause)*
 
-**Stage two is repair.** A separate call, invoked only when something was detected. Returns a structured object with code and language. The output is parsed with @babel/parser — prose answers are rejected. The repair is surfaced as a VS Code Quick Fix. The developer applies the patch — there are no silent rewrites.
+Stage one — detection. The code goes to the local model as one JSON-mode call, and the model fills a fixed schema — so what comes back is structured data, not an essay. When RAG is on, the most relevant CWE and OWASP snippets go into the prompt first. And to filter one-off noise, detection runs twice, each pass from a different random seed. A finding survives only when both passes agree. *(pause)*
 
-Privacy is by construction. Ollama is bound to loopback. Embeddings are local. There's no telemetry."
+One honest note. *(slow)* That consensus is real in the shipped extension. In the evaluation, the seed is pinned for reproducibility — repeated runs come out identical — so consistency is reported as a property of deterministic decoding, not a robustness claim. Seed rotation is future work.
 
-**TRANSITION** — "What does this actually look like running?"
+Stage two — repair. It runs only when stage one found something. A separate call returns just the fixed code, and that output goes through the Babel parser — prose gets thrown away before you ever see it. What survives appears as a one-click Quick Fix, and you decide whether to apply it. *(pause)*
+
+Notice what never happened: nothing left the machine. Ollama on loopback, local embeddings, no telemetry."
+
+**PRE-EMPT — folded in** — the "one honest note" paragraph defuses "your consensus is just identical runs" (QA_PREP G.2).
+
+**TRANSITION** — "What does this look like when it runs?"
 
 ---
 
-## Slide 10 — Live in VS Code  ·  [75 s]
+## Slide 10 — Live in VS Code  ·  [50 s · ~90 words]
 
 **VOICE** *(pointing at the screenshot)*
-"This is the extension on a vulnerable Express route. Red squiggle on the line with the SQL injection. The side panel shows the finding — category, severity, CWE, the evidence. The Quick Fix menu lists the structured repair. The developer accepts it, the patch lands as a diff, the developer reviews and saves.
+"This is the extension on a file full of vulnerable endpoints — SQL injection, reflected XSS, code injection, command injection, path traversal. On the right, the Code Guardian panel is examining the reflected-XSS endpoint. It explains why the input is unsafe, and it proposes a fix. *(pause)*
 
-The QR code links to the demo video and the published Marketplace listing. The extension is open source."
+Notice the panel marks this one 'not auto-applicable.' That is deliberate honesty: it shows the fix but asks you to review it first. No silent rewrites. Nothing leaves the laptop.
+
+The QR code installs the extension from the VS Code Marketplace."
 
 **TRANSITION** — "Behind that UI sits the architecture."
 
 ---
 
-## Slide 11 — System Architecture  ·  [75 s]
+## Slide 11 — System Architecture  ·  [100 s · ~185 words]
 
 **VOICE** *(walk the diagram)*
-"Inside the dashed rectangle is everything on the developer's laptop. The VS Code extension host orchestrates the four workflows. It talks to Ollama on loopback only — that's the privacy boundary. Ollama loads an 8B-class quantised model — qwen3:8b by default. The RAG store is HNSWlib, local. The vulnerability data manager refreshes public NVD, OWASP, and CWE metadata on a 24-hour cache — that's the only outbound call, and it never includes user code.
+"Everything inside the dashed rectangle runs on your laptop. The extension host drives the four workflows, and it talks to Ollama on loopback only. *(slow)* That line is the privacy boundary.
 
-Privacy isn't a feature here. It's a topological boundary."
+Ollama runs an 8B-class quantised model — qwen3:8b is the one I evaluate and recommend, though any Ollama model works. And eight billion is a deliberate ceiling, not a compromise: it is the largest that fits a 16-gigabyte laptop alongside VS Code. A 70B model needs over 40 gigabytes — a workstation, not a laptop. *(pause)*
+
+Now follow a request through. It hits the local cache first — on a hit, no model call at all. On a miss, the two-stage analyzer runs, and the result is stored. When RAG is on, the manager pulls the three closest snippets from a local, signed knowledge base — matched by meaning, not keyword — so the right CWE guidance surfaces even when the code never says the word 'injection.'
+
+And the boundary itself: by default, nothing crosses it. The vulnerability data ships pre-bundled, so the tool runs fully offline. There is exactly one outbound call, opt-in and off by default — a refresh of public NVD, OWASP, and CWE metadata on a 24-hour cache. It carries look-ups, never your code. *(pause)*
+
+Privacy here is not a feature you switch on. It is decided by where the boundary sits."
+
+**PRE-EMPT — folded in** — the 16 GB / 70B sentence defuses "why not a bigger model?" (QA_PREP B.4).
 
 **TRANSITION** — "Four ways the privacy claim is enforced."
 
 ---
 
-## Slide 12 — Privacy by Construction  ·  [75 s]
+## Slide 12 — Privacy by Construction  ·  [80 s · ~145 words]
 
 **VOICE**
-"Four arms, each independently verifiable. Loopback-only Ollama — bound to 127.0.0.1 — that's the network isolation arm. Ed25519-signed RAG corpus — the provenance arm, verified at load. Pinned container — Node 20.19.0-alpine, npm ci, seed 42 — the reproducibility arm. And a prompt-injection harness — 12 cases attempting to exfiltrate via the model — that produced a **leakFreeRate of 100 percent**.
+"Privacy here is not one feature. It is four arms — three shut down a specific attack, and the fourth lets you verify the other three. *(pause)*
 
-Each arm fails differently. A single failure doesn't silently break the contract."
+The network arm: Ollama is bound to loopback — 127.0.0.1 and nothing else — so nothing it sends can leave your laptop.
+
+The provenance arm stops a poisoned knowledge base. The RAG corpus is Ed25519-signed and checked on every load. If it has been tampered with, the extension refuses to load it.
+
+The injection arm stops prompt injection — instructions hidden in the code that try to hijack the model. Twelve crafted attacks were run. All twelve came back clean. *(pause)*
+
+And the reproducibility arm is about trust: the whole pipeline rebuilds from a pinned container at seed 42, so anyone can re-run it and get the same result — rather than taking my word for it.
+
+Because each arm stands alone, no single failure quietly breaks the promise."
+
+**LIT-ANCHOR** *(reserve — network arm, if "why local" is pushed)* — "An industry study on ChatGPT for secure coding lands on the same rule this arm enforces: run local LLMs, kept off the network, so proprietary code never leaves the building." (Espinha Gasiba et al., 2024)  → *QA_PREP F.5*
+
+**LIT-ANCHOR** *(reserve — provenance arm, if corpus-signing is questioned)* — "A 2024 RAG-security survey shows poisoning just 0.04 percent of a corpus can hijack retrieval 98 percent of the time. The signature is the lock on that door." (Zhou et al., RAG-Trust survey 2024)  → *QA_PREP F.4*
 
 **TRANSITION** — "Now the evaluation."
 
 ---
 
-## Slide 13 — Evaluation Setup  ·  [85 s]
+## Slide 13 — Evaluation Setup  ·  [105 s · ~195 words]
 
 **VOICE**
-"Three things to commit to before showing numbers. The **corpus** — a curated JavaScript and TypeScript set, 101 cases, 71 vulnerable and 30 secure, across 14 CWE categories. An external 15-case set drawn from OWASP NodeGoat, Juice Shop, and three named CVEs. And a whole-project NodeGoat scan for end-to-end validation.
+"Three things were locked down before any number went on screen. *(pause)*
 
-The **configurations** — 5 Ollama models, two modes each — LLM-only and LLM-plus-RAG — gives 10 configurations. Three SAST baselines: Semgrep, CodeQL, and ESLint. Three runs per sample under deterministic decoding — that's 303 invocations per configuration.
+First, the **corpus**. 101 JavaScript and TypeScript cases — 71 vulnerable, 30 secure, across 20 CWE categories — every label verified by hand. Some are real bugs from npm packages and named CVEs; the rest are written to standard weakness patterns from suites like Juliet, which only ship in C and Java. Why verify by hand? Because CWEval found that fewer than a third of one popular benchmark's flagged samples could even be reproduced. A scanner's labels are not ground truth. And 101 curated cases is a deliberate choice, not a shortcut — the peer benchmark CWEval uses 119, and no existing JavaScript corpus fits. Alongside it sit an external 15-case set and a whole-project NodeGoat scan, run end to end. *(pause)*
 
-The **statistical discipline** — a held-out 71/30 test split keeps threshold tuning off the headline. McNemar with Bonferroni correction across paired model comparisons. Exact-binomial confidence intervals for small-n rates."
+Second, the **configurations**. Five local models, each with and without RAG — ten configurations — plus three SAST baselines: Semgrep, CodeQL, ESLint. Each sample runs three times, deterministically — 303 invocations per configuration. There is no cloud-LLM baseline by design: a cloud model would break the very threat model the thesis is built on, so the SAST tools set the local floor.
+
+Third, the **statistics**. The cases are split — tune on one half, freeze the other. McNemar with Bonferroni. Exact-binomial intervals. *(slow)* Rules first, measurements second."
+
+**PRE-EMPT — folded in** — "101 is deliberate / CWEval 119 / no JS corpus" defuses QA_PREP A.1 and A.3; "no cloud baseline by design" defuses QA_PREP B.2.
 
 **TRANSITION** — "Four headline numbers, one per requirement."
 
 ---
 
-## Slide 14 — Headline Numbers  ·  [70 s]
+## Slide 14 — Results  ·  [65 s · ~120 words]
 
-**VOICE** *(briefly land each number, save detail for the next four slides)*
-"Detection — **F1 71.43 percent**, qwen3:8b plus RAG. With the confidence gate, **74.07 percent F1**, **78.13 percent precision**. Repair — **90.32 percent auto-applicable**. Latency — **2.2 seconds median**, comfortably inside the on-demand band. Privacy — **leakFreeRate 100 percent** on the harness, zero non-loopback transmission across the corpus run. And the strip at the bottom is R2 — consistency — **JSON parse 100 percent across three thousand inferences**, zero schema rejections.
+**VOICE** *(land each number, then breathe; detail comes in the next four slides)*
+"Four numbers. One per requirement. *(pause)*
 
-Each of the four headline numbers gets its own slide; R2 is detailed in the appendix."
+Detection: an F1 of **71.43 percent**, from qwen3:8b with RAG. *(pause)* And it travels — 61.11 on code held back during tuning, 63.64 on outside projects.
 
-**TRANSITION** — "R1, detection accuracy."
+Repair: **90.32 percent** auto-applicable — the fix parses and applies cleanly — with semantic correctness around 68 percent. *(pause)*
 
----
+Latency: a median of **2.2 seconds** — well inside the on-demand band. *(pause)*
 
-## Slide 15 — R1 Detection Accuracy  ·  [95 s]
+Privacy: **leak-free** across all 12 injection attempts. *(pause)*
 
-**VOICE**
-"Headline configuration: qwen3:8b plus RAG, canonical taxonomy, full 101 cases. F1 71.43 percent, precision 72.46 percent, recall 70.42, false-positive rate 10 percent.
+And along the bottom, R2 — consistency. 100 percent valid JSON across all 3,030 invocations. But the runs share a seed, so that reflects determinism, not robustness. I say so plainly. Each of the four gets its own slide next."
 
-With the inter-run confidence gate at 0.67 — that's two of three runs in agreement — F1 rises to 74.07 percent and precision to 78.13 percent. The trade-off is exposed, not hidden — both numbers are in the thesis.
+**COLOUR NOTE** *(not spoken — only if you want to gesture at the card colours)* — each card is tinted by its requirement band from the A8 scale: repair, latency, and privacy are **green (High / met)**; detection is **amber (Medium)**. The single amber card quietly pre-figures the slide-21 admission. The confidence-gate number (74.07) is not on this card; it lives on appendix A9.
 
-On the held-out 71/30 test split the configuration shows F1 61.11 percent at false-positive rate zero. Lower recall, higher precision — that's what a held-out split is for.
-
-Compared to the SAST baselines on the bar chart — Code Guardian's F1 71.43 percent beats every one of them on recall-driven F1. Semgrep's canonical recall is 12.68 percent."
-
-**TRANSITION** — "But the second research question — does RAG actually help — is more interesting than I expected."
+**TRANSITION** — "Start with R1, detection accuracy."
 
 ---
 
-## Slide 16 — RAG Is Not a Uniform Win  ·  [90 s]
+## Slide 15 — R1 Detection Accuracy  ·  [100 s · ~190 words]
 
 **VOICE**
-"This is the most honest slide in the deck. Five models, two modes each, paired comparison: delta F1 from no-RAG to RAG.
+"This is the main result. qwen3:8b with retrieval, across all 101 cases. *(pause)*
 
-qwen3:8b — **plus 3.91 F1** with RAG, the largest positive effect. The gemma3 family — essentially zero, around the noise floor. qwen3:4b — **minus 5.22** with RAG. codellama — **minus 29.89 F1 with RAG**. That's the largest paired effect in the dataset, and it goes the wrong way.
+The headline: an F1 of 71.43. In plain terms, two things at once. When it flags code, it is right about seven times in ten. And of all the real vulnerabilities, it catches about seven in ten. *(pause)* The false-positive rate is ten percent — one safe snippet in ten gets a warning it does not need.
 
-**Only codellama's drop survives Bonferroni correction at alpha 0.01** — McNemar p equals 0.0013. The other effects don't.
+Does that hold on unseen code? I checked two ways. On the held-back cases, it drops to 61. On the external set — projects I had no hand in — about 64. So on unfamiliar code it sits in the low sixties: recall gives ground, precision holds. That dip is not a weakness. It is why you hold cases back — and the gap between curated and real-world code is a well-known pattern.
 
-The disciplined finding is: RAG is a per-model design choice. Treating it as a default is wrong. That's exactly what the field has reported — RESCUE in 2025 documents the same pattern."
+Now the comparison. On this chart, Code Guardian scores 71. Semgrep, about 20. CodeQL, 11. ESLint, essentially zero. *(pause)* One point on fairness: I ran those tools one function at a time — the same narrow window the model gets — which understates their full-project recall. Details are in appendix A7."
 
-**TRANSITION** — "R3, repair quality."
+**PRE-EMPT — folded in** — the fairness sentence disarms "your baselines are strawmen / ESLint scores 0" (QA_PREP B.5). Don't skip it.
+
+**RESERVE — confidence gate** *(not spoken — only if pressed on precision; it lives on appendix A9)* — "There's an optional rescore filter at 0.67: precision rises from 72 to 78 and F1 to 74, with recall unchanged. It drops the findings the model couldn't map to a category — six false positives here. It's eval-only, off in the shipped extension, and because the runs are seed-pinned it's a category filter, not run consensus. Full before-and-after: appendix A9."  → *QA_PREP D.3 / G.1*
+
+**LIT-ANCHOR** *(reserve — only if the held-out drop is called a weakness)* — "A review of over 300 works reports the same shape: detection looks strong on curated data and drops on real-world code. So 71 down to the low sixties isn't a crack — it's the field's normal." (Zhang et al., SLR 2024)  → *QA_PREP B.7*
+
+**TRANSITION** — "The second research question — does retrieval actually help — turned out more interesting than I expected."
 
 ---
 
-## Slide 17 — R3 Repair Quality  ·  [95 s]
+## Slide 16 — RAG Is Not a Uniform Win  ·  [95 s · ~175 words]
 
-**VOICE**
-"Two complementary metrics. On the left, the **manual review** at n equals 25. A fix was provided in 76 percent of samples. Of the fixes issued, 89.5 percent are semantically correct — they address the CWE — and 94.7 percent are strategy-aligned. Only 42.1 percent are directly executable; the rest give correct prose guidance. Combined correctness — fix-rate times semantic correctness — is 68 percent. The executability bar is low because a knowledgeable reviewer can recognise an intended fix even when the patch isn't perfectly runnable.
+**VOICE** *(this is the turn of the talk — slow down here more than anywhere else)*
+"The plan was simple: switch RAG on, get better detection, across the board. Five models, two modes each, a paired comparison on F1.
 
-On the right, the **fully automated auto-applicable rate**. The validator parses the fix with @babel/parser. On the 279 issued fixes — **90.32 percent are auto-applicable**. Across all 297 stage-two calls including no-fix abstentions — 84.85 percent.
+The results did not cooperate. *(pause)* qwen3:8b improved by 3.91. The gemma models were essentially flat. qwen3:4b fell by 5.22. And codellama — *(pause)* — fell by 29.89. The single largest effect in the whole study, and it pointed the wrong way. *(pause)*
 
-The two-tier metric is deliberate. Manual is the decision-support reading. Auto-applicable is the deployment reading. The thesis reports both."
+Is that real? Only codellama's drop survives Bonferroni at alpha 0.01 — McNemar p equals 0.0013. A genuine effect, not noise.
 
-**TRANSITION** — "R4, usability — what latency band does this actually live in."
+The error profile explains it. With retrieval on, qwen3 treats the retrieved examples as a reference page — its false alarms fall from one in two to one in ten. The very same text does the opposite to codellama: handed a prompt full of vulnerability descriptions, the weaker model starts seeing vulnerabilities everywhere. A stronger model checks against the context. A weaker one drowns in it. *(pause)*
+
+So retrieval is not a free upgrade. It is a per-model choice. And the field agrees: RESCUE, in 2025, found naive RAG did not significantly help secure generation, and two 2025 systematic reviews report the same pattern."
+
+**PRE-EMPT** — this whole slide is the pre-empt: volunteering that retrieval can hurt, with the Bonferroni discipline, defuses "your RAG hurts / is this significant?" (QA_PREP C.1, G.1). Stating it yourself is far stronger than conceding it under questioning.
+
+**TRANSITION** — "Next, R3, repair quality."
 
 ---
 
-## Slide 18 — R4 Usability: Latency Bands  ·  [80 s]
+## Slide 17 — R3 Repair Quality  ·  [110 s · ~200 words]
 
 **VOICE**
-"Three bands committed to before evaluation. **Real-time, under 500 milliseconds** — SAST baselines only. **Interactive, under 1.5 seconds** — gemma3:1b plus RAG at 1,019 milliseconds qualifies, and qwen3:4b at 1,328 milliseconds qualifies. **On-demand, under 5 seconds** — the headline qwen3:8b plus RAG at 2,216 milliseconds, p95 at 4,327 milliseconds, comfortably inside.
+"Repair is measured two ways — one automatic, one by hand. The slide is split to match. *(pause)*
 
-A real product would pick the band per workflow. Inline-diagnostic mode goes to a 4B model. On-demand and audit modes use the 8B."
+The left half is the automatic measure, and it is the main number. Every fix goes through the Babel parser before you see it, confirming it is valid code the editor can insert as a one-click Quick Fix. Out of 279 fixes, 252 passed — 90.32 percent. *(pause)* In 18 more calls the model returned no fix at all; counted against all 297, the rate is 84.85. This is the main number because the parser decides — objective, and it covers every fix, not a sample.
+
+The right half is the manual review: 25 repairs, read by hand, scored against a rubric. A fix was offered in 76 percent of cases. Of those offered, 89.5 percent correctly address the vulnerability, and 94.7 percent use the right approach. Taken together, about 68 percent of cases got a fix that was both offered and correct. *(pause)*
+
+One score looks low — only 42 percent run exactly as they are. That does not contradict the 90, because they measure different things. 'Applies' means the editor can insert it. 'Runs as is' means a complete program on its own. Most fixes are a two-line patch meant to sit inside your function — it applies cleanly, but lifted out alone it fails, because it references a database handle that only exists in the surrounding code. A correct fix — just not a standalone program. *(pause)*
+
+And to be plain: auto-applicable means the fix parses and applies — not that it is proven secure. That is why both halves are on the slide. The manual review is one reviewer on 25 cases; it supports the result rather than leading it."
+
+**PRE-EMPT — folded in** — the closing paragraph defuses "single reviewer n = 25 / repair rate too high" (QA_PREP D.1, D.3).
+
+**TRANSITION** — "R4, usability — which latency band does this actually fall in?"
+
+---
+
+## Slide 18 — R4 Usability: Latency Bands  ·  [55 s · ~100 words]
+
+**VOICE**
+"Three latency bands, fixed before evaluation. Real-time — under 500 milliseconds — is deliberately out of scope for the model. That band belongs to SAST. *(pause)*
+
+Interactive — under 1.5 seconds — is met by gemma3:1b and qwen3:4b, both with RAG, at 1,019 and 1,328 milliseconds. And on-demand — under 5 seconds — is where the headline qwen3:8b lands: a median of 2,216 milliseconds, 95th percentile 4,327. Comfortably inside. *(pause)*
+
+A real product picks the band per workflow: inline diagnostics run a 4B model; on-demand and audit modes run the 8B."
+
+**PRE-EMPT — folded in** — naming real-time as SAST territory up front makes 2.2 s read as on-target, not slow (QA_PREP E.1).
 
 **TRANSITION** — "R5, privacy."
 
 ---
 
-## Slide 19 — R5 Privacy: Empirically Verified  ·  [70 s]
+## Slide 19 — R5 Privacy: Empirically Verified  ·  [75 s · ~140 words]
 
 **VOICE**
-"Four arms, each empirically verified rather than asserted. Zero non-loopback traffic across the full corpus run, observed via host firewall logs. leakFreeRate 100 percent on the 12-case prompt-injection harness. The RAG corpus manifest signature verified at load. And the whole pipeline reproducible from a pinned container — Node 20.19.0-alpine, npm ci, seed 42.
+"The same four arms from the architecture — but now each carries a measurement, not just a claim. *(pause)*
 
-The resource footprint is acceptable: the harness itself uses 87 megabytes of RAM. Ollama dominates at 6 to 8 gigabytes for an 8B-q4 model."
+The network arm: the policy allows loopback only, so a non-loopback connection cannot even open. A source-leak scan corroborates it — the corpus is broken into more than nine thousand small text fingerprints, and the scan watches for any of them trying to leave the machine. It found none.
 
-**TRANSITION** — "What does all of this actually mean."
+The injection arm: twelve crafted attempts to make the model leak. All twelve, leak-free. *(pause)* The slide also carries a stricter number — 83 percent, ten of twelve, returned a clean, well-formed reply. The other two went silent rather than leaking. The worst case was the model saying nothing.
+
+The provenance arm: the Ed25519 signature is verified on every load. Tampering fails closed.
+
+The reproducibility arm: the pinned container gives byte-identical runs — Node 20.19, npm ci, seed 42.
+
+And the cost is modest: the harness stays under a hundred megabytes; Ollama is the heavy part, at 6 to 8 gigabytes."
+
+**TRANSITION** — "What does all of this add up to?"
 
 ---
 
-## Slide 20 — What We Learned  ·  [90 s]
+## Slide 20 — What the Evaluation Showed  ·  [75 s · ~140 words]
 
 **VOICE**
-"Four takeaways.
+"Four things. *(pause)*
 
-**A local 8B model is enough.** qwen3:8b plus RAG reaches roughly 71 percent F1 on JavaScript and TypeScript, well inside the on-demand latency band on a developer laptop. You don't pay for privacy in quality.
+First — **a local 8B model is enough**. About 71 percent F1, on a laptop, inside the on-demand band. You do not pay for privacy with quality. *(pause)*
 
-**RAG is model-dependent**, not a universal win. The largest paired effect in the dataset is a RAG-induced *degradation* — codellama loses 29.89 F1 points. That finding alone justifies the per-model calibration stance.
+Second — **retrieval depends on the model**. The largest single effect in the whole study is RAG making things worse — codellama, minus 29.89. One result, enough to rewrite the rule.
 
-**Repair is the real product gap.** 90 percent auto-applicable means the developer can act, not just be warned. This is exactly where SAST falls flat — they detect, they don't fix.
+Third — **repair is the real gap**. Ninety percent auto-applicable means you can act, not just be warned. That is the one thing local scanners cannot do.
 
-**Privacy as a verifiable boundary.** Loopback plus signed corpus plus container pin makes privacy testable, not aspirational. leakFreeRate 100 is a measurement, not a slogan.
+Fourth — **privacy is something you can test**. Loopback, a signed corpus, a pinned container — they make 'leak-free' a measurement, not a slogan. *(pause)*
 
-And to close the loop on the three research questions from the start — the strip at the bottom answers them directly. **RQ1**, yes: 71.43 percent F1 under the privacy envelope. **RQ2**, yes but per-model — RAG is not a default. **RQ3**, yes: 2.2 seconds median, inside the on-demand band."
+And the three questions from the start are answered. RQ1: yes — 71.43 F1 under the privacy envelope. RQ2: yes, but per-model. RQ3: yes — 2.2 seconds, on-demand."
 
-**TRANSITION** — "The honest limitations."
+**TRANSITION** — "So where does that leave Code Guardian against the gap I opened with?"
 
 ---
 
-## Slide 21 — Limitations  ·  [80 s]
+## Slide 21 — Code Guardian Closes the Gap  ·  [55 s · ~100 words]
 
 **VOICE**
-"Five limitations, transparent.
+"Recall the trade I opened with — send your code away, or work almost unprotected. This is the same matrix from the start, with one row added at the bottom. *(pause)*
 
-Single-reviewer manual review at n equals 25 — inter-rater agreement on a 10-sample subset is the obvious next step.
+Privacy: met. Repair: met — the column every other local tool leaves empty. Usability: inside the band. Consistency: holds. And accuracy I marked partial — deliberately. 71 percent F1 is the Medium band: competitive under these constraints, not class-leading. *(pause)*
 
-Curated 101-case corpus — selection bias mitigated four ways: held-out split, external 15-case set, NodeGoat whole-project run, and the signed-manifest provenance.
+So the claim is narrow, and more useful for it: this is the one approach that brings privacy, repair, and IDE-grade speed together. It refuses the trade no developer should have to make."
 
-One real-world project end-to-end — NodeGoat. Multi-project validation is future work.
-
-Consensus filter inert under deterministic decoding — three runs at seed 42 are byte-identical. Real consensus signal requires seed rotation.
-
-No cloud-LLM baseline — excluded by the privacy threat model. The floor is provided by three SAST baselines."
-
-**TRANSITION** — "And the directions those limitations point to."
+**TRANSITION** — "Now the limitations."
 
 ---
 
-## Slide 22 — Future Work  ·  [60 s]
+## Slide 22 — Limitations & Future Work  ·  [80 s · ~150 words]
 
 **VOICE**
-"Five directions. Seed rotation for genuine consensus signal. Inter-rater agreement on the manual-review subset. Multi-project real-world validation. Streaming partial results to break the real-time band. And adaptive per-model RAG gating — directly motivated by slide 16."
+"Now the honest part — one slide, because every limitation points at its own piece of future work. *(pause)*
 
-**TRANSITION** — "The contributions."
+Five limitations, in the open. The manual repair review — one reviewer, 25 cases. An informed judgment, not a consensus. The corpus — 101 curated cases, guarded four ways: the held-out split, the external set, the whole-project NodeGoat run, and signed provenance. Only one real project ran end to end — one project cannot prove generalization. The consensus filter does nothing under deterministic decoding — three runs at seed 42 are byte-identical. And no cloud baseline — ruled out by the privacy threat model. *(pause)*
+
+Each one has its next step. Rotate the seeds, and the consensus filter does real work. Add a second rater. Validate across more projects. Stream partial results toward real-time. And gate retrieval per model — straight from the codellama finding. These are not loose ends. They are the roadmap the evaluation wrote for itself."
+
+**TRANSITION** — "Now the contributions."
 
 ---
 
-## Slide 23 — Contributions of This Thesis  ·  [70 s]
+## Slide 23 — Contributions of This Thesis  ·  [50 s · ~85 words]
 
 **VOICE**
-"Five contributions.
-
-A **working VS Code extension** — local LLM, RAG, signed corpus, pinned container, published.
-
-A **two-stage pipeline** with structured JSON contracts at every boundary — detection and repair.
-
-An **empirical study** — 5 models, 2 modes, plus 3 SAST baselines, 303 invocations per configuration, on a CWE-mapped JavaScript and TypeScript corpus.
-
-**Reproducibility infrastructure** — byte-identical runs, signed manifest, pinned Node container.
-
-And **statistical discipline** — Bonferroni-corrected McNemar, exact-binomial confidence intervals, held-out test split."
+"Five contributions. A working VS Code extension — local model, RAG, signed corpus, pinned container — published to the Marketplace, so any developer can install it today. A two-stage detect-and-repair pipeline with a structured JSON contract at every boundary. An empirical study — five models, two modes, three SAST baselines, 303 invocations per configuration, on a CWE-mapped JavaScript and TypeScript corpus. Reproducibility infrastructure — byte-identical runs anyone can repeat. And statistical discipline — corrected significance tests, exact intervals, and a held-out split."
 
 **TRANSITION** — "Those are the contributions; the key references are on the next slide."
 
 ---
 
-## Slide 24 — References  ·  [10 s]
+## Slide 24 — References  ·  [15 s · ~30 words]
 
 **VOICE**
-"These are the primary sources — the foundation models and RAG, the academic LLM-for-security comparators, and the standards the corpus is mapped against. I'll leave this up briefly."
+"These are the main sources — the foundation models and RAG, the LLM-for-security comparators, and the standards the corpus maps against. I'll leave this up for a moment."
 
-*(Do not read the list. Advance once the panel has had a moment.)*
+*(Don't read the list. Advance once the panel has had a moment.)*
 
 **TRANSITION** — "Thank you. I'd be glad to take questions."
 
 ---
 
-## Slide 25 — Thank You  ·  [Q&A — 2 min]
+## Slide 25 — Thank You  ·  [40 s · ~70 words, then Q&A — 20 min]
 
 **VOICE**
-"Thank you. The headline strip at the bottom is the four numbers — F1 71.43, repair 90.32, latency 2.2 seconds, leakFreeRate 100. I'd be glad to take questions."
+"Recall the opening — the bank's code, and today's trade: send your code away, or work almost unprotected. Code Guardian refuses that trade. *(pause)* The code stays on your machine. You get the finding. And you get the fix.
+
+Four numbers hold it together: F1 71.43. Repair 90.32. Latency 2.2 seconds. Leak-free on the harness. *(pause)*
+
+Thank you. I would be glad to take your questions."
 
 *(Stop talking. Look at the panel. Wait.)*
 
-**During Q&A:**
-- Restate the question briefly in your reframe (5 seconds — confirms you understood)
-- If the question routes to an appendix slide, navigate to it before answering
+**During Q&A (a full 20 minutes — slow down, answer properly):**
+- Briefly restate the question in your reframe. It confirms you understood and buys thinking time.
+- Give a full answer, then open the matching appendix slide — put A1–A9 on the projector when it helps.
+- Use the QA_PREP structure: Frame → Anchor (one number) → Concede (the smallest honest limit). ~60–90 s per answer.
+- It is fine to pause and think. Silence reads as care, not weakness.
 - Don't apologise. Don't say "good question." Just answer.
-- One question, one anchor number, max ~30 s per answer
 
 ---
 
 ## Pacing checkpoints
 
-If you're behind schedule at these slides, you need to trim:
+Budgets above include transitions and pauses and sum to ~28 minutes, leaving a ~2-minute buffer in the 30-minute slot. If you're behind at these slides, trim:
 
 | Checkpoint     | Slide | Time elapsed should be |
 |----------------|-------|------------------------|
 | End of Act I   | 5     | ~5 min                 |
-| End of Act III | 12    | ~13 min                |
-| End of Act IV  | 14    | ~16 min                |
+| End of Act III | 12    | ~14½ min               |
+| End of Act IV  | 14    | ~17½ min               |
 | End of Act V   | 19    | ~23 min                |
-| End of Act VI  | 23    | ~28 min                |
+| End of Act VI  | 23    | ~27 min                |
 
-If you're at slide 19 and the clock says 25 minutes, **drop slide 22 and condense slide 23 to 30 seconds**. Never run over.
+If you're at slide 19 and the clock is past **26 minutes**: keep slide 22 to the limitations column only and cut slide 23 (Contributions) to 30 seconds. Cut connective sentences, never numbers, never the folded pre-empts. Never run over into the 20-minute Q&A.
+
+If you're **ahead** of a checkpoint by more than a minute, you are speaking too fast — stretch the pauses, not the words.
 
 ## Voice / tone notes
 
-- **Pause** after every number. The audience needs a beat to absorb a percentage.
+- **Hold the slow pace.** The script fits 30 minutes at ~115 words per minute. Nerves push everyone toward 150; if a slide feels "too easy" on the clock, that's the buffer working — don't fill it.
+- **Pause after every number.** *(pause)* = one slow breath, about two seconds. The audience needs the beat to take in a percentage. At slow pace, the pause is what reads as authority.
+- **Finish every sentence.** Slow pace exposes trailing-off. Short, complete, declarative sentences — land each one, then breathe (STORYTELLING_STYLE.md §2).
 - **Don't read the slide aloud.** The slide carries the artefact; you carry the argument.
 - **Plain English.** "Stage one is detection," not "the first stage performs the detection task."
 - **No first person plural.** Say "the thesis" or "Code Guardian," not "we built."
-- **Don't apologise.** Don't say "this might not be perfect, but…" Anchor a limitation in a future-work item instead.
+- **Don't apologise.** Anchor a limitation in its future-work item instead.
 - **Land each requirement.** When you say "R1" on a results slide, point at the badge in the corner.
+- **Plant and call back.** "Send your code away, or work almost unprotected" is the through-line — slide 3, slide 21, and the close.
+- **Let the surprise breathe.** Slide 16 is the turn. Pause before the codellama number; don't bury it in the next sentence.
+- **Headline, then proof.** One plain sentence, then the number — never the reverse.
 
 ## Pre-defense checklist
 
-- [ ] Rehearse slides 14–19 (the results block) standalone — these are where Q&A traction lives
-- [ ] Walk through QA_PREP.md anchors verbally — the anchor stats must be muscle memory
-- [ ] Verify the architecture diagram, screenshot, and three bar charts are dropped into the placeholders
-- [ ] Print QA_PREP.md "quick reference card" and tape it inside your binder
+- [ ] Rehearse the whole talk **with a timer** against the per-slide budgets — you should hit each pacing checkpoint within ±30 s
+- [ ] Rehearse slides 14–19 (the results block) on their own — this is where Q&A traction lives
+- [ ] Rehearse the folded pre-empt sentences until they sound voluntary, not defensive — they answer the examiner's top questions inside the talk
+- [ ] Say the QA_PREP.md anchors out loud — the anchor stats must be muscle memory
+- [ ] Re-run make_assets.py and rebuild the deck, then eyeball the architecture diagram, screenshot, and bar charts in the exported PDF
+- [ ] Print the QA_PREP.md "quick reference card" and tape it inside your binder
 - [ ] Hard-reload the deck on the projector laptop the morning of — fonts can be substituted
 - [ ] Have a backup PDF export — projector apps fail
-- [ ] Bring water. Sip between slides, not during them.
+- [ ] Bring water. Sip during the *(pause)* marks, not mid-sentence.

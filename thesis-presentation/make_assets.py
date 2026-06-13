@@ -183,146 +183,264 @@ def chart_latency_bands():
 # Diagram — slide 11: system architecture
 # -----------------------------------------------------------------------------
 def diagram_architecture():
-    from matplotlib.patches import Ellipse
-    fig, ax = plt.subplots(figsize=(12.5, 6.8))
-    ax.set_xlim(0, 100)
-    ax.set_ylim(0, 68)
+    """Slide-11 system architecture.
+
+    Laid out on a 200x80 canvas (2.5:1) so it fills the deck's content box
+    without horizontal stretch (add_picture forces width AND height). The slide
+    chrome supplies the "System Architecture" title, so none is drawn here.
+
+    Layout: a left-to-right request pipeline on the top lane
+    (Client UI -> Extension Core -> Analyzer -> Ollama) with supporting stores
+    on two lower lanes snapped to shared columns, so connectors stay straight.
+    The optional outbound path forms a clean vertical chain on the right
+    (Vulnerability Data -> Egress Gate -> Public Security Feeds).
+    """
+    from matplotlib.patches import Ellipse, Polygon
+
+    fig, ax = plt.subplots(figsize=(15, 6.0))
+    ax.set_xlim(0, 200)
+    ax.set_ylim(0, 80)
     ax.axis("off")
     fig.patch.set_facecolor("white")
+    # full-bleed white background — also locks the tight-bbox to 2.5:1
+    ax.add_patch(Rectangle((0, 0), 200, 80, facecolor="white",
+                           edgecolor="none", zorder=0))
 
     STORE_FILL = "#E9EEF8"
-    GREEN_LINE = "#2E8B57"
+    CREAM = "#FFF6E2"
+    TS = 0.88  # global text scale — shrinks every label uniformly
 
-    def card(x, y, w, h, title, sub=None, fill=NAVY, edge=NAVY,
-             title_color="white", sub_color="#C2CBDD", fontsize=11, lw=1.6):
-        ax.add_patch(FancyBboxPatch((x, y), w, h,
-                     boxstyle="round,pad=0.45,rounding_size=1.0",
-                     linewidth=lw, edgecolor=edge, facecolor=fill, zorder=4))
+    # ---- helpers ----------------------------------------------------------
+    def box(cx, cy, w, h, title, sub=None, fill=NAVY, text_color="white",
+            border=None, lw=1.5, title_fs=12.5, sub_fs=9.0, sub_color=None):
+        """Rounded card with centered bold title + optional sub-label.
+        Returns (left, bottom, w, h) for edge-point lookups."""
+        if border is None:
+            border = fill
+        x0, y0 = cx - w / 2, cy - h / 2
+        ax.add_patch(FancyBboxPatch((x0, y0), w, h,
+                     boxstyle="round,pad=0,rounding_size=1.1",
+                     linewidth=lw, edgecolor=border, facecolor=fill, zorder=4))
         if sub:
-            ax.text(x + w / 2, y + h * 0.63, title, ha="center", va="center",
-                    fontsize=fontsize, color=title_color, fontweight="bold", zorder=5)
-            ax.text(x + w / 2, y + h * 0.30, sub, ha="center", va="center",
-                    fontsize=8, color=sub_color, zorder=5)
+            sc = sub_color or ("#C7D0E4" if text_color == "white" else TEXT_MUTED)
+            ax.text(cx, cy + h * 0.17, title, ha="center", va="center",
+                    fontsize=title_fs * TS, fontweight="bold", color=text_color,
+                    zorder=5)
+            ax.text(cx, cy - h * 0.24, sub, ha="center", va="center",
+                    fontsize=sub_fs * TS, color=sc, zorder=5)
         else:
-            ax.text(x + w / 2, y + h / 2, title, ha="center", va="center",
-                    fontsize=fontsize, color=title_color, fontweight="bold", zorder=5)
+            ax.text(cx, cy, title, ha="center", va="center",
+                    fontsize=title_fs * TS, fontweight="bold",
+                    color=text_color, zorder=5)
+        return (x0, y0, w, h)
 
-    def cylinder(x, y, w, h, title, sub):
-        cx = x + w / 2
-        eh = h * 0.13
-        ax.add_patch(Rectangle((x, y + eh), w, h - 2 * eh, facecolor=STORE_FILL,
-                               edgecolor=NAVY, linewidth=1.5, zorder=4))
-        ax.add_patch(Ellipse((cx, y + eh), w, 2 * eh, facecolor=STORE_FILL,
+    def cylinder(cx, cy, w, h, title, sub):
+        """Database cylinder. Returns (left, bottom, w, h, top_rim, bot_rim)
+        so connectors land on the rims rather than the bounding box."""
+        eh = h * 0.20
+        top_rim = cy + h / 2 - eh / 2
+        bot_rim = cy - h / 2 + eh / 2
+        left, right = cx - w / 2, cx + w / 2
+        ax.add_patch(Polygon([(left, bot_rim), (left, top_rim),
+                              (right, top_rim), (right, bot_rim)],
+                             closed=True, facecolor=STORE_FILL,
+                             edgecolor="none", zorder=4))
+        ax.add_patch(Ellipse((cx, bot_rim), w, eh, facecolor=STORE_FILL,
                              edgecolor=NAVY, linewidth=1.5, zorder=4))
-        ax.add_patch(Ellipse((cx, y + h - eh), w, 2 * eh, facecolor=STORE_FILL,
-                             edgecolor=NAVY, linewidth=1.5, zorder=5))
-        ax.text(cx, y + h * 0.64, title, ha="center", va="center",
-                fontsize=10, color=NAVY_DARK, fontweight="bold", zorder=6)
-        ax.text(cx, y + h * 0.42, sub, ha="center", va="center",
-                fontsize=7.5, color=TEXT_MUTED, zorder=6)
+        ax.plot([left, left], [bot_rim, top_rim], color=NAVY, lw=1.5, zorder=5)
+        ax.plot([right, right], [bot_rim, top_rim], color=NAVY, lw=1.5, zorder=5)
+        ax.add_patch(Ellipse((cx, top_rim), w, eh, facecolor="#F4F7FD",
+                             edgecolor=NAVY, linewidth=1.5, zorder=6))
+        ax.text(cx, cy + h * 0.10, title, ha="center", va="center",
+                fontsize=10.5 * TS, fontweight="bold", color=NAVY, zorder=7)
+        ax.text(cx, cy - h * 0.21, sub, ha="center", va="center",
+                fontsize=8.0 * TS, color=TEXT_MUTED, zorder=7)
+        return (left, cy - h / 2, w, h, top_rim, bot_rim)
 
-    def conn(points, color=NAVY_DARK, lw=1.7, style="-|>", alpha=1.0,
-             dashed=False, label=None, label_xy=None, label_color=TEXT_MUTED):
-        ls = (0, (5, 3)) if dashed else "solid"
-        for i in range(len(points) - 1):
-            a, b = points[i], points[i + 1]
-            st = style if i == len(points) - 2 else "-"
-            ax.add_patch(FancyArrowPatch(a, b, arrowstyle=st, color=color,
-                                         linewidth=lw, alpha=alpha,
-                                         mutation_scale=15, linestyle=ls,
-                                         shrinkA=0, shrinkB=0, zorder=2))
-        if label:
-            ax.text(label_xy[0], label_xy[1], label, fontsize=8,
-                    color=label_color, ha="center", va="center", zorder=12,
-                    fontstyle="italic")
+    def ep(b, side):
+        """Edge midpoint of a box/cylinder tuple."""
+        x0, y0, w, h = b[0], b[1], b[2], b[3]
+        if side == "top":
+            return (x0 + w / 2, b[4] if len(b) > 4 else y0 + h)
+        if side == "bottom":
+            return (x0 + w / 2, b[5] if len(b) > 5 else y0)
+        if side == "left":
+            return (x0, y0 + h / 2)
+        return (x0 + w, y0 + h / 2)               # right
 
-    # ---- backend boundary (everything local) ----
-    ax.add_patch(FancyBboxPatch((3, 5), 94, 47,
-                 boxstyle="round,pad=1.0,rounding_size=2.0",
-                 linewidth=1.8, edgecolor=NAVY, facecolor="#F7F9FD",
+    def arrow(p0, p1, color=NAVY, lw=2.0, dashed=False, mut=15, zorder=4):
+        ax.add_patch(FancyArrowPatch(
+            p0, p1, arrowstyle="-|>", mutation_scale=mut, linewidth=lw,
+            color=color, zorder=zorder, shrinkA=0, shrinkB=0,
+            joinstyle="round", capstyle="round",
+            linestyle=(0, (5, 4)) if dashed else "-"))
+
+    def seg(x0, y0, x1, y1, color=NAVY, lw=2.0, dashed=False, zorder=4):
+        ax.plot([x0, x1], [y0, y1], color=color, lw=lw, zorder=zorder,
+                solid_capstyle="round", dash_capstyle="round",
+                linestyle=(0, (5, 4)) if dashed else "-")
+
+    def label(x, y, text, color=TEXT_DARK, fs=9.0, weight="bold", pad=0.18):
+        ax.text(x, y, text, ha="center", va="center", fontsize=fs * TS,
+                color=color, fontweight=weight, zorder=9,
+                bbox=dict(boxstyle=f"round,pad={pad}", fc="white", ec="none",
+                          alpha=0.95))
+
+    # ---- privacy boundary -------------------------------------------------
+    ax.add_patch(FancyBboxPatch((4, 4.5), 178, 62.5,
+                 boxstyle="round,pad=0,rounding_size=2.4",
+                 linewidth=2.2, edgecolor=NAVY, facecolor="#FBFCFE",
                  linestyle=(0, (6, 4)), zorder=1))
-    ax.text(7, 8.5, "CODE GUARDIAN", ha="left", va="center",
-            fontsize=15, color=NAVY_DARK, fontweight="bold", zorder=3)
-    ax.text(7, 5.9, "runs entirely on your laptop", ha="left", va="center",
-            fontsize=8.5, color=TEXT_MUTED, fontstyle="italic", zorder=3)
+    ax.text(7, 64.6, "CODE GUARDIAN", ha="left", va="center", fontsize=12.0 * TS,
+            fontweight="bold", color=NAVY_DARK, zorder=3)
+    ax.text(7, 61.7, "runs entirely on your laptop", ha="left", va="center",
+            fontsize=9.0 * TS, color=TEXT_MUTED, fontstyle="italic", zorder=3)
 
-    # ---- external provider (outside, top) ----
-    FEED = (60, 58, 33, 7)
-    card(*FEED, "Public Security Feeds", "NVD · OWASP · CWE · GitHub",
-         fill="white", edge=NAVY, title_color=NAVY_DARK, sub_color=TEXT_MUTED,
-         fontsize=10.5, lw=1.4)
+    # ---- column / lane grid ----------------------------------------------
+    C_CLIENT, C_CORE, C_ANALYZER, C_OLLAMA = 24, 63, 111, 159
+    C_CACHE, C_RAG, C_EGRESS = 63, 111, 159       # lower lane 1, aligned to top
+    C_KB, C_VULN = 111, 159                        # lower lane 2
+    TOP_Y, LANE1_Y, LANE2_Y = 53, 33, 14
+    RED_X = 176                                    # sole outbound channel
 
-    # ---- nodes (bottom-left x, y, w, h) ----
-    CUI = (9, 38, 17, 9)     # client UI
-    EXT = (31, 38, 17, 9)    # extension core
-    ANA = (53, 38, 17, 9)    # analyzer (accent)
-    OL  = (74, 38, 19, 9)    # ollama
-    CH  = (31, 23, 17, 8)    # cache (cyl)
-    RAGM = (53, 23, 17, 8)   # rag manager
-    VD  = (74, 23, 19, 8)    # vuln data (cyl)
-    VEC = (53, 9, 17, 8)     # vector index (cyl)
+    # ---- top lane: request pipeline --------------------------------------
+    b_client = box(C_CLIENT, TOP_Y, 26, 12, "Client UI", "VS Code · 4 workflows")
+    b_core = box(C_CORE, TOP_Y, 26, 12, "Extension Core", "orchestration")
 
-    def cx(n): return n[0] + n[2] / 2
-    def top(n): return n[1] + n[3]
-    def vmid(n): return n[1] + n[3] / 2
+    AN_W, AN_H = 48, 20.5
+    an_x0, an_y0 = C_ANALYZER - AN_W / 2, TOP_Y - AN_H / 2
+    ax.add_patch(FancyBboxPatch((an_x0, an_y0), AN_W, AN_H,
+                 boxstyle="round,pad=0,rounding_size=1.4",
+                 linewidth=1.6, edgecolor=NAVY, facecolor="#EEF2FA", zorder=2))
+    ax.text(C_ANALYZER, an_y0 + AN_H - 2.4, "Analyzer — two-stage",
+            ha="center", va="center", fontsize=10.5 * TS, fontweight="bold",
+            color=NAVY_DARK, zorder=6)
+    b_s1 = box(C_ANALYZER - 11.5, 49.5, 20, 11, "Stage 1 · Detect",
+               "consensus · JSON", title_fs=8.8, sub_fs=7.8)
+    b_s2 = box(C_ANALYZER + 11.5, 49.5, 20, 11, "Stage 2 · Repair",
+               "Babel-validated", title_fs=8.8, sub_fs=7.8)
+    arrow(ep(b_s1, "right"), ep(b_s2, "left"), color=ACCENT, lw=1.8, mut=10,
+          zorder=7)
+    an_box = (an_x0, an_y0, AN_W, AN_H)
 
-    # ---- connectors (drawn first; cards overlay endpoints) ----
-    # client request / response — the green path
-    conn([(CUI[0] + CUI[2], vmid(CUI) + 1.5), (EXT[0], vmid(CUI) + 1.5)],
-         color=GREEN_LINE, label="analyze", label_xy=(28.5, 49.0),
-         label_color=GREEN_LINE)
-    conn([(EXT[0], vmid(EXT) - 1.5), (CUI[0] + CUI[2], vmid(EXT) - 1.5)],
-         color=GREEN_LINE, dashed=True, label="results", label_xy=(28.5, 36.0),
-         label_color=GREEN_LINE)
-    # extension → analyzer
-    conn([(EXT[0] + EXT[2], vmid(EXT)), (ANA[0], vmid(EXT))],
-         label="on miss", label_xy=(50.5, 49.0))
-    # extension ↓ cache  (and cache ↑ back)
-    conn([(cx(EXT) - 1.6, EXT[1]), (cx(EXT) - 1.6, top(CH))],
-         label="cache\ncheck", label_xy=(35.0, 35.0))
-    conn([(cx(EXT) + 1.6, top(CH)), (cx(EXT) + 1.6, EXT[1])],
-         dashed=True, style="-|>")
-    # analyzer ↓ rag manager  /  rag ↑ analyzer
-    conn([(cx(ANA) - 1.6, ANA[1]), (cx(ANA) - 1.6, top(RAGM))],
-         label="query", label_xy=(57.0, 35.0))
-    conn([(cx(RAGM) + 1.6, top(RAGM)), (cx(RAGM) + 1.6, ANA[1])],
-         dashed=True, label="context", label_xy=(67.0, 35.0))
-    # rag manager ↓ vector index  /  vector ↑ rag
-    conn([(cx(RAGM) - 1.6, RAGM[1]), (cx(RAGM) - 1.6, top(VEC))],
-         label="embed", label_xy=(57.0, 20.6))
-    conn([(cx(VEC) + 1.6, top(VEC)), (cx(VEC) + 1.6, RAGM[1])],
-         dashed=True, label="top-k", label_xy=(66.5, 20.6))
-    # analyzer → ollama  /  ollama → analyzer
-    conn([(ANA[0] + ANA[2], vmid(ANA) + 1.5), (OL[0], vmid(ANA) + 1.5)],
-         label="prompt (JSON)", label_xy=(72.0, 49.0))
-    conn([(OL[0], vmid(OL) - 1.5), (ANA[0] + ANA[2], vmid(OL) - 1.5)],
-         dashed=True, label="completion", label_xy=(72.0, 36.0))
-    # vuln data → rag manager (CVE context)
-    conn([(VD[0], vmid(VD)), (RAGM[0] + RAGM[2], vmid(VD))],
-         label="CVE context", label_xy=(72.0, 33.0))
-    # external feeds ⇢ vuln data  (the only line crossing the boundary,
-    # routed down the right margin so it never touches the Ollama card)
-    conn([(cx(FEED), FEED[1]), (cx(FEED), 54.5), (95.5, 54.5),
-          (95.5, vmid(VD)), (VD[0] + VD[2], vmid(VD))],
-         color=RED, dashed=True, lw=1.7,
-         label="fetch (24 h)\noutbound only", label_xy=(70.5, 55.4),
-         label_color=RED)
+    b_ollama = box(C_OLLAMA, TOP_Y, 28, 12, "Ollama", "local · codellama / qwen3",
+                   sub_fs=8.6)
 
-    # ---- nodes ----
-    card(*CUI, "Client UI", "VS Code editor", edge=GREEN_LINE, lw=2.2)
-    card(*EXT, "Extension Core", "orchestration")
-    card(*ANA, "Analyzer", "detect + repair", fill=ACCENT, edge=ACCENT,
-         title_color=NAVY_DARK, sub_color="#5A4410")
-    card(*OL, "Ollama", "local LLM")
-    card(*RAGM, "RAG Manager", "context retrieval", fontsize=10)
-    cylinder(*CH, "Cache", "LRU 95–98%")
-    cylinder(*VD, "Vulnerability Data", "24 h cache")
-    cylinder(*VEC, "Vector Index", "HNSWlib")
+    # ---- lower lanes ------------------------------------------------------
+    b_cache = cylinder(C_CACHE, LANE1_Y, 30, 11, "Analysis Cache",
+                       "LRU · 100 · 30 min")
+    b_rag = box(C_RAG, LANE1_Y, 30, 11, "RAG Manager", "context retrieval",
+                title_fs=11.5, sub_fs=8.6)
+    b_egress = box(C_EGRESS, LANE1_Y, 28, 11, "Egress Gate",
+                   "loopback-only · off by default", title_fs=11.0, sub_fs=7.6)
+    b_kb = cylinder(C_KB, LANE2_Y, 32, 11, "Knowledge Base",
+                    "HNSWlib · Ed25519-signed")
+    b_vuln = cylinder(C_VULN, LANE2_Y, 30, 11, "Vulnerability Data",
+                      "24 h cache · 7 sources")
 
-    ax.text(50, 1.4, "Only public vulnerability look-ups (red) ever leave the machine — your code never does.",
-            ha="center", va="center", fontsize=8.5, color=RED, fontweight="bold")
+    # ---- external feed (outside boundary, top-right) ---------------------
+    b_feeds = box(RED_X, 73, 42, 9, "Public Security Feeds",
+                  "NVD · OWASP · CWE · GitHub", fill="white", text_color=NAVY_DARK,
+                  border=NAVY, lw=1.8, title_fs=11.5, sub_fs=8.6,
+                  sub_color=TEXT_MUTED)
+    ax.text(RED_X, 78.9, "outside the privacy boundary", ha="center",
+            va="center", fontsize=8.0 * TS, color=TEXT_MUTED, fontstyle="italic")
 
-    fig.tight_layout(pad=0.4)
+    # ---- privacy callout (bottom-left, free corner) ----------------------
+    PC_X, PC_Y, PC_W, PC_H = 8, 5.5, 38, 23
+    ax.add_patch(FancyBboxPatch((PC_X, PC_Y), PC_W, PC_H,
+                 boxstyle="round,pad=0,rounding_size=1.3",
+                 linewidth=1.8, edgecolor=ACCENT, facecolor=CREAM, zorder=3))
+    ax.text(PC_X + PC_W / 2, PC_Y + PC_H - 3.0, "Privacy by construction",
+            ha="center", va="center", fontsize=11.0 * TS, fontweight="bold",
+            color=NAVY_DARK, zorder=5)
+    for i, c in enumerate(["all local execution", "no code leaves machine",
+                           "no telemetry", "egress off by default",
+                           "signed corpus"]):
+        ay = PC_Y + PC_H - 6.6 - i * 3.1
+        ax.text(PC_X + 3.0, ay, "✓", ha="left", va="center", fontsize=10.5 * TS,
+                color=GREEN, fontweight="bold", zorder=5)
+        ax.text(PC_X + 6.2, ay, c, ha="left", va="center", fontsize=9.4 * TS,
+                color=TEXT_DARK, zorder=5)
+
+    # ---- connectors -------------------------------------------------------
+    OFF = 1.6   # separates a forward/return pair on a shared axis
+
+    # Client UI -> Extension Core : analyze (+ dashed return)
+    cl_r, co_l = ep(b_client, "right")[0], ep(b_core, "left")[0]
+    arrow((cl_r, TOP_Y + OFF), (co_l, TOP_Y + OFF), lw=2.2)
+    arrow((co_l, TOP_Y - OFF), (cl_r, TOP_Y - OFF), lw=1.5, dashed=True)
+    label((cl_r + co_l) / 2, TOP_Y + OFF + 2.6, "analyze", color=NAVY)
+
+    # Extension Core -> Analyzer : on miss
+    arrow((ep(b_core, "right")[0], TOP_Y), (an_x0, TOP_Y), lw=2.2)
+    label((ep(b_core, "right")[0] + an_x0) / 2, TOP_Y + 2.6, "on miss",
+          color=NAVY, fs=8.6)
+
+    # Analyzer <-> Ollama : prompt (JSON) (+ dashed return)
+    an_r, ol_l = an_x0 + AN_W, ep(b_ollama, "left")[0]
+    arrow((an_r, TOP_Y + OFF), (ol_l, TOP_Y + OFF), lw=2.2)
+    arrow((ol_l, TOP_Y - OFF), (an_r, TOP_Y - OFF), lw=1.5, dashed=True)
+    label((an_r + ol_l) / 2, TOP_Y + OFF + 2.7, "prompt (JSON)", color=NAVY,
+          fs=8.0)
+
+    # Extension Core <-> Analysis Cache : check (down) / hit (up)
+    cache_t = ep(b_cache, "top")[1]
+    core_b = ep(b_core, "bottom")[1]
+    arrow((C_CORE - 2, core_b), (C_CORE - 2, cache_t), lw=2.2)
+    arrow((C_CORE + 2, cache_t), (C_CORE + 2, core_b), lw=1.5, dashed=True)
+    label(C_CORE - 8.5, (core_b + cache_t) / 2, "check", color=NAVY)
+    label(C_CORE + 8.0, (core_b + cache_t) / 2, "hit", color=TEXT_MUTED)
+
+    # Analyzer -> Analysis Cache : store on miss (Manhattan elbow, lands on the
+    # cache top right of the check/hit pair so the three arrows stay separated)
+    sx, ey, lx = 100, 40.5, 73
+    seg(sx, an_y0, sx, ey)
+    seg(sx, ey, lx, ey)
+    arrow((lx, ey), (lx, cache_t))
+    label((sx + lx) / 2, ey + 1.4, "store on miss", color=NAVY, fs=8.6)
+
+    # Analyzer -> RAG Manager : RAG enrich
+    rag_t = ep(b_rag, "top")[1]
+    arrow((C_ANALYZER, an_y0), (C_RAG, rag_t), lw=2.2)
+    label(C_ANALYZER + 11, (an_y0 + rag_t) / 2, "RAG enrich", color=NAVY, fs=8.6)
+
+    # RAG Manager -> Knowledge Base : top-k 3
+    rag_b, kb_t = ep(b_rag, "bottom")[1], ep(b_kb, "top")[1]
+    arrow((C_RAG, rag_b), (C_KB, kb_t), lw=2.2)
+    label(C_RAG + 9, (rag_b + kb_t) / 2, "top-k 3", color=NAVY, fs=8.6)
+
+    # Vulnerability Data -> Knowledge Base : sync (dashed)
+    vd_l, kb_r = ep(b_vuln, "left"), ep(b_kb, "right")
+    arrow(vd_l, kb_r, lw=1.8, dashed=True)
+    label((vd_l[0] + kb_r[0]) / 2, vd_l[1] + 2.3, "sync", color=TEXT_MUTED)
+
+    # Vulnerability Data -> Egress Gate : egress req (straight up)
+    arrow(ep(b_vuln, "top"), ep(b_egress, "bottom"), lw=2.2)
+    label(C_VULN - 11, (ep(b_vuln, "top")[1] + ep(b_egress, "bottom")[1]) / 2,
+          "egress req", color=NAVY, fs=8.6)
+
+    # Egress Gate -> Public Security Feeds : RED dashed, sole boundary crossing
+    eg_r = ep(b_egress, "right")
+    feed_b = ep(b_feeds, "bottom")[1]
+    seg(eg_r[0], eg_r[1], RED_X, eg_r[1], color=RED, lw=2.0, dashed=True)
+    arrow((RED_X, eg_r[1]), (RED_X, feed_b), color=RED, lw=2.0, dashed=True,
+          mut=17)
+    ax.text(RED_X - 2.4, 44.2, "optional fetch", ha="right", va="center",
+            fontsize=8.8 * TS, fontweight="bold", color=RED, zorder=9,
+            bbox=dict(boxstyle="round,pad=0.16", fc="white", ec="none", alpha=0.95))
+    ax.text(RED_X - 2.4, 41.0, "off by default", ha="right", va="center",
+            fontsize=8.2 * TS, color=RED, zorder=9,
+            bbox=dict(boxstyle="round,pad=0.16", fc="white", ec="none", alpha=0.95))
+
+    # ---- legend -----------------------------------------------------------
+    arrow((60, 2.4), (67, 2.4), color=NAVY, lw=2.4, mut=13)
+    ax.text(68.5, 2.4, "local data flow", ha="left", va="center",
+            fontsize=9.4 * TS, color=TEXT_DARK)
+    arrow((112, 2.4), (119, 2.4), color=RED, lw=2.0, dashed=True, mut=13)
+    ax.text(120.5, 2.4, "optional outbound — public metadata, off by default",
+            ha="left", va="center", fontsize=9.4 * TS, color=TEXT_DARK)
+
     save("diagram_11_architecture.png", fig)
 
 
@@ -366,14 +484,14 @@ def diagram_threat_model():
             va="center", fontsize=10, color=GREEN_LINE, fontweight="bold")
 
     # ---- inside: everything that stays local (green ✓) ----
-    card(7, 70, 54, 13, "Code Guardian", "local LLM + RAG",
+    card(7, 70, 52, 13, "Code Guardian", "local LLM + RAG",
          fill=NAVY, edge=NAVY, tcol="white", scol="#C2CBDD",
          mark="✓", mark_col=GREEN_LINE)
-    card(7, 53, 54, 13, "Local SAST baselines", "Semgrep · CodeQL · ESLint",
+    card(7, 53, 52, 13, "Local SAST baselines", "Semgrep · CodeQL · ESLint",
          mark="✓", mark_col=GREEN_LINE)
-    card(7, 36, 54, 13, "Your code & prompts", "source · embeddings · context",
+    card(7, 36, 52, 13, "Your code & prompts", "source · embeddings · context",
          mark="✓", mark_col=GREEN_LINE)
-    card(7, 23, 54, 8, "Only outbound: signed corpus updates", "",
+    card(7, 23, 52, 8, "Only outbound: signed corpus updates", "",
          fill="#F3E9D8", edge=TEXT_MUTED, tcol=TEXT_MUTED, ts=9.5, lw=1.2)
 
     # ---- outside: the excluded cloud baseline (red ✗) ----
@@ -382,11 +500,11 @@ def diagram_threat_model():
          mark="✗", mark_col=RED)
 
     # ---- the egress that using a cloud baseline would require ----
-    ax.add_patch(FancyArrowPatch((61, 42.5), (73, 42.5),
+    ax.add_patch(FancyArrowPatch((59, 42.5), (73, 42.5),
                  arrowstyle="-|>", color=RED, mutation_scale=15,
                  linewidth=1.8, linestyle=(0, (5, 3)), shrinkA=0, shrinkB=0,
                  zorder=3))
-    ax.text(64, 54, "requires\ncode egress", color=RED, fontsize=8.5,
+    ax.text(66, 47.5, "requires\ncode egress", color=RED, fontsize=8,
             ha="center", va="center", fontweight="bold", fontstyle="italic",
             zorder=8)
 
@@ -466,7 +584,7 @@ def illustration_dilemma():
 
     # Bubble 2 (top-right) — SAST coverage
     bubble(82, 44, 28, 12, "✗", "Semgrep missed it",
-           "again — only catches\npattern matches", "#A68000")
+           "again, only catches\npattern matches", "#A68000")
 
     # Bubble 3 (bottom-left, below dev) — repair gap
     bubble(20, 12, 28, 12, "?", "I need a fix",
@@ -474,7 +592,7 @@ def illustration_dilemma():
 
     # Bubble 4 (bottom-right) — the question
     bubble(82, 12, 28, 12, "!", "What's the alternative?",
-           "Privacy + coverage + repair\nin one tool — does it exist?",
+           "Privacy + coverage + repair\nin one tool: does it exist?",
            "#2E8B57")
 
     # Connector lines from bubbles toward developer
@@ -484,7 +602,7 @@ def illustration_dilemma():
 
     # Sub-caption
     ax.text(50, 1.5,
-            "Privacy, coverage, and repair quality — pick at most two.",
+            "Privacy, coverage, and repair quality: pick at most two.",
             fontsize=12, color=TEXT_MUTED, ha="center", va="center",
             fontstyle="italic", fontweight="bold")
 
